@@ -43,6 +43,7 @@ struct MainTabView: View {
     @AppStorage("app.language") private var appLanguage = "system"
     @AppStorage("prayer.customLabel") private var customLabel = ""
     @AppStorage("fasting.reminders") private var fastingReminders = false
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         TabView(selection: $tab) {
@@ -97,7 +98,13 @@ struct MainTabView: View {
                 .tag(Tab.settings)
         }
         .tint(NoorColor.accentPrimary)
+        .onChange(of: scenePhase) { _, phase in
+            // Reading progress accumulates silently while the reader is
+            // open — push it to iCloud whenever the app leaves the front.
+            if phase == .background || phase == .inactive { CloudSync.pushLocal() }
+        }
         .task {
+            CloudSync.start()
             syncWidgets()
             await rescheduleNotifications()
         }
@@ -126,6 +133,7 @@ struct MainTabView: View {
     private func syncWidgets() {
         NoorShared.syncFromApp()
         WidgetCenter.shared.reloadAllTimelines()
+        CloudSync.pushLocal()
     }
 
     private func rescheduleNotifications() async {

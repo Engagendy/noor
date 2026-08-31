@@ -90,7 +90,7 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        UIBackgroundModes: [audio]
+        UIBackgroundModes: [audio, remote-notification]
         UILaunchScreen:
           UIColorName: LaunchBackground
         ITSAppUsesNonExemptEncryption: false

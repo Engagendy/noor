@@ -5,9 +5,10 @@ import SwiftData
 /// A saved bookmark (user data → SwiftData per CLAUDE.md conventions).
 @Model
 public final class Bookmark {
-    public var surahId: Int
-    public var ayah: Int
-    public var createdAt: Date
+    // CloudKit-backed SwiftData requires default values on every attribute.
+    public var surahId: Int = 1
+    public var ayah: Int = 1
+    public var createdAt: Date = Date.now
 
     public init(surahId: Int, ayah: Int, createdAt: Date = .now) {
         self.surahId = surahId
@@ -40,10 +41,25 @@ public final class LibraryStore {
     private let container: ModelContainer
 
     public init(inMemory: Bool = false) throws {
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: inMemory)
-        container = try ModelContainer(for: Bookmark.self, configurations: configuration)
+        if inMemory {
+            let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+            container = try ModelContainer(for: Bookmark.self, configurations: configuration)
+        } else if let cloud = try? ModelContainer(
+            for: Bookmark.self,
+            configurations: ModelConfiguration(
+                cloudKitDatabase: .private("iCloud.com.engagendy.Noor"))) {
+            // Bookmarks sync via the user's private iCloud (nothing shared).
+            container = cloud
+        } else {
+            // No iCloud account / entitlement (e.g. macOS dev build): local.
+            let configuration = ModelConfiguration(isStoredInMemoryOnly: false)
+            container = try ModelContainer(for: Bookmark.self, configurations: configuration)
+        }
         refresh()
     }
+
+    /// CloudKit merges arrive in the background — re-read on demand.
+    public func reload() { refresh() }
 
     public func isBookmarked(surahId: Int, ayah: Int) -> Bool {
         bookmarks.contains { $0.surahId == surahId && $0.ayah == ayah }
