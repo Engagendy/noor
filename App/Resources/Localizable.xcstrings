@@ -719,6 +719,16 @@
         }
       }
     },
+    "Mushaf": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مصحف"
+          }
+        }
+      }
+    },
     "Mushaf (continuous)": {
       "localizations": {
         "ar": {

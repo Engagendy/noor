@@ -19,11 +19,8 @@ public struct SurahReaderView: View {
     @AppStorage("reader.mode") private var modeRaw = DisplayMode.mushaf.rawValue
     @AppStorage("reader.showTranslation") private var showTranslation = false
     @AppStorage("reader.wordByWord") private var wordByWord = false
-    /// Furthest mushaf page ever reached — drives khatmah progress on Today.
-    @AppStorage("khatmah.maxPage") private var khatmahMaxPage = 0
-    /// Last page being read — resume point (Continue Reading, rotation).
-    @AppStorage("reader.lastPage") private var lastReadPage = 0
     @State private var selectedKey: Int?          // surah*1000 + ayah
+    @State private var showOptions = false
     @State private var currentPage = 0
     @State private var tafsirVerse: Verse?
     @State private var shareVerse: Verse?
@@ -93,11 +90,18 @@ public struct SurahReaderView: View {
         .environment(\.layoutDirection, .rightToLeft)
         .background(NoorColor.bgPrimary)
         .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.3)) { chromeVisible.toggle() }
+            withAnimation(.easeInOut(duration: 0.3)) {
+                if showOptions { showOptions = false } else { chromeVisible.toggle() }
+            }
         }
         // Constant-height top strip: content never reflows — the two rows
         // just cross-fade (full controls ↔ surah·time·juz).
         .safeAreaInset(edge: .top, spacing: 0) { topBar }
+        .overlay(alignment: .top) {
+            if showOptions {
+                optionsPanel
+            }
+        }
         .overlay(alignment: .bottom) {
             if let player {
                 AudioPillView(player: player)
@@ -129,8 +133,14 @@ public struct SurahReaderView: View {
             withAnimation(.easeInOut(duration: 0.3)) { currentPage = page }
         }
         .onChange(of: currentPage) { _, page in
-            if page > khatmahMaxPage { khatmahMaxPage = page }
-            if page > 0 && mode != .ayah { lastReadPage = page }
+            guard page > 0, mode != .ayah else { return }
+            // Direct defaults writes: the reader must NOT observe these via
+            // @AppStorage or every swipe re-renders the whole pager.
+            let defaults = UserDefaults.standard
+            if page > defaults.integer(forKey: "khatmah.maxPage") {
+                defaults.set(page, forKey: "khatmah.maxPage")
+            }
+            defaults.set(page, forKey: "reader.lastPage")
         }
         .sheet(item: $actionVerses) { group in
             AyahActionsSheet(
@@ -243,11 +253,18 @@ public struct SurahReaderView: View {
         }
     }
 
+    /// Only a sliding window of pages is materialized — a 604-child TabView
+    /// re-diffs every page on each swipe and stutters.
+    private var pageWindow: ClosedRange<Int> {
+        let center = min(max(currentPage, 1), 604)
+        return max(1, center - 3)...min(604, center + 3)
+    }
+
     // MARK: Madani page mode — the whole mushaf, pixel-faithful
 
     private var madaniPager: some View {
         TabView(selection: $currentPage) {
-            ForEach(1...604, id: \.self) { page in
+            ForEach(pageWindow, id: \.self) { page in
                 MadaniPageView(
                     page: page, layout: layout, fontStore: fontStore,
                     surahName: { viewModel.surahInfo($0)?.nameArabic ?? "" },
@@ -271,7 +288,7 @@ public struct SurahReaderView: View {
 
     private var mushafPager: some View {
         TabView(selection: $currentPage) {
-            ForEach(1...604, id: \.self) { page in
+            ForEach(pageWindow, id: \.self) { page in
                 mushafPage(page)
                     .tag(page)
             }
@@ -517,16 +534,19 @@ public struct SurahReaderView: View {
             }
     }
 
+    /// The Aa button toggles a custom dropdown panel (SwiftUI-owned, so it
+    /// honors RTL — the system Menu follows the process language and can't).
     private var readerMenu: some View {
-        Menu {
-            // Menus are presentations — re-apply the app's direction.
-            menuContent
-                .environment(\.layoutDirection, appDirection)
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) { showOptions.toggle() }
         } label: {
             Text(verbatim: "Aa")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(NoorColor.accentPrimary)
+                .foregroundStyle(showOptions ? NoorColor.accentGold : NoorColor.accentPrimary)
+                .frame(width: 40, height: 40)
+                .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
         .accessibilityLabel("Reader options")
         .onChange(of: showTranslation) { _, enabled in
             if enabled {
@@ -539,26 +559,31 @@ public struct SurahReaderView: View {
         }
     }
 
-    @ViewBuilder
-    private var menuContent: some View {
+    /// RTL-correct options panel shown under the top strip.
+    private var optionsPanel: some View {
+        VStack(alignment: .leading, spacing: 14) {
             Picker(selection: $modeRaw) {
-                Text("Mushaf (continuous)").tag(DisplayMode.mushaf.rawValue)
+                Text("Mushaf").tag(DisplayMode.mushaf.rawValue)
                 if layout != nil {
-                    Text("Page (Madani print)").tag(DisplayMode.page.rawValue)
+                    Text("Madani").tag(DisplayMode.page.rawValue)
                 }
                 Text("Ayah by ayah").tag(DisplayMode.ayah.rawValue)
             } label: {
                 Text("Reading mode")
             }
+            .pickerStyle(.segmented)
+
             if translations != nil {
                 Toggle(isOn: $showTranslation) {
                     Text("Show translation")
                 }
+                .tint(NoorColor.accentPrimary)
             }
             if layout != nil {
                 Toggle(isOn: $wordByWord) {
                     Text("Word by word")
                 }
+                .tint(NoorColor.accentPrimary)
             }
             if let surah = viewModel.surah, let player {
                 Button {
@@ -567,33 +592,65 @@ public struct SurahReaderView: View {
                             reciter: player.reciter, surah: surah.id, ayahCount: surah.ayahCount)
                     }
                 } label: {
-                    switch downloader.state {
-                    case .downloading(let completed, let total):
-                        Label("Downloading \(completed)/\(total)…", systemImage: "arrow.down.circle")
-                    case .done:
-                        Label("Audio downloaded", systemImage: "checkmark.circle")
-                    default:
-                        if SurahDownloader.isDownloaded(
-                            reciter: player.reciter, surah: surah.id, ayahCount: surah.ayahCount) {
+                    Group {
+                        switch downloader.state {
+                        case .downloading(let completed, let total):
+                            Label("Downloading \(completed)/\(total)…", systemImage: "arrow.down.circle")
+                        case .done:
                             Label("Audio downloaded", systemImage: "checkmark.circle")
-                        } else {
-                            Label("Download surah audio", systemImage: "arrow.down.circle")
+                        default:
+                            if SurahDownloader.isDownloaded(
+                                reciter: player.reciter, surah: surah.id, ayahCount: surah.ayahCount) {
+                                Label("Audio downloaded", systemImage: "checkmark.circle")
+                            } else {
+                                Label("Download surah audio", systemImage: "arrow.down.circle")
+                            }
                         }
                     }
+                    .font(.system(size: 14, weight: .medium))
                 }
+                .buttonStyle(.plain)
+                .foregroundStyle(NoorColor.accentPrimary)
             }
-            Divider()
-            Button {
-                quranFontSize = min(NoorMetrics.quranSizeRange.upperBound, quranFontSize + 2)
-            } label: {
-                Label("Larger", systemImage: "plus")
+
+            HStack(spacing: 12) {
+                Text("Quran text size")
+                    .font(.system(size: 14))
+                    .foregroundStyle(NoorColor.inkSecondary)
+                Spacer()
+                Button {
+                    quranFontSize = max(NoorMetrics.quranSizeRange.lowerBound, quranFontSize - 2)
+                } label: {
+                    Image(systemName: "minus.circle")
+                        .font(.system(size: 22))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Smaller")
+                Text(verbatim: "\(Int(quranFontSize))")
+                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                    .frame(minWidth: 30)
+                Button {
+                    quranFontSize = min(NoorMetrics.quranSizeRange.upperBound, quranFontSize + 2)
+                } label: {
+                    Image(systemName: "plus.circle")
+                        .font(.system(size: 22))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Larger")
             }
-            Button {
-                quranFontSize = max(NoorMetrics.quranSizeRange.lowerBound, quranFontSize - 2)
-            } label: {
-                Label("Smaller", systemImage: "minus")
-            }
-            Button("Reset") { quranFontSize = 26 }
+            .foregroundStyle(NoorColor.accentPrimary)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(NoorColor.bgElevated)
+                .shadow(color: .black.opacity(0.15), radius: 16, y: 6)
+        )
+        .padding(.horizontal, 14)
+        .padding(.top, 4)
+        .environment(\.layoutDirection, appDirection)
+        .environment(\.locale, locale)
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 }
 
