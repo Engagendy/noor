@@ -1,0 +1,9 @@
+.DS_Store
+xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+.build/
+.swiftpm/
+*.ipa
+*.dSYM.zip
+/Noor.xcodeproj

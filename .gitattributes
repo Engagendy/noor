@@ -1,0 +1,4 @@
+# Tanzil source files must remain byte-for-byte verbatim (checksum-verified).
+Tools/source/* -text
+*.sqlite binary
+*.ttf binary
