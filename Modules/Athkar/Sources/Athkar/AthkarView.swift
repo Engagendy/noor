@@ -37,6 +37,27 @@ public struct AthkarView: View {
             }
             .listRowBackground(Color.clear)
 
+            NavigationLink {
+                AsmaulHusnaView()
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(NoorColor.accentGold)
+                        .frame(width: 30)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Names of Allah")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Text(verbatim: "أسماء الله الحسنى · ٩٩")
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .listRowBackground(Color.clear)
+
             ForEach(filtered) { category in
                 NavigationLink {
                     DhikrListView(category: category)

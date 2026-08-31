@@ -1757,6 +1757,22 @@
           }
         }
       }
+    },
+    "Names of Allah": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أسماء الله الحسنى"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Names of Allah"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
