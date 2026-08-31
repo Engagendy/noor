@@ -122,6 +122,14 @@ struct ZakatView: View {
             }
             .scrollContentBackground(.hidden)
             .background(NoorColor.bgPrimary)
+            #if os(iOS)
+            // Swiping the form or tapping Done puts the number pad away.
+            .scrollDismissesKeyboard(.immediately)
+            .simultaneousGesture(TapGesture().onEnded {
+                UIApplication.shared.sendAction(
+                    #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            })
+            #endif
             .navigationTitle(Text("Zakat Calculator"))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
