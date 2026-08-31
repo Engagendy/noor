@@ -14,6 +14,7 @@ struct SettingsView: View {
     @AppStorage("reader.mode") private var readerMode = "mushaf"
     @AppStorage("audio.reciter") private var reciterRaw = Reciter.alafasy.rawValue
     @State private var showReciterPicker = false
+    @State private var showAdhanSounds = false
     @AppStorage("notifications.enabled") private var notificationsEnabled = false
     @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanShort.rawValue
     @Environment(\.locale) private var locale
@@ -43,17 +44,31 @@ struct SettingsView: View {
                 Toggle(isOn: $notificationsEnabled) {
                     Text("Adhan notifications")
                 }
-                Picker(selection: $soundRaw) {
-                    ForEach(AdhanSound.allCases) { sound in
-                        Text(sound.displayName).tag(sound.rawValue)
-                    }
+                Button {
+                    showAdhanSounds = true
                 } label: {
-                    Text("Notification sound")
+                    HStack {
+                        Text("Notification sound")
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Spacer()
+                        Text((AdhanSound(rawValue: soundRaw) ?? .adhanShort).displayName)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                        Image(systemName: "chevron.forward")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkSecondary.opacity(0.6))
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .sheet(isPresented: $showAdhanSounds) {
+                    AdhanSoundPickerView(soundRaw: $soundRaw)
+                        .environment(\.locale, locale)
+                        .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
                 }
             } header: {
                 Text("Prayer")
             } footer: {
-                Text("Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen. Authentic adhan audio clips arrive once licensing is confirmed.")
+                Text("Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen.")
             }
 
             Section {

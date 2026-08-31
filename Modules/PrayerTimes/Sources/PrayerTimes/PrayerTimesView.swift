@@ -512,11 +512,15 @@ final class AdhanPreviewPlayer {
 
 
 /// Adhan sound list: tapping a row selects it AND plays it immediately.
-struct AdhanSoundPickerView: View {
+public struct AdhanSoundPickerView: View {
     @Binding var soundRaw: String
     @Environment(\.dismiss) private var dismiss
 
-    var body: some View {
+    public init(soundRaw: Binding<String>) {
+        _soundRaw = soundRaw
+    }
+
+    public var body: some View {
         NavigationStack {
             List(AdhanSound.allCases) { sound in
                 let isOn = soundRaw == sound.rawValue
