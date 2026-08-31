@@ -31,3 +31,21 @@ public enum NoorMetrics {
     public static let quranLineSpacingFactor: CGFloat = 1.0 // ≈2.0 line height
     public static let minTapTarget: CGFloat = 44
 }
+
+
+#if canImport(UIKit)
+import UIKit
+#endif
+
+extension Font {
+    /// System font that scales with the user's Dynamic Type setting
+    /// (plain `.system(size:)` does not).
+    public static func noorScaled(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        #if canImport(UIKit)
+        let scaled = UIFontMetrics(forTextStyle: .body).scaledValue(for: size)
+        return .system(size: scaled, weight: weight)
+        #else
+        return .system(size: size, weight: weight)
+        #endif
+    }
+}

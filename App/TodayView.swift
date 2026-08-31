@@ -289,7 +289,7 @@ struct TodayView: View {
                     }
                     Spacer(minLength: 0)
                     Text(verbatim: hadith.arabic)
-                        .font(.system(size: 16))
+                        .font(.noorScaled(16))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(7)
                         .lineLimit(4)
@@ -784,7 +784,7 @@ struct EventDetailSheet: View {
                         .fill(NoorColor.accentGold.opacity(0.3))
                         .frame(height: 0.7)
                     Text(verbatim: isArabicUI ? event.detailArabic : event.detailEnglish)
-                        .font(.system(size: 16.5))
+                        .font(.noorScaled(16.5))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(9)
                         .multilineTextAlignment(.leading)

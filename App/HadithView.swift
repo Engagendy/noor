@@ -62,7 +62,7 @@ struct HadithListView: View {
                                         .foregroundStyle(NoorColor.accentGold)
                                         .frame(width: 30, alignment: .center)
                                     Text(verbatim: hadith.arabic)
-                                        .font(.system(size: 15))
+                                        .font(.noorScaled(15))
                                         .foregroundStyle(NoorColor.inkPrimary)
                                         .lineLimit(2)
                                         .multilineTextAlignment(.leading)
@@ -122,7 +122,7 @@ struct HadithDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(verbatim: hadith.arabic)
-                        .font(.system(size: 18))
+                        .font(.noorScaled(18))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(10)
                         .multilineTextAlignment(.leading)
@@ -133,7 +133,7 @@ struct HadithDetailView: View {
                             .fill(NoorColor.accentGold.opacity(0.3))
                             .frame(height: 0.7)
                         Text(verbatim: hadith.english)
-                            .font(.system(size: 15.5, design: .serif))
+                            .font(.noorScaled(15.5))
                             .foregroundStyle(NoorColor.inkPrimary.opacity(0.9))
                             .lineSpacing(7)
                     }
@@ -172,4 +172,11 @@ struct HadithDetailView: View {
             }
         }
     }
+}
+
+
+#Preview("Hadith AR-RTL") {
+    HadithListView(items: HadithStore.load(), isArabicUI: true)
+        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.locale, Locale(identifier: "ar"))
 }

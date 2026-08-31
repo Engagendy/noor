@@ -92,12 +92,12 @@ struct NawafilView: View {
                                 Image(systemName: "clock")
                                     .font(.system(size: 11))
                                 Text(verbatim: isArabicUI ? item.timeArabic : item.timeEnglish)
-                                    .font(.system(size: 14))
+                                    .font(.noorScaled(14))
                                     .multilineTextAlignment(.leading)
                             }
                             .foregroundStyle(NoorColor.inkSecondary)
                             Text(verbatim: isArabicUI ? item.noteArabic : item.noteEnglish)
-                                .font(.system(size: 14.5))
+                                .font(.noorScaled(14.5))
                                 .foregroundStyle(NoorColor.inkPrimary.opacity(0.85))
                                 .lineSpacing(6)
                                 .multilineTextAlignment(.leading)
@@ -142,4 +142,9 @@ struct NawafilView: View {
 #Preview {
     NawafilView(isArabicUI: true)
         .environment(\.layoutDirection, .rightToLeft)
+}
+
+
+#Preview("Nawafil EN-LTR") {
+    NawafilView(isArabicUI: false)
 }

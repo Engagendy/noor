@@ -19,6 +19,16 @@ struct MadaniPageView: View {
     /// Long-pressing a line reports exactly the ayat on that line.
     var onLongPressLine: (([PageLine.Ref]) -> Void)?
 
+    /// VoiceOver: which ayat this printed line carries (the QCF glyph
+    /// codes themselves are not readable text).
+    private func lineLabel(_ line: PageLine) -> String {
+        guard let first = line.ayahRefs.first else { return "" }
+        let last = line.ayahRefs.last ?? first
+        return first.ayah == last.ayah
+            ? String(localized: "Ayah \(first.ayah)")
+            : String(localized: "Ayahs \(first.ayah) to \(last.ayah)")
+    }
+
     private func isHighlighted(_ line: PageLine) -> Bool {
         guard let highlightKey else { return false }
         return line.ayahRefs.contains {
@@ -80,6 +90,7 @@ struct MadaniPageView: View {
                                     )
                                     .contentShape(Rectangle())
                                     .onLongPressGesture { onLongPressLine?(line.ayahRefs) }
+                                    .accessibilityLabel(lineLabel(line))
                             }
                         }
                     }

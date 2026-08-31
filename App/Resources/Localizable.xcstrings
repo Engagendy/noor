@@ -2221,6 +2221,22 @@
           }
         }
       }
+    },
+    "Ayahs %lld to %lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الآيات %lld إلى %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayahs %lld to %lld"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -161,7 +161,7 @@ struct DhikrCard: View {
         VStack(alignment: .leading, spacing: 10) {
             // Inside RTL, .leading is the right edge — where Arabic starts.
             Text(dhikr.text)
-                .font(.system(size: 19))
+                .font(.noorScaled(19))
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineSpacing(8)
                 .multilineTextAlignment(.leading)

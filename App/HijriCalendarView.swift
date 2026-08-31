@@ -213,3 +213,10 @@ struct HijriCalendarView: View {
         }
     }
 }
+
+
+#Preview("Calendar AR-RTL") {
+    HijriCalendarView(isArabicUI: true)
+        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.locale, Locale(identifier: "ar"))
+}

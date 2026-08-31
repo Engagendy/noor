@@ -142,3 +142,10 @@ struct ZakatView: View {
         }
     }
 }
+
+
+#Preview("Zakat AR-RTL") {
+    ZakatView()
+        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.locale, Locale(identifier: "ar"))
+}
