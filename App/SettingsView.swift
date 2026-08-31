@@ -15,6 +15,7 @@ struct SettingsView: View {
     @AppStorage("audio.reciter") private var reciterRaw = Reciter.alafasy.rawValue
     @State private var showReciterPicker = false
     @State private var showAdhanSounds = false
+    @State private var showZakat = false
     @AppStorage("notifications.enabled") private var notificationsEnabled = false
     @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanMadinah.rawValue
     @Environment(\.locale) private var locale
@@ -69,6 +70,33 @@ struct SettingsView: View {
                 Text("Prayer")
             } footer: {
                 Text("Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen.")
+            }
+
+            Section {
+                Button {
+                    showZakat = true
+                } label: {
+                    HStack {
+                        Image(systemName: "percent")
+                            .font(.system(size: 14))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                        Text("Zakat Calculator")
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Spacer()
+                        Image(systemName: "chevron.forward")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkSecondary.opacity(0.6))
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .sheet(isPresented: $showZakat) {
+                    ZakatView()
+                        .environment(\.locale, locale)
+                        .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                }
+            } header: {
+                Text("Tools")
             }
 
             Section {
