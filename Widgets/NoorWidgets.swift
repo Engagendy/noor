@@ -256,7 +256,12 @@ struct NextPrayerWidget: Widget {
         }
         .configurationDisplayName("Next Prayer")
         .description("Countdown to the next prayer.")
+        #if os(iOS)
+        .supportedFamilies([.systemSmall, .systemMedium,
+                            .accessoryRectangular, .accessoryCircular, .accessoryInline])
+        #else
         .supportedFamilies([.systemSmall, .systemMedium])
+        #endif
     }
 }
 
@@ -269,12 +274,72 @@ struct NextPrayerWidgetView: View {
         case .systemMedium:
             TodayPrayersMediumView(entry: entry)
                 .containerBackground(WidgetTheme.darkBG, for: .widget)
+        #if os(iOS)
+        case .accessoryRectangular:
+            LockRectangularView(entry: entry)
+                .containerBackground(.clear, for: .widget)
+        case .accessoryCircular:
+            LockCircularView(entry: entry)
+                .containerBackground(.clear, for: .widget)
+        case .accessoryInline:
+            // Inline: single line next to the clock.
+            Text(verbatim: "\(entry.nextName) \(entry.nextTime.formatted(date: .omitted, time: .shortened))")
+                .containerBackground(.clear, for: .widget)
+        #endif
         default:
             NextPrayerSmallView(entry: entry)
                 .containerBackground(WidgetTheme.paper, for: .widget)
         }
     }
 }
+
+#if os(iOS)
+/// Lock screen rectangular: prayer name, time, live countdown.
+struct LockRectangularView: View {
+    let entry: PrayerEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(verbatim: entry.isArabic ? "الصلاة القادمة" : "NEXT PRAYER")
+                .font(.system(size: 11, weight: .semibold))
+                .opacity(0.75)
+            HStack(spacing: 6) {
+                Text(verbatim: entry.nextName)
+                    .font(.system(size: 16, weight: .bold))
+                Text(entry.nextTime, style: .time)
+                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                    .opacity(0.9)
+            }
+            Text(entry.nextTime, style: .timer)
+                .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                .opacity(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .environment(\.layoutDirection, entry.isArabic ? .rightToLeft : .leftToRight)
+    }
+}
+
+/// Lock screen circular: gauge of the day's prayers + next prayer name.
+struct LockCircularView: View {
+    let entry: PrayerEntry
+
+    var body: some View {
+        Gauge(value: Double(entry.passedCount), in: 0...5) {
+            Image(systemName: "moon.stars.fill")
+        } currentValueLabel: {
+            VStack(spacing: 0) {
+                Text(verbatim: String(entry.nextName.prefix(6)))
+                    .font(.system(size: 11, weight: .bold))
+                    .minimumScaleFactor(0.6)
+                Text(entry.nextTime, style: .time)
+                    .font(.system(size: 10, weight: .semibold).monospacedDigit())
+                    .minimumScaleFactor(0.6)
+            }
+        }
+        .gaugeStyle(.accessoryCircular)
+    }
+}
+#endif
 
 @main
 struct NoorWidgetsBundle: WidgetBundle {
