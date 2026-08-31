@@ -39,7 +39,6 @@ public struct SurahListView: View {
     @State private var searchText = ""
     @State private var tab: IndexTab = .surah
     @Environment(\.locale) private var locale
-    @Environment(\.dismissSearch) private var dismissSearch
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
@@ -83,7 +82,6 @@ public struct SurahListView: View {
                 List(selection: $selection) {
                     ForEach(filtered) { surah in
                         Button {
-                            dismissSearch()
                             openReference(surah.id, nil)
                         } label: {
                             SurahRow(surah: surah)
@@ -99,9 +97,6 @@ public struct SurahListView: View {
                         Section(header: Text("Ayat").foregroundStyle(NoorColor.inkSecondary)) {
                             ForEach(hits) { hit in
                                 Button {
-                                    // Close the search first — otherwise its
-                                    // cancel button lingers over the reader.
-                                    dismissSearch()
                                     openReference(hit.surahId, hit.ayah)
                                 } label: {
                                     // Inside forced RTL, .leading == the
@@ -127,7 +122,6 @@ public struct SurahListView: View {
                     }
                 }
                 .listStyle(.plain)
-                .searchable(text: $searchText, prompt: Text("Surah, word, or 2:255"))
             case .juz:
                 juzList
             case .bookmarks:
@@ -172,6 +166,44 @@ public struct SurahListView: View {
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
+            VStack(alignment: .leading, spacing: 10) {
+            // Custom heading: the system large title never renders above a
+            // top safe-area inset in a compact stack.
+            Text("Quran")
+                .font(NoorFont.screenTitle)
+                .foregroundStyle(NoorColor.inkPrimary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+            // Our own search field — the system one lives in the (hidden)
+            // navigation bar and caused overlay/back-button conflicts.
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 15))
+                    .foregroundStyle(NoorColor.inkSecondary)
+                TextField(text: $searchText) {
+                    Text("Surah, word, or 2:255")
+                }
+                .textFieldStyle(.plain)
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(NoorColor.inkSecondary)
+                            .frame(width: 32, height: 32)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear search")
+                }
+            }
+            .padding(.horizontal, 12)
+            .frame(height: 40)
+            .background(RoundedRectangle(cornerRadius: 12).fill(NoorColor.bgElevated))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(NoorColor.inkPrimary.opacity(0.08), lineWidth: 1))
+            .padding(.horizontal, 16)
             Picker(selection: $tab) {
                 Text("Surah").tag(IndexTab.surah)
                 Text("Juz").tag(IndexTab.juz)
@@ -181,7 +213,8 @@ public struct SurahListView: View {
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            }
+            .padding(.bottom, 8)
             .background(NoorColor.bgPrimary)
         }
         .navigationTitle(Text("Quran"))

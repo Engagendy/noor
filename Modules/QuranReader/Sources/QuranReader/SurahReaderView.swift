@@ -115,10 +115,8 @@ public struct SurahReaderView: View {
             }
         }
         #if os(iOS)
-        // System bars stay hidden for the whole reading session — the page
-        // keeps one stable size; our own strip carries the controls.
-        .toolbar(.hidden, for: .navigationBar)
-        .toolbar(.hidden, for: .tabBar)
+        // Bar visibility is owned by the navigation stack (QuranTab) —
+        // per-view toggles leak across pushes in both directions.
         .statusBarHidden(!chromeVisible)
         #endif
         .simultaneousGesture(pinch)
@@ -300,7 +298,8 @@ public struct SurahReaderView: View {
             MadaniPageView(
                 page: page, layout: layout, fontStore: fontStore,
                 surahName: { viewModel.surahInfo($0)?.nameArabic ?? "" },
-                basmala: viewModel.basmalaForAnySurah
+                basmala: viewModel.basmalaForAnySurah,
+                highlightKey: selectedKey ?? recitingKey
             ) { refs in
                 let verses = viewModel.sections(forPage: page)
                     .flatMap(\.verses)

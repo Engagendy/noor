@@ -12,8 +12,17 @@ struct MadaniPageView: View {
     var surahName: (Int) -> String = { _ in "" }
     /// Basmala text (from the verified DB) for injected basmala lines.
     var basmala: String?
+    /// surah*1000+ayah to softly highlight (arrival from search/bookmarks).
+    var highlightKey: Int?
     /// Long-pressing a line reports exactly the ayat on that line.
     var onLongPressLine: (([PageLine.Ref]) -> Void)?
+
+    private func isHighlighted(_ line: PageLine) -> Bool {
+        guard let highlightKey else { return false }
+        return line.ayahRefs.contains {
+            $0.surahId * 1000 + $0.ayah == highlightKey
+        }
+    }
 
     @State private var lines: [PageLine] = []
     @State private var fontReady = false
@@ -63,6 +72,10 @@ struct MadaniPageView: View {
                                     .minimumScaleFactor(0.5)
                                     .frame(maxWidth: .infinity)
                                     .frame(height: rowHeight)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .fill(isHighlighted(line) ? NoorColor.stateReciting : Color.clear)
+                                    )
                                     .contentShape(Rectangle())
                                     .onLongPressGesture { onLongPressLine?(line.ayahRefs) }
                             }
