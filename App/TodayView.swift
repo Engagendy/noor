@@ -17,6 +17,8 @@ struct TodayView: View {
     @State private var hadiths: [HadithItem] = []
     @State private var showHadithList = false
     @State private var showHijriCalendar = false
+    @State private var cardPage = 0
+    private let cardTimer = Timer.publish(every: 8, on: .main, in: .common).autoconnect()
 
     enum ShareItem: Identifiable {
         case ayah(Verse, Surah)
@@ -52,25 +54,59 @@ struct TodayView: View {
         return String(localized: resource)
     }
 
+    /// One carousel page: card pinned to the top, page dots below.
+    private func carouselPage<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(spacing: 0) {
+            content()
+            Spacer(minLength: 0)
+        }
+        .padding(.bottom, 26)  // clear the page dots
+        .padding(.horizontal, 2)
+    }
+
+    /// Whether it is Ramadan (adds the countdown page).
+    private func inRamadan(_ now: Date) -> Bool {
+        Calendar(identifier: .islamicUmmAlQura).component(.month, from: now) == 9
+    }
+
+    private func pageCount(now: Date) -> Int { inRamadan(now) ? 7 : 6 }
+
     var body: some View {
         TimelineView(.everyMinute) { context in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    header(now: context.date)
-                    if let day = prayerDay(date: context.date) {
-                        nextPrayerHero(day: day, now: context.date)
-                    }
-                    ramadanCard(now: context.date)
-                    continueReadingCard
-                    khatmahCard(now: context.date)
-                    dailyAyahCard(now: context.date)
-                    dailyDhikrCard(now: context.date)
-                    dailyHadithCard(now: context.date)
-                    onThisDayCard(now: context.date)
+            // No scrolling: header + prayer hero stay put; everything else
+            // lives in an auto-rotating card carousel.
+            VStack(alignment: .leading, spacing: 12) {
+                header(now: context.date)
+                if let day = prayerDay(date: context.date) {
+                    nextPrayerHero(day: day, now: context.date)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
+                TabView(selection: $cardPage) {
+                    Group {
+                        carouselPage { continueReadingCard }.tag(0)
+                        carouselPage { khatmahCard(now: context.date) }.tag(1)
+                        carouselPage { dailyAyahCard(now: context.date) }.tag(2)
+                        carouselPage { dailyDhikrCard(now: context.date) }.tag(3)
+                        carouselPage { dailyHadithCard(now: context.date) }.tag(4)
+                        carouselPage { onThisDayCard(now: context.date) }.tag(5)
+                        if inRamadan(context.date) {
+                            carouselPage { ramadanCard(now: context.date) }.tag(6)
+                        }
+                    }
+                }
+                #if os(iOS)
+                .tabViewStyle(.page(indexDisplayMode: .always))
+                .indexViewStyle(.page(backgroundDisplayMode: .never))
+                #endif
+                .onReceive(cardTimer) { _ in
+                    withAnimation(.easeInOut(duration: 0.45)) {
+                        cardPage = (cardPage + 1) % pageCount(now: context.date)
+                    }
+                }
+                .frame(maxHeight: .infinity)
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(NoorColor.bgPrimary)
         }
         .task {
