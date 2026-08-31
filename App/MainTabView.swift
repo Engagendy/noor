@@ -53,8 +53,8 @@ struct MainTabView: View {
                         quranOpenRequest = UserDefaults.standard.integer(forKey: "reader.lastSurah")
                     },
                     openAthkar: { tab = .athkar })
+                    .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
             }
-            .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
             .tabItem { Label("Today", systemImage: "sun.max") }
             .tag(Tab.today)
 
@@ -76,18 +76,22 @@ struct MainTabView: View {
                             .accessibilityLabel("Qibla")
                         }
                     }
+                    .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
             }
-            .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
             .tabItem { Label("Prayer", systemImage: "clock") }
             .tag(Tab.prayer)
 
-            NavigationStack { AthkarView() }
-                .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
+            NavigationStack {
+                AthkarView()
+                    .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
+            }
                 .tabItem { Label("Athkar", systemImage: "sparkles") }
                 .tag(Tab.athkar)
 
-            NavigationStack { SettingsView() }
-                .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
+            NavigationStack {
+                SettingsView()
+                    .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
+            }
                 .tabItem { Label("Settings", systemImage: "gearshape") }
                 .tag(Tab.settings)
         }
@@ -113,6 +117,7 @@ struct MainTabView: View {
         if player.current != nil {
             AudioPillView(player: player)
                 .environment(\.layoutDirection, .leftToRight)
+                .padding(.bottom, 4)
         }
     }
 
