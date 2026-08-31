@@ -2109,6 +2109,22 @@
           }
         }
       }
+    },
+    "Sunnah fasting reminders": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تذكير بصيام السنة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sunnah fasting reminders"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

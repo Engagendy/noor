@@ -42,6 +42,7 @@ struct MainTabView: View {
     @AppStorage("notif.isha") private var notifIsha = true
     @AppStorage("app.language") private var appLanguage = "system"
     @AppStorage("prayer.customLabel") private var customLabel = ""
+    @AppStorage("fasting.reminders") private var fastingReminders = false
 
     var body: some View {
         TabView(selection: $tab) {
@@ -104,7 +105,7 @@ struct MainTabView: View {
                        String(notificationsEnabled), String(useCustomLocation),
                        String(notifFajr), String(notifDhuhr), String(notifAsr),
                        String(notifMaghrib), String(notifIsha),
-                       appLanguage, customLabel]) {
+                       appLanguage, customLabel, String(fastingReminders)]) {
             syncWidgets()
             Task { await rescheduleNotifications() }
         }
@@ -142,6 +143,8 @@ struct MainTabView: View {
             method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
             madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
             sound: AdhanSound(rawValue: soundRaw) ?? .adhanMadinah)
+        await FastingReminderScheduler().reschedule(
+            arabic: appLanguage == "ar", enabled: fastingReminders)
     }
 }
 

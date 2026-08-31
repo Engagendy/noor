@@ -60,6 +60,7 @@ struct TodayView: View {
                     if let day = prayerDay(date: context.date) {
                         nextPrayerHero(day: day, now: context.date)
                     }
+                    ramadanCard(now: context.date)
                     continueReadingCard
                     khatmahCard(now: context.date)
                     dailyAyahCard(now: context.date)
@@ -402,6 +403,41 @@ struct TodayView: View {
                 .shadow(color: NoorColor.accentPrimary.opacity(0.22), radius: 9, y: 6)
         )
         .accessibilityElement(children: .combine)
+    }
+
+    /// Ramadan: suhoor/iftar countdown, visible only during the month.
+    @ViewBuilder
+    private func ramadanCard(now: Date) -> some View {
+        let hijri = Calendar(identifier: .islamicUmmAlQura).component(.month, from: now)
+        if hijri == 9, let day = prayerDay(date: now) {
+            let times = Dictionary(uniqueKeysWithValues: day.entries.map { ($0.prayer, $0.time) })
+            if let fajr = times[.fajr], let maghrib = times[.maghrib] {
+                let beforeIftar = now < maghrib && now >= fajr
+                let target: Date = beforeIftar ? maghrib
+                    : (now < fajr ? fajr : Calendar.current.date(byAdding: .day, value: 1, to: fajr) ?? fajr)
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(verbatim: isArabicUI ? "رمضان كريم 🌙" : "Ramadan Kareem 🌙")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(NoorColor.accentGold)
+                        Spacer()
+                    }
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(verbatim: beforeIftar
+                             ? (isArabicUI ? "الإفطار بعد" : "Iftar in")
+                             : (isArabicUI ? "السحور ينتهي بعد" : "Suhoor ends in"))
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Text(target, style: .timer)
+                            .font(.system(size: 20, weight: .bold).monospacedDigit())
+                            .foregroundStyle(NoorColor.accentPrimary)
+                    }
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .noorCard()
+            }
+        }
     }
 
     /// Khatmah plan: daily portion, behind/ahead, start/change goal.

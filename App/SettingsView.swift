@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var showAdhanSounds = false
     @State private var showZakat = false
     @AppStorage("notifications.enabled") private var notificationsEnabled = false
+    @AppStorage("fasting.reminders") private var fastingReminders = false
     @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanMadinah.rawValue
     @Environment(\.locale) private var locale
 
@@ -44,6 +45,9 @@ struct SettingsView: View {
             Section {
                 Toggle(isOn: $notificationsEnabled) {
                     Text("Adhan notifications")
+                }
+                Toggle(isOn: $fastingReminders) {
+                    Text("Sunnah fasting reminders")
                 }
                 Button {
                     showAdhanSounds = true
