@@ -99,17 +99,20 @@ public struct SurahListView: View {
                                 Button {
                                     openReference(hit.surahId, hit.ayah)
                                 } label: {
-                                    VStack(alignment: .trailing, spacing: 4) {
+                                    // Inside forced RTL, .leading == the
+                                    // right edge — ayat start from the right.
+                                    VStack(alignment: .leading, spacing: 4) {
                                         Text(hit.text)
                                             .font(NoorFont.quran(size: 17))
                                             .foregroundStyle(NoorColor.inkPrimary)
                                             .lineLimit(2)
-                                            .environment(\.layoutDirection, .rightToLeft)
-                                            .frame(maxWidth: .infinity, alignment: .trailing)
-                                        Text(verbatim: "\(surahName(hit.surahId)) · \(hit.surahId):\(hit.ayah)")
+                                            .multilineTextAlignment(.leading)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                        Text(verbatim: "\u{200F}\(surahName(hit.surahId)) · \(hit.surahId):\(hit.ayah)")
                                             .font(NoorFont.caption)
                                             .foregroundStyle(NoorColor.inkSecondary)
                                     }
+                                    .environment(\.layoutDirection, .rightToLeft)
                                     .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.borderless)
