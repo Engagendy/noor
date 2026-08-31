@@ -16,6 +16,7 @@ struct TodayView: View {
     @State private var athkar: [DhikrCategory] = []
     @State private var hadiths: [HadithItem] = []
     @State private var showHadithList = false
+    @State private var showHijriCalendar = false
 
     enum ShareItem: Identifiable {
         case ayah(Verse, Surah)
@@ -74,6 +75,11 @@ struct TodayView: View {
         .task {
             if athkar.isEmpty { athkar = AthkarStore.load() }
             if hadiths.isEmpty { hadiths = HadithStore.load() }
+        }
+        .sheet(isPresented: $showHijriCalendar) {
+            HijriCalendarView(isArabicUI: isArabicUI)
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
         .sheet(isPresented: $showHadithList) {
             HadithListView(items: hadiths, isArabicUI: isArabicUI,
@@ -319,9 +325,19 @@ struct TodayView: View {
             let _ = hijriStyle.locale = locale
             var gregStyle = Date.FormatStyle().weekday(.wide).month(.abbreviated).day()
             let _ = gregStyle.locale = locale
-            Text("\(now.formatted(hijriStyle)) · \(now.formatted(gregStyle))")
+            Button { showHijriCalendar = true } label: {
+                HStack(spacing: 5) {
+                    Text("\(now.formatted(hijriStyle)) · \(now.formatted(gregStyle))")
+                    Image(systemName: "calendar")
+                        .font(.system(size: 11))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                }
                 .font(NoorFont.caption)
                 .foregroundStyle(NoorColor.inkSecondary)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Hijri Calendar")
             Text("As-salamu alaykum")
                 .font(NoorFont.screenTitle)
                 .foregroundStyle(NoorColor.inkPrimary)

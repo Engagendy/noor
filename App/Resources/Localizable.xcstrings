@@ -1773,6 +1773,22 @@
           }
         }
       }
+    },
+    "Hijri Calendar": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التقويم الهجري"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hijri Calendar"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
