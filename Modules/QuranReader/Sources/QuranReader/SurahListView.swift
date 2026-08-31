@@ -2,6 +2,21 @@ import ContentDB
 import DesignSystem
 import SwiftUI
 
+/// App-layer bookmark value (QuranReader must not import the Library module).
+public struct BookmarkRef: Identifiable, Hashable, Sendable {
+    public let surahId: Int
+    public let ayah: Int
+    public let createdAt: Date
+
+    public var id: String { "\(surahId):\(ayah)" }
+
+    public init(surahId: Int, ayah: Int, createdAt: Date) {
+        self.surahId = surahId
+        self.ayah = ayah
+        self.createdAt = createdAt
+    }
+}
+
 /// Surah index per design 1g: search, segmented Surah/Juz/Bookmarks tabs,
 /// diamond number badge, Arabic calligraphic name trailing.
 public struct SurahListView: View {
@@ -17,6 +32,9 @@ public struct SurahListView: View {
     let openReference: (_ surahId: Int, _ ayah: Int) -> Void
     /// Word search over the Quran text (diacritic-insensitive).
     let searchVerses: (_ query: String) -> [SearchHit]
+    /// Saved bookmarks (provided by the app layer from the Library store).
+    let bookmarks: [BookmarkRef]
+    let onRemoveBookmark: ((BookmarkRef) -> Void)?
 
     @State private var searchText = ""
     @State private var tab: IndexTab = .surah
@@ -29,13 +47,17 @@ public struct SurahListView: View {
         structure: QuranStructure?,
         selection: Binding<Int?>,
         openReference: @escaping (_ surahId: Int, _ ayah: Int) -> Void,
-        searchVerses: @escaping (_ query: String) -> [SearchHit] = { _ in [] }
+        searchVerses: @escaping (_ query: String) -> [SearchHit] = { _ in [] },
+        bookmarks: [BookmarkRef] = [],
+        onRemoveBookmark: ((BookmarkRef) -> Void)? = nil
     ) {
         self.surahs = surahs
         self.structure = structure
         _selection = selection
         self.openReference = openReference
         self.searchVerses = searchVerses
+        self.bookmarks = bookmarks
+        self.onRemoveBookmark = onRemoveBookmark
     }
 
     private var filtered: [Surah] {
@@ -95,11 +117,43 @@ public struct SurahListView: View {
             case .juz:
                 juzList
             case .bookmarks:
-                ContentUnavailableView {
-                    Label("Bookmarks", systemImage: "bookmark")
-                        .foregroundStyle(NoorColor.inkSecondary)
-                } description: {
-                    Text("Your bookmarks will gather here.")
+                if bookmarks.isEmpty {
+                    ContentUnavailableView {
+                        Label("Bookmarks", systemImage: "bookmark")
+                            .foregroundStyle(NoorColor.inkSecondary)
+                    } description: {
+                        Text("Your bookmarks will gather here.")
+                    }
+                } else {
+                    List {
+                        ForEach(bookmarks) { bookmark in
+                            Button {
+                                openReference(bookmark.surahId, bookmark.ayah)
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "bookmark.fill")
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(NoorColor.accentGold)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(verbatim: "\(surahName(bookmark.surahId)) · \(bookmark.surahId):\(bookmark.ayah)")
+                                            .font(.system(size: 15, weight: .semibold))
+                                            .foregroundStyle(NoorColor.inkPrimary)
+                                        Text(bookmark.createdAt.formatted(date: .abbreviated, time: .omitted))
+                                            .font(NoorFont.caption)
+                                            .foregroundStyle(NoorColor.inkSecondary)
+                                    }
+                                    Spacer()
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.borderless)
+                            .listRowBackground(Color.clear)
+                        }
+                        .onDelete { offsets in
+                            for offset in offsets { onRemoveBookmark?(bookmarks[offset]) }
+                        }
+                    }
+                    .listStyle(.plain)
                 }
             }
         }

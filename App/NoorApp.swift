@@ -33,7 +33,7 @@ struct MenuBarCountdownLabel: View {
     var body: some View {
         TimelineView(.everyMinute) { context in
             if let day = PrayerDay.compute(
-                city: CityPreset.named(cityName),
+                location: PrayerLocation.current(),
                 method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
                 madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
                 date: context.date),
@@ -55,7 +55,7 @@ struct MenuBarPrayerView: View {
     var body: some View {
         TimelineView(.everyMinute) { context in
             if let day = PrayerDay.compute(
-                city: CityPreset.named(cityName),
+                location: PrayerLocation.current(),
                 method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
                 madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
                 date: context.date) {

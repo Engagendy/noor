@@ -12,7 +12,7 @@ public struct PrayerDay {
     }
 
     public let entries: [Entry]
-    public let city: CityPreset
+    public let location: PrayerLocation
     private let times: Adhan.PrayerTimes
 
     public static func compute(
@@ -21,10 +21,19 @@ public struct PrayerDay {
         madhab: MadhabChoice,
         date: Date = .now
     ) -> PrayerDay? {
+        compute(location: city.location, method: method, madhab: madhab, date: date)
+    }
+
+    public static func compute(
+        location: PrayerLocation,
+        method: CalculationMethodChoice,
+        madhab: MadhabChoice,
+        date: Date = .now
+    ) -> PrayerDay? {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: city.timeZoneIdentifier) ?? .current
+        calendar.timeZone = TimeZone(identifier: location.timeZoneIdentifier) ?? .current
         guard let times = PrayerTimesService().prayerTimes(
-            latitude: city.latitude, longitude: city.longitude,
+            latitude: location.latitude, longitude: location.longitude,
             date: date, calendar: calendar,
             method: method.adhanMethod, madhab: madhab.adhanMadhab
         ) else { return nil }
@@ -35,7 +44,7 @@ public struct PrayerDay {
             Entry(prayer: .maghrib, name: "Maghrib", time: times.maghrib),
             Entry(prayer: .isha, name: "Isha", time: times.isha),
         ]
-        return PrayerDay(entries: entries, city: city, times: times)
+        return PrayerDay(entries: entries, location: location, times: times)
     }
 
     /// The next of the five prayers still ahead of `now` this day, if any.

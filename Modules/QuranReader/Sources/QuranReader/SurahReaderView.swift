@@ -20,6 +20,8 @@ public struct SurahReaderView: View {
     @AppStorage("reader.fontSize") private var quranFontSize = 26.0
     @AppStorage("reader.mode") private var modeRaw = DisplayMode.mushaf.rawValue
     @AppStorage("reader.showTranslation") private var showTranslation = false
+    /// Furthest mushaf page ever reached — drives khatmah progress on Today.
+    @AppStorage("khatmah.maxPage") private var khatmahMaxPage = 0
     @State private var selectedAyah: Int?
     @State private var currentPage = 0
     @State private var tafsirVerse: Verse?
@@ -34,19 +36,25 @@ public struct SurahReaderView: View {
     private let translations: TranslationStore?
     private let surahId: Int
     private let scrollToAyah: Int?
+    private let bookmarkedAyat: Set<Int>
+    private let onToggleBookmark: ((Int) -> Void)?
 
     public init(
         database: QuranDatabase,
         surahId: Int,
         scrollToAyah: Int? = nil,
         player: QuranAudioPlayer? = nil,
-        translations: TranslationStore? = nil
+        translations: TranslationStore? = nil,
+        bookmarkedAyat: Set<Int> = [],
+        onToggleBookmark: ((Int) -> Void)? = nil
     ) {
         _viewModel = State(initialValue: SurahReaderViewModel(database: database, surahId: surahId))
         self.surahId = surahId
         self.scrollToAyah = scrollToAyah
         self.player = player
         self.translations = translations
+        self.bookmarkedAyat = bookmarkedAyat
+        self.onToggleBookmark = onToggleBookmark
     }
 
     private var mode: DisplayMode { DisplayMode(rawValue: modeRaw) ?? .mushaf }
@@ -88,6 +96,9 @@ public struct SurahReaderView: View {
         .onChange(of: recitingAyah) { _, new in
             guard mode == .mushaf, let new, let page = viewModel.page(containing: new) else { return }
             withAnimation(.easeInOut(duration: 0.3)) { currentPage = page }
+        }
+        .onChange(of: currentPage) { _, page in
+            if page > khatmahMaxPage { khatmahMaxPage = page }
         }
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
@@ -203,6 +214,11 @@ public struct SurahReaderView: View {
             piece = piece + (verse.ayah == recitingAyah
                              ? body.foregroundStyle(NoorColor.accentPrimary)
                              : body)
+            if viewModel.sajdaAyat.contains(verse.ayah) {
+                piece = piece + Text(verbatim: " ۩")
+                    .foregroundStyle(NoorColor.accentGold)
+            }
+            piece = piece
                 + Text(verbatim: " ﴿\(verse.ayah.arabicIndic)﴾ ")
                     .font(NoorFont.quran(size: liveFontSize * 0.62))
                     .foregroundStyle(NoorColor.accentGold)
@@ -257,8 +273,12 @@ public struct SurahReaderView: View {
     private func ayahBlock(_ verse: Verse) -> some View {
         let isSelected = selectedAyah == verse.ayah
         let isReciting = recitingAyah == verse.ayah
+        let sajda = viewModel.sajdaAyat.contains(verse.ayah)
+            ? Text(verbatim: " ۩").foregroundStyle(NoorColor.accentGold)
+            : Text(verbatim: "")
         return VStack(alignment: .leading, spacing: 10) {
             (Text(verse.text)
+                + sajda
                 + Text(verbatim: "  ﴿\(verse.ayah.arabicIndic)﴾")
                     .font(NoorFont.quran(size: liveFontSize * 0.62))
                     .foregroundStyle(NoorColor.accentGold))
@@ -320,7 +340,16 @@ public struct SurahReaderView: View {
                 Label("Share", systemImage: "square.and.arrow.up").chipStyle()
             }
             .buttonStyle(.plain)
-            Text("Bookmark").chipStyle().opacity(0.55)
+            if let onToggleBookmark {
+                Button {
+                    onToggleBookmark(verse.ayah)
+                } label: {
+                    Label("Bookmark",
+                          systemImage: bookmarkedAyat.contains(verse.ayah) ? "bookmark.fill" : "bookmark")
+                        .chipStyle()
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 

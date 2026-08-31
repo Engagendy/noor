@@ -136,6 +136,7 @@
       }
     },
     "Audio downloaded": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -167,6 +168,7 @@
       }
     },
     "Ayat": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -242,6 +244,7 @@
       }
     },
     "Check your connection and try again. (%@)": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -263,6 +266,7 @@
       }
     },
     "Continuous": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -315,6 +319,7 @@
       }
     },
     "Download surah audio": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -325,6 +330,7 @@
       }
     },
     "Downloading %lld/%lld…": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -395,6 +401,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الحزب %lld"
+          }
+        }
+      }
+    },
+    "Hizb quarters": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أرباع الحزب"
           }
         }
       }
@@ -471,6 +487,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "الجزء %1$lld · صفحة %2$lld"
+          }
+        }
+      }
+    },
+    "Khatmah · page %lld of 604": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الختمة · صفحة %lld من ٦٠٤"
           }
         }
       }
@@ -561,6 +587,7 @@
       }
     },
     "Mushaf symbols": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -577,6 +604,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "رابطة العالم الإسلامي"
+          }
+        }
+      }
+    },
+    "My location": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "موقعي"
           }
         }
       }
@@ -603,6 +640,7 @@
       }
     },
     "Pause marks (علامات الوقف)": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -624,6 +662,7 @@
       }
     },
     "Play recitation": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -645,6 +684,7 @@
       }
     },
     "Playback mode": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -748,6 +788,7 @@
       }
     },
     "Repeat ayah": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -769,6 +810,7 @@
       }
     },
     "Restart Noor to apply the language change.": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -811,6 +853,7 @@
       }
     },
     "Share": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -821,6 +864,7 @@
       }
     },
     "Share image": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -897,6 +941,7 @@
       }
     },
     "Surah, word, or 2:255": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -928,6 +973,7 @@
       }
     },
     "Tafsir unavailable": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -938,6 +984,7 @@
       }
     },
     "Tafsir — %lld:%lld": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -958,6 +1005,7 @@
       }
     },
     "Tajweed rules (أحكام التجويد)": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -968,6 +1016,7 @@
       }
     },
     "This page only": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -1005,6 +1054,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "جامعة كراتشي"
+          }
+        }
+      }
+    },
+    "Use my current location": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "استخدام موقعي الحالي"
+          }
+        }
+      }
+    },
+    "Using current location": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يُستخدم الموقع الحالي"
           }
         }
       }

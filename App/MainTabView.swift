@@ -1,5 +1,6 @@
 import ContentDB
 import DesignSystem
+import Library
 import Notifications
 import PrayerTimes
 import Qibla
@@ -22,6 +23,7 @@ struct MainTabView: View {
     }
     @State private var player = QuranAudioPlayer()
     @State private var translations = TranslationStore()
+    @State private var library = try? LibraryStore()
 
     // Prayer settings — observed so adhan notifications reschedule on change.
     @AppStorage("prayer.city") private var cityName = "Makkah"
@@ -38,7 +40,7 @@ struct MainTabView: View {
             .tabItem { Label("Today", systemImage: "sun.max") }
             .tag(Tab.today)
 
-            QuranTab(database: database, player: player, translations: translations)
+            QuranTab(database: database, player: player, translations: translations, library: library)
                 .tabItem { Label("Quran", systemImage: "book") }
                 .tag(Tab.quran)
 
@@ -81,7 +83,7 @@ struct MainTabView: View {
             return
         }
         await scheduler.reschedule(
-            city: CityPreset.named(cityName),
+            location: PrayerLocation.current(),
             method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
             madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
             sound: AdhanSound(rawValue: soundRaw) ?? .adhanShort)
@@ -93,6 +95,7 @@ struct QuranTab: View {
     let database: QuranDatabase
     let player: QuranAudioPlayer
     let translations: TranslationStore
+    let library: LibraryStore?
 
     @State private var surahs: [Surah] = []
     @State private var structure: QuranStructure?
@@ -125,6 +128,12 @@ struct QuranTab: View {
                 },
                 searchVerses: { query in
                     (try? database.searchVerses(query)) ?? []
+                },
+                bookmarks: (library?.bookmarks ?? []).map {
+                    BookmarkRef(surahId: $0.surahId, ayah: $0.ayah, createdAt: $0.createdAt)
+                },
+                onRemoveBookmark: { ref in
+                    library?.remove(BookmarkItem(surahId: ref.surahId, ayah: ref.ayah, createdAt: ref.createdAt))
                 })
         } detail: {
             if let selection {
@@ -133,7 +142,12 @@ struct QuranTab: View {
                     surahId: selection,
                     scrollToAyah: targetAyah,
                     player: player,
-                    translations: translations)
+                    translations: translations,
+                    bookmarkedAyat: Set((library?.bookmarks ?? [])
+                        .filter { $0.surahId == selection }.map(\.ayah)),
+                    onToggleBookmark: { ayah in
+                        library?.toggle(surahId: selection, ayah: ayah)
+                    })
                     .id("\(selection)-\(targetAyah ?? 0)")
             }
         }

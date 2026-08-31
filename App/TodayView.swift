@@ -14,6 +14,7 @@ struct TodayView: View {
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
     @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
     @AppStorage("reader.lastSurah") private var lastSurah = 1
+    @AppStorage("khatmah.maxPage") private var khatmahMaxPage = 0
     @Environment(\.locale) private var locale
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
@@ -52,7 +53,7 @@ struct TodayView: View {
 
     private func prayerDay(date: Date) -> PrayerDay? {
         PrayerDay.compute(
-            city: CityPreset.named(cityName),
+            location: PrayerLocation.current(),
             method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
             madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
             date: date)
@@ -126,6 +127,21 @@ struct TodayView: View {
                     Text(surah?.displayName(arabicUI: isArabicUI) ?? "")
                         .font(isArabicUI ? NoorFont.quran(size: 18) : .system(size: 16, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
+                    if khatmahMaxPage > 0 {
+                        GeometryReader { geometry in
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(NoorColor.inkPrimary.opacity(0.07))
+                                Capsule().fill(NoorColor.accentGold)
+                                    .frame(width: geometry.size.width * CGFloat(khatmahMaxPage) / 604)
+                            }
+                        }
+                        .frame(height: 3)
+                        .padding(.top, 6)
+                        Text("Khatmah · page \(khatmahMaxPage) of 604")
+                            .font(.system(size: 11))
+                            .foregroundStyle(NoorColor.inkSecondary)
+                            .padding(.top, 2)
+                    }
                 }
                 Spacer()
                 Image(systemName: "chevron.forward")
@@ -169,7 +185,7 @@ struct TodayView: View {
 
     private var cityTimeFormat: Date.FormatStyle {
         var style = Date.FormatStyle(date: .omitted, time: .shortened)
-        style.timeZone = TimeZone(identifier: CityPreset.named(cityName).timeZoneIdentifier) ?? .current
+        style.timeZone = TimeZone(identifier: PrayerLocation.current().timeZoneIdentifier) ?? .current
         return style
     }
 }

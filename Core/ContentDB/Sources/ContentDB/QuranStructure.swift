@@ -20,6 +20,8 @@ public struct QuranStructure: Sendable {
     public let juzStarts: [DivisionStart]
     public let quarterStarts: [DivisionStart]
     public let pageStarts: [DivisionStart]
+    /// The 15 ayat of prostration (سجدة التلاوة).
+    public let sajdaAyat: [DivisionStart]
 
     /// Global sort key for (surah, ayah) comparisons.
     private static func key(_ surahId: Int, _ ayah: Int) -> Int {
@@ -70,7 +72,9 @@ extension QuranDatabase {
                 quarterStarts: try DivisionStart.fetchAll(
                     db, sql: "SELECT idx, surah_id, ayah FROM hizb_quarter_start ORDER BY idx"),
                 pageStarts: try DivisionStart.fetchAll(
-                    db, sql: "SELECT idx, surah_id, ayah FROM page_start ORDER BY idx"))
+                    db, sql: "SELECT idx, surah_id, ayah FROM page_start ORDER BY idx"),
+                sajdaAyat: try DivisionStart.fetchAll(
+                    db, sql: "SELECT idx, surah_id, ayah FROM sajda ORDER BY idx"))
         }
     }
 }

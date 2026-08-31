@@ -27,8 +27,31 @@ packages:
     path: Modules/Qibla
   Tafsir:
     path: Modules/Tafsir
+  Library:
+    path: Modules/Library
 
 targets:
+  NoorWidgets:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources: [Widgets]
+    dependencies:
+      - package: PrayerTimes
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Noor Widgets
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.engagendy.Noor.widgets
+        DEVELOPMENT_TEAM: 7JM77223V5
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_VERSION: 5.10
+        SKIP_INSTALL: YES
+
   Noor:
     type: application
     supportedDestinations: [iOS, macOS]
@@ -44,12 +67,16 @@ targets:
       - package: Notifications
       - package: Qibla
       - package: Tafsir
+      - package: Library
+      - target: NoorWidgets
+        platformFilter: iOS
     info:
       path: App/Info.plist
       properties:
         UIBackgroundModes: [audio]
         UILaunchScreen: {}
         ITSAppUsesNonExemptEncryption: false
+        NSLocationWhenInUseUsageDescription: "Your location is used only on this device to calculate prayer times and qibla direction. It never leaves your device."
     settings:
       base:
         DEVELOPMENT_TEAM: 7JM77223V5

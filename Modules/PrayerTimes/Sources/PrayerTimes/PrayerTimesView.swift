@@ -7,16 +7,20 @@ import SwiftUI
 /// calculation-settings row. Updates minute-level, calmly.
 public struct PrayerTimesView: View {
     @AppStorage("prayer.city") private var cityName = "Makkah"
+    @AppStorage("prayer.useCustom") private var useCustomLocation = false
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
     @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
     @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanShort.rawValue
 
     @State private var dayOffset = 0
     @State private var showSettings = false
+    @State private var locationFetcher = OneShotLocationFetcher()
 
     public init() {}
 
-    private var city: CityPreset { CityPreset.named(cityName) }
+    private var location: PrayerLocation {
+        useCustomLocation ? PrayerLocation.current() : CityPreset.named(cityName).location
+    }
     private var method: CalculationMethodChoice {
         CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee
     }
@@ -30,7 +34,7 @@ public struct PrayerTimesView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     cityLine
                     weekStrip(now: now)
-                    if let day = PrayerDay.compute(city: city, method: method, madhab: madhab, date: shownDate) {
+                    if let day = PrayerDay.compute(location: location, method: method, madhab: madhab, date: shownDate) {
                         timeline(day: day, now: now, isToday: dayOffset == 0)
                     }
                     settingsRow
@@ -46,9 +50,9 @@ public struct PrayerTimesView: View {
 
     private var cityLine: some View {
         HStack(spacing: 6) {
-            Image(systemName: "mappin.and.ellipse")
+            Image(systemName: useCustomLocation ? "location.fill" : "mappin.and.ellipse")
                 .font(.system(size: 12))
-            Text("\(city.name) · manual")
+            Text(useCustomLocation ? "\(location.label)" : "\(location.label) · manual")
                 .font(NoorFont.caption)
         }
         .foregroundStyle(NoorColor.inkSecondary)
@@ -195,6 +199,18 @@ public struct PrayerTimesView: View {
     private var settingsSheet: some View {
         NavigationStack {
             Form {
+                Button {
+                    Task {
+                        if let coordinate = await locationFetcher.fetch() {
+                            PrayerLocation.saveCustom(
+                                latitude: coordinate.latitude, longitude: coordinate.longitude)
+                            useCustomLocation = true
+                        }
+                    }
+                } label: {
+                    Label(useCustomLocation ? "Using current location" : "Use my current location",
+                          systemImage: useCustomLocation ? "location.fill" : "location")
+                }
                 Picker(selection: $cityName) {
                     ForEach(CityPreset.all) { preset in
                         Text(preset.name).tag(preset.name)
@@ -226,14 +242,19 @@ public struct PrayerTimesView: View {
                     Button("Done") { showSettings = false }
                 }
             }
+            .onChange(of: cityName) {
+                // Picking a city switches back to manual mode.
+                PrayerLocation.clearCustom()
+                useCustomLocation = false
+            }
         }
         .presentationDetents([.medium])
     }
 
-    /// Times shown in the selected city's time zone, not the device's.
+    /// Times shown in the selected location's time zone, not the device's.
     private var timeFormat: Date.FormatStyle {
         var style = Date.FormatStyle(date: .omitted, time: .shortened)
-        style.timeZone = TimeZone(identifier: city.timeZoneIdentifier) ?? .current
+        style.timeZone = TimeZone(identifier: location.timeZoneIdentifier) ?? .current
         return style
     }
 }

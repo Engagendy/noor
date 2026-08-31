@@ -15,6 +15,8 @@ public final class SurahReaderViewModel {
     public private(set) var pages: [PageGroup] = []
     /// Global hizb-quarter index for ayat that begin one (keyed by ayah number).
     public private(set) var quarterStarts: [Int: Int] = [:]
+    /// Ayat in this surah carrying the sajdah mark ۩.
+    public private(set) var sajdaAyat: Set<Int> = []
     public private(set) var juz = 1
     /// Basmala text loaded verbatim from the DB (verse 1:1) — shown as the
     /// traditional opening for every surah except Al-Fatiha (it IS its first
@@ -42,6 +44,7 @@ public final class SurahReaderViewModel {
             quarterStarts = Dictionary(uniqueKeysWithValues: structure.quarterStarts
                 .filter { $0.surahId == surahId }
                 .map { ($0.ayah, $0.idx) })
+            sajdaAyat = Set(structure.sajdaAyat.filter { $0.surahId == surahId }.map(\.ayah))
             pages = Dictionary(grouping: verses) { structure.page(surahId: surahId, ayah: $0.ayah) }
                 .map { PageGroup(page: $0.key, verses: $0.value.sorted { $0.ayah < $1.ayah }) }
                 .sorted { $0.page < $1.page }

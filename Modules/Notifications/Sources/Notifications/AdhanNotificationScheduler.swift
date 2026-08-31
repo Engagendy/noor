@@ -22,7 +22,7 @@ public struct AdhanNotificationScheduler: Sendable {
     }
 
     public func reschedule(
-        city: CityPreset,
+        location: PrayerLocation,
         method: CalculationMethodChoice,
         madhab: MadhabChoice,
         sound: AdhanSound
@@ -30,7 +30,7 @@ public struct AdhanNotificationScheduler: Sendable {
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
 
-        for planned in AdhanNotificationPlanner.plan(city: city, method: method, madhab: madhab) {
+        for planned in AdhanNotificationPlanner.plan(location: location, method: method, madhab: madhab) {
             let content = UNMutableNotificationContent()
             // Calm microcopy per design §7 — no exclamation marks.
             content.title = String(localized: "It's time for \(planned.prayerName)")
