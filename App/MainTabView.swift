@@ -54,6 +54,7 @@ struct MainTabView: View {
                     },
                     openAthkar: { tab = .athkar })
             }
+            .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
             .tabItem { Label("Today", systemImage: "sun.max") }
             .tag(Tab.today)
 
@@ -76,27 +77,21 @@ struct MainTabView: View {
                         }
                     }
             }
+            .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
             .tabItem { Label("Prayer", systemImage: "clock") }
             .tag(Tab.prayer)
 
             NavigationStack { AthkarView() }
+                .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
                 .tabItem { Label("Athkar", systemImage: "sparkles") }
                 .tag(Tab.athkar)
 
             NavigationStack { SettingsView() }
+                .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
                 .tabItem { Label("Settings", systemImage: "gearshape") }
                 .tag(Tab.settings)
         }
         .tint(NoorColor.accentPrimary)
-        // Recitation follows you: the pill floats above the tab bar on every
-        // tab (the reader shows its own copy inside the Quran tab).
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if tab != .quran, player.current != nil {
-                AudioPillView(player: player)
-                    .environment(\.layoutDirection, .leftToRight)
-                    .padding(.bottom, 6)
-            }
-        }
         .task {
             syncWidgets()
             await rescheduleNotifications()
@@ -108,6 +103,16 @@ struct MainTabView: View {
                        appLanguage, customLabel]) {
             syncWidgets()
             Task { await rescheduleNotifications() }
+        }
+    }
+
+    /// Player pill shown above the tab bar while recitation runs (the
+    /// reader has its own copy inside the Quran tab).
+    @ViewBuilder
+    private var globalPill: some View {
+        if player.current != nil {
+            AudioPillView(player: player)
+                .environment(\.layoutDirection, .leftToRight)
         }
     }
 

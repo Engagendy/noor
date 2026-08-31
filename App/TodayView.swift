@@ -233,7 +233,13 @@ struct TodayView: View {
                                      ? "بعد \(upcoming.inDays.arabicIndic) يومًا تقريبًا"
                                      : "in about \(upcoming.inDays) days")
                             }
-                            Text(isArabicUI ? "التفاصيل ←" : "Details →")
+                            Spacer(minLength: 8)
+                            Text(isArabicUI ? "التفاصيل" : "Details")
+                                .font(.system(size: 12.5, weight: .semibold))
+                                .foregroundStyle(NoorColor.bgPrimary)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(NoorColor.accentPrimary))
                         }
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.accentGold)
@@ -467,6 +473,18 @@ struct EventDetailSheet: View {
                         .lineSpacing(9)
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Image(systemName: "text.book.closed")
+                            .font(.system(size: 12))
+                        Text(verbatim: isArabicUI
+                             ? "المصدر: \(event.sourceArabic)"
+                             : "Source: \(event.sourceEnglish)")
+                            .font(.system(size: 13))
+                            .multilineTextAlignment(.leading)
+                    }
+                    .foregroundStyle(NoorColor.inkSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 4)
                 }
                 .padding(20)
             }
