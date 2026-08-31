@@ -2,6 +2,7 @@ import ContentDB
 import DesignSystem
 import QuranAudio
 import SwiftUI
+import Tafsir
 import Translations
 
 /// Flow-mode reader. Two display modes:
@@ -21,7 +22,13 @@ public struct SurahReaderView: View {
     @AppStorage("reader.showTranslation") private var showTranslation = false
     @State private var selectedAyah: Int?
     @State private var currentPage = 0
+    @State private var tafsirVerse: Verse?
+    @State private var shareVerse: Verse?
+    @State private var downloader = SurahDownloader()
     @GestureState private var pinchScale: CGFloat = 1
+    @Environment(\.locale) private var locale
+
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
     private let player: QuranAudioPlayer?
     private let translations: TranslationStore?
@@ -88,8 +95,8 @@ public struct SurahReaderView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 0) {
-                    Text(viewModel.surah?.nameTransliterated ?? "")
-                        .font(.system(size: 16, weight: .semibold))
+                    Text(viewModel.surah?.displayName(arabicUI: isArabicUI) ?? "")
+                        .font(isArabicUI ? NoorFont.quran(size: 17) : .system(size: 16, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text(mode == .mushaf && currentPage > 0
                          ? "Juz \(viewModel.juz) · Page \(currentPage)"
@@ -98,9 +105,33 @@ public struct SurahReaderView: View {
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
             }
+            if player != nil {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        startPlayback(from: mode == .mushaf
+                            ? (viewModel.pages.first { $0.page == currentPage }?.verses.first?.ayah ?? 1)
+                            : 1)
+                    } label: {
+                        Image(systemName: "play.fill")
+                            .foregroundStyle(NoorColor.accentPrimary)
+                    }
+                    .accessibilityLabel("Play recitation")
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 readerMenu
             }
+        }
+        .sheet(item: $tafsirVerse) { verse in
+            TafsirSheetView(surahId: surahId, ayah: verse.ayah, ayahText: verse.text)
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(item: $shareVerse) { verse in
+            ShareAyahSheet(
+                verse: verse,
+                surahName: viewModel.surah?.nameTransliterated ?? "",
+                translation: showTranslation ? translations?.translation(surah: surahId, ayah: verse.ayah) : nil)
+                .presentationDetents([.medium, .large])
         }
     }
 
@@ -266,7 +297,7 @@ public struct SurahReaderView: View {
         .accessibilityValue(verse.text)
     }
 
-    /// Tafsir / Bookmark arrive in later phases; Play is live.
+    /// Bookmark arrives with the Library module; the rest are live.
     private func actionChips(for verse: Verse) -> some View {
         HStack(spacing: 6) {
             Button {
@@ -277,18 +308,35 @@ public struct SurahReaderView: View {
             }
             .buttonStyle(.plain)
             .disabled(player == nil)
-            Text("Tafsir").chipStyle().opacity(0.55)
+            Button {
+                tafsirVerse = verse
+            } label: {
+                Text("Tafsir").chipStyle()
+            }
+            .buttonStyle(.plain)
+            Button {
+                shareVerse = verse
+            } label: {
+                Label("Share", systemImage: "square.and.arrow.up").chipStyle()
+            }
+            .buttonStyle(.plain)
             Text("Bookmark").chipStyle().opacity(0.55)
         }
     }
 
     private func startPlayback(from ayah: Int) {
         guard let surah = viewModel.surah else { return }
+        // "This page only" mode stops at the end of the page the ayah is on.
+        if let page = viewModel.page(containing: ayah),
+           let group = viewModel.pages.first(where: { $0.page == page }) {
+            player?.pageEndAyah = group.verses.last?.ayah
+        }
         player?.play(
             surah: surah.id,
             ayahCount: surah.ayahCount,
             from: ayah,
-            title: surah.nameTransliterated)
+            title: surah.nameTransliterated,
+            pageEndAyah: player?.pageEndAyah)
         withAnimation(.easeInOut(duration: 0.25)) { selectedAyah = nil }
     }
 
@@ -320,6 +368,28 @@ public struct SurahReaderView: View {
             if translations != nil {
                 Toggle(isOn: $showTranslation) {
                     Text("Show translation")
+                }
+            }
+            if let surah = viewModel.surah, let player {
+                Button {
+                    Task {
+                        await downloader.download(
+                            reciter: player.reciter, surah: surah.id, ayahCount: surah.ayahCount)
+                    }
+                } label: {
+                    switch downloader.state {
+                    case .downloading(let completed, let total):
+                        Label("Downloading \(completed)/\(total)…", systemImage: "arrow.down.circle")
+                    case .done:
+                        Label("Audio downloaded", systemImage: "checkmark.circle")
+                    default:
+                        if SurahDownloader.isDownloaded(
+                            reciter: player.reciter, surah: surah.id, ayahCount: surah.ayahCount) {
+                            Label("Audio downloaded", systemImage: "checkmark.circle")
+                        } else {
+                            Label("Download surah audio", systemImage: "arrow.down.circle")
+                        }
+                    }
                 }
             }
             Divider()

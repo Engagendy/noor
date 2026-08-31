@@ -10,6 +10,14 @@ public struct AudioPillView: View {
         self.player = player
     }
 
+    private var modeIcon: String {
+        switch player.mode {
+        case .continuous: "repeat"
+        case .repeatAyah: "repeat.1"
+        case .pageOnly: "doc.text"
+        }
+    }
+
     public var body: some View {
         if let current = player.current {
             HStack(spacing: 12) {
@@ -56,6 +64,21 @@ public struct AudioPillView: View {
                     Image(systemName: "forward.fill").font(.system(size: 14))
                 }
                 .accessibilityLabel("Next ayah")
+
+                Menu {
+                    Picker(selection: $player.mode) {
+                        Label("Continuous", systemImage: "arrow.forward").tag(QuranAudioPlayer.PlaybackMode.continuous)
+                        Label("Repeat ayah", systemImage: "repeat.1").tag(QuranAudioPlayer.PlaybackMode.repeatAyah)
+                        Label("This page only", systemImage: "doc.text").tag(QuranAudioPlayer.PlaybackMode.pageOnly)
+                    } label: {
+                        Text("Playback mode")
+                    }
+                } label: {
+                    Image(systemName: modeIcon)
+                        .font(.system(size: 14))
+                        .foregroundStyle(player.mode == .continuous ? NoorColor.inkSecondary : NoorColor.accentPrimary)
+                }
+                .accessibilityLabel("Playback mode")
 
                 Button { player.stop() } label: {
                     Image(systemName: "xmark").font(.system(size: 13, weight: .semibold))

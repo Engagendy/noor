@@ -14,6 +14,9 @@ struct TodayView: View {
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
     @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
     @AppStorage("reader.lastSurah") private var lastSurah = 1
+    @Environment(\.locale) private var locale
+
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
     var body: some View {
         TimelineView(.everyMinute) { context in
@@ -120,8 +123,8 @@ struct TodayView: View {
                         .font(.system(size: 12, weight: .semibold))
                         .tracking(0.8)
                         .foregroundStyle(NoorColor.inkSecondary)
-                    Text(surah?.nameTransliterated ?? "Al-Faatiha")
-                        .font(.system(size: 16, weight: .semibold))
+                    Text(surah?.displayName(arabicUI: isArabicUI) ?? "")
+                        .font(isArabicUI ? NoorFont.quran(size: 18) : .system(size: 16, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                 }
                 Spacer()
@@ -154,7 +157,7 @@ struct TodayView: View {
                     .lineSpacing(12)
                     .environment(\.layoutDirection, .rightToLeft)
                     .frame(maxWidth: .infinity, alignment: .trailing)
-                Text("\(daily.surah.nameTransliterated) \(daily.verse.surahId):\(daily.verse.ayah)")
+                Text("\(daily.surah.displayName(arabicUI: isArabicUI)) \(daily.verse.surahId):\(daily.verse.ayah)")
                     .font(NoorFont.caption)
                     .foregroundStyle(NoorColor.inkSecondary)
             }

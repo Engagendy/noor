@@ -64,6 +64,24 @@ sajdas = [(int(e.get("index")), int(e.get("sura")), int(e.get("aya")),
           for e in root.find("sajdas").iter("sajda")]
 assert len(sajdas) == 15
 
+def normalize(text):
+    """Search normalization ONLY (never displayed): strip tashkeel/quranic
+    marks/tatweel, unify alef/ya variants. Must match ContentDB's Swift
+    normalizer."""
+    out = []
+    for ch in text:
+        code = ord(ch)
+        if 0x064B <= code <= 0x065F or 0x06D6 <= code <= 0x06ED or code in (0x0670, 0x0640):
+            continue
+        if code in (0x0622, 0x0623, 0x0625, 0x0671):
+            out.append("ا")  # alef variants → bare alef
+        elif code == 0x0649:
+            out.append("ي")  # alef maqsura → ya
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 if os.path.exists(OUT):
     os.remove(OUT)
@@ -90,6 +108,13 @@ CREATE TABLE juz_start (idx INTEGER PRIMARY KEY, surah_id INTEGER NOT NULL, ayah
 CREATE TABLE hizb_quarter_start (idx INTEGER PRIMARY KEY, surah_id INTEGER NOT NULL, ayah INTEGER NOT NULL);
 CREATE TABLE page_start (idx INTEGER PRIMARY KEY, surah_id INTEGER NOT NULL, ayah INTEGER NOT NULL);
 CREATE TABLE sajda (idx INTEGER PRIMARY KEY, surah_id INTEGER NOT NULL, ayah INTEGER NOT NULL, obligatory INTEGER NOT NULL);
+-- Diacritic-stripped copy for word search only; display always uses verse.text.
+CREATE TABLE verse_search (
+  surah_id INTEGER NOT NULL,
+  ayah INTEGER NOT NULL,
+  text_normalized TEXT NOT NULL,
+  PRIMARY KEY (surah_id, ayah)
+) WITHOUT ROWID;
 """)
 db.executemany("INSERT INTO surah VALUES (?,?,?,?,?,?,?)", suras)
 db.executemany("INSERT INTO verse VALUES (?,?,?)", verses)
@@ -97,6 +122,8 @@ db.executemany("INSERT INTO juz_start VALUES (?,?,?)", juzs)
 db.executemany("INSERT INTO hizb_quarter_start VALUES (?,?,?)", quarters)
 db.executemany("INSERT INTO page_start VALUES (?,?,?)", pages)
 db.executemany("INSERT INTO sajda VALUES (?,?,?,?)", sajdas)
+db.executemany("INSERT INTO verse_search VALUES (?,?,?)",
+               [(s, a, normalize(t)) for s, a, t in verses])
 db.executemany("INSERT INTO meta VALUES (?,?)", [
     ("source", "Tanzil.net Quran Uthmani"),
     ("source_url", "https://tanzil.net"),

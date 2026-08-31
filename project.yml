@@ -25,6 +25,8 @@ packages:
     path: Modules/Notifications
   Qibla:
     path: Modules/Qibla
+  Tafsir:
+    path: Modules/Tafsir
 
 targets:
   Noor:
@@ -41,6 +43,7 @@ targets:
       - package: QuranAudio
       - package: Notifications
       - package: Qibla
+      - package: Tafsir
     info:
       path: App/Info.plist
       properties:

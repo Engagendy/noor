@@ -13,6 +13,11 @@ public struct Surah: Codable, Identifiable, Hashable, FetchableRecord, TableReco
 
     public var isMeccan: Bool { revelationType == "Meccan" }
 
+    /// Arabic name in Arabic UI, transliteration otherwise.
+    public func displayName(arabicUI: Bool) -> String {
+        arabicUI ? nameArabic : nameTransliterated
+    }
+
     enum CodingKeys: String, CodingKey {
         case id
         case nameArabic = "name_arabic"

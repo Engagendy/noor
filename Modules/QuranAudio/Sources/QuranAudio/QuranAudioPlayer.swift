@@ -18,11 +18,28 @@ public final class QuranAudioPlayer {
         }
     }
 
+    /// How playback advances after each ayah finishes.
+    public enum PlaybackMode: String, CaseIterable {
+        case continuous   // through the whole surah
+        case repeatAyah   // repeat the current ayah (memorization)
+        case pageOnly     // stop at the end of the current page
+    }
+
     public private(set) var current: Reference?
     public private(set) var isPlaying = false
+    public var mode: PlaybackMode = .continuous
+    /// Last ayah to play when mode is .pageOnly (set by the reader).
+    public var pageEndAyah: Int?
     public var reciter: Reciter {
         get { Reciter(rawValue: reciterRaw) ?? .alafasy }
-        set { reciterRaw = newValue.rawValue }
+        set {
+            reciterRaw = newValue.rawValue
+            // Switching sheikh mid-recitation restarts the current ayah in
+            // the new voice immediately.
+            if let current, isPlaying {
+                playAyah(current)
+            }
+        }
     }
     private var reciterRaw: String {
         get { UserDefaults.standard.string(forKey: "audio.reciter") ?? Reciter.alafasy.rawValue }
@@ -39,11 +56,29 @@ public final class QuranAudioPlayer {
 
     public init() {}
 
-    public func play(surah: Int, ayahCount: Int, from ayah: Int, title: String) {
+    public func play(surah: Int, ayahCount: Int, from ayah: Int, title: String, pageEndAyah: Int? = nil) {
         surahTitle = title
         self.ayahCount = ayahCount
+        self.pageEndAyah = pageEndAyah
         configureSessionAndCommands()
         playAyah(Reference(surah: surah, ayah: ayah))
+    }
+
+    /// Called when an ayah finishes naturally — honors the playback mode.
+    private func advanceAfterFinish() {
+        guard let current else { return }
+        switch mode {
+        case .repeatAyah:
+            playAyah(current)
+        case .pageOnly:
+            if let end = pageEndAyah, current.ayah >= end {
+                stop()
+            } else {
+                next()
+            }
+        case .continuous:
+            next()
+        }
     }
 
     public func togglePlayPause() {
@@ -86,7 +121,7 @@ public final class QuranAudioPlayer {
         endObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime, object: item, queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.next() }
+            Task { @MainActor in self?.advanceAfterFinish() }
         }
         if let player {
             player.replaceCurrentItem(with: item)

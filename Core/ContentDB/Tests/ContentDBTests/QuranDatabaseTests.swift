@@ -49,6 +49,18 @@ final class QuranDatabaseTests: XCTestCase {
         XCTAssertEqual(QuranStructure.quarterDescription(8).quarterInHizb, 4)
     }
 
+    func testWordSearchIgnoresDiacritics() throws {
+        let db = try QuranDatabase()
+        // Plain query must match fully-vocalized Uthmani text.
+        let hits = try db.searchVerses("الحمد لله")
+        XCTAssertTrue(hits.contains { $0.surahId == 1 && $0.ayah == 2 })
+        XCTAssertFalse(hits.isEmpty)
+        // Returned text is the untouched display text (has diacritics).
+        XCTAssertNotEqual(hits[0].text, QuranDatabase.normalizeForSearch(hits[0].text))
+        // Too-short queries return nothing.
+        XCTAssertTrue(try db.searchVerses("ا").isEmpty)
+    }
+
     func testSurahAyahCountsMatchVerseTable() throws {
         let db = try QuranDatabase()
         for surah in try db.allSurahs() {

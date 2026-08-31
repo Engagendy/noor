@@ -13,22 +13,29 @@ public struct SurahListView: View {
     let surahs: [Surah]
     let structure: QuranStructure?
     @Binding var selection: Int?
-    /// Opens the reader at an exact reference (used by the Juz tab).
+    /// Opens the reader at an exact reference (Juz tab + word search).
     let openReference: (_ surahId: Int, _ ayah: Int) -> Void
+    /// Word search over the Quran text (diacritic-insensitive).
+    let searchVerses: (_ query: String) -> [SearchHit]
 
     @State private var searchText = ""
     @State private var tab: IndexTab = .surah
+    @Environment(\.locale) private var locale
+
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
     public init(
         surahs: [Surah],
         structure: QuranStructure?,
         selection: Binding<Int?>,
-        openReference: @escaping (_ surahId: Int, _ ayah: Int) -> Void
+        openReference: @escaping (_ surahId: Int, _ ayah: Int) -> Void,
+        searchVerses: @escaping (_ query: String) -> [SearchHit] = { _ in [] }
     ) {
         self.surahs = surahs
         self.structure = structure
         _selection = selection
         self.openReference = openReference
+        self.searchVerses = searchVerses
     }
 
     private var filtered: [Surah] {
@@ -50,13 +57,41 @@ public struct SurahListView: View {
         Group {
             switch tab {
             case .surah:
-                List(filtered, selection: $selection) { surah in
-                    SurahRow(surah: surah)
-                        .tag(surah.id)
-                        .listRowBackground(Color.clear)
+                List(selection: $selection) {
+                    ForEach(filtered) { surah in
+                        SurahRow(surah: surah)
+                            .tag(surah.id)
+                            .listRowBackground(Color.clear)
+                    }
+                    // Word search: matching ayat below the surah matches.
+                    let hits = searchText.count >= 2 ? searchVerses(searchText) : []
+                    if !hits.isEmpty {
+                        Section(header: Text("Ayat").foregroundStyle(NoorColor.inkSecondary)) {
+                            ForEach(hits) { hit in
+                                Button {
+                                    openReference(hit.surahId, hit.ayah)
+                                } label: {
+                                    VStack(alignment: .trailing, spacing: 4) {
+                                        Text(hit.text)
+                                            .font(NoorFont.quran(size: 17))
+                                            .foregroundStyle(NoorColor.inkPrimary)
+                                            .lineLimit(2)
+                                            .environment(\.layoutDirection, .rightToLeft)
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                        Text(verbatim: "\(surahName(hit.surahId)) · \(hit.surahId):\(hit.ayah)")
+                                            .font(NoorFont.caption)
+                                            .foregroundStyle(NoorColor.inkSecondary)
+                                    }
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.borderless)
+                                .listRowBackground(Color.clear)
+                            }
+                        }
+                    }
                 }
                 .listStyle(.plain)
-                .searchable(text: $searchText, prompt: Text("Surah name or 2:255"))
+                .searchable(text: $searchText, prompt: Text("Surah, word, or 2:255"))
             case .juz:
                 juzList
             case .bookmarks:
@@ -189,9 +224,12 @@ public struct SurahListView: View {
         }
     }
 
+    private func surahName(_ id: Int) -> String {
+        surahs.first { $0.id == id }?.displayName(arabicUI: isArabicUI) ?? "\(id)"
+    }
+
     private func referenceLabel(_ start: DivisionStart) -> String {
-        let name = surahs.first { $0.id == start.surahId }?.nameTransliterated ?? "\(start.surahId)"
-        return "\(name) · \(start.surahId):\(start.ayah)"
+        "\(surahName(start.surahId)) · \(start.surahId):\(start.ayah)"
     }
 }
 

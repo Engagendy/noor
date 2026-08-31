@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@  %@%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@  %2$@%3$@"
+          }
+        }
+      }
+    },
     "%@ %@:%@": {
       "localizations": {
         "en": {
@@ -28,6 +38,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ · يدوي"
+          }
+        }
+      }
+    },
+    "%@ −%@:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ −%2$@:%3$@"
           }
         }
       }
@@ -73,6 +93,16 @@
         }
       }
     },
+    "Appearance": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المظهر"
+          }
+        }
+      }
+    },
     "As-salamu alaykum": {
       "localizations": {
         "ar": {
@@ -105,6 +135,16 @@
         }
       }
     },
+    "Audio downloaded": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم تنزيل الصوت"
+          }
+        }
+      }
+    },
     "Ayah %lld": {
       "extractionState": "stale",
       "localizations": {
@@ -126,7 +166,18 @@
         }
       }
     },
+    "Ayat": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "آيات"
+          }
+        }
+      }
+    },
     "Bearing from true north": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -190,6 +241,16 @@
         }
       }
     },
+    "Check your connection and try again. (%@)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تحقق من الاتصال وحاول مجددًا. (%@)"
+          }
+        }
+      }
+    },
     "City": {
       "extractionState": "stale",
       "localizations": {
@@ -201,12 +262,32 @@
         }
       }
     },
+    "Continuous": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متواصل"
+          }
+        }
+      }
+    },
     "DAILY AYAH": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "آية اليوم"
+          }
+        }
+      }
+    },
+    "Dark (Tahajjud)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "داكن (تهجّد)"
           }
         }
       }
@@ -229,6 +310,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "تم"
+          }
+        }
+      }
+    },
+    "Download surah audio": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تنزيل صوت السورة"
+          }
+        }
+      }
+    },
+    "Downloading %lld/%lld…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ التنزيل %1$lld/%2$lld…"
           }
         }
       }
@@ -331,6 +432,7 @@
       }
     },
     "It's time for %@": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -363,6 +465,7 @@
       }
     },
     "Juz %lld · Page %lld": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -389,6 +492,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "أكبر"
+          }
+        }
+      }
+    },
+    "Light (Mushaf)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فاتح (مصحف)"
           }
         }
       }
@@ -447,6 +560,16 @@
         }
       }
     },
+    "Mushaf symbols": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رموز المصحف"
+          }
+        }
+      }
+    },
     "Muslim World League": {
       "extractionState": "stale",
       "localizations": {
@@ -479,6 +602,16 @@
         }
       }
     },
+    "Pause marks (علامات الوقف)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "علامات الوقف"
+          }
+        }
+      }
+    },
     "Play from here": {
       "extractionState": "stale",
       "localizations": {
@@ -490,7 +623,18 @@
         }
       }
     },
+    "Play recitation": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تشغيل التلاوة"
+          }
+        }
+      }
+    },
     "Play surah": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -500,7 +644,18 @@
         }
       }
     },
+    "Playback mode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "وضع التشغيل"
+          }
+        }
+      }
+    },
     "Point the arrow at the Kaaba": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -582,6 +737,26 @@
         }
       }
     },
+    "Reciter": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "القارئ"
+          }
+        }
+      }
+    },
+    "Repeat ayah": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تكرار الآية"
+          }
+        }
+      }
+    },
     "Reset": {
       "extractionState": "stale",
       "localizations": {
@@ -635,7 +810,28 @@
         }
       }
     },
+    "Share": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مشاركة"
+          }
+        }
+      }
+    },
+    "Share image": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مشاركة الصورة"
+          }
+        }
+      }
+    },
     "Show translation": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -700,6 +896,16 @@
         }
       }
     },
+    "Surah, word, or 2:255": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سورة، كلمة، أو 2:255"
+          }
+        }
+      }
+    },
     "System": {
       "localizations": {
         "ar": {
@@ -717,6 +923,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "التفسير"
+          }
+        }
+      }
+    },
+    "Tafsir unavailable": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التفسير غير متاح"
+          }
+        }
+      }
+    },
+    "Tafsir — %lld:%lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التفسير — %1$lld:%2$lld"
+          }
+        }
+      }
+    },
+    "Tajweed Guide": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "دليل التجويد"
+          }
+        }
+      }
+    },
+    "Tajweed rules (أحكام التجويد)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أحكام التجويد"
+          }
+        }
+      }
+    },
+    "This page only": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذه الصفحة فقط"
           }
         }
       }

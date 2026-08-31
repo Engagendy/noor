@@ -49,6 +49,13 @@ Attributions are displayed in Settings → About.
 - **Note:** verify redistribution terms before App Store submission; audio is
   never bundled, only fetched by the user's explicit playback.
 
+### Tafsir — Al-Muyassar & Ibn Kathir (fetched per-ayah, cached)
+- **Source:** spa5k/tafsir_api CDN bundles
+  (https://github.com/spa5k/tafsir_api), serving public tafsir text
+  collections; fetched on demand and cached on device.
+- **Attribution:** "Tafsir texts via the Tafsir API project."
+- **Note:** verify per-tafsir redistribution terms before App Store release.
+
 ## Software dependencies
 
 | Package | License | URL |

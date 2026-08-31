@@ -115,10 +115,17 @@ struct QuranTab: View {
 
     var body: some View {
         NavigationSplitView {
-            SurahListView(surahs: surahs, structure: structure, selection: listSelection) { surahId, ayah in
-                targetAyah = ayah
-                selection = surahId
-            }
+            SurahListView(
+                surahs: surahs,
+                structure: structure,
+                selection: listSelection,
+                openReference: { surahId, ayah in
+                    targetAyah = ayah
+                    selection = surahId
+                },
+                searchVerses: { query in
+                    (try? database.searchVerses(query)) ?? []
+                })
         } detail: {
             if let selection {
                 SurahReaderView(
