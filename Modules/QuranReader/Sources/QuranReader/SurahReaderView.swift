@@ -20,7 +20,8 @@ public struct SurahReaderView: View {
     @AppStorage("reader.showTranslation") private var showTranslation = false
     @AppStorage("reader.wordByWord") private var wordByWord = false
     @State private var selectedKey: Int?          // surah*1000 + ayah
-    @State private var showOptions = false
+    @State private var showOptions =
+        ProcessInfo.processInfo.environment["NOOR_SHOWOPTIONS"] == "1"
     @State private var currentPage = 0
     @State private var tafsirVerse: Verse?
     @State private var shareVerse: Verse?
@@ -253,18 +254,18 @@ public struct SurahReaderView: View {
         }
     }
 
-    /// Only a sliding window of pages is materialized — a 604-child TabView
-    /// re-diffs every page on each swipe and stutters.
-    private var pageWindow: ClosedRange<Int> {
-        let center = min(max(currentPage, 1), 604)
-        return max(1, center - 3)...min(604, center + 3)
+    /// Stable 1…604 pager (mutating a paged TabView's children mid-swipe
+    /// asserts in UIKit); far pages render as empty placeholders instead.
+    private func isNear(_ page: Int) -> Bool {
+        abs(page - currentPage) <= 2
     }
 
     // MARK: Madani page mode — the whole mushaf, pixel-faithful
 
     private var madaniPager: some View {
         TabView(selection: $currentPage) {
-            ForEach(pageWindow, id: \.self) { page in
+            ForEach(1...604, id: \.self) { page in
+                pagePlaceholder(page) {
                 MadaniPageView(
                     page: page, layout: layout, fontStore: fontStore,
                     surahName: { viewModel.surahInfo($0)?.nameArabic ?? "" },
@@ -276,6 +277,7 @@ public struct SurahReaderView: View {
                     guard !verses.isEmpty else { return }
                     actionVerses = SurahReaderViewModel.PageGroup(page: page, verses: verses)
                 }
+                }
                 .tag(page)
             }
         }
@@ -284,12 +286,22 @@ public struct SurahReaderView: View {
         #endif
     }
 
+    /// Builds real content only near the current page.
+    @ViewBuilder
+    private func pagePlaceholder<Content: View>(_ page: Int, @ViewBuilder content: () -> Content) -> some View {
+        if isNear(page) {
+            content()
+        } else {
+            NoorColor.bgPrimary
+        }
+    }
+
     // MARK: Mushaf mode — the whole mushaf, flowing text
 
     private var mushafPager: some View {
         TabView(selection: $currentPage) {
-            ForEach(pageWindow, id: \.self) { page in
-                mushafPage(page)
+            ForEach(1...604, id: \.self) { page in
+                pagePlaceholder(page) { mushafPage(page) }
                     .tag(page)
             }
         }
@@ -559,10 +571,21 @@ public struct SurahReaderView: View {
         }
     }
 
+    /// Writes deferred one tick: selecting a mode swaps the whole pager —
+    /// synchronous writes from inside the picker abort with
+    /// "AttributeGraph: setting value during update".
+    private func deferred<V>(_ binding: Binding<V>) -> Binding<V> {
+        Binding(
+            get: { binding.wrappedValue },
+            set: { newValue in
+                Task { @MainActor in binding.wrappedValue = newValue }
+            })
+    }
+
     /// RTL-correct options panel shown under the top strip.
     private var optionsPanel: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Picker(selection: $modeRaw) {
+            Picker(selection: deferred($modeRaw)) {
                 Text("Mushaf").tag(DisplayMode.mushaf.rawValue)
                 if layout != nil {
                     Text("Madani").tag(DisplayMode.page.rawValue)
@@ -574,13 +597,13 @@ public struct SurahReaderView: View {
             .pickerStyle(.segmented)
 
             if translations != nil {
-                Toggle(isOn: $showTranslation) {
+                Toggle(isOn: deferred($showTranslation)) {
                     Text("Show translation")
                 }
                 .tint(NoorColor.accentPrimary)
             }
             if layout != nil {
-                Toggle(isOn: $wordByWord) {
+                Toggle(isOn: deferred($wordByWord)) {
                     Text("Word by word")
                 }
                 .tint(NoorColor.accentPrimary)
