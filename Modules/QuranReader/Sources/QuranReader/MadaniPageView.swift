@@ -30,10 +30,22 @@ struct MadaniPageView: View {
                     VStack(spacing: 0) {
                         ForEach(lines) { line in
                             switch line.kind {
-                            case .surahHeader(let surahId):
-                                headerLine(surahId: surahId, rowHeight: rowHeight, withBasmala: false)
-                            case .surahHeaderWithBasmala(let surahId):
-                                headerLine(surahId: surahId, rowHeight: rowHeight, withBasmala: true)
+                            case .surahHeader:
+                                // Name already shown in the top bar — a calm
+                                // gold rule marks the surah boundary.
+                                Rectangle()
+                                    .fill(NoorColor.accentGold.opacity(0.35))
+                                    .frame(height: 0.7)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: rowHeight)
+                            case .surahHeaderWithBasmala:
+                                Text(basmala ?? "")
+                                    .font(NoorFont.quran(size: rowHeight * 0.45))
+                                    .foregroundStyle(NoorColor.inkPrimary)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.5)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: rowHeight)
                             case .basmala:
                                 Text(basmala ?? "")
                                     .font(NoorFont.quran(size: rowHeight * 0.45))
@@ -88,39 +100,4 @@ struct MadaniPageView: View {
         .accessibilityLabel("Page \(page)")
     }
 
-    /// Compact header: gold rules flanking the framed surah name; when the
-    /// print shares the line, the basmala sits beside the name.
-    private func headerLine(surahId: Int, rowHeight: CGFloat, withBasmala: Bool) -> some View {
-        HStack(spacing: 10) {
-            if !withBasmala {
-                Rectangle().fill(NoorColor.accentGold.opacity(0.45)).frame(height: 1)
-            }
-            Text(surahName(surahId))
-                .font(NoorFont.quran(size: rowHeight * 0.4))
-                .foregroundStyle(NoorColor.inkPrimary)
-                .lineLimit(1)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 3)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(NoorColor.accentGold, lineWidth: 1)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(NoorColor.accentGold.opacity(0.45), lineWidth: 0.8)
-                        .padding(2.5)
-                )
-            if withBasmala {
-                Text(basmala ?? "")
-                    .font(NoorFont.quran(size: rowHeight * 0.38))
-                    .foregroundStyle(NoorColor.inkPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-            } else {
-                Rectangle().fill(NoorColor.accentGold.opacity(0.45)).frame(height: 1)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: rowHeight)
-    }
 }

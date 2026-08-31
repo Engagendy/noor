@@ -5,9 +5,10 @@ import Foundation
 public enum NoorShared {
     public static let appGroup = "group.com.engagendy.noor"
 
-    public static var defaults: UserDefaults {
+    /// Cached: constructing UserDefaults(suiteName:) repeatedly re-logs
+    /// the harmless cfprefs warning and costs an XPC roundtrip.
+    public static let defaults: UserDefaults =
         UserDefaults(suiteName: appGroup) ?? .standard
-    }
 
     /// Keys the app mirrors into the shared suite for widgets.
     public static let mirroredKeys = [
@@ -17,9 +18,8 @@ public enum NoorShared {
 
     /// Copies widget-relevant settings from standard defaults to the group.
     public static func syncFromApp() {
-        let shared = UserDefaults(suiteName: appGroup)
         for key in mirroredKeys {
-            shared?.set(UserDefaults.standard.object(forKey: key), forKey: key)
+            defaults.set(UserDefaults.standard.object(forKey: key), forKey: key)
         }
     }
 }

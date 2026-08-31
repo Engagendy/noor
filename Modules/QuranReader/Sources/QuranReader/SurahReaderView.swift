@@ -254,73 +254,69 @@ public struct SurahReaderView: View {
         }
     }
 
-    /// Stable 1…604 pager (mutating a paged TabView's children mid-swipe
-    /// asserts in UIKit); far pages render as empty placeholders instead.
-    private func isNear(_ page: Int) -> Bool {
-        abs(page - currentPage) <= 2
+    /// Lazy native pager: only visible pages (±1) ever materialize — a
+    /// 604-child TabView re-diffs everything per swipe and stutters.
+    private var pagePosition: Binding<Int?> {
+        Binding(
+            get: { currentPage },
+            set: { if let page = $0 { currentPage = page } })
+    }
+
+    private func lazyPager<Content: View>(
+        @ViewBuilder content: @escaping (Int) -> Content
+    ) -> some View {
+        ScrollView(.horizontal) {
+            LazyHStack(spacing: 0) {
+                ForEach(1...604, id: \.self) { page in
+                    content(page)
+                        .containerRelativeFrame([.horizontal, .vertical])
+                        .id(page)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.paging)
+        .scrollPosition(id: pagePosition)
+        .scrollIndicators(.hidden)
     }
 
     // MARK: Madani page mode — the whole mushaf, pixel-faithful
 
     private var madaniPager: some View {
-        TabView(selection: $currentPage) {
-            ForEach(1...604, id: \.self) { page in
-                pagePlaceholder(page) {
-                MadaniPageView(
-                    page: page, layout: layout, fontStore: fontStore,
-                    surahName: { viewModel.surahInfo($0)?.nameArabic ?? "" },
-                    basmala: viewModel.basmalaForAnySurah
-                ) { refs in
-                    let verses = viewModel.sections(forPage: page)
-                        .flatMap(\.verses)
-                        .filter { verse in refs.contains { $0.surahId == verse.surahId && $0.ayah == verse.ayah } }
-                    guard !verses.isEmpty else { return }
-                    actionVerses = SurahReaderViewModel.PageGroup(page: page, verses: verses)
-                }
-                }
-                .tag(page)
+        lazyPager { page in
+            MadaniPageView(
+                page: page, layout: layout, fontStore: fontStore,
+                surahName: { viewModel.surahInfo($0)?.nameArabic ?? "" },
+                basmala: viewModel.basmalaForAnySurah
+            ) { refs in
+                let verses = viewModel.sections(forPage: page)
+                    .flatMap(\.verses)
+                    .filter { verse in refs.contains { $0.surahId == verse.surahId && $0.ayah == verse.ayah } }
+                guard !verses.isEmpty else { return }
+                actionVerses = SurahReaderViewModel.PageGroup(page: page, verses: verses)
             }
-        }
-        #if os(iOS)
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        #endif
-    }
-
-    /// Builds real content only near the current page.
-    @ViewBuilder
-    private func pagePlaceholder<Content: View>(_ page: Int, @ViewBuilder content: () -> Content) -> some View {
-        if isNear(page) {
-            content()
-        } else {
-            NoorColor.bgPrimary
         }
     }
 
     // MARK: Mushaf mode — the whole mushaf, flowing text
 
     private var mushafPager: some View {
-        TabView(selection: $currentPage) {
-            ForEach(1...604, id: \.self) { page in
-                pagePlaceholder(page) { mushafPage(page) }
-                    .tag(page)
-            }
+        lazyPager { page in
+            mushafPage(page)
         }
-        #if os(iOS)
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        #endif
     }
 
     private func mushafPage(_ page: Int) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(viewModel.sections(forPage: page)) { section in
-                    if let headerSurah = section.headerSurah {
-                        SurahOrnamentFrame {
-                            Text(headerSurah.nameArabic)
-                                .font(NoorFont.quran(size: 24))
-                                .foregroundStyle(NoorColor.inkPrimary)
-                        }
-                        .padding(.vertical, 10)
+                    // Surah name lives in the top bar — pages show only the
+                    // basmala at a surah start (At-Tawbah has none).
+                    if section.headerSurah != nil && section.basmala == nil {
+                        Rectangle()
+                            .fill(NoorColor.accentGold.opacity(0.35))
+                            .frame(height: 0.7)
+                            .padding(.vertical, 10)
                     }
                     if let basmala = section.basmala {
                         Text(basmala)
@@ -432,14 +428,6 @@ public struct SurahReaderView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 6) {
-                    if let surah = viewModel.surah {
-                        SurahOrnamentFrame {
-                            Text(surah.nameArabic)
-                                .font(NoorFont.quran(size: 24))
-                                .foregroundStyle(NoorColor.inkPrimary)
-                        }
-                        .padding(.bottom, 10)
-                    }
                     if let basmala = viewModel.basmala {
                         Text(basmala)
                             .font(NoorFont.quran(size: liveFontSize * 0.92))

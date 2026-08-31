@@ -295,25 +295,39 @@ public struct SurahListView: View {
 
 struct SurahRow: View {
     let surah: Surah
+    @Environment(\.locale) private var locale
+
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
     var body: some View {
         HStack(spacing: 12) {
             SurahNumberBadge(surah.id)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(surah.nameTransliterated)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(NoorColor.inkPrimary)
-                Text("\(surah.nameEnglish) · \(surah.ayahCount) ayat · \(surah.isMeccan ? String(localized: "Makki") : String(localized: "Madani"))")
-                    .font(NoorFont.caption)
-                    .foregroundStyle(NoorColor.inkSecondary)
+                if isArabicUI {
+                    Text(surah.nameArabic)
+                        .font(NoorFont.quran(size: 18))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                    Text(verbatim: "\(surah.ayahCount.arabicIndic) آية · \(surah.isMeccan ? "مكية" : "مدنية")")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                } else {
+                    Text(surah.nameTransliterated)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                    Text("\(surah.nameEnglish) · \(surah.ayahCount) ayat · \(surah.isMeccan ? String(localized: "Makki") : String(localized: "Madani"))")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
             }
 
             Spacer()
 
-            Text(surah.nameArabic)
-                .font(NoorFont.quran(size: 19))
-                .foregroundStyle(NoorColor.inkPrimary)
+            if !isArabicUI {
+                Text(surah.nameArabic)
+                    .font(NoorFont.quran(size: 19))
+                    .foregroundStyle(NoorColor.inkPrimary)
+            }
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
