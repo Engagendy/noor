@@ -18,7 +18,7 @@ struct TodayView: View {
     @State private var showHadithList = false
     @State private var showHijriCalendar = false
     @State private var cardPage = 0
-    private let cardTimer = Timer.publish(every: 8, on: .main, in: .common).autoconnect()
+    private let cardTimer = Timer.publish(every: 12, on: .main, in: .common).autoconnect()
 
     enum ShareItem: Identifiable {
         case ayah(Verse, Surah)
@@ -73,33 +73,31 @@ struct TodayView: View {
 
     var body: some View {
         TimelineView(.everyMinute) { context in
-            // No scrolling: header + prayer hero stay put; everything else
-            // lives in an auto-rotating card carousel.
+            // The important cards stay fixed; the daily extras share one
+            // compact swipeable slot that rotates slowly with page dots.
             VStack(alignment: .leading, spacing: 12) {
                 header(now: context.date)
                 if let day = prayerDay(date: context.date) {
                     nextPrayerHero(day: day, now: context.date)
                 }
+                if inRamadan(context.date) {
+                    ramadanCard(now: context.date)
+                }
+                continueReadingCard
+                khatmahCard(now: context.date)
                 TabView(selection: $cardPage) {
-                    Group {
-                        carouselPage { continueReadingCard }.tag(0)
-                        carouselPage { khatmahCard(now: context.date) }.tag(1)
-                        carouselPage { dailyAyahCard(now: context.date) }.tag(2)
-                        carouselPage { dailyDhikrCard(now: context.date) }.tag(3)
-                        carouselPage { dailyHadithCard(now: context.date) }.tag(4)
-                        carouselPage { onThisDayCard(now: context.date) }.tag(5)
-                        if inRamadan(context.date) {
-                            carouselPage { ramadanCard(now: context.date) }.tag(6)
-                        }
-                    }
+                    carouselPage { dailyAyahCard(now: context.date) }.tag(0)
+                    carouselPage { dailyDhikrCard(now: context.date) }.tag(1)
+                    carouselPage { dailyHadithCard(now: context.date) }.tag(2)
+                    carouselPage { onThisDayCard(now: context.date) }.tag(3)
                 }
                 #if os(iOS)
                 .tabViewStyle(.page(indexDisplayMode: .always))
                 .indexViewStyle(.page(backgroundDisplayMode: .never))
                 #endif
                 .onReceive(cardTimer) { _ in
-                    withAnimation(.easeInOut(duration: 0.45)) {
-                        cardPage = (cardPage + 1) % pageCount(now: context.date)
+                    withAnimation(.easeInOut(duration: 0.6)) {
+                        cardPage = (cardPage + 1) % 4
                     }
                 }
                 .frame(maxHeight: .infinity)

@@ -69,6 +69,13 @@ public final class QuranAudioPlayer {
     private var ayahCount = 0
 
     private var player: AVQueuePlayer?
+    // Follow-along (word highlight): separate gapless-surah player.
+    private var followPlayer: AVPlayer?
+    private var followObserver: Any?
+    private var followTimings: SurahTimings?
+    /// surah*1_000_000 + ayah*1_000 + wordNumber while following, else nil.
+    public private(set) var recitingWordKey: Int?
+    public private(set) var isFollowAlong = false
     /// Next ayah pre-enqueued in the queue player — the hand-off happens
     /// inside AVFoundation, so there is no fetch-then-swap pause.
     private var queuedNext: (item: AVPlayerItem, ref: Reference)?
@@ -138,6 +145,12 @@ public final class QuranAudioPlayer {
     public var currentAyahCount: Int { ayahCount }
 
     public func togglePlayPause() {
+        if isFollowAlong, let followPlayer {
+            if isPlaying { followPlayer.pause() } else { followPlayer.play() }
+            isPlaying.toggle()
+            updateNowPlaying()
+            return
+        }
         guard let player else { return }
         if isPlaying { player.pause() } else { player.play() }
         isPlaying.toggle()
@@ -145,6 +158,7 @@ public final class QuranAudioPlayer {
     }
 
     public func stop() {
+        stopFollowAlong()
         player?.pause()
         player?.removeAllItems()
         queuedNext = nil
@@ -155,6 +169,7 @@ public final class QuranAudioPlayer {
     }
 
     public func next() {
+        if isFollowAlong { seekFollow(by: 1); return }
         guard let current else {
             stop()
             return
@@ -176,8 +191,84 @@ public final class QuranAudioPlayer {
     }
 
     public func previous() {
+        if isFollowAlong { seekFollow(by: -1); return }
         guard let current, current.ayah > 1 else { return }
         playAyah(Reference(surah: current.surah, ayah: current.ayah - 1))
+    }
+
+    // MARK: - Follow-along (word-level highlight, Alafasy gapless)
+
+    /// Plays the gapless surah with word tracking. Falls back to normal
+    /// ayah playback when timings/audio are unavailable.
+    public func playFollowAlong(surah: Int, ayahCount: Int, from ayah: Int,
+                                title: String, arabicTitle: String) async -> Bool {
+        surahTitle = title
+        surahTitleArabic = arabicTitle
+        self.ayahCount = ayahCount
+        configureSessionAndCommands()
+        guard let timings = await WordTimingService.timings(surah: surah),
+              let local = await WordTimingService.localAudio(surah: surah, remote: timings.audioURL)
+        else { return false }
+        player?.pause()
+        player?.removeAllItems()
+        queuedNext = nil
+        stopFollowAlong()
+        followTimings = timings
+        isFollowAlong = true
+        let avPlayer = AVPlayer(url: local)
+        followPlayer = avPlayer
+        current = Reference(surah: surah, ayah: ayah)
+        if let verse = timings.verses.first(where: { $0.ayah == ayah }) {
+            avPlayer.seek(to: CMTime(value: CMTimeValue(verse.fromMs), timescale: 1000),
+                          toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
+        }
+        followObserver = avPlayer.addPeriodicTimeObserver(
+            forInterval: CMTime(value: 1, timescale: 10), queue: .main
+        ) { [weak self] time in
+            Task { @MainActor in self?.followTick(ms: Int(time.seconds * 1000), surah: surah) }
+        }
+        avPlayer.play()
+        isPlaying = true
+        updateNowPlaying()
+        return true
+    }
+
+    private func followTick(ms: Int, surah: Int) {
+        guard let timings = followTimings else { return }
+        if let position = timings.position(atMs: ms) {
+            let key = surah * 1_000_000 + position.ayah * 1_000 + position.word
+            if recitingWordKey != key { recitingWordKey = key }
+            if current?.ayah != position.ayah {
+                current = Reference(surah: surah, ayah: position.ayah)
+                UserDefaults.standard.set(position.ayah, forKey: "audio.lastAyah")
+                updateNowPlaying()
+            }
+        }
+        // Finished the surah?
+        if let last = timings.verses.last, ms >= last.toMs {
+            stop()
+        }
+    }
+
+    private func seekFollow(by delta: Int) {
+        guard let timings = followTimings, let current,
+              let verse = timings.verses.first(where: { $0.ayah == current.ayah + delta })
+        else { return }
+        followPlayer?.seek(to: CMTime(value: CMTimeValue(verse.fromMs), timescale: 1000),
+                           toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
+        self.current = Reference(surah: current.surah, ayah: verse.ayah)
+    }
+
+    private func stopFollowAlong() {
+        if let followObserver, let followPlayer {
+            followPlayer.removeTimeObserver(followObserver)
+        }
+        followObserver = nil
+        followPlayer?.pause()
+        followPlayer = nil
+        followTimings = nil
+        recitingWordKey = nil
+        isFollowAlong = false
     }
 
     // MARK: - Internals

@@ -79,6 +79,13 @@ public struct SurahReaderView: View {
     private var liveFontSize: CGFloat {
         (quranFontSize * pinchScale).clamped(to: NoorMetrics.quranSizeRange)
     }
+    /// Current word (1-based) if follow-along is reciting this exact ayah.
+    private func recitingWordPosition(surahId: Int, ayah: Int) -> Int? {
+        guard let key = player?.recitingWordKey,
+              key / 1_000_000 == surahId, (key / 1_000) % 1_000 == ayah else { return nil }
+        return key % 1_000
+    }
+
     private var recitingKey: Int? {
         guard let current = player?.current else { return nil }
         return current.surah * 1000 + current.ayah
@@ -492,6 +499,7 @@ public struct SurahReaderView: View {
             if wordByWord, let layout {
                 WordByWordContainer(
                     layout: layout, surahId: verse.surahId, ayah: verse.ayah, fontSize: liveFontSize,
+                    highlightPosition: recitingWordPosition(surahId: verse.surahId, ayah: verse.ayah),
                     onTapWord: { _ in tafsirVerse = verse })
             } else {
                 (Text(verse.text)
@@ -553,13 +561,29 @@ public struct SurahReaderView: View {
            let last = viewModel.sections(forPage: page).flatMap(\.verses).last {
             player?.pageEndAyah = last.surahId == verse.surahId ? last.ayah : surah.ayahCount
         }
-        player?.play(
-            surah: surah.id,
-            ayahCount: surah.ayahCount,
-            from: verse.ayah,
-            title: surah.displayName(arabicUI: isArabicUI),
-            arabicTitle: surah.nameArabic,
-            pageEndAyah: player?.pageEndAyah)
+        // Word-by-word + Alafasy: gapless follow-along with word tracking
+        // (timings are recorded against this reciter's murattal).
+        if wordByWord, player?.reciter == .alafasy, let player {
+            let title = surah.displayName(arabicUI: isArabicUI)
+            Task {
+                let ok = await player.playFollowAlong(
+                    surah: surah.id, ayahCount: surah.ayahCount, from: verse.ayah,
+                    title: title, arabicTitle: surah.nameArabic)
+                if !ok {
+                    player.play(surah: surah.id, ayahCount: surah.ayahCount, from: verse.ayah,
+                                title: title, arabicTitle: surah.nameArabic,
+                                pageEndAyah: player.pageEndAyah)
+                }
+            }
+        } else {
+            player?.play(
+                surah: surah.id,
+                ayahCount: surah.ayahCount,
+                from: verse.ayah,
+                title: surah.displayName(arabicUI: isArabicUI),
+                arabicTitle: surah.nameArabic,
+                pageEndAyah: player?.pageEndAyah)
+        }
         withAnimation(.easeInOut(duration: 0.25)) { selectedKey = nil }
     }
 
@@ -721,12 +745,14 @@ private struct WordByWordContainer: View {
     let surahId: Int
     let ayah: Int
     let fontSize: CGFloat
+    var highlightPosition: Int?
     var onTapWord: ((PageWord) -> Void)?
 
     @State private var words: [PageWord] = []
 
     var body: some View {
-        WordByWordView(words: words, fontSize: fontSize, onTapWord: onTapWord)
+        WordByWordView(words: words, fontSize: fontSize,
+                       highlightPosition: highlightPosition, onTapWord: onTapWord)
             .task { words = (try? layout.words(surahId: surahId, ayah: ayah)) ?? [] }
     }
 }
