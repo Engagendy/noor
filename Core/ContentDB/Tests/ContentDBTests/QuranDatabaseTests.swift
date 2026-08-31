@@ -76,6 +76,15 @@ final class QuranDatabaseTests: XCTestCase {
         XCTAssertTrue(page50.contains { $0.kind == .surahHeader(surahId: 3) })
         XCTAssertTrue(page50.contains { $0.kind == .basmala })
 
+        // An-Nisa (page 77) reserves ONE line: header + basmala share it.
+        let page77 = try layout.lines(page: 77)
+        XCTAssertTrue(page77.contains { $0.kind == .surahHeaderWithBasmala(surahId: 4) })
+
+        // At-Tawbah (page 187): header only, never a basmala.
+        let page187 = try layout.lines(page: 187)
+        XCTAssertTrue(page187.contains { $0.kind == .surahHeader(surahId: 9) })
+        XCTAssertFalse(page187.contains { $0.kind == .basmala })
+
         let page604 = try layout.lines(page: 604)
         XCTAssertFalse(page604.isEmpty)
 

@@ -38,6 +38,9 @@ public struct PageLine: Identifiable, Hashable, Sendable {
     public enum Kind: Hashable, Sendable {
         case words
         case surahHeader(surahId: Int)
+        /// Single reserved line: header frame and basmala share it (e.g.
+        /// An-Nisa on page 77 in the Madani print).
+        case surahHeaderWithBasmala(surahId: Int)
         case basmala
     }
 
@@ -97,18 +100,23 @@ public final class PageLayoutDatabase: Sendable {
                 let headerAt = firstLine - 2
                 let basmalaAt = firstLine - 1
                 if basmalaAt >= 1 && !present.contains(basmalaAt) {
+                    // At-Tawbah opens without the basmala; Al-Fatiha's
+                    // basmala is its first ayah.
+                    let needsBasmala = surahId != 9 && surahId != 1
                     if headerAt >= 1 && !present.contains(headerAt) {
                         lines.append(PageLine(line: headerAt, kind: .surahHeader(surahId: surahId),
                                               glyphs: "", glyphsV2: "", ayahRefs: []))
-                        // At-Tawbah traditionally opens without the basmala,
-                        // and Al-Fatiha's basmala is its first ayah.
-                        if surahId != 9 && surahId != 1 {
+                        if needsBasmala {
                             lines.append(PageLine(line: basmalaAt, kind: .basmala,
                                                   glyphs: "", glyphsV2: "", ayahRefs: []))
                         }
                     } else {
-                        lines.append(PageLine(line: basmalaAt, kind: .surahHeader(surahId: surahId),
-                                              glyphs: "", glyphsV2: "", ayahRefs: []))
+                        // One reserved line — header and basmala share it.
+                        lines.append(PageLine(
+                            line: basmalaAt,
+                            kind: needsBasmala ? .surahHeaderWithBasmala(surahId: surahId)
+                                               : .surahHeader(surahId: surahId),
+                            glyphs: "", glyphsV2: "", ayahRefs: []))
                     }
                 }
             }
