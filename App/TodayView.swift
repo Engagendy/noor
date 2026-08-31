@@ -451,19 +451,22 @@ struct TodayView: View {
             let _ = hijriStyle.locale = locale
             var gregStyle = Date.FormatStyle().weekday(.wide).month(.abbreviated).day()
             let _ = gregStyle.locale = locale
-            Button { showHijriCalendar = true } label: {
-                HStack(spacing: 5) {
-                    Text("\(now.formatted(hijriStyle)) · \(now.formatted(gregStyle))")
+            HStack {
+                Text("\(now.formatted(hijriStyle)) · \(now.formatted(gregStyle))")
+                    .font(NoorFont.caption)
+                    .foregroundStyle(NoorColor.inkSecondary)
+                Spacer()
+                Button { showHijriCalendar = true } label: {
                     Image(systemName: "calendar")
-                        .font(.system(size: 11))
+                        .font(.system(size: 19, weight: .medium))
                         .foregroundStyle(NoorColor.accentPrimary)
+                        .frame(width: 44, height: 44)
+                        .background(Circle().fill(NoorColor.accentPrimary.opacity(0.12)))
+                        .contentShape(Circle())
                 }
-                .font(NoorFont.caption)
-                .foregroundStyle(NoorColor.inkSecondary)
-                .contentShape(Rectangle())
+                .buttonStyle(.plain)
+                .accessibilityLabel("Hijri Calendar")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Hijri Calendar")
             Text("As-salamu alaykum")
                 .font(NoorFont.screenTitle)
                 .foregroundStyle(NoorColor.inkPrimary)
