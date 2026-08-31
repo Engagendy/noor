@@ -8,3 +8,4 @@ DerivedData/
 *.dSYM.zip
 /Noor.xcodeproj
 Config/secrets.local.json
+Screenshots/

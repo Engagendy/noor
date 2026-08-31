@@ -14,7 +14,11 @@ struct RootView: View {
 
     @State private var state: LoadState = .loading
     @State private var showSplash = true
-    @AppStorage("app.language") private var language = "system"
+    @AppStorage("app.language") private var storedLanguage = "system"
+    /// NOOR_LANG env overrides (screenshots/UI tests — sim defaults race).
+    private var language: String {
+        ProcessInfo.processInfo.environment["NOOR_LANG"] ?? storedLanguage
+    }
     @AppStorage("app.theme") private var theme = "system"
 
     private var effectiveDirection: LayoutDirection {

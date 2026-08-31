@@ -21,6 +21,7 @@ struct MainTabView: View {
     @State private var tab: Tab = switch ProcessInfo.processInfo.environment["NOOR_TAB"] {
         case "quran": .quran
         case "prayer": .prayer
+        case "athkar": .athkar
         default: .today
     }
     @State private var player = QuranAudioPlayer()
@@ -183,6 +184,11 @@ struct QuranTab: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
 
+    /// Screenshot/UI-test hook: NOOR_OPEN=<surahId> pushes the reader.
+    private var autoOpenSurah: Int? {
+        ProcessInfo.processInfo.environment["NOOR_OPEN"].flatMap(Int.init)
+    }
+
     private func open(_ surahId: Int, _ ayah: Int?) {
         lastSurah = surahId
         targetAyah = ayah
@@ -251,6 +257,7 @@ struct QuranTab: View {
             structure = try? database.structure()
             if selection == nil { selection = lastSurah }
             consumeOpenRequest()
+            if let auto = autoOpenSurah { open(auto, nil) }
         }
         .onChange(of: openRequest) { _, _ in consumeOpenRequest() }
     }
