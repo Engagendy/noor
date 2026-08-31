@@ -24,6 +24,10 @@ public struct PrayerTimesView: View {
     @State private var locationFetcher = OneShotLocationFetcher()
     @State private var fetchingLocation = false
     @State private var locationFailed = false
+    @Environment(\.locale) private var locale
+    @Environment(\.layoutDirection) private var appDirection
+
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
     private func notificationBinding(for prayer: Prayer) -> Binding<Bool>? {
         switch prayer {
@@ -84,15 +88,26 @@ public struct PrayerTimesView: View {
             .background(NoorColor.bgPrimary)
             .navigationTitle(Text("Prayer Times"))
         }
-        .sheet(isPresented: $showSettings) { settingsSheet }
+        .sheet(isPresented: $showSettings) {
+            // Presentations don't inherit layout direction — re-apply.
+            settingsSheet
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, appDirection)
+        }
     }
 
     private var cityLine: some View {
         HStack(spacing: 6) {
             Image(systemName: useCustomLocation ? "location.fill" : "mappin.and.ellipse")
                 .font(.system(size: 12))
-            Text(useCustomLocation ? "\(location.label)" : "\(location.label) · manual")
-                .font(NoorFont.caption)
+            Group {
+                if useCustomLocation {
+                    Text("Near \(CityPreset.named(location.label).displayName(arabicUI: isArabicUI))")
+                } else {
+                    Text(verbatim: "\(CityPreset.named(cityName).displayName(arabicUI: isArabicUI))")
+                }
+            }
+            .font(NoorFont.caption)
         }
         .foregroundStyle(NoorColor.inkSecondary)
     }
@@ -103,9 +118,9 @@ public struct PrayerTimesView: View {
                 let date = Calendar.current.date(byAdding: .day, value: offset, to: now) ?? now
                 let isSelected = offset == dayOffset
                 VStack(spacing: 2) {
-                    Text(date.formatted(.dateTime.weekday(.abbreviated)))
+                    Text(date.formatted(.dateTime.weekday(.abbreviated).locale(locale)))
                         .font(.system(size: 12))
-                    Text(date.formatted(.dateTime.day()))
+                    Text(date.formatted(.dateTime.day().locale(locale)))
                         .font(.system(size: 14, weight: isSelected ? .bold : .semibold))
                 }
                 .frame(maxWidth: .infinity)
@@ -250,7 +265,7 @@ public struct PrayerTimesView: View {
                             PrayerLocation.saveCustom(
                                 latitude: coordinate.latitude,
                                 longitude: coordinate.longitude,
-                                label: String(localized: "Near \(nearest.name)"))
+                                label: nearest.name)
                             cityName = nearest.name
                             useCustomLocation = true
                         } else {

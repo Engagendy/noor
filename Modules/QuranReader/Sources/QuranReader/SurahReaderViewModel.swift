@@ -138,6 +138,9 @@ public final class SurahReaderViewModel {
         (try? database.verses(surahId: 1))?.first?.text
     }
 
+    /// Basmala for injected print-mode lines (verified DB text).
+    public var basmalaForAnySurah: String? { basmalaText }
+
     // MARK: Tappable mushaf flow
 
     /// One tappable fragment of the continuous mushaf flow. Words come from

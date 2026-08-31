@@ -26,14 +26,23 @@ public struct PageWord: Codable, Hashable, Sendable, FetchableRecord {
 }
 
 /// A rendered line of a mushaf page: glyphs concatenated in reading order,
-/// plus which ayat appear on the line (for tap targeting).
+/// plus which ayat appear on the line (for tap targeting). The layout data
+/// only carries verse words — surah-header and basmala lines are injected
+/// as synthetic lines (kind).
 public struct PageLine: Identifiable, Hashable, Sendable {
     public struct Ref: Hashable, Sendable {
         public let surahId: Int
         public let ayah: Int
     }
 
+    public enum Kind: Hashable, Sendable {
+        case words
+        case surahHeader(surahId: Int)
+        case basmala
+    }
+
     public let line: Int
+    public let kind: Kind
     public let glyphs: String
     /// QCF v2 glyphs (the exact printed Madani mushaf typeface).
     public let glyphsV2: String
@@ -63,7 +72,7 @@ public final class PageLayoutDatabase: Sendable {
                 SELECT * FROM page_word WHERE page = ?
                 ORDER BY line, surah_id, ayah, position
                 """, arguments: [page])
-            return Dictionary(grouping: words, by: \.line)
+            var lines = Dictionary(grouping: words, by: \.line)
                 .map { line, words in
                     var refs: [PageLine.Ref] = []
                     for word in words {
@@ -72,11 +81,38 @@ public final class PageLayoutDatabase: Sendable {
                     }
                     return PageLine(
                         line: line,
+                        kind: .words,
                         glyphs: words.map(\.glyph).joined(),
                         glyphsV2: words.map(\.glyphV2).joined(),
                         ayahRefs: refs)
                 }
                 .sorted { $0.line < $1.line }
+
+            // Inject the reserved header/basmala lines before surah starts.
+            let present = Set(lines.map(\.line))
+            let starts = Dictionary(grouping: words.filter { $0.ayah == 1 && $0.position == 1 },
+                                    by: \.surahId)
+            for (surahId, startWords) in starts {
+                guard let firstLine = startWords.map(\.line).min() else { continue }
+                let headerAt = firstLine - 2
+                let basmalaAt = firstLine - 1
+                if basmalaAt >= 1 && !present.contains(basmalaAt) {
+                    if headerAt >= 1 && !present.contains(headerAt) {
+                        lines.append(PageLine(line: headerAt, kind: .surahHeader(surahId: surahId),
+                                              glyphs: "", glyphsV2: "", ayahRefs: []))
+                        // At-Tawbah traditionally opens without the basmala,
+                        // and Al-Fatiha's basmala is its first ayah.
+                        if surahId != 9 && surahId != 1 {
+                            lines.append(PageLine(line: basmalaAt, kind: .basmala,
+                                                  glyphs: "", glyphsV2: "", ayahRefs: []))
+                        }
+                    } else {
+                        lines.append(PageLine(line: basmalaAt, kind: .surahHeader(surahId: surahId),
+                                              glyphs: "", glyphsV2: "", ayahRefs: []))
+                    }
+                }
+            }
+            return lines.sorted { $0.line < $1.line }
         }
     }
 

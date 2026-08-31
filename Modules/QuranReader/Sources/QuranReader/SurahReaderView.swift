@@ -34,6 +34,7 @@ public struct SurahReaderView: View {
     @State private var fontStore = PageFontStore()
     @GestureState private var pinchScale: CGFloat = 1
     @Environment(\.locale) private var locale
+    @Environment(\.layoutDirection) private var appDirection
     @Environment(\.dismiss) private var dismiss
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
@@ -144,10 +145,14 @@ public struct SurahReaderView: View {
                 },
                 onToggleBookmark: onToggleBookmark)
                 .presentationDetents([.medium, .large])
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, appDirection)
         }
         .sheet(item: $tafsirVerse) { verse in
             TafsirSheetView(surahId: verse.surahId, ayah: verse.ayah, ayahText: verse.text)
                 .presentationDetents([.medium, .large])
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, appDirection)
         }
         .sheet(item: $shareVerse) { verse in
             ShareAyahSheet(
@@ -155,6 +160,8 @@ public struct SurahReaderView: View {
                 surahName: viewModel.surahInfo(verse.surahId)?.nameTransliterated ?? "",
                 translation: showTranslation ? translations?.translation(surah: verse.surahId, ayah: verse.ayah) : nil)
                 .presentationDetents([.medium, .large])
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, appDirection)
         }
     }
 
@@ -241,7 +248,11 @@ public struct SurahReaderView: View {
     private var madaniPager: some View {
         TabView(selection: $currentPage) {
             ForEach(1...604, id: \.self) { page in
-                MadaniPageView(page: page, layout: layout, fontStore: fontStore) { refs in
+                MadaniPageView(
+                    page: page, layout: layout, fontStore: fontStore,
+                    surahName: { viewModel.surahInfo($0)?.nameArabic ?? "" },
+                    basmala: viewModel.basmalaForAnySurah
+                ) { refs in
                     let verses = viewModel.sections(forPage: page)
                         .flatMap(\.verses)
                         .filter { verse in refs.contains { $0.surahId == verse.surahId && $0.ayah == verse.ayah } }

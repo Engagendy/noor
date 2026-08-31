@@ -8,6 +8,10 @@ struct MadaniPageView: View {
     let page: Int
     let layout: PageLayoutDatabase?
     let fontStore: PageFontStore
+    /// Arabic surah name for injected header lines.
+    var surahName: (Int) -> String = { _ in "" }
+    /// Basmala text (from the verified DB) for injected basmala lines.
+    var basmala: String?
     /// Long-pressing a line reports exactly the ayat on that line.
     var onLongPressLine: (([PageLine.Ref]) -> Void)?
 
@@ -25,14 +29,33 @@ struct MadaniPageView: View {
                 if fontReady && !lines.isEmpty {
                     VStack(spacing: 0) {
                         ForEach(lines) { line in
-                            Text(verbatim: line.glyphsV2.isEmpty ? line.glyphs : line.glyphsV2)
-                                .font(.custom(PageFontStore.fontName(page: page), size: fontSize))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.5)
-                                .frame(maxWidth: .infinity)
+                            switch line.kind {
+                            case .surahHeader(let surahId):
+                                SurahOrnamentFrame {
+                                    Text(surahName(surahId))
+                                        .font(NoorFont.quran(size: rowHeight * 0.42))
+                                        .foregroundStyle(NoorColor.inkPrimary)
+                                        .lineLimit(1)
+                                }
                                 .frame(height: rowHeight)
-                                .contentShape(Rectangle())
-                                .onLongPressGesture { onLongPressLine?(line.ayahRefs) }
+                            case .basmala:
+                                Text(basmala ?? "")
+                                    .font(NoorFont.quran(size: rowHeight * 0.45))
+                                    .foregroundStyle(NoorColor.inkPrimary)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.5)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: rowHeight)
+                            case .words:
+                                Text(verbatim: line.glyphsV2.isEmpty ? line.glyphs : line.glyphsV2)
+                                    .font(.custom(PageFontStore.fontName(page: page), size: fontSize))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.5)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: rowHeight)
+                                    .contentShape(Rectangle())
+                                    .onLongPressGesture { onLongPressLine?(line.ayahRefs) }
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

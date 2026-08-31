@@ -18,10 +18,12 @@ struct TodayView: View {
     enum ShareItem: Identifiable {
         case ayah(Verse, Surah)
         case dhikr(Dhikr)
+        case event(IslamicEvent)
         var id: String {
             switch self {
             case .ayah(let verse, _): "a\(verse.id)"
             case .dhikr(let dhikr): "d\(dhikr.id.hashValue)"
+            case .event(let event): "e\(event.day)-\(event.month)-\(event.arabic.hashValue)"
             }
         }
     }
@@ -54,6 +56,7 @@ struct TodayView: View {
                     continueReadingCard
                     dailyAyahCard(now: context.date)
                     dailyDhikrCard(now: context.date)
+                    onThisDayCard(now: context.date)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
@@ -77,6 +80,13 @@ struct TodayView: View {
                     arabicText: dhikr.text,
                     reference: isArabicUI ? "حصن المسلم" : "Hisn al-Muslim",
                     attribution: "نور Noor · Hisn al-Muslim",
+                    useQuranFont: false)
+                    .presentationDetents([.medium, .large])
+            case .event(let event):
+                NoorShareSheet(
+                    arabicText: isArabicUI ? event.arabic : event.english,
+                    reference: eventReference(event),
+                    attribution: "نور Noor",
                     useQuranFont: false)
                     .presentationDetents([.medium, .large])
             }
@@ -122,21 +132,6 @@ struct TodayView: View {
                     .accessibilityLabel("Share")
                 }
             }
-                if let dhikr {
-                    Text(dhikr.text)
-                        .font(.system(size: 16))
-                        .foregroundStyle(NoorColor.inkPrimary)
-                        .lineSpacing(6)
-                        .lineLimit(4)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .environment(\.layoutDirection, .rightToLeft)
-                    if dhikr.count > 1 {
-                        Text("Repeat \(dhikr.count)×")
-                            .font(NoorFont.caption)
-                            .foregroundStyle(NoorColor.accentGold)
-                    }
-            }
             if let dhikr {
                 Text(dhikr.text)
                     .font(.system(size: 16))
@@ -158,6 +153,62 @@ struct TodayView: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: openAthkar)
         .noorCard()
+    }
+
+    private func eventReference(_ event: IslamicEvent) -> String {
+        if let year = event.yearHijri {
+            return isArabicUI ? "في مثل هذا اليوم · سنة \(year.arabicIndic) هـ"
+                              : "On this day · \(year) AH"
+        }
+        return isArabicUI ? "في مثل هذا اليوم" : "On this day"
+    }
+
+    /// "On this day" in Islamic history, matched by the Hijri date.
+    @ViewBuilder
+    private func onThisDayCard(now: Date) -> some View {
+        let hijri = Calendar(identifier: .islamicUmmAlQura).dateComponents([.day, .month], from: now)
+        let events = IslamicEvent.events(day: hijri.day ?? 0, month: hijri.month ?? 0)
+        if !events.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("ON THIS DAY")
+                        .font(.system(size: 12, weight: .semibold))
+                        .tracking(0.8)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                    Spacer()
+                    Button {
+                        shareItem = .event(events[0])
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 14))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                            .frame(width: 32, height: 32)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Share")
+                }
+                ForEach(Array(events.enumerated()), id: \.offset) { _, event in
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(verbatim: isArabicUI ? event.arabic : event.english)
+                            .font(.system(size: 15))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                            .lineSpacing(5)
+                            .multilineTextAlignment(isArabicUI ? .leading : .leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                        if let year = event.yearHijri {
+                            Text(verbatim: isArabicUI ? "سنة \(year.arabicIndic) هـ" : "\(year) AH")
+                                .font(NoorFont.caption)
+                                .foregroundStyle(NoorColor.accentGold)
+                        }
+                    }
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .noorCard()
+        }
     }
 
     private func header(now: Date) -> some View {

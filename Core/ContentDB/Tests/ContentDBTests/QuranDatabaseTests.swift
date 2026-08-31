@@ -67,7 +67,14 @@ final class QuranDatabaseTests: XCTestCase {
 
         let page1 = try layout.lines(page: 1)
         XCTAssertFalse(page1.isEmpty)
-        XCTAssertTrue(page1.allSatisfy { !$0.glyphs.isEmpty })
+        XCTAssertTrue(page1.allSatisfy { $0.kind != .words || !$0.glyphs.isEmpty })
+        // Al-Fatiha's page carries an injected surah-header line.
+        XCTAssertTrue(page1.contains { $0.kind == .surahHeader(surahId: 1) })
+
+        // Surah 3 starts mid-page 50: header + basmala lines injected.
+        let page50 = try layout.lines(page: 50)
+        XCTAssertTrue(page50.contains { $0.kind == .surahHeader(surahId: 3) })
+        XCTAssertTrue(page50.contains { $0.kind == .basmala })
 
         let page604 = try layout.lines(page: 604)
         XCTAssertFalse(page604.isEmpty)
