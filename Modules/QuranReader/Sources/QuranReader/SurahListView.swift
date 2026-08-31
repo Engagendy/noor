@@ -84,7 +84,6 @@ public struct SurahListView: View {
                     ForEach(filtered) { surah in
                         Button {
                             dismissSearch()
-                            searchText = ""
                             openReference(surah.id, nil)
                         } label: {
                             SurahRow(surah: surah)
@@ -103,7 +102,6 @@ public struct SurahListView: View {
                                     // Close the search first — otherwise its
                                     // cancel button lingers over the reader.
                                     dismissSearch()
-                                    searchText = ""
                                     openReference(hit.surahId, hit.ayah)
                                 } label: {
                                     // Inside forced RTL, .leading == the
