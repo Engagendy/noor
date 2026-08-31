@@ -11,7 +11,10 @@ struct AyahShareCard: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            RubElHizbMark(size: 16)
+            MihrabLogoMark(
+                size: 44,
+                archColor: Color(red: 0.055, green: 0.420, blue: 0.361),
+                lampColor: Color(red: 0.73, green: 0.54, blue: 0.18))
             Text(verse.text)
                 .font(NoorFont.quran(size: 30))
                 .foregroundStyle(Color(red: 0.12, green: 0.16, blue: 0.20))
@@ -28,9 +31,9 @@ struct AyahShareCard: View {
                 Text(verbatim: "\(surahName) · \(verse.surahId):\(verse.ayah)")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Color(red: 0.05, green: 0.42, blue: 0.36))
-                Text(verbatim: "Noor · Quran text: Tanzil.net")
-                    .font(.system(size: 10))
-                    .foregroundStyle(Color(red: 0.36, green: 0.40, blue: 0.44).opacity(0.7))
+                Text(verbatim: "نور Noor · Quran text: Tanzil.net")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color(red: 0.36, green: 0.40, blue: 0.44).opacity(0.8))
             }
         }
         .padding(36)

@@ -8,6 +8,8 @@ struct MadaniPageView: View {
     let page: Int
     let layout: PageLayoutDatabase?
     let fontStore: PageFontStore
+    /// Tapping a line reports exactly the ayat on that line.
+    var onTapLine: (([PageLine.Ref]) -> Void)?
 
     @State private var lines: [PageLine] = []
     @State private var fontReady = false
@@ -25,6 +27,8 @@ struct MadaniPageView: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.5)
                                 .frame(maxWidth: .infinity)
+                                .contentShape(Rectangle())
+                                .onTapGesture { onTapLine?(line.ayahRefs) }
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

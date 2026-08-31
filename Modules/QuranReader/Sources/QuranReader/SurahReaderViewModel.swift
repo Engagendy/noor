@@ -1,4 +1,5 @@
 import ContentDB
+import DesignSystem
 import Foundation
 import Observation
 
@@ -55,5 +56,44 @@ public final class SurahReaderViewModel {
 
     public func page(containing ayah: Int) -> Int? {
         pages.first { $0.verses.contains { $0.ayah == ayah } }?.page
+    }
+
+    // MARK: Tappable mushaf flow
+
+    /// One tappable fragment of the continuous mushaf flow. Words come from
+    /// splitting the checksummed Tanzil text on spaces — layout only, the
+    /// text itself is never altered.
+    public struct FlowItem: Identifiable, Hashable {
+        public enum Kind { case word, marker, quarter, sajda }
+        public let id: Int
+        public let ayah: Int
+        public let text: String
+        public let kind: Kind
+    }
+
+    private var flowCache: [Int: [FlowItem]] = [:]
+
+    public func flowItems(for page: PageGroup) -> [FlowItem] {
+        if let cached = flowCache[page.page] { return cached }
+        var items: [FlowItem] = []
+        var index = 0
+        func add(_ ayah: Int, _ text: String, _ kind: FlowItem.Kind) {
+            items.append(FlowItem(id: index, ayah: ayah, text: text, kind: kind))
+            index += 1
+        }
+        for verse in page.verses {
+            if quarterStarts[verse.ayah] != nil {
+                add(verse.ayah, "۞", .quarter)
+            }
+            for word in verse.text.split(separator: " ") {
+                add(verse.ayah, String(word), .word)
+            }
+            if sajdaAyat.contains(verse.ayah) {
+                add(verse.ayah, "۩", .sajda)
+            }
+            add(verse.ayah, "﴿\(verse.ayah.arabicIndic)﴾", .marker)
+        }
+        flowCache[page.page] = items
+        return items
     }
 }

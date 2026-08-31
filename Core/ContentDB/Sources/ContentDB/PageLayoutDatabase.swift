@@ -23,10 +23,17 @@ public struct PageWord: Codable, Hashable, Sendable, FetchableRecord {
     }
 }
 
-/// A rendered line of a mushaf page: glyphs concatenated in reading order.
+/// A rendered line of a mushaf page: glyphs concatenated in reading order,
+/// plus which ayat appear on the line (for tap targeting).
 public struct PageLine: Identifiable, Hashable, Sendable {
+    public struct Ref: Hashable, Sendable {
+        public let surahId: Int
+        public let ayah: Int
+    }
+
     public let line: Int
     public let glyphs: String
+    public let ayahRefs: [Ref]
     public var id: Int { line }
 }
 
@@ -53,7 +60,14 @@ public final class PageLayoutDatabase: Sendable {
                 ORDER BY line, surah_id, ayah, position
                 """, arguments: [page])
             return Dictionary(grouping: words, by: \.line)
-                .map { PageLine(line: $0.key, glyphs: $0.value.map(\.glyph).joined()) }
+                .map { line, words in
+                    var refs: [PageLine.Ref] = []
+                    for word in words {
+                        let ref = PageLine.Ref(surahId: word.surahId, ayah: word.ayah)
+                        if refs.last != ref { refs.append(ref) }
+                    }
+                    return PageLine(line: line, glyphs: words.map(\.glyph).joined(), ayahRefs: refs)
+                }
                 .sorted { $0.line < $1.line }
         }
     }

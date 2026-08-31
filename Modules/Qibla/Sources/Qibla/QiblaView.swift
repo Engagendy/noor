@@ -3,82 +3,107 @@ import DesignSystem
 import PrayerTimes
 import SwiftUI
 
-/// Qibla compass. The needle shows where to turn; when the phone faces the
-/// qibla (±6°) the dial turns green, pulses once, and taps a success haptic.
-/// Without a compass (iPad/Mac/simulator) it shows the static bearing.
+/// Qibla finder. The Kaaba sits at the top; a gold arc shows how far to
+/// turn (it shrinks as you rotate). Facing the qibla (±6°): everything
+/// turns green, pulses, and a success haptic fires. Without a compass
+/// (iPad/Mac/simulator) the static bearing is shown.
 public struct QiblaView: View {
     @AppStorage("prayer.city") private var cityName = "Makkah"
     @AppStorage("prayer.useCustom") private var useCustomLocation = false
     @State private var headingProvider = HeadingProvider()
     @State private var pulse = false
+    @Environment(\.locale) private var locale
 
     public init() {}
 
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
     private var location: PrayerLocation {
         useCustomLocation ? PrayerLocation.current() : CityPreset.named(cityName).location
+    }
+    private var locationLabel: String {
+        useCustomLocation ? location.label : CityPreset.named(cityName).displayName(arabicUI: isArabicUI)
     }
     private var bearing: Double {
         QiblaMath.bearing(fromLatitude: location.latitude, longitude: location.longitude)
     }
     /// How far to turn, -180…180 (0 = facing the qibla).
     private var turn: Double {
-        guard let heading = headingProvider.heading else { return bearing }
+        guard let heading = headingProvider.heading else { return 0 }
         var delta = (bearing - heading).truncatingRemainder(dividingBy: 360)
         if delta > 180 { delta -= 360 }
         if delta < -180 { delta += 360 }
         return delta
     }
-    private var isAligned: Bool {
-        headingProvider.heading != nil && abs(turn) < 6
-    }
+    private var hasCompass: Bool { headingProvider.heading != nil }
+    private var isAligned: Bool { hasCompass && abs(turn) < 6 }
 
     public var body: some View {
-        VStack(spacing: 28) {
-            Text(verbatim: location.label)
+        VStack(spacing: 22) {
+            Text(verbatim: locationLabel)
                 .font(NoorFont.caption)
                 .foregroundStyle(NoorColor.inkSecondary)
 
             ZStack {
+                // The Kaaba — the target, fixed at the top.
+                Text(verbatim: "🕋")
+                    .font(.system(size: 44))
+                    .offset(y: -150)
+                    .scaleEffect(pulse ? 1.15 : 1)
+                    .animation(.easeInOut(duration: 0.35), value: pulse)
+
+                // Turn arc: sweeps from the top by the remaining angle.
+                if hasCompass && !isAligned {
+                    Circle()
+                        .trim(from: 0, to: abs(turn) / 360)
+                        .stroke(NoorColor.accentGold,
+                                style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                        .frame(width: 224, height: 224)
+                        .rotationEffect(.degrees(-90))
+                        .scaleEffect(x: turn >= 0 ? 1 : -1)
+                        .animation(.easeInOut(duration: 0.25), value: turn)
+                }
                 Circle()
-                    .stroke(isAligned ? NoorColor.accentPrimary : NoorColor.inkSecondary.opacity(0.2),
+                    .stroke(isAligned ? NoorColor.accentPrimary : NoorColor.inkSecondary.opacity(0.15),
                             lineWidth: isAligned ? 3 : 1.5)
                     .frame(width: 250, height: 250)
-                    .scaleEffect(pulse ? 1.07 : 1)
+                    .scaleEffect(pulse ? 1.06 : 1)
                     .animation(.easeInOut(duration: 0.35), value: pulse)
-                ForEach(0..<8, id: \.self) { tick in
-                    Capsule()
-                        .fill(NoorColor.inkSecondary.opacity(tick % 2 == 0 ? 0.5 : 0.25))
-                        .frame(width: 2, height: tick % 2 == 0 ? 14 : 8)
-                        .offset(y: -118)
-                        .rotationEffect(.degrees(Double(tick) * 45))
+
+                // Prayer-mat motif (geometry, not imagery — design §1.6).
+                VStack(spacing: 0) {
+                    MihrabArch()
+                        .stroke(isAligned ? NoorColor.accentPrimary : NoorColor.accentGold,
+                                style: StrokeStyle(lineWidth: 4, lineJoin: .round))
+                        .frame(width: 74, height: 96)
                 }
-
-                // The needle: turn your body until it points straight up.
-                Image(systemName: "location.north.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(isAligned ? NoorColor.accentPrimary : NoorColor.accentGold)
-                    .rotationEffect(.degrees(turn))
-                    .animation(.easeInOut(duration: 0.25), value: turn)
-                    .shadow(color: isAligned ? NoorColor.accentPrimary.opacity(0.5) : .clear, radius: 14)
-
-                Text(verbatim: "🕋")
-                    .font(.system(size: 34))
-                    .offset(y: -155)
+                .padding(18)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(NoorColor.bgElevated.opacity(0.7))
+                )
+                .rotationEffect(.degrees(hasCompass ? turn : 0))
+                .animation(.easeInOut(duration: 0.25), value: turn)
             }
+            .frame(height: 330)
             .environment(\.layoutDirection, .leftToRight)  // compass never mirrors
 
-            VStack(spacing: 4) {
+            VStack(spacing: 5) {
                 if isAligned {
                     Text("Facing the qibla")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.system(size: 24, weight: .semibold))
                         .foregroundStyle(NoorColor.accentPrimary)
+                } else if hasCompass {
+                    Text(turn >= 0 ? "Turn right" : "Turn left")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                    Text(verbatim: "\(Int(abs(turn).rounded()))°")
+                        .font(.system(size: 16).monospacedDigit())
+                        .foregroundStyle(NoorColor.inkSecondary)
                 } else {
                     Text(verbatim: "\(Int(bearing.rounded()))°")
                         .font(.system(size: 34, weight: .semibold).monospacedDigit())
                         .foregroundStyle(NoorColor.inkPrimary)
-                    Text(headingProvider.heading == nil
-                         ? "Bearing from true north"
-                         : "Turn until the arrow points up")
+                    Text("Bearing from true north")
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
@@ -98,7 +123,27 @@ public struct QiblaView: View {
             #endif
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(isAligned ? "Facing the qibla" : "Qibla bearing \(Int(bearing.rounded())) degrees")
+        .accessibilityLabel(isAligned
+            ? "Facing the qibla"
+            : "Qibla bearing \(Int(bearing.rounded())) degrees")
+    }
+}
+
+/// The mihrab arch (same geometry as the app icon / splash).
+struct MihrabArch: Shape {
+    func path(in rect: CGRect) -> Path {
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + (x - 11) / 42 * rect.width,
+                    y: rect.minY + (y - 6) / 52 * rect.height)
+        }
+        var path = Path()
+        path.move(to: pt(11, 58))
+        path.addLine(to: pt(11, 42))
+        path.addCurve(to: pt(32, 6), control1: pt(11, 25), control2: pt(20, 13))
+        path.addCurve(to: pt(53, 42), control1: pt(44, 13), control2: pt(53, 25))
+        path.addLine(to: pt(53, 58))
+        path.addLine(to: pt(11, 58))
+        return path
     }
 }
 

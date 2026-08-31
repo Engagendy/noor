@@ -172,10 +172,15 @@ public struct SurahReaderView: View {
     private var madaniPager: some View {
         TabView(selection: $currentPage) {
             ForEach(viewModel.pages) { page in
-                MadaniPageView(page: page.page, layout: layout, fontStore: fontStore)
-                    .contentShape(Rectangle())
-                    .onTapGesture { actionsPage = page }
-                    .tag(page.page)
+                MadaniPageView(page: page.page, layout: layout, fontStore: fontStore) { refs in
+                    // Only this surah's ayat on the tapped line.
+                    let verses = viewModel.verses.filter { verse in
+                        refs.contains { $0.surahId == surahId && $0.ayah == verse.ayah }
+                    }
+                    guard !verses.isEmpty else { return }
+                    actionsPage = SurahReaderViewModel.PageGroup(page: page.page, verses: verses)
+                }
+                .tag(page.page)
             }
         }
         #if os(iOS)
@@ -218,10 +223,14 @@ public struct SurahReaderView: View {
                             .padding(.bottom, 14)
                     }
                 }
-                continuousText(page.verses)
-                    .lineSpacing(liveFontSize * NoorMetrics.quranLineSpacingFactor)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                tappableFlow(page)
+                if mode == .mushaf, let selected = selectedAyah,
+                   let verse = page.verses.first(where: { $0.ayah == selected }) {
+                    actionChips(for: verse)
+                        .padding(.top, 4)
+                        .environment(\.layoutDirection, .leftToRight)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
                 HStack(spacing: 10) {
                     Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
                     Text(page.page.arabicIndic)
@@ -235,36 +244,37 @@ public struct SurahReaderView: View {
             .padding(.horizontal, 24)
             .padding(.vertical, 24)
             .padding(.bottom, player?.current != nil ? 72 : 0)
-            .contentShape(Rectangle())
-            .onTapGesture { actionsPage = page }
         }
     }
 
-    /// One flowing Text per page: ayah ﴿n﴾ ayah ﴿n﴾ … with ۞ before each
-    /// hizb-quarter start. The recited ayah is tinted accent green.
-    private func continuousText(_ verses: [Verse]) -> Text {
-        verses.reduce(Text(verbatim: "")) { result, verse in
-            var piece = Text(verbatim: "")
-            if viewModel.quarterStarts[verse.ayah] != nil {
-                piece = piece + Text(verbatim: "۞ ")
-                    .foregroundStyle(NoorColor.accentGold)
+    /// Every word is tappable — tap selects ITS ayah (highlight + chips).
+    private func tappableFlow(_ page: SurahReaderViewModel.PageGroup) -> some View {
+        RTLFlowLayout(horizontalSpacing: liveFontSize * 0.3,
+                      verticalSpacing: liveFontSize * NoorMetrics.quranLineSpacingFactor) {
+            ForEach(viewModel.flowItems(for: page)) { item in
+                let isSelected = selectedAyah == item.ayah
+                let isReciting = recitingAyah == item.ayah
+                Text(item.text)
+                    .font(NoorFont.quran(size: item.kind == .marker ? liveFontSize * 0.62 : liveFontSize))
+                    .foregroundStyle(
+                        item.kind == .word
+                            ? (isReciting ? NoorColor.accentPrimary : NoorColor.inkPrimary)
+                            : NoorColor.accentGold)
+                    .padding(.horizontal, 2)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(isSelected ? NoorColor.stateReciting : Color.clear)
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            selectedAyah = isSelected ? nil : item.ayah
+                        }
+                    }
             }
-            let body = Text(verse.text)
-            piece = piece + (verse.ayah == recitingAyah
-                             ? body.foregroundStyle(NoorColor.accentPrimary)
-                             : body)
-            if viewModel.sajdaAyat.contains(verse.ayah) {
-                piece = piece + Text(verbatim: " ۩")
-                    .foregroundStyle(NoorColor.accentGold)
-            }
-            piece = piece
-                + Text(verbatim: " ﴿\(verse.ayah.arabicIndic)﴾ ")
-                    .font(NoorFont.quran(size: liveFontSize * 0.62))
-                    .foregroundStyle(NoorColor.accentGold)
-            return result + piece
         }
-        .font(NoorFont.quran(size: liveFontSize))
-        .foregroundStyle(NoorColor.inkPrimary)
+        .environment(\.layoutDirection, .leftToRight)  // layout places RTL itself
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: Ayah mode — lazy vertical list

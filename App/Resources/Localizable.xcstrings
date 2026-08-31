@@ -158,6 +158,7 @@
       }
     },
     "Ayah actions": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -275,6 +276,16 @@
         }
       }
     },
+    "City name": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسم المدينة"
+          }
+        }
+      }
+    },
     "Connect to the internet once to download this page.": {
       "extractionState": "stale",
       "localizations": {
@@ -384,6 +395,7 @@
       }
     },
     "Facing the qibla": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -1135,7 +1147,28 @@
         }
       }
     },
+    "Turn left": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اذهب نحو اليسار"
+          }
+        }
+      }
+    },
+    "Turn right": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اذهب نحو اليمين"
+          }
+        }
+      }
+    },
     "Turn until the arrow points up": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {

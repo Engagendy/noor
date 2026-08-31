@@ -250,12 +250,15 @@ public struct PrayerTimesView: View {
                     Label(useCustomLocation ? "Using current location" : "Use my current location",
                           systemImage: useCustomLocation ? "location.fill" : "location")
                 }
-                Picker(selection: $cityName) {
-                    ForEach(CityPreset.all) { preset in
-                        Text(preset.name).tag(preset.name)
-                    }
+                NavigationLink {
+                    CityPickerView(cityName: $cityName)
                 } label: {
-                    Text("City")
+                    HStack {
+                        Text("City")
+                        Spacer()
+                        Text(verbatim: CityPreset.named(cityName).name)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Picker(selection: $methodRaw) {
                     ForEach(CalculationMethodChoice.allCases) { choice in

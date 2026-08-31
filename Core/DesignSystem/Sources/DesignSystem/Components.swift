@@ -101,6 +101,53 @@ public extension Int {
     }
 }
 
+/// The brand mihrab arch (app icon / splash geometry).
+public struct MihrabShape: Shape {
+    public init() {}
+
+    public func path(in rect: CGRect) -> Path {
+        func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + (x - 11) / 42 * rect.width,
+                    y: rect.minY + (y - 6) / 52 * rect.height)
+        }
+        var path = Path()
+        path.move(to: pt(11, 58))
+        path.addLine(to: pt(11, 42))
+        path.addCurve(to: pt(32, 6), control1: pt(11, 25), control2: pt(20, 13))
+        path.addCurve(to: pt(53, 42), control1: pt(44, 13), control2: pt(53, 25))
+        path.addLine(to: pt(53, 58))
+        path.addLine(to: pt(11, 58))
+        return path
+    }
+}
+
+/// Small brand mark: the mihrab with its lamp.
+public struct MihrabLogoMark: View {
+    var size: CGFloat
+    var archColor: Color
+    var lampColor: Color
+
+    public init(size: CGFloat = 36,
+                archColor: Color = NoorColor.accentPrimary,
+                lampColor: Color = NoorColor.accentGold) {
+        self.size = size
+        self.archColor = archColor
+        self.lampColor = lampColor
+    }
+
+    public var body: some View {
+        ZStack {
+            MihrabShape()
+                .stroke(archColor, style: StrokeStyle(lineWidth: size * 0.07, lineJoin: .round))
+                .frame(width: size * 0.78, height: size)
+            Circle()
+                .fill(lampColor)
+                .frame(width: size * 0.22, height: size * 0.22)
+                .offset(y: -size * 0.12)
+        }
+    }
+}
+
 /// Elevated card treatment used across Today, study reader, and hadith cards.
 public struct NoorCardStyle: ViewModifier {
     var cornerRadius: CGFloat
