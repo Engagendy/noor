@@ -26,7 +26,14 @@ public final class QuranAudioPlayer {
         case continuous   // through the whole surah
         case repeatAyah   // repeat the current ayah (memorization)
         case pageOnly     // stop at the end of the current page
+        case memorize     // loop a range, repeating each ayah N times
     }
+
+    // Memorize-mode settings (set from the range sheet).
+    public var memorizeStart = 1
+    public var memorizeEnd = 5
+    public var memorizePerAyah = 3
+    private var memorizeRepeatsDone = 0
 
     public private(set) var current: Reference?
     public private(set) var isPlaying = false
@@ -88,6 +95,8 @@ public final class QuranAudioPlayer {
     private func advanceAfterFinish() {
         guard let current else { return }
         switch mode {
+        case .memorize:
+            advanceMemorize(from: current)
         case .repeatAyah:
             playAyah(current)
         case .pageOnly:
@@ -100,6 +109,33 @@ public final class QuranAudioPlayer {
             next()
         }
     }
+
+    /// Memorize loop: each ayah ×N, then the next; wrap to the start of
+    /// the range after the last ayah.
+    private func advanceMemorize(from current: Reference) {
+        memorizeRepeatsDone += 1
+        if memorizeRepeatsDone < memorizePerAyah {
+            playAyah(current)
+            return
+        }
+        memorizeRepeatsDone = 0
+        let nextAyah = current.ayah < min(memorizeEnd, ayahCount) ? current.ayah + 1 : memorizeStart
+        playAyah(Reference(surah: current.surah, ayah: nextAyah))
+    }
+
+    /// Starts the memorize loop over an ayah range.
+    public func startMemorize(start: Int, end: Int, perAyah: Int) {
+        memorizeStart = max(1, min(start, ayahCount))
+        memorizeEnd = max(memorizeStart, min(end, ayahCount))
+        memorizePerAyah = max(1, perAyah)
+        memorizeRepeatsDone = 0
+        mode = .memorize
+        guard let current else { return }
+        playAyah(Reference(surah: current.surah, ayah: memorizeStart))
+    }
+
+    /// Exposed so range pickers can bound their steppers.
+    public var currentAyahCount: Int { ayahCount }
 
     public func togglePlayPause() {
         guard let player else { return }
@@ -196,8 +232,8 @@ public final class QuranAudioPlayer {
 
     private func itemDidEnd() {
         guard let cur = current else { return }
-        if mode == .repeatAyah {
-            playAyah(cur)  // rebuilds the queue (drops any pre-enqueued next)
+        if mode == .repeatAyah || mode == .memorize {
+            advanceAfterFinish()
             return
         }
         if mode == .pageOnly, let end = pageEndAyah, cur.ayah >= end {
@@ -219,7 +255,7 @@ public final class QuranAudioPlayer {
     /// Downloads (or reads from cache) the next ayah and appends it to the
     /// queue while the current one is still playing.
     private func enqueueNextIfNeeded() {
-        guard queuedNext == nil, mode != .repeatAyah,
+        guard queuedNext == nil, mode != .repeatAyah, mode != .memorize,
               let cur = current, cur.ayah < ayahCount else { return }
         if mode == .pageOnly, let end = pageEndAyah, cur.ayah >= end { return }
         let nextRef = Reference(surah: cur.surah, ayah: cur.ayah + 1)

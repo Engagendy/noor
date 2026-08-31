@@ -20,6 +20,7 @@ public struct AudioPillView: View {
         case .continuous: "repeat"
         case .repeatAyah: "repeat.1"
         case .pageOnly: "doc.text"
+        case .memorize: "brain.head.profile"
         }
     }
 
@@ -230,6 +231,7 @@ struct PlaybackModeSheet: View {
         (.repeatAyah, "Repeat ayah", "repeat.1"),
         (.pageOnly, "This page only", "doc.text"),
     ]
+    @State private var showMemorize = false
 
     var body: some View {
         NavigationStack {
@@ -262,6 +264,33 @@ struct PlaybackModeSheet: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(NoorColor.bgPrimary)
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    showMemorize = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "brain.head.profile")
+                            .font(.system(size: 16))
+                        Text("Memorize a range")
+                            .font(.system(size: 15, weight: .semibold))
+                        Spacer()
+                        if player.mode == .memorize {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 14, weight: .semibold))
+                        }
+                    }
+                    .foregroundStyle(NoorColor.accentPrimary)
+                    .padding(14)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(NoorColor.accentPrimary.opacity(0.1)))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(16)
+                .background(NoorColor.bgPrimary)
+            }
+            .sheet(isPresented: $showMemorize) {
+                MemorizeRangeSheet(player: player)
+            }
             .navigationTitle(Text("Playback mode"))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -273,5 +302,72 @@ struct PlaybackModeSheet: View {
             }
         }
         .presentationDetents([.height(260), .medium])
+    }
+}
+
+
+/// Configure the memorize loop: ayah range and repeats per ayah.
+struct MemorizeRangeSheet: View {
+    @Bindable var player: QuranAudioPlayer
+    @Environment(\.dismiss) private var dismiss
+    @State private var start = 1
+    @State private var end = 5
+    @State private var perAyah = 3
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Stepper(value: $start, in: 1...max(1, player.currentAyahCount)) {
+                    HStack {
+                        Text("From ayah")
+                        Spacer()
+                        Text(verbatim: "\(start)").foregroundStyle(NoorColor.accentPrimary)
+                    }
+                }
+                Stepper(value: $end, in: start...max(start, player.currentAyahCount)) {
+                    HStack {
+                        Text("To ayah")
+                        Spacer()
+                        Text(verbatim: "\(end)").foregroundStyle(NoorColor.accentPrimary)
+                    }
+                }
+                Stepper(value: $perAyah, in: 1...20) {
+                    HStack {
+                        Text("Repeat each ayah")
+                        Spacer()
+                        Text(verbatim: "×\(perAyah)").foregroundStyle(NoorColor.accentPrimary)
+                    }
+                }
+                Button {
+                    player.startMemorize(start: start, end: end, perAyah: perAyah)
+                    dismiss()
+                } label: {
+                    Text("Start memorizing")
+                        .font(.system(size: 16, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(NoorColor.bgPrimary)
+            .navigationTitle(Text("Memorize a range"))
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .onAppear {
+                start = player.memorizeStart
+                end = min(max(start, player.memorizeEnd), max(1, player.currentAyahCount))
+                perAyah = player.memorizePerAyah
+                if let current = player.current {
+                    start = current.ayah
+                    end = min(current.ayah + 4, max(1, player.currentAyahCount))
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }

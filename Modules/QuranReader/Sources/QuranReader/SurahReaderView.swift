@@ -19,6 +19,9 @@ public struct SurahReaderView: View {
     @AppStorage("reader.mode") private var modeRaw = DisplayMode.mushaf.rawValue
     @AppStorage("reader.showTranslation") private var showTranslation = false
     @AppStorage("reader.wordByWord") private var wordByWord = false
+    /// Hifz practice: ayah text hidden until tapped (ayah-list mode).
+    @AppStorage("reader.hifz") private var hifzMode = false
+    @State private var revealedKeys: Set<Int> = []
     @State private var selectedKey: Int?          // surah*1000 + ayah
     @State private var showOptions =
         ProcessInfo.processInfo.environment["NOOR_SHOWOPTIONS"] == "1"
@@ -520,7 +523,13 @@ public struct SurahReaderView: View {
                 .fill(isSelected || isReciting ? NoorColor.stateReciting : Color.clear)
         )
         .contentShape(Rectangle())
+        .blur(radius: hifzMode && !revealedKeys.contains(key) && !isReciting ? 7 : 0)
+        .animation(.easeInOut(duration: 0.25), value: revealedKeys)
         .onTapGesture {
+            if hifzMode && !revealedKeys.contains(key) {
+                revealedKeys.insert(key)   // first tap: reveal for checking
+                return
+            }
             withAnimation(.easeInOut(duration: 0.25)) {
                 selectedKey = isSelected ? nil : key
             }
@@ -584,6 +593,7 @@ public struct SurahReaderView: View {
                 Task { await translations?.download() }
             }
         }
+        .onChange(of: hifzMode) { _, _ in revealedKeys = [] }
         .onChange(of: wordByWord) { _, enabled in
             if enabled { modeRaw = DisplayMode.ayah.rawValue }
         }
@@ -626,6 +636,10 @@ public struct SurahReaderView: View {
                 }
                 .tint(NoorColor.accentPrimary)
             }
+            Toggle(isOn: deferred($hifzMode)) {
+                Text("Hifz mode (hide text)")
+            }
+            .tint(NoorColor.accentPrimary)
             if let surah = viewModel.surah, let player {
                 Button {
                     Task {
