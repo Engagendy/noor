@@ -265,19 +265,23 @@ public struct SurahReaderView: View {
     private func lazyPager<Content: View>(
         @ViewBuilder content: @escaping (Int) -> Content
     ) -> some View {
-        ScrollView(.horizontal) {
-            LazyHStack(spacing: 0) {
-                ForEach(1...604, id: \.self) { page in
-                    content(page)
-                        .containerRelativeFrame([.horizontal, .vertical])
-                        .id(page)
+        // Measured size, NOT containerRelativeFrame: the latter ignores the
+        // top-strip safe-area inset, making pages taller than the viewport.
+        GeometryReader { geometry in
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 0) {
+                    ForEach(1...604, id: \.self) { page in
+                        content(page)
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .id(page)
+                    }
                 }
+                .scrollTargetLayout()
             }
-            .scrollTargetLayout()
+            .scrollTargetBehavior(.paging)
+            .scrollPosition(id: pagePosition)
+            .scrollIndicators(.hidden)
         }
-        .scrollTargetBehavior(.paging)
-        .scrollPosition(id: pagePosition)
-        .scrollIndicators(.hidden)
     }
 
     // MARK: Madani page mode — the whole mushaf, pixel-faithful
