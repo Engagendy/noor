@@ -29,6 +29,9 @@ struct TodayView: View {
     }
     @State private var shareItem: ShareItem?
     @State private var detailEvent: IslamicEvent?
+    @State private var showKhatmahGoal = false
+    /// Bumped when the plan changes so the card recomputes.
+    @State private var khatmahPlanVersion = 0
 
     @AppStorage("prayer.city") private var cityName = "Makkah"
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
@@ -55,6 +58,7 @@ struct TodayView: View {
                         nextPrayerHero(day: day, now: context.date)
                     }
                     continueReadingCard
+                    khatmahCard(now: context.date)
                     dailyAyahCard(now: context.date)
                     dailyDhikrCard(now: context.date)
                     onThisDayCard(now: context.date)
@@ -66,6 +70,12 @@ struct TodayView: View {
         }
         .task {
             if athkar.isEmpty { athkar = AthkarStore.load() }
+        }
+        .sheet(isPresented: $showKhatmahGoal) {
+            KhatmahGoalSheet(currentPage: khatmahMaxPage,
+                             onChanged: { khatmahPlanVersion += 1 })
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
         .sheet(item: $detailEvent) { event in
             EventDetailSheet(event: event, isArabicUI: isArabicUI)
@@ -332,6 +342,86 @@ struct TodayView: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// Khatmah plan: daily portion, behind/ahead, start/change goal.
+    @ViewBuilder
+    private func khatmahCard(now: Date) -> some View {
+        let _ = khatmahPlanVersion
+        if let plan = KhatmahPlan.load() {
+            let left = plan.pagesLeftToday(now: now, currentPage: khatmahMaxPage)
+            let behind = plan.pagesBehind(now: now, currentPage: khatmahMaxPage)
+            let target = plan.targetPage(now: now)
+            Button { showKhatmahGoal = true } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("KHATMAH PLAN")
+                            .font(.system(size: 12, weight: .semibold))
+                            .tracking(0.8)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                        Spacer()
+                        Text(verbatim: isArabicUI
+                             ? "اليوم \(plan.dayNumber(now: now).arabicIndic) من \(plan.goalDays.arabicIndic)"
+                             : "Day \(plan.dayNumber(now: now)) of \(plan.goalDays)")
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.accentGold)
+                    }
+                    if plan.isFinished(currentPage: khatmahMaxPage) {
+                        Text(isArabicUI ? "ما شاء الله، أتممت الختمة 🎉" : "Masha'Allah — khatmah complete 🎉")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                    } else if left == 0 {
+                        Text(isArabicUI ? "أنجزت وِرد اليوم، تقبّل الله" : "Today's portion done — may Allah accept")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                    } else {
+                        Text(verbatim: isArabicUI
+                             ? "اقرأ إلى صفحة \(target.arabicIndic) · بقيت \(left.arabicIndic) صفحات اليوم"
+                             : "Read to page \(target) · \(left) pages left today")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        if behind > 0 {
+                            Text(verbatim: isArabicUI
+                                 ? "متأخر بـ \(behind.arabicIndic) صفحات عن الخطة"
+                                 : "\(behind) pages behind schedule")
+                                .font(NoorFont.caption)
+                                .foregroundStyle(NoorColor.accentGold)
+                        }
+                    }
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(NoorColor.inkPrimary.opacity(0.07))
+                            Capsule().fill(NoorColor.accentPrimary)
+                                .frame(width: geometry.size.width * CGFloat(min(khatmahMaxPage, 604)) / 604)
+                        }
+                    }
+                    .frame(height: 5)
+                }
+                .padding(16)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .noorCard()
+        } else {
+            Button { showKhatmahGoal = true } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "flag.checkered")
+                        .font(.system(size: 15))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                    Text("Start a khatmah plan")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                    Spacer()
+                    Image(systemName: "chevron.forward")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(NoorColor.inkSecondary.opacity(0.6))
+                }
+                .padding(16)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .noorCard()
+        }
+    }
+
     private var continueReadingCard: some View {
         let surah = (try? database.allSurahs().first { $0.id == lastSurah }) ?? nil
         return Button(action: openReader) {
@@ -519,5 +609,98 @@ struct EventDetailSheet: View {
                     .presentationDetents([.medium, .large])
             }
         }
+    }
+}
+
+
+/// Choose the khatmah duration; shows the resulting daily portion live.
+struct KhatmahGoalSheet: View {
+    let currentPage: Int
+    var onChanged: () -> Void
+    @State private var days = 30
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
+
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
+    private var pagesPerDay: Int {
+        Int((Double(KhatmahPlan.totalPages - min(currentPage, 603)) / Double(days)).rounded(.up))
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Finish the Quran in")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(NoorColor.inkSecondary)
+                HStack(spacing: 8) {
+                    ForEach([15, 30, 60, 90], id: \.self) { preset in
+                        Button {
+                            days = preset
+                        } label: {
+                            Text(verbatim: isArabicUI ? preset.arabicIndic : "\(preset)")
+                                .font(.system(size: 15, weight: .semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(days == preset ? NoorColor.accentPrimary : NoorColor.bgElevated))
+                                .foregroundStyle(days == preset ? NoorColor.bgPrimary : NoorColor.inkPrimary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                Stepper(value: $days, in: 3...365) {
+                    Text(verbatim: isArabicUI ? "\(days.arabicIndic) يومًا" : "\(days) days")
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                Text(verbatim: isArabicUI
+                     ? "وِردك اليومي: نحو \(pagesPerDay.arabicIndic) صفحات"
+                     : "Daily portion: about \(pagesPerDay) pages")
+                    .font(.system(size: 14))
+                    .foregroundStyle(NoorColor.accentGold)
+                Button {
+                    KhatmahPlan.start(days: days, currentPage: currentPage)
+                    onChanged()
+                    dismiss()
+                } label: {
+                    Text("Start plan")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(NoorColor.bgPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(RoundedRectangle(cornerRadius: 14).fill(NoorColor.accentPrimary))
+                }
+                .buttonStyle(.plain)
+                if KhatmahPlan.load() != nil {
+                    Button {
+                        KhatmahPlan.clear()
+                        onChanged()
+                        dismiss()
+                    } label: {
+                        Text("Stop plan")
+                            .font(.system(size: 15))
+                            .foregroundStyle(.red.opacity(0.85))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.plain)
+                }
+                Spacer()
+            }
+            .padding(20)
+            .background(NoorColor.bgPrimary)
+            .navigationTitle(Text("KHATMAH PLAN"))
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .onAppear {
+                if let plan = KhatmahPlan.load() { days = plan.goalDays }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }
