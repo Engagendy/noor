@@ -383,6 +383,16 @@
         }
       }
     },
+    "Facing the qibla": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أنت باتجاه القبلة"
+          }
+        }
+      }
+    },
     "Fajr": {
       "extractionState": "stale",
       "localizations": {
@@ -1121,6 +1131,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "اليوم"
+          }
+        }
+      }
+    },
+    "Turn until the arrow points up": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "در حتى يشير السهم إلى الأعلى"
           }
         }
       }
