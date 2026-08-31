@@ -224,13 +224,6 @@ public struct SurahReaderView: View {
                     }
                 }
                 tappableFlow(page)
-                if mode == .mushaf, let selected = selectedAyah,
-                   let verse = page.verses.first(where: { $0.ayah == selected }) {
-                    actionChips(for: verse)
-                        .padding(.top, 4)
-                        .environment(\.layoutDirection, .leftToRight)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                }
                 HStack(spacing: 10) {
                     Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
                     Text(page.page.arabicIndic)
@@ -266,15 +259,62 @@ public struct SurahReaderView: View {
                             .fill(isSelected ? NoorColor.stateReciting : Color.clear)
                     )
                     .contentShape(Rectangle())
+                    // Tap = subtle select; long-press = context menu (design 6.2).
                     .onTapGesture {
                         withAnimation(.easeInOut(duration: 0.25)) {
                             selectedAyah = isSelected ? nil : item.ayah
+                        }
+                    }
+                    .contextMenu {
+                        if let verse = page.verses.first(where: { $0.ayah == item.ayah }) {
+                            contextActions(for: verse)
                         }
                     }
             }
         }
         .environment(\.layoutDirection, .leftToRight)  // layout places RTL itself
         .frame(maxWidth: .infinity)
+    }
+
+    /// Long-press context menu actions for one ayah.
+    @ViewBuilder
+    private func contextActions(for verse: Verse) -> some View {
+        if player != nil {
+            Button {
+                startPlayback(from: verse.ayah)
+            } label: {
+                Label("Play from here", systemImage: "play.fill")
+            }
+        }
+        Button {
+            tafsirVerse = verse
+        } label: {
+            Label("Tafsir", systemImage: "book")
+        }
+        if let onToggleBookmark {
+            Button {
+                onToggleBookmark(verse.ayah)
+            } label: {
+                Label("Bookmark",
+                      systemImage: bookmarkedAyat.contains(verse.ayah) ? "bookmark.fill" : "bookmark")
+            }
+        }
+        Button {
+            shareVerse = verse
+        } label: {
+            Label("Share", systemImage: "square.and.arrow.up")
+        }
+        Button {
+            let text = "\(verse.text) \u{2067}﴿\(verse.ayah.arabicIndic)﴾\u{2069} — \(verse.surahId):\(verse.ayah)"
+            #if os(iOS)
+            UIPasteboard.general.string = text
+            #else
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text, forType: .string)
+            #endif
+        } label: {
+            Label("Copy", systemImage: "doc.on.doc")
+        }
     }
 
     // MARK: Ayah mode — lazy vertical list
@@ -333,7 +373,7 @@ public struct SurahReaderView: View {
             } else {
                 (Text(verse.text)
                     + sajda
-                    + Text(verbatim: "  ﴿\(verse.ayah.arabicIndic)﴾")
+                    + Text(verbatim: "  \u{2067}﴿\(verse.ayah.arabicIndic)﴾\u{2069}")
                         .font(NoorFont.quran(size: liveFontSize * 0.62))
                         .foregroundStyle(NoorColor.accentGold))
                     .font(NoorFont.quran(size: liveFontSize))
@@ -351,9 +391,6 @@ public struct SurahReaderView: View {
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            if isSelected {
-                actionChips(for: verse)
-            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -367,45 +404,10 @@ public struct SurahReaderView: View {
                 selectedAyah = isSelected ? nil : verse.ayah
             }
         }
+        .contextMenu { contextActions(for: verse) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Ayah \(verse.ayah)")
         .accessibilityValue(verse.text)
-    }
-
-    /// Bookmark arrives with the Library module; the rest are live.
-    private func actionChips(for verse: Verse) -> some View {
-        HStack(spacing: 6) {
-            Button {
-                startPlayback(from: verse.ayah)
-            } label: {
-                Label("Play from here", systemImage: "play.fill")
-                    .chipStyle(filled: true)
-            }
-            .buttonStyle(.plain)
-            .disabled(player == nil)
-            Button {
-                tafsirVerse = verse
-            } label: {
-                Text("Tafsir").chipStyle()
-            }
-            .buttonStyle(.plain)
-            Button {
-                shareVerse = verse
-            } label: {
-                Label("Share", systemImage: "square.and.arrow.up").chipStyle()
-            }
-            .buttonStyle(.plain)
-            if let onToggleBookmark {
-                Button {
-                    onToggleBookmark(verse.ayah)
-                } label: {
-                    Label("Bookmark",
-                          systemImage: bookmarkedAyat.contains(verse.ayah) ? "bookmark.fill" : "bookmark")
-                        .chipStyle()
-                }
-                .buttonStyle(.plain)
-            }
-        }
     }
 
     private func startPlayback(from ayah: Int) {

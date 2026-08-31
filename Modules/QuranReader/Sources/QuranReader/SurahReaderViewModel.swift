@@ -91,7 +91,8 @@ public final class SurahReaderViewModel {
             if sajdaAyat.contains(verse.ayah) {
                 add(verse.ayah, "۩", .sajda)
             }
-            add(verse.ayah, "﴿\(verse.ayah.arabicIndic)﴾", .marker)
+            // RLI…PDI isolate keeps the ornate braces in mushaf order.
+            add(verse.ayah, "\u{2067}﴿\(verse.ayah.arabicIndic)﴾\u{2069}", .marker)
         }
         flowCache[page.page] = items
         return items
