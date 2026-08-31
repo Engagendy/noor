@@ -20,7 +20,7 @@ struct RootView: View {
             case .loading:
                 NoorColor.bgPrimary.ignoresSafeArea()
             case .ready(let database):
-                SurahReaderView(database: database, surahId: 1)
+                MainTabView(database: database)
             case .failed(let message):
                 ContentUnavailableView(
                     "Content unavailable",
