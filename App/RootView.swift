@@ -54,16 +54,25 @@ struct RootView: View {
         .environment(\.layoutDirection, effectiveDirection)
         .preferredColorScheme(theme == "light" ? .light : theme == "dark" ? .dark : nil)
         .task {
+            let start = ContinuousClock.now
             do {
                 let database = try QuranDatabase()
-                try database.verifyIntegrity()
+                // Off the main thread — a blocked main thread freezes the
+                // splash animation mid-draw.
+                try await Task.detached(priority: .userInitiated) {
+                    try database.verifyIntegrity()
+                }.value
                 state = .ready(database)
             } catch {
                 state = .failed("The bundled Quran database failed verification: \(error)")
             }
-            // Let the intro breathe, then reveal the app (calm fade, §5).
-            try? await Task.sleep(for: .seconds(1.9))
-            withAnimation(.easeInOut(duration: 0.45)) { showSplash = false }
+            // Guarantee the intro a full animation window (calm fade, §5).
+            let elapsed = start.duration(to: .now)
+            let remaining = .seconds(2.2) - elapsed
+            if remaining > .zero {
+                try? await Task.sleep(for: remaining)
+            }
+            withAnimation(.easeInOut(duration: 0.5)) { showSplash = false }
         }
     }
 }
