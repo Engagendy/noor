@@ -39,6 +39,7 @@ public struct SurahListView: View {
     @State private var searchText = ""
     @State private var tab: IndexTab = .surah
     @Environment(\.locale) private var locale
+    @Environment(\.dismissSearch) private var dismissSearch
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
@@ -82,6 +83,8 @@ public struct SurahListView: View {
                 List(selection: $selection) {
                     ForEach(filtered) { surah in
                         Button {
+                            dismissSearch()
+                            searchText = ""
                             openReference(surah.id, nil)
                         } label: {
                             SurahRow(surah: surah)
@@ -97,6 +100,10 @@ public struct SurahListView: View {
                         Section(header: Text("Ayat").foregroundStyle(NoorColor.inkSecondary)) {
                             ForEach(hits) { hit in
                                 Button {
+                                    // Close the search first — otherwise its
+                                    // cancel button lingers over the reader.
+                                    dismissSearch()
+                                    searchText = ""
                                     openReference(hit.surahId, hit.ayah)
                                 } label: {
                                     // Inside forced RTL, .leading == the
