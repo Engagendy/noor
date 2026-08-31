@@ -519,6 +519,28 @@ public struct SurahReaderView: View {
 
     private var readerMenu: some View {
         Menu {
+            // Menus are presentations — re-apply the app's direction.
+            menuContent
+                .environment(\.layoutDirection, appDirection)
+        } label: {
+            Text(verbatim: "Aa")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(NoorColor.accentPrimary)
+        }
+        .accessibilityLabel("Reader options")
+        .onChange(of: showTranslation) { _, enabled in
+            if enabled {
+                modeRaw = DisplayMode.ayah.rawValue
+                Task { await translations?.download() }
+            }
+        }
+        .onChange(of: wordByWord) { _, enabled in
+            if enabled { modeRaw = DisplayMode.ayah.rawValue }
+        }
+    }
+
+    @ViewBuilder
+    private var menuContent: some View {
             Picker(selection: $modeRaw) {
                 Text("Mushaf (continuous)").tag(DisplayMode.mushaf.rawValue)
                 if layout != nil {
@@ -572,21 +594,6 @@ public struct SurahReaderView: View {
                 Label("Smaller", systemImage: "minus")
             }
             Button("Reset") { quranFontSize = 26 }
-        } label: {
-            Text(verbatim: "Aa")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(NoorColor.accentPrimary)
-        }
-        .accessibilityLabel("Reader options")
-        .onChange(of: showTranslation) { _, enabled in
-            if enabled {
-                modeRaw = DisplayMode.ayah.rawValue
-                Task { await translations?.download() }
-            }
-        }
-        .onChange(of: wordByWord) { _, enabled in
-            if enabled { modeRaw = DisplayMode.ayah.rawValue }
-        }
     }
 }
 

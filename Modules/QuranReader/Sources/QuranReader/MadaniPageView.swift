@@ -47,7 +47,9 @@ struct MadaniPageView: View {
                                     .frame(maxWidth: .infinity)
                                     .frame(height: rowHeight)
                             case .words:
-                                Text(verbatim: line.glyphsV2.isEmpty ? line.glyphs : line.glyphsV2)
+                                // RLI…PDI: hard right-to-left, immune to
+                                // bidi mis-segmentation of ligature codes.
+                                Text(verbatim: "\u{2067}" + (line.glyphsV2.isEmpty ? line.glyphs : line.glyphsV2) + "\u{2069}")
                                     .font(.custom(PageFontStore.fontName(page: page), size: fontSize))
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.5)
