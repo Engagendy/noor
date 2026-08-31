@@ -66,6 +66,10 @@ public struct SurahReaderView: View {
         // Position the pager before the first frame — no page-1 flash.
         _currentPage = State(initialValue: SurahReaderViewModel.initialPage(
             database: database, surahId: surahId, ayah: scrollToAyah))
+        // Arriving at a specific ayah (search/juz/bookmark): highlight it.
+        if let ayah = scrollToAyah {
+            _selectedKey = State(initialValue: surahId * 1000 + ayah)
+        }
     }
 
     private var mode: DisplayMode { DisplayMode(rawValue: modeRaw) ?? .mushaf }
@@ -185,10 +189,15 @@ public struct SurahReaderView: View {
                     dismiss()
                 } label: {
                     Image(systemName: "chevron.backward")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(NoorColor.accentPrimary)
-                        .frame(width: 40, height: 40)
-                        .contentShape(Rectangle())
+                        .frame(width: 38, height: 38)
+                        .background(
+                            Circle()
+                                .fill(NoorColor.bgElevated)
+                                .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
+                        )
+                        .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Back")
