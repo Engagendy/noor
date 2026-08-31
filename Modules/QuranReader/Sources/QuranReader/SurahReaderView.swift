@@ -27,6 +27,10 @@ public struct SurahReaderView: View {
     @State private var tafsirVerse: Verse?
     @State private var shareVerse: Verse?
     @State private var actionsPage: SurahReaderViewModel.PageGroup?
+    /// Chrome-less by default after a moment (design 6.2): tap background
+    /// to toggle bars; a minimal surah·time·juz header remains.
+    @State private var chromeVisible = true
+    @State private var didAutoHide = false
     @State private var downloader = SurahDownloader()
     @GestureState private var pinchScale: CGFloat = 1
     @Environment(\.locale) private var locale
@@ -83,6 +87,13 @@ public struct SurahReaderView: View {
         }
         .environment(\.layoutDirection, .rightToLeft)
         .background(NoorColor.bgPrimary)
+        .onTapGesture {
+            // Fires only when no word/ayah consumed the tap.
+            withAnimation(.easeInOut(duration: 0.3)) { chromeVisible.toggle() }
+        }
+        .overlay(alignment: .top) {
+            if !chromeVisible { miniHeader }
+        }
         .overlay(alignment: .bottom) {
             if let player {
                 AudioPillView(player: player)
@@ -90,9 +101,19 @@ public struct SurahReaderView: View {
                     .padding(.bottom, 8)
             }
         }
+        #if os(iOS)
+        .toolbar(chromeVisible ? .visible : .hidden, for: .navigationBar)
+        .toolbar(chromeVisible ? .visible : .hidden, for: .tabBar)
+        .statusBarHidden(!chromeVisible)
+        #endif
         .simultaneousGesture(pinch)
         .task {
             viewModel.load()
+            if !didAutoHide {
+                didAutoHide = true
+                try? await Task.sleep(for: .seconds(2.5))
+                withAnimation(.easeInOut(duration: 0.35)) { chromeVisible = false }
+            }
             if let ayah = scrollToAyah, let page = viewModel.page(containing: ayah) {
                 currentPage = page
             } else {
@@ -167,6 +188,30 @@ public struct SurahReaderView: View {
         }
     }
 
+    /// Whisper-thin header while chrome is hidden: surah · time · juz/page.
+    private var miniHeader: some View {
+        TimelineView(.everyMinute) { context in
+            HStack {
+                Text(viewModel.surah?.displayName(arabicUI: true) ?? "")
+                    .font(NoorFont.quran(size: 15))
+                Spacer()
+                Text(context.date, format: .dateTime.hour().minute())
+                    .font(.system(size: 12).monospacedDigit())
+                Spacer()
+                Text(mode != .ayah && currentPage > 0
+                     ? "Juz \(viewModel.juz) · Page \(currentPage)"
+                     : "Juz \(viewModel.juz)")
+                    .font(.system(size: 12))
+            }
+            .foregroundStyle(NoorColor.inkSecondary)
+            .padding(.horizontal, 16)
+            .padding(.top, 6)
+            .padding(.bottom, 8)
+            .background(NoorColor.bgPrimary.opacity(0.9))
+        }
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+
     // MARK: Madani page mode — pixel-faithful QCF pages
 
     private var madaniPager: some View {
@@ -234,8 +279,8 @@ public struct SurahReaderView: View {
                 .padding(.top, 10)
                 .accessibilityLabel("Page \(page.page)")
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 24)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 18)
             .padding(.bottom, player?.current != nil ? 72 : 0)
         }
     }

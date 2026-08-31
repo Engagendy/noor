@@ -17,7 +17,7 @@ struct MadaniPageView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let fontSize = geometry.size.width / 10.5
+            let fontSize = geometry.size.width / 9.8
             Group {
                 if fontReady && !lines.isEmpty {
                     VStack(spacing: fontSize * 0.42) {
@@ -32,7 +32,7 @@ struct MadaniPageView: View {
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 4)
                 } else if fontFailed {
                     ContentUnavailableView {
                         Label("Page font unavailable", systemImage: "wifi.slash")
