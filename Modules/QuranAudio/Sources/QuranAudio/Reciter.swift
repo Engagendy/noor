@@ -21,6 +21,18 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
     case tablawi
     case abdulBasitMujawwad
     case minshawiMujawwad
+    case salamah
+    case qatami
+    case faresAbbad
+    case ajamy
+    case muhsinQasim
+    case juhany
+    case bukhatir
+    case budair
+    case aliJaber
+    case banna
+    case matroud
+    case abdulKareem
 
     public var id: String { rawValue }
 
@@ -45,6 +57,18 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .tablawi: "Mohammad At-Tablawi"
         case .abdulBasitMujawwad: "Abdul Basit (Mujawwad)"
         case .minshawiMujawwad: "Al-Minshawi (Mujawwad)"
+        case .salamah: "Yaser Salamah"
+        case .qatami: "Nasser Al-Qatami"
+        case .faresAbbad: "Fares Abbad"
+        case .ajamy: "Ahmed Al-Ajmi"
+        case .muhsinQasim: "Muhsin Al-Qasim"
+        case .juhany: "Abdullah Al-Juhany"
+        case .bukhatir: "Salah Bukhatir"
+        case .budair: "Salah Al-Budair"
+        case .aliJaber: "Ali Jaber"
+        case .banna: "Mahmoud Ali Al-Banna"
+        case .matroud: "Abdullah Al-Matroud"
+        case .abdulKareem: "Muhammad Abdul-Kareem"
         }
     }
 
@@ -69,6 +93,18 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .tablawi: "محمد الطبلاوي"
         case .abdulBasitMujawwad: "عبد الباسط (مجوّد)"
         case .minshawiMujawwad: "المنشاوي (مجوّد)"
+        case .salamah: "ياسر سلامة"
+        case .qatami: "ناصر القطامي"
+        case .faresAbbad: "فارس عباد"
+        case .ajamy: "أحمد العجمي"
+        case .muhsinQasim: "محسن القاسم"
+        case .juhany: "عبد الله الجهني"
+        case .bukhatir: "صلاح بوخاطر"
+        case .budair: "صلاح البدير"
+        case .aliJaber: "علي جابر"
+        case .banna: "محمود علي البنا"
+        case .matroud: "عبد الله المطرود"
+        case .abdulKareem: "محمد عبد الكريم"
         }
     }
 
@@ -102,6 +138,20 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .tablawi: "Mohammad_al_Tablaway_128kbps"
         case .abdulBasitMujawwad: "Abdul_Basit_Mujawwad_128kbps"
         case .minshawiMujawwad: "Minshawy_Mujawwad_192kbps"
+        // Below: verified on everyayah.com 2026-08-31; salamah also on the
+        // mirror. The rest rely on the local cache once played.
+        case .salamah: "Yaser_Salamah_128kbps"
+        case .qatami: "Nasser_Alqatami_128kbps"
+        case .faresAbbad: "Fares_Abbad_64kbps"
+        case .ajamy: "Ahmed_ibn_Ali_al-Ajamy_64kbps_QuranExplorer.Com"
+        case .muhsinQasim: "Muhsin_Al_Qasim_192kbps"
+        case .juhany: "Abdullaah_3awwaad_Al-Juhaynee_128kbps"
+        case .bukhatir: "Salaah_AbdulRahman_Bukhatir_128kbps"
+        case .budair: "Salah_Al_Budair_128kbps"
+        case .aliJaber: "Ali_Jaber_64kbps"
+        case .banna: "mahmoud_ali_al_banna_32kbps"
+        case .matroud: "Abdullah_Matroud_128kbps"
+        case .abdulKareem: "Muhammad_AbdulKareem_128kbps"
         }
     }
 

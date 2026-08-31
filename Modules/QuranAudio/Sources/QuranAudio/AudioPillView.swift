@@ -96,7 +96,11 @@ public struct AudioPillView: View {
             // The pill itself is forced LTR (control order), so derive the
             // sheets' direction from the UI language, not the inherited env.
             .sheet(isPresented: $showReciterPicker) {
-                ReciterPickerSheet(player: player, isArabicUI: isArabicUI)
+                ReciterPickerSheet(
+                    selection: Binding(
+                        get: { player.reciter.rawValue },
+                        set: { player.reciter = Reciter(rawValue: $0) ?? .alafasy }),
+                    isArabicUI: isArabicUI)
                     .environment(\.locale, locale)
                     .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
             }
@@ -111,11 +115,16 @@ public struct AudioPillView: View {
 
 /// RTL-correct reciter list (sheets don't inherit layoutDirection; the
 /// presenter re-applies it).
-struct ReciterPickerSheet: View {
-    @Bindable var player: QuranAudioPlayer
+public struct ReciterPickerSheet: View {
+    @Binding var selection: String
     let isArabicUI: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
+
+    public init(selection: Binding<String>, isArabicUI: Bool) {
+        _selection = selection
+        self.isArabicUI = isArabicUI
+    }
 
     private var filtered: [Reciter] {
         let query = searchText.trimmingCharacters(in: .whitespaces)
@@ -126,19 +135,19 @@ struct ReciterPickerSheet: View {
         }
     }
 
-    var body: some View {
+    public var body: some View {
         NavigationStack {
             List(filtered) { reciter in
                 Button {
-                    player.reciter = reciter
+                    selection = reciter.rawValue
                     dismiss()
                 } label: {
                     HStack(spacing: 12) {
                         Text(verbatim: reciter.displayName(arabicUI: isArabicUI))
-                            .font(.system(size: 16, weight: player.reciter == reciter ? .semibold : .regular))
+                            .font(.system(size: 16, weight: selection == reciter.rawValue ? .semibold : .regular))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        if player.reciter == reciter {
+                        if selection == reciter.rawValue {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(NoorColor.accentPrimary)
@@ -163,6 +172,8 @@ struct ReciterPickerSheet: View {
                     }
                     .textFieldStyle(.plain)
                     .font(.system(size: 15))
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     if !searchText.isEmpty {
                         Button {
                             searchText = ""

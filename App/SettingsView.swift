@@ -13,6 +13,7 @@ struct SettingsView: View {
     @AppStorage("reader.fontSize") private var quranFontSize = 26.0
     @AppStorage("reader.mode") private var readerMode = "mushaf"
     @AppStorage("audio.reciter") private var reciterRaw = Reciter.alafasy.rawValue
+    @State private var showReciterPicker = false
     @AppStorage("notifications.enabled") private var notificationsEnabled = false
     @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanShort.rawValue
     @Environment(\.locale) private var locale
@@ -73,12 +74,26 @@ struct SettingsView: View {
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
-                Picker(selection: $reciterRaw) {
-                    ForEach(Reciter.allCases) { reciter in
-                        Text(verbatim: reciter.displayName(arabicUI: isArabicUI)).tag(reciter.rawValue)
-                    }
+                Button {
+                    showReciterPicker = true
                 } label: {
-                    Text("Reciter")
+                    HStack {
+                        Text("Reciter")
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Spacer()
+                        Text(verbatim: (Reciter(rawValue: reciterRaw) ?? .alafasy).displayName(arabicUI: isArabicUI))
+                            .foregroundStyle(NoorColor.inkSecondary)
+                        Image(systemName: "chevron.forward")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkSecondary.opacity(0.6))
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .sheet(isPresented: $showReciterPicker) {
+                    ReciterPickerSheet(selection: $reciterRaw, isArabicUI: isArabicUI)
+                        .environment(\.locale, locale)
+                        .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
                 }
                 NavigationLink {
                     TajweedGuideView()
