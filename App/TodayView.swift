@@ -210,9 +210,9 @@ struct TodayView: View {
                         shareItem = .dhikr(dhikr)
                     } label: {
                         Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 14))
+                            .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(NoorColor.accentPrimary)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 40, height: 40)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.borderless)
@@ -330,9 +330,9 @@ struct TodayView: View {
                         shareItem = .event(events[0])
                     } label: {
                         Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 14))
+                            .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(NoorColor.accentPrimary)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 40, height: 40)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.borderless)
@@ -654,9 +654,9 @@ struct TodayView: View {
                         shareItem = .ayah(daily.verse, daily.surah)
                     } label: {
                         Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 14))
+                            .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(NoorColor.accentPrimary)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 40, height: 40)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.borderless)
