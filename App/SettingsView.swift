@@ -108,15 +108,9 @@ struct SettingsView: View {
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
         .navigationTitle(Text("Settings"))
-        .onChange(of: language) { _, newValue in
-            // Keep system-level strings in sync for the next cold launch;
-            // the UI itself switches immediately via RootView's locale.
-            switch newValue {
-            case "system": UserDefaults.standard.removeObject(forKey: "AppleLanguages")
-            case "ar": UserDefaults.standard.set(["ar"], forKey: "AppleLanguages")
-            default: UserDefaults.standard.set(["en"], forKey: "AppleLanguages")
-            }
-        }
+        // Language is applied entirely via the SwiftUI environment in
+        // RootView. Never touch AppleLanguages: a process launched in one
+        // direction with the environment forcing the other renders mirrored.
     }
 }
 

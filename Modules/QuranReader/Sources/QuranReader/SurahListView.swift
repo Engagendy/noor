@@ -29,7 +29,7 @@ public struct SurahListView: View {
     let structure: QuranStructure?
     @Binding var selection: Int?
     /// Opens the reader at an exact reference (Juz tab + word search).
-    let openReference: (_ surahId: Int, _ ayah: Int) -> Void
+    let openReference: (_ surahId: Int, _ ayah: Int?) -> Void
     /// Word search over the Quran text (diacritic-insensitive).
     let searchVerses: (_ query: String) -> [SearchHit]
     /// Saved bookmarks (provided by the app layer from the Library store).
@@ -46,7 +46,7 @@ public struct SurahListView: View {
         surahs: [Surah],
         structure: QuranStructure?,
         selection: Binding<Int?>,
-        openReference: @escaping (_ surahId: Int, _ ayah: Int) -> Void,
+        openReference: @escaping (_ surahId: Int, _ ayah: Int?) -> Void,
         searchVerses: @escaping (_ query: String) -> [SearchHit] = { _ in [] },
         bookmarks: [BookmarkRef] = [],
         onRemoveBookmark: ((BookmarkRef) -> Void)? = nil
@@ -81,9 +81,15 @@ public struct SurahListView: View {
             case .surah:
                 List(selection: $selection) {
                     ForEach(filtered) { surah in
-                        SurahRow(surah: surah)
-                            .tag(surah.id)
-                            .listRowBackground(Color.clear)
+                        Button {
+                            openReference(surah.id, nil)
+                        } label: {
+                            SurahRow(surah: surah)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.borderless)
+                        .tag(surah.id)
+                        .listRowBackground(Color.clear)
                     }
                     // Word search: matching ayat below the surah matches.
                     let hits = searchText.count >= 2 ? searchVerses(searchText) : []

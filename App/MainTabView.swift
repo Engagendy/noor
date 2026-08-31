@@ -113,7 +113,15 @@ struct MainTabView: View {
     }
 }
 
-/// Two-pane on iPad/Mac, stacked on iPhone (plan §5 Phase 1).
+/// Reader destination: a surah, optionally scrolled to an ayah.
+struct ReaderTarget: Identifiable, Hashable {
+    let surahId: Int
+    let ayah: Int?
+    var id: String { "\(surahId)-\(ayah ?? 0)" }
+}
+
+/// Two-pane on iPad/Mac; explicit push navigation on iPhone (programmatic
+/// List selection does not reliably push in a collapsed split view).
 struct QuranTab: View {
     let database: QuranDatabase
     let player: QuranAudioPlayer
@@ -123,65 +131,88 @@ struct QuranTab: View {
     @State private var surahs: [Surah] = []
     @State private var structure: QuranStructure?
     @State private var pageLayout = try? PageLayoutDatabase()
-    // Last-read position survives relaunch. (Full SwiftData bookmarks/khatmah
-    // come with the Library module.)
     @AppStorage("reader.lastSurah") private var lastSurah = 1
     @State private var selection: Int?
     @State private var targetAyah: Int?
+    @State private var compactPath: [ReaderTarget] = []
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    #endif
 
-    /// Picking from the surah list clears any pending ayah target; the Juz
-    /// tab sets its target before writing selection directly.
-    private var listSelection: Binding<Int?> {
-        Binding(
-            get: { selection },
-            set: { newValue in
-                targetAyah = nil
-                selection = newValue
+    private func open(_ surahId: Int, _ ayah: Int?) {
+        lastSurah = surahId
+        targetAyah = ayah
+        selection = surahId
+        compactPath = [ReaderTarget(surahId: surahId, ayah: ayah)]
+    }
+
+    private var listView: some View {
+        SurahListView(
+            surahs: surahs,
+            structure: structure,
+            selection: $selection,
+            openReference: open,
+            searchVerses: { query in
+                (try? database.searchVerses(query)) ?? []
+            },
+            bookmarks: (library?.bookmarks ?? []).map {
+                BookmarkRef(surahId: $0.surahId, ayah: $0.ayah, createdAt: $0.createdAt)
+            },
+            onRemoveBookmark: { ref in
+                library?.remove(BookmarkItem(surahId: ref.surahId, ayah: ref.ayah, createdAt: ref.createdAt))
             })
     }
 
+    private func reader(surahId: Int, ayah: Int?) -> some View {
+        SurahReaderView(
+            database: database,
+            surahId: surahId,
+            scrollToAyah: ayah,
+            player: player,
+            translations: translations,
+            layout: pageLayout,
+            bookmarkedAyat: Set((library?.bookmarks ?? [])
+                .filter { $0.surahId == surahId }.map(\.ayah)),
+            onToggleBookmark: { toggled in
+                library?.toggle(surahId: surahId, ayah: toggled)
+            })
+            .id("\(surahId)-\(ayah ?? 0)")
+    }
+
     var body: some View {
-        NavigationSplitView {
-            SurahListView(
-                surahs: surahs,
-                structure: structure,
-                selection: listSelection,
-                openReference: { surahId, ayah in
-                    targetAyah = ayah
-                    selection = surahId
-                },
-                searchVerses: { query in
-                    (try? database.searchVerses(query)) ?? []
-                },
-                bookmarks: (library?.bookmarks ?? []).map {
-                    BookmarkRef(surahId: $0.surahId, ayah: $0.ayah, createdAt: $0.createdAt)
-                },
-                onRemoveBookmark: { ref in
-                    library?.remove(BookmarkItem(surahId: ref.surahId, ayah: ref.ayah, createdAt: ref.createdAt))
-                })
-        } detail: {
-            if let selection {
-                SurahReaderView(
-                    database: database,
-                    surahId: selection,
-                    scrollToAyah: targetAyah,
-                    player: player,
-                    translations: translations,
-                    layout: pageLayout,
-                    bookmarkedAyat: Set((library?.bookmarks ?? [])
-                        .filter { $0.surahId == selection }.map(\.ayah)),
-                    onToggleBookmark: { ayah in
-                        library?.toggle(surahId: selection, ayah: ayah)
-                    })
-                    .id("\(selection)-\(targetAyah ?? 0)")
+        Group {
+            #if os(iOS)
+            if sizeClass == .compact {
+                NavigationStack(path: $compactPath) {
+                    listView
+                        .navigationDestination(for: ReaderTarget.self) { target in
+                            reader(surahId: target.surahId, ayah: target.ayah)
+                        }
+                }
+            } else {
+                splitView
             }
+            #else
+            splitView
+            #endif
         }
         .onAppear {
             surahs = (try? database.allSurahs()) ?? []
             structure = try? database.structure()
             if selection == nil { selection = lastSurah }
         }
+    }
+
+    private var splitView: some View {
+        NavigationSplitView {
+            listView
+        } detail: {
+            if let selection {
+                reader(surahId: selection, ayah: targetAyah)
+            }
+        }
         .onChange(of: selection) { _, new in
+            // Sidebar taps on iPad write the binding directly.
             if let new { lastSurah = new }
         }
     }

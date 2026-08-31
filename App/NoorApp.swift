@@ -6,6 +6,9 @@ import SwiftUI
 struct NoorApp: App {
     init() {
         FontRegistrar.registerQuranFont()
+        // Migration: we briefly wrote AppleLanguages for in-app language;
+        // that mirrors rendering when it disagrees with the environment.
+        UserDefaults.standard.removeObject(forKey: "AppleLanguages")
     }
 
     var body: some Scene {

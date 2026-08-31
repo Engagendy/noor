@@ -30,7 +30,7 @@ rows = []
 for page in range(1, 605):
     url = (f"https://api.qurancdn.com/api/qdc/verses/by_page/{page}"
            "?words=true&per_page=50"
-           "&word_fields=code_v1,line_number,text_uthmani"
+           "&word_fields=code_v1,code_v2,line_number,text_uthmani"
            "&fields=verse_key")
     data = fetch(url)
     assert data.get("pagination", {}).get("next_page") is None, f"page {page} paginated"
@@ -39,7 +39,8 @@ for page in range(1, 605):
         for w in verse["words"]:
             rows.append((
                 page, w["line_number"], surah, ayah, w["position"],
-                w.get("code_v1") or "", w.get("text_uthmani") or "",
+                w.get("code_v1") or "", w.get("code_v2") or "",
+                w.get("text_uthmani") or "",
                 (w.get("translation") or {}).get("text") or "",
                 w.get("char_type_name") or "word",
             ))
@@ -60,6 +61,7 @@ CREATE TABLE page_word (
   ayah INTEGER NOT NULL,
   position INTEGER NOT NULL,
   glyph TEXT NOT NULL,
+  glyph_v2 TEXT NOT NULL,
   text TEXT NOT NULL,
   translation TEXT NOT NULL,
   char_type TEXT NOT NULL
@@ -67,7 +69,7 @@ CREATE TABLE page_word (
 CREATE INDEX idx_page_word_page ON page_word(page, line, surah_id, ayah, position);
 CREATE INDEX idx_page_word_ref ON page_word(surah_id, ayah, position);
 """)
-db.executemany("INSERT INTO page_word VALUES (?,?,?,?,?,?,?,?,?)", rows)
+db.executemany("INSERT INTO page_word VALUES (?,?,?,?,?,?,?,?,?,?)", rows)
 db.commit()
 db.execute("VACUUM")
 db.close()

@@ -2,9 +2,10 @@ import CoreText
 import Foundation
 import Observation
 
-/// Downloads and registers the per-page QCF v1 fonts (KFGQPC, ~42 KB each)
-/// on demand, cached in Application Support — each page is offline after its
-/// first view. Source: mustafa0x/qpc-fonts mirror (see LICENSES.md).
+/// Downloads and registers the per-page QCF v2 fonts (KFGQPC — the exact
+/// printed Madani mushaf typeface, ~600 KB each) on demand, cached in
+/// Application Support — each page is offline after its first view.
+/// Source: mustafa0x/qpc-fonts mirror (see LICENSES.md).
 @Observable
 @MainActor
 public final class PageFontStore {
@@ -15,12 +16,12 @@ public final class PageFontStore {
     public init() {}
 
     public static func fontName(page: Int) -> String {
-        String(format: "AQF_P%03d_HA", page)
+        String(format: "QCF2%03d", page)
     }
 
     private static func localURL(page: Int) -> URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return base.appendingPathComponent("pagefonts/page_\(page).ttf")
+        return base.appendingPathComponent("pagefonts/v2_page_\(page).ttf")
     }
 
     public func isReady(page: Int) -> Bool {
@@ -36,8 +37,8 @@ public final class PageFontStore {
 
         let local = Self.localURL(page: page)
         if !FileManager.default.fileExists(atPath: local.path) {
-            let remote = URL(string:
-                "https://raw.githubusercontent.com/mustafa0x/qpc-fonts/master/mushaf-v1.5/page_\(page).ttf")!
+            let remote = URL(string: String(format:
+                "https://raw.githubusercontent.com/mustafa0x/qpc-fonts/master/mushaf-v2/QCF2%03d.ttf", page))!
             guard let (temp, response) = try? await URLSession.shared.download(from: remote),
                   (response as? HTTPURLResponse)?.statusCode == 200
             else {

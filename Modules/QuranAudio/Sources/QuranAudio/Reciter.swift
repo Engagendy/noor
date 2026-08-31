@@ -64,7 +64,7 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .abdulBasit: "Abdul_Basit_Murattal_192kbps"
         case .ghamdi: "Ghamadi_40kbps"
         case .sudais: "Abdurrahmaan_As-Sudais_192kbps"
-        case .muaiqly: "MaherAlMuaiqly128kbps"
+        case .muaiqly: "Maher_AlMuaiqly_64kbps"
         case .shuraym: "Saood_ash-Shuraym_128kbps"
         case .ayyoub: "Muhammad_Ayyoub_128kbps"
         case .shatri: "Abu_Bakr_Ash-Shaatree_128kbps"
@@ -74,7 +74,17 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
 
     /// Remote URL for one ayah, e.g. .../Alafasy_128kbps/001001.mp3
     public func url(surah: Int, ayah: Int) -> URL {
-        URL(string: "https://everyayah.com/data/\(folder)/\(Self.fileName(surah: surah, ayah: ayah))")!
+        urls(surah: surah, ayah: ayah)[0]
+    }
+
+    /// Candidate sources in order — EveryAyah, then the quranicaudio mirror
+    /// (identical layout). Playback falls through automatically.
+    public func urls(surah: Int, ayah: Int) -> [URL] {
+        let file = "\(folder)/\(Self.fileName(surah: surah, ayah: ayah))"
+        return [
+            URL(string: "https://everyayah.com/data/\(file)")!,
+            URL(string: "https://mirrors.quranicaudio.com/everyayah/\(file)")!,
+        ]
     }
 
     public static func fileName(surah: Int, ayah: Int) -> String {

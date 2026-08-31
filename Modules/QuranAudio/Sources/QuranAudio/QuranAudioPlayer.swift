@@ -121,7 +121,28 @@ public final class QuranAudioPlayer {
 
     private func playAyah(_ reference: Reference) {
         current = reference
-        let url = AudioCache.localOrRemoteURL(reciter: reciter, surah: reference.surah, ayah: reference.ayah)
+        isPlaying = true
+        let reciter = self.reciter
+        let ayahCount = self.ayahCount
+        // Fetch-then-play: tries EveryAyah then the mirror, caches the file
+        // (~50–200 KB), plays locally. Replays are offline automatically.
+        Task { [weak self] in
+            let local = await AudioCache.ensureLocal(
+                reciter: reciter, surah: reference.surah, ayah: reference.ayah)
+            guard let self, self.current == reference else { return }
+            guard let local else {
+                self.stop()  // all sources unreachable and not cached
+                return
+            }
+            self.startPlayer(with: local)
+            if reference.ayah < ayahCount {
+                _ = await AudioCache.ensureLocal(
+                    reciter: reciter, surah: reference.surah, ayah: reference.ayah + 1)
+            }
+        }
+    }
+
+    private func startPlayer(with url: URL) {
         let item = AVPlayerItem(url: url)
         if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
         endObserver = NotificationCenter.default.addObserver(
@@ -137,11 +158,6 @@ public final class QuranAudioPlayer {
         player?.play()
         isPlaying = true
         updateNowPlaying()
-        AudioCache.cacheInBackground(reciter: reciter, surah: reference.surah, ayah: reference.ayah)
-        // Prefetch the next ayah so auto-advance is gapless-ish offline.
-        if reference.ayah < ayahCount {
-            AudioCache.cacheInBackground(reciter: reciter, surah: reference.surah, ayah: reference.ayah + 1)
-        }
     }
 
     private func configureSessionAndCommands() {
@@ -197,23 +213,21 @@ enum AudioCache {
             .appendingPathComponent(Reciter.fileName(surah: surah, ayah: ayah))
     }
 
-    static func localOrRemoteURL(reciter: Reciter, surah: Int, ayah: Int) -> URL {
+    /// Returns a playable local file: the cache if present, else downloads
+    /// from the first reachable source (EveryAyah → mirror) and caches it.
+    static func ensureLocal(reciter: Reciter, surah: Int, ayah: Int) async -> URL? {
         let local = localURL(reciter: reciter, surah: surah, ayah: ayah)
-        return FileManager.default.fileExists(atPath: local.path) ? local
-            : reciter.url(surah: surah, ayah: ayah)
-    }
-
-    static func cacheInBackground(reciter: Reciter, surah: Int, ayah: Int) {
-        let local = localURL(reciter: reciter, surah: surah, ayah: ayah)
-        guard !FileManager.default.fileExists(atPath: local.path) else { return }
-        let remote = reciter.url(surah: surah, ayah: ayah)
-        Task.detached(priority: .utility) {
+        if FileManager.default.fileExists(atPath: local.path) { return local }
+        for remote in reciter.urls(surah: surah, ayah: ayah) {
             guard let (temp, response) = try? await URLSession.shared.download(from: remote),
                   (response as? HTTPURLResponse)?.statusCode == 200
-            else { return }
+            else { continue }
             try? FileManager.default.createDirectory(
                 at: local.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try? FileManager.default.moveItem(at: temp, to: local)
+            try? FileManager.default.removeItem(at: local)
+            guard (try? FileManager.default.moveItem(at: temp, to: local)) != nil else { continue }
+            return local
         }
+        return nil
     }
 }

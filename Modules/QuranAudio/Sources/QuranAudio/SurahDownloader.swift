@@ -56,16 +56,8 @@ public final class SurahDownloader {
     }
 
     private static func fetch(reciter: Reciter, surah: Int, ayah: Int) async throws {
-        let local = AudioCache.localURL(reciter: reciter, surah: surah, ayah: ayah)
-        guard !FileManager.default.fileExists(atPath: local.path) else { return }
-        let (temp, response) = try await URLSession.shared.download(
-            from: reciter.url(surah: surah, ayah: ayah))
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+        guard await AudioCache.ensureLocal(reciter: reciter, surah: surah, ayah: ayah) != nil else {
             throw URLError(.badServerResponse)
         }
-        try FileManager.default.createDirectory(
-            at: local.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try? FileManager.default.removeItem(at: local)
-        try FileManager.default.moveItem(at: temp, to: local)
     }
 }

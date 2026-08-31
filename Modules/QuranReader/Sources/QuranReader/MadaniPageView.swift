@@ -22,7 +22,7 @@ struct MadaniPageView: View {
                 if fontReady && !lines.isEmpty {
                     VStack(spacing: fontSize * 0.42) {
                         ForEach(lines) { line in
-                            Text(verbatim: line.glyphs)
+                            Text(verbatim: line.glyphsV2.isEmpty ? line.glyphs : line.glyphsV2)
                                 .font(.custom(PageFontStore.fontName(page: page), size: fontSize))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.5)

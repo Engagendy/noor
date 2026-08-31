@@ -56,11 +56,12 @@ Attributions are displayed in Settings → About.
 - **Attribution:** "Tafsir texts via the Tafsir API project."
 - **Note:** verify per-tafsir redistribution terms before App Store release.
 
-### QCF v1 page fonts (Madani page mode — downloaded on demand)
-- **Source:** King Fahd Glorious Quran Printing Complex per-page fonts,
-  obtained via the mustafa0x/qpc-fonts mirror (`mushaf-v1.5`, repaired v1
-  TTFs). One ~42 KB font per page, downloaded when a page is first viewed,
-  cached in Application Support.
+### QCF v2 page fonts (Madani page mode — downloaded on demand)
+- **Source:** King Fahd Glorious Quran Printing Complex per-page fonts
+  (`QCF2001–QCF2604`), obtained via the mustafa0x/qpc-fonts mirror
+  (`mushaf-v2`) — the exact typeface of the printed Madani mushaf. One
+  ~600 KB font per page, downloaded when a page is first viewed, cached in
+  Application Support.
 - **Attribution:** "Madani page fonts by King Fahd Glorious Quran Printing
   Complex."
 

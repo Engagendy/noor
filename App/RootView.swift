@@ -48,8 +48,10 @@ struct RootView: View {
                     .zIndex(1)
             }
         }
-        // Live language switch: drive locale + layout direction directly so
-        // no app restart is needed.
+        // Live language switch via environment only (never AppleLanguages —
+        // process/environment direction mismatch mirrors the rendering).
+        // .id forces a full re-layout so the direction flip is immediate.
+        .id(language)
         .environment(\.locale, language == "system" ? .current : Locale(identifier: language))
         .environment(\.layoutDirection, effectiveDirection)
         .preferredColorScheme(theme == "light" ? .light : theme == "dark" ? .dark : nil)
