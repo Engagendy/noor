@@ -16,6 +16,7 @@ struct TodayView: View {
     @State private var athkar: [DhikrCategory] = []
     @State private var hadiths: [HadithItem] = []
     @State private var showHadithList = false
+    @State private var dailyHadithDetail: HadithItem?
     @State private var showHijriCalendar = false
     @State private var cardPage = 0
     private let cardTimer = Timer.publish(every: 12, on: .main, in: .common).autoconnect()
@@ -142,7 +143,7 @@ struct TodayView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 12)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(NoorColor.bgPrimary)
         }
         .task {
@@ -155,8 +156,12 @@ struct TodayView: View {
                 .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
         .sheet(isPresented: $showHadithList) {
-            HadithListView(items: hadiths, isArabicUI: isArabicUI,
-                           initial: HadithStore.daily(from: hadiths, date: Date()))
+            HadithListView(items: hadiths, isArabicUI: isArabicUI)
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+        }
+        .sheet(item: $dailyHadithDetail) { hadith in
+            HadithDetailView(hadith: hadith, isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
                 .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
@@ -254,7 +259,7 @@ struct TodayView: View {
             }
         }
         .padding(16)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .onTapGesture(perform: openAthkar)
@@ -265,8 +270,8 @@ struct TodayView: View {
     @ViewBuilder
     private func dailyHadithCard(now: Date) -> some View {
         if let hadith = HadithStore.daily(from: hadiths, date: now) {
-            Button { showHadithList = true } label: {
-                VStack(alignment: .leading, spacing: 8) {
+            Button { dailyHadithDetail = hadith } label: {
+                VStack(spacing: 10) {
                     HStack {
                         Text("DAILY HADITH")
                             .font(.system(size: 12, weight: .semibold))
@@ -277,6 +282,7 @@ struct TodayView: View {
                             .font(NoorFont.caption)
                             .foregroundStyle(NoorColor.accentGold)
                     }
+                    Spacer(minLength: 0)
                     Text(verbatim: hadith.arabic)
                         .font(.system(size: 16))
                         .foregroundStyle(NoorColor.inkPrimary)
@@ -285,12 +291,16 @@ struct TodayView: View {
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .environment(\.layoutDirection, .rightToLeft)
-                    Text(isArabicUI ? "اقرأ الحديث كاملًا ←" : "Read the full hadith →")
-                        .font(NoorFont.caption)
-                        .foregroundStyle(NoorColor.accentPrimary)
+                    Spacer(minLength: 0)
+                    Text(isArabicUI ? "اقرأ الحديث كاملًا" : "Read the full hadith")
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(NoorColor.bgPrimary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(NoorColor.accentPrimary))
                 }
                 .padding(16)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -351,6 +361,7 @@ struct TodayView: View {
                     .buttonStyle(.borderless)
                     .accessibilityLabel("Share")
                 }
+                Spacer(minLength: 0)
                 ForEach(Array(events.enumerated()), id: \.offset) { _, event in
                     Button {
                         detailEvent = event
@@ -360,7 +371,7 @@ struct TodayView: View {
                             .font(.system(size: 15))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineSpacing(5)
-                            .multilineTextAlignment(isArabicUI ? .leading : .leading)
+                            .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
                         HStack(spacing: 8) {
@@ -372,13 +383,6 @@ struct TodayView: View {
                                      ? "بعد \(upcoming.inDays.arabicIndic) يومًا تقريبًا"
                                      : "in about \(upcoming.inDays) days")
                             }
-                            Spacer(minLength: 8)
-                            Text(isArabicUI ? "التفاصيل" : "Details")
-                                .font(.system(size: 12.5, weight: .semibold))
-                                .foregroundStyle(NoorColor.bgPrimary)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 6)
-                                .background(Capsule().fill(NoorColor.accentPrimary))
                         }
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.accentGold)
@@ -387,10 +391,23 @@ struct TodayView: View {
                     }
                     .buttonStyle(.plain)
                 }
+                Spacer(minLength: 0)
+                Button {
+                    detailEvent = events[0]
+                } label: {
+                    Text(isArabicUI ? "التفاصيل" : "Details")
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(NoorColor.bgPrimary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(NoorColor.accentPrimary))
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
             }
             .padding(16)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .noorCard()
         }
     }
@@ -683,7 +700,7 @@ struct TodayView: View {
             }
         }
         .padding(16)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         .frame(maxWidth: .infinity, alignment: .leading)
         .noorCard()
     }
