@@ -17,16 +17,20 @@ struct MadaniPageView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let fontSize = geometry.size.width / 9.8
+            // Every printed line must fit: bound the size by height (15 rows)
+            // AND width, so no line is ever clipped or dropped.
+            let rowHeight = geometry.size.height / CGFloat(max(lines.count, 15))
+            let fontSize = min(geometry.size.width / 9.8, rowHeight * 0.72)
             Group {
                 if fontReady && !lines.isEmpty {
-                    VStack(spacing: fontSize * 0.42) {
+                    VStack(spacing: 0) {
                         ForEach(lines) { line in
                             Text(verbatim: line.glyphsV2.isEmpty ? line.glyphs : line.glyphsV2)
                                 .font(.custom(PageFontStore.fontName(page: page), size: fontSize))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.5)
                                 .frame(maxWidth: .infinity)
+                                .frame(height: rowHeight)
                                 .contentShape(Rectangle())
                                 .onLongPressGesture { onLongPressLine?(line.ayahRefs) }
                         }

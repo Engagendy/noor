@@ -30,7 +30,7 @@ rows = []
 for page in range(1, 605):
     url = (f"https://api.qurancdn.com/api/qdc/verses/by_page/{page}"
            "?words=true&per_page=50"
-           "&word_fields=code_v1,code_v2,line_number,text_uthmani"
+           "&word_fields=code_v1,code_v2,line_number,text_uthmani,page_number"
            "&fields=verse_key")
     data = fetch(url)
     assert data.get("pagination", {}).get("next_page") is None, f"page {page} paginated"
@@ -38,7 +38,9 @@ for page in range(1, 605):
         surah, ayah = map(int, verse["verse_key"].split(":"))
         for w in verse["words"]:
             rows.append((
-                page, w["line_number"], surah, ayah, w["position"],
+                # A verse can spill onto the next printed page — every word
+                # carries its true page.
+                w.get("page_number") or page, w["line_number"], surah, ayah, w["position"],
                 w.get("code_v1") or "", w.get("code_v2") or "",
                 w.get("text_uthmani") or "",
                 (w.get("translation") or {}).get("text") or "",

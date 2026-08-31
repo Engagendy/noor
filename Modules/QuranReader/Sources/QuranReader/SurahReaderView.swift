@@ -21,6 +21,8 @@ public struct SurahReaderView: View {
     @AppStorage("reader.wordByWord") private var wordByWord = false
     /// Furthest mushaf page ever reached — drives khatmah progress on Today.
     @AppStorage("khatmah.maxPage") private var khatmahMaxPage = 0
+    /// Last page being read — resume point (Continue Reading, rotation).
+    @AppStorage("reader.lastPage") private var lastReadPage = 0
     @State private var selectedKey: Int?          // surah*1000 + ayah
     @State private var currentPage = 0
     @State private var tafsirVerse: Verse?
@@ -113,6 +115,10 @@ public struct SurahReaderView: View {
             }
             if let ayah = scrollToAyah, let page = viewModel.page(containing: ayah) {
                 currentPage = page
+            } else if lastReadPage > 0,
+                      viewModel.sections(forPage: lastReadPage).contains(where: { $0.id == surahId }) {
+                // Resume where the reader left off (Continue Reading, rotation).
+                currentPage = lastReadPage
             } else {
                 currentPage = viewModel.pages.first?.page ?? 1
             }
@@ -126,6 +132,7 @@ public struct SurahReaderView: View {
         }
         .onChange(of: currentPage) { _, page in
             if page > khatmahMaxPage { khatmahMaxPage = page }
+            if page > 0 && mode != .ayah { lastReadPage = page }
         }
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)

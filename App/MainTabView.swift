@@ -23,6 +23,7 @@ struct MainTabView: View {
         default: .today
     }
     @State private var player = QuranAudioPlayer()
+    @State private var quranOpenRequest: Int?
     @State private var translations = TranslationStore()
     @State private var library = try? LibraryStore()
 
@@ -44,12 +45,16 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $tab) {
             NavigationStack {
-                TodayView(database: database, openReader: { tab = .quran })
+                TodayView(database: database, openReader: {
+                    tab = .quran
+                    quranOpenRequest = UserDefaults.standard.integer(forKey: "reader.lastSurah")
+                })
             }
             .tabItem { Label("Today", systemImage: "sun.max") }
             .tag(Tab.today)
 
-            QuranTab(database: database, player: player, translations: translations, library: library)
+            QuranTab(database: database, player: player, translations: translations,
+                     library: library, openRequest: $quranOpenRequest)
                 .tabItem { Label("Quran", systemImage: "book") }
                 .tag(Tab.quran)
 
@@ -127,6 +132,7 @@ struct QuranTab: View {
     let player: QuranAudioPlayer
     let translations: TranslationStore
     let library: LibraryStore?
+    @Binding var openRequest: Int?
 
     @State private var surahs: [Surah] = []
     @State private var structure: QuranStructure?
@@ -199,7 +205,9 @@ struct QuranTab: View {
             surahs = (try? database.allSurahs()) ?? []
             structure = try? database.structure()
             if selection == nil { selection = lastSurah }
+            consumeOpenRequest()
         }
+        .onChange(of: openRequest) { _, _ in consumeOpenRequest() }
     }
 
     private var splitView: some View {
@@ -214,5 +222,15 @@ struct QuranTab: View {
             // Sidebar taps on iPad write the binding directly.
             if let new { lastSurah = new }
         }
+    }
+}
+
+
+extension QuranTab {
+    /// Today's Continue Reading card requests a direct open at the resume point.
+    fileprivate func consumeOpenRequest() {
+        guard let request = openRequest else { return }
+        openRequest = nil
+        open(request, nil)
     }
 }
