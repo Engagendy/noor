@@ -18,6 +18,7 @@ struct TodayView: View {
     @State private var showHadithList = false
     @State private var dailyHadithDetail: HadithItem?
     @State private var showHijriCalendar = false
+    @State private var showAllEvents = false
     @State private var cardPage = 0
     private let cardTimer = Timer.publish(every: 12, on: .main, in: .common).autoconnect()
 
@@ -25,11 +26,13 @@ struct TodayView: View {
         case ayah(Verse, Surah)
         case dhikr(Dhikr)
         case event(IslamicEvent)
+        case hadith(HadithItem)
         var id: String {
             switch self {
             case .ayah(let verse, _): "a\(verse.id)"
             case .dhikr(let dhikr): "d\(dhikr.id.hashValue)"
             case .event(let event): "e\(event.day)-\(event.month)-\(event.arabic.hashValue)"
+            case .hadith(let hadith): "h\(hadith.id)"
             }
         }
     }
@@ -127,6 +130,11 @@ struct TodayView: View {
             if athkar.isEmpty { athkar = AthkarStore.load() }
             if hadiths.isEmpty { hadiths = HadithStore.load() }
         }
+        .sheet(isPresented: $showAllEvents) {
+            AllEventsView(isArabicUI: isArabicUI)
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+        }
         .sheet(isPresented: $showHijriCalendar) {
             HijriCalendarView(isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
@@ -173,6 +181,15 @@ struct TodayView: View {
                 NoorShareSheet(
                     arabicText: isArabicUI ? event.arabic : event.english,
                     reference: eventReference(event),
+                    attribution: "نور Noor",
+                    useQuranFont: false)
+                    .presentationDetents([.medium, .large])
+            case .hadith(let hadith):
+                NoorShareSheet(
+                    arabicText: hadith.arabic,
+                    reference: isArabicUI
+                        ? "\(hadith.collectionArabic) · الحديث \(hadith.number.arabicIndic)"
+                        : "\(hadith.collectionEnglish) · Hadith \(hadith.number)",
                     attribution: "نور Noor",
                     useQuranFont: false)
                     .presentationDetents([.medium, .large])
@@ -258,6 +275,17 @@ struct TodayView: View {
                         Text(verbatim: isArabicUI ? hadith.collectionArabic : hadith.collectionEnglish)
                             .font(NoorFont.caption)
                             .foregroundStyle(NoorColor.accentGold)
+                        Button {
+                            shareItem = .hadith(hadith)
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(NoorColor.accentPrimary)
+                                .frame(width: 40, height: 40)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel("Share")
                     }
                     Spacer(minLength: 0)
                     Text(verbatim: hadith.arabic)
@@ -269,12 +297,26 @@ struct TodayView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .environment(\.layoutDirection, .rightToLeft)
                     Spacer(minLength: 0)
-                    Text(isArabicUI ? "اقرأ الحديث كاملًا" : "Read the full hadith")
-                        .font(.system(size: 12.5, weight: .semibold))
-                        .foregroundStyle(NoorColor.bgPrimary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 6)
-                        .background(Capsule().fill(NoorColor.accentPrimary))
+                    HStack(spacing: 14) {
+                        Text(isArabicUI ? "اقرأ الحديث كاملًا" : "Read the full hadith")
+                            .font(.system(size: 12.5, weight: .semibold))
+                            .foregroundStyle(NoorColor.bgPrimary)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(NoorColor.accentPrimary))
+                        Button {
+                            showHadithList = true
+                        } label: {
+                            Text(isArabicUI ? "كل الأحاديث" : "All hadith")
+                                .font(.system(size: 12.5, weight: .semibold))
+                                .foregroundStyle(NoorColor.accentPrimary)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 6)
+                                .background(Capsule().stroke(NoorColor.accentPrimary, lineWidth: 1))
+                                .contentShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -369,18 +411,32 @@ struct TodayView: View {
                     .buttonStyle(.plain)
                 }
                 Spacer(minLength: 0)
-                Button {
-                    detailEvent = events[0]
-                } label: {
-                    Text(isArabicUI ? "التفاصيل" : "Details")
-                        .font(.system(size: 12.5, weight: .semibold))
-                        .foregroundStyle(NoorColor.bgPrimary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 6)
-                        .background(Capsule().fill(NoorColor.accentPrimary))
-                        .contentShape(Capsule())
+                HStack(spacing: 14) {
+                    Button {
+                        detailEvent = events[0]
+                    } label: {
+                        Text(isArabicUI ? "التفاصيل" : "Details")
+                            .font(.system(size: 12.5, weight: .semibold))
+                            .foregroundStyle(NoorColor.bgPrimary)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(NoorColor.accentPrimary))
+                            .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    Button {
+                        showAllEvents = true
+                    } label: {
+                        Text(isArabicUI ? "كل الأحداث" : "All events")
+                            .font(.system(size: 12.5, weight: .semibold))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 6)
+                            .background(Capsule().stroke(NoorColor.accentPrimary, lineWidth: 1))
+                            .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
             }
             .padding(16)
@@ -870,5 +926,76 @@ struct KhatmahGoalSheet: View {
             }
         }
         .presentationDetents([.medium])
+    }
+}
+
+
+/// Every curated Islamic-history event, grouped by hijri month.
+struct AllEventsView: View {
+    let isArabicUI: Bool
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
+    @State private var detail: IslamicEvent?
+
+    private var byMonth: [(month: Int, events: [IslamicEvent])] {
+        Dictionary(grouping: IslamicEvent.all, by: \.month)
+            .map { (month: $0.key, events: $0.value.sorted { $0.day < $1.day }) }
+            .sorted { $0.month < $1.month }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(byMonth, id: \.month) { group in
+                    Section {
+                        ForEach(group.events) { event in
+                            Button {
+                                detail = event
+                            } label: {
+                                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                    Text(verbatim: isArabicUI ? event.day.arabicIndic : "\(event.day)")
+                                        .font(.system(size: 14, weight: .bold).monospacedDigit())
+                                        .foregroundStyle(NoorColor.accentGold)
+                                        .frame(width: 28)
+                                    Text(verbatim: isArabicUI ? event.arabic : event.english)
+                                        .font(.system(size: 15))
+                                        .foregroundStyle(NoorColor.inkPrimary)
+                                        .multilineTextAlignment(.leading)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .padding(.vertical, 3)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.borderless)
+                            .listRowBackground(Color.clear)
+                        }
+                    } header: {
+                        Text(verbatim: (1...12).contains(group.month)
+                             ? (isArabicUI ? IslamicEvent.hijriMonthsArabic
+                                           : IslamicEvent.hijriMonthsEnglish)[group.month - 1]
+                             : "")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                    }
+                }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(NoorColor.bgPrimary)
+            .navigationTitle(Text("ON THIS DAY"))
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .sheet(item: $detail) { event in
+                EventDetailSheet(event: event, isArabicUI: isArabicUI)
+                    .environment(\.locale, locale)
+                    .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+            }
+        }
     }
 }
