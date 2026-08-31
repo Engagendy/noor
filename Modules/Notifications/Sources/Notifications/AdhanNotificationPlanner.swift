@@ -1,3 +1,4 @@
+import Adhan
 import Foundation
 import PrayerTimes
 
@@ -20,6 +21,7 @@ public enum AdhanNotificationPlanner {
         location: PrayerLocation,
         method: CalculationMethodChoice,
         madhab: MadhabChoice,
+        enabledPrayers: Set<Adhan.Prayer> = [.fajr, .dhuhr, .asr, .maghrib, .isha],
         from now: Date = .now,
         days: Int = defaultDays,
         limit: Int = defaultLimit
@@ -32,7 +34,7 @@ public enum AdhanNotificationPlanner {
             guard let date = Calendar.current.date(byAdding: .day, value: dayOffset, to: now),
                   let day = PrayerDay.compute(location: location, method: method, madhab: madhab, date: date)
             else { continue }
-            for entry in day.entries where entry.time > now {
+            for entry in day.entries where entry.time > now && enabledPrayers.contains(entry.prayer) {
                 guard result.count < limit else { return result }
                 result.append(PlannedNotification(
                     id: "adhan-\(entry.prayer)-\(Int(entry.time.timeIntervalSince1970))",

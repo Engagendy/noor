@@ -61,6 +61,24 @@ final class QuranDatabaseTests: XCTestCase {
         XCTAssertTrue(try db.searchVerses("ا").isEmpty)
     }
 
+    func testPageLayoutDatabase() throws {
+        let layout = try PageLayoutDatabase()
+        XCTAssertGreaterThan(try layout.wordCount(), 77000)
+
+        let page1 = try layout.lines(page: 1)
+        XCTAssertFalse(page1.isEmpty)
+        XCTAssertTrue(page1.allSatisfy { !$0.glyphs.isEmpty })
+
+        let page604 = try layout.lines(page: 604)
+        XCTAssertFalse(page604.isEmpty)
+
+        // Al-Fatiha 1:1 (basmala) has exactly 4 words.
+        XCTAssertEqual(try layout.words(surahId: 1, ayah: 1).count, 4)
+        // Word-by-word glosses present.
+        let words = try layout.words(surahId: 1, ayah: 2)
+        XCTAssertTrue(words.allSatisfy { !$0.translation.isEmpty })
+    }
+
     func testSurahAyahCountsMatchVerseTable() throws {
         let db = try QuranDatabase()
         for surah in try db.allSurahs() {

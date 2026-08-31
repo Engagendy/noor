@@ -30,7 +30,9 @@ public struct AdhanNotificationScheduler: Sendable {
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
 
-        for planned in AdhanNotificationPlanner.plan(location: location, method: method, madhab: madhab) {
+        for planned in AdhanNotificationPlanner.plan(
+            location: location, method: method, madhab: madhab,
+            enabledPrayers: PrayerNotificationPrefs.enabledPrayers()) {
             let content = UNMutableNotificationContent()
             // Calm microcopy per design §7 — no exclamation marks.
             content.title = String(localized: "It's time for \(planned.prayerName)")

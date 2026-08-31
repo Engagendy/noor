@@ -56,6 +56,23 @@ Attributions are displayed in Settings → About.
 - **Attribution:** "Tafsir texts via the Tafsir API project."
 - **Note:** verify per-tafsir redistribution terms before App Store release.
 
+### QCF v1 page fonts (Madani page mode — downloaded on demand)
+- **Source:** King Fahd Glorious Quran Printing Complex per-page fonts,
+  obtained via the mustafa0x/qpc-fonts mirror (`mushaf-v1.5`, repaired v1
+  TTFs). One ~42 KB font per page, downloaded when a page is first viewed,
+  cached in Application Support.
+- **Attribution:** "Madani page fonts by King Fahd Glorious Quran Printing
+  Complex."
+
+### Page layout + word-by-word data (bundled)
+- **Source:** quran.com / Quran Foundation layout data via the public
+  qurancdn API (one-time prefetch by `Tools/build_page_layout.py`, gentle
+  rate, identified User-Agent). Per-word QCF glyph codes, line numbers, and
+  English word-by-word glosses.
+- **File:** `Core/ContentDB/Sources/ContentDB/Resources/page_layout.sqlite`
+- **Attribution:** "Page layout and word-by-word data courtesy of
+  Quran.com (Quran Foundation)."
+
 ## Software dependencies
 
 | Package | License | URL |

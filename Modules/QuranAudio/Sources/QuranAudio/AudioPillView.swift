@@ -5,6 +5,9 @@ import SwiftUI
 /// previous/play/next, stop. Shown over the reader while audio plays.
 public struct AudioPillView: View {
     @Bindable var player: QuranAudioPlayer
+    @Environment(\.locale) private var locale
+
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
     public init(player: QuranAudioPlayer) {
         self.player = player
@@ -23,7 +26,15 @@ public struct AudioPillView: View {
             HStack(spacing: 12) {
                 Menu {
                     ForEach(Reciter.allCases) { reciter in
-                        Button(reciter.displayName) { player.reciter = reciter }
+                        Button {
+                            player.reciter = reciter
+                        } label: {
+                            if player.reciter == reciter {
+                                Label(reciter.displayName(arabicUI: isArabicUI), systemImage: "checkmark")
+                            } else {
+                                Text(verbatim: reciter.displayName(arabicUI: isArabicUI))
+                            }
+                        }
                     }
                 } label: {
                     Image(systemName: "person.wave.2")
@@ -35,7 +46,7 @@ public struct AudioPillView: View {
                 .accessibilityLabel("Reciter: \(player.reciter.displayName)")
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(player.reciter.displayName)
+                    Text(verbatim: player.reciter.displayName(arabicUI: isArabicUI))
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(1)

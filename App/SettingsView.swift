@@ -1,4 +1,5 @@
 import DesignSystem
+import PrayerTimes
 import QuranAudio
 import QuranReader
 import SwiftUI
@@ -13,6 +14,10 @@ struct SettingsView: View {
     @AppStorage("reader.mode") private var readerMode = "mushaf"
     @AppStorage("audio.reciter") private var reciterRaw = Reciter.alafasy.rawValue
     @AppStorage("notifications.enabled") private var notificationsEnabled = false
+    @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanShort.rawValue
+    @Environment(\.locale) private var locale
+
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
     var body: some View {
         Form {
@@ -37,10 +42,17 @@ struct SettingsView: View {
                 Toggle(isOn: $notificationsEnabled) {
                     Text("Adhan notifications")
                 }
+                Picker(selection: $soundRaw) {
+                    ForEach(AdhanSound.allCases) { sound in
+                        Text(sound.displayName).tag(sound.rawValue)
+                    }
+                } label: {
+                    Text("Notification sound")
+                }
             } header: {
                 Text("Prayer")
             } footer: {
-                Text("Notifications are scheduled on your device for the next 12 days and roll forward automatically.")
+                Text("Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen. Authentic adhan audio clips arrive once licensing is confirmed.")
             }
 
             Section {
@@ -63,7 +75,7 @@ struct SettingsView: View {
                 }
                 Picker(selection: $reciterRaw) {
                     ForEach(Reciter.allCases) { reciter in
-                        Text(verbatim: reciter.displayName).tag(reciter.rawValue)
+                        Text(verbatim: reciter.displayName(arabicUI: isArabicUI)).tag(reciter.rawValue)
                     }
                 } label: {
                     Text("Reciter")

@@ -13,7 +13,7 @@ import Translations
 /// While reciting, the current ayah is tinted and the view follows it.
 public struct SurahReaderView: View {
     public enum DisplayMode: String {
-        case mushaf, ayah
+        case mushaf, ayah, page
     }
 
     @State private var viewModel: SurahReaderViewModel
@@ -34,10 +34,13 @@ public struct SurahReaderView: View {
 
     private let player: QuranAudioPlayer?
     private let translations: TranslationStore?
+    private let layout: PageLayoutDatabase?
     private let surahId: Int
     private let scrollToAyah: Int?
     private let bookmarkedAyat: Set<Int>
     private let onToggleBookmark: ((Int) -> Void)?
+    @AppStorage("reader.wordByWord") private var wordByWord = false
+    @State private var fontStore = PageFontStore()
 
     public init(
         database: QuranDatabase,
@@ -45,9 +48,11 @@ public struct SurahReaderView: View {
         scrollToAyah: Int? = nil,
         player: QuranAudioPlayer? = nil,
         translations: TranslationStore? = nil,
+        layout: PageLayoutDatabase? = nil,
         bookmarkedAyat: Set<Int> = [],
         onToggleBookmark: ((Int) -> Void)? = nil
     ) {
+        self.layout = layout
         _viewModel = State(initialValue: SurahReaderViewModel(database: database, surahId: surahId))
         self.surahId = surahId
         self.scrollToAyah = scrollToAyah
@@ -72,6 +77,7 @@ public struct SurahReaderView: View {
             switch mode {
             case .mushaf: mushafPager
             case .ayah: ayahList
+            case .page: madaniPager
             }
         }
         .environment(\.layoutDirection, .rightToLeft)
@@ -144,6 +150,20 @@ public struct SurahReaderView: View {
                 translation: showTranslation ? translations?.translation(surah: surahId, ayah: verse.ayah) : nil)
                 .presentationDetents([.medium, .large])
         }
+    }
+
+    // MARK: Madani page mode — pixel-faithful QCF pages
+
+    private var madaniPager: some View {
+        TabView(selection: $currentPage) {
+            ForEach(viewModel.pages) { page in
+                MadaniPageView(page: page.page, layout: layout, fontStore: fontStore)
+                    .tag(page.page)
+            }
+        }
+        #if os(iOS)
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        #endif
     }
 
     // MARK: Mushaf mode — one page per screen, RTL page turns
@@ -277,16 +297,21 @@ public struct SurahReaderView: View {
             ? Text(verbatim: " ۩").foregroundStyle(NoorColor.accentGold)
             : Text(verbatim: "")
         return VStack(alignment: .leading, spacing: 10) {
-            (Text(verse.text)
-                + sajda
-                + Text(verbatim: "  ﴿\(verse.ayah.arabicIndic)﴾")
-                    .font(NoorFont.quran(size: liveFontSize * 0.62))
-                    .foregroundStyle(NoorColor.accentGold))
-                .font(NoorFont.quran(size: liveFontSize))
-                .foregroundStyle(NoorColor.inkPrimary)
-                .lineSpacing(liveFontSize * NoorMetrics.quranLineSpacingFactor)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            if wordByWord, let layout {
+                WordByWordContainer(
+                    layout: layout, surahId: surahId, ayah: verse.ayah, fontSize: liveFontSize)
+            } else {
+                (Text(verse.text)
+                    + sajda
+                    + Text(verbatim: "  ﴿\(verse.ayah.arabicIndic)﴾")
+                        .font(NoorFont.quran(size: liveFontSize * 0.62))
+                        .foregroundStyle(NoorColor.accentGold))
+                    .font(NoorFont.quran(size: liveFontSize))
+                    .foregroundStyle(NoorColor.inkPrimary)
+                    .lineSpacing(liveFontSize * NoorMetrics.quranLineSpacingFactor)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             if showTranslation, let translation = translations?.translation(surah: surahId, ayah: verse.ayah) {
                 Text(translation)
                     .font(NoorFont.translation)
@@ -390,6 +415,9 @@ public struct SurahReaderView: View {
             }
             Picker(selection: $modeRaw) {
                 Text("Mushaf (continuous)").tag(DisplayMode.mushaf.rawValue)
+                if layout != nil {
+                    Text("Page (Madani print)").tag(DisplayMode.page.rawValue)
+                }
                 Text("Ayah by ayah").tag(DisplayMode.ayah.rawValue)
             } label: {
                 Text("Reading mode")
@@ -397,6 +425,11 @@ public struct SurahReaderView: View {
             if translations != nil {
                 Toggle(isOn: $showTranslation) {
                     Text("Show translation")
+                }
+            }
+            if layout != nil {
+                Toggle(isOn: $wordByWord) {
+                    Text("Word by word")
                 }
             }
             if let surah = viewModel.surah, let player {
@@ -445,6 +478,24 @@ public struct SurahReaderView: View {
                 Task { await translations?.download() }
             }
         }
+        .onChange(of: wordByWord) { _, enabled in
+            if enabled { modeRaw = DisplayMode.ayah.rawValue }
+        }
+    }
+}
+
+/// Loads one ayah's words off the layout DB and renders the wbw grid.
+private struct WordByWordContainer: View {
+    let layout: PageLayoutDatabase
+    let surahId: Int
+    let ayah: Int
+    let fontSize: CGFloat
+
+    @State private var words: [PageWord] = []
+
+    var body: some View {
+        WordByWordView(words: words, fontSize: fontSize)
+            .task { words = (try? layout.words(surahId: surahId, ayah: ayah)) ?? [] }
     }
 }
 

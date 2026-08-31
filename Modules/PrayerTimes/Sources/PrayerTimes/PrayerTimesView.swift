@@ -12,9 +12,46 @@ public struct PrayerTimesView: View {
     @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
     @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanShort.rawValue
 
+    // Per-prayer notification toggles (design 6.4: inline on the timeline).
+    @AppStorage("notif.fajr") private var notifFajr = true
+    @AppStorage("notif.dhuhr") private var notifDhuhr = true
+    @AppStorage("notif.asr") private var notifAsr = true
+    @AppStorage("notif.maghrib") private var notifMaghrib = true
+    @AppStorage("notif.isha") private var notifIsha = true
+
     @State private var dayOffset = 0
     @State private var showSettings = false
     @State private var locationFetcher = OneShotLocationFetcher()
+
+    private func notificationBinding(for prayer: Prayer) -> Binding<Bool>? {
+        switch prayer {
+        case .fajr: $notifFajr
+        case .dhuhr: $notifDhuhr
+        case .asr: $notifAsr
+        case .maghrib: $notifMaghrib
+        case .isha: $notifIsha
+        default: nil
+        }
+    }
+
+    private func bellToggle(for prayer: Prayer) -> some View {
+        Group {
+            if let binding = notificationBinding(for: prayer) {
+                Button {
+                    binding.wrappedValue.toggle()
+                } label: {
+                    Image(systemName: binding.wrappedValue ? "bell" : "bell.slash")
+                        .font(.system(size: 15))
+                        .foregroundStyle(binding.wrappedValue ? NoorColor.accentPrimary : NoorColor.inkSecondary.opacity(0.5))
+                        .frame(width: 34, height: 34)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Notification")
+                .accessibilityAddTraits(binding.wrappedValue ? .isSelected : [])
+            }
+        }
+    }
 
     public init() {}
 
@@ -109,6 +146,7 @@ public struct PrayerTimesView: View {
                         Text(entry.time, format: timeFormat)
                             .font(.system(size: 15).monospacedDigit())
                             .foregroundStyle(NoorColor.inkSecondary)
+                        bellToggle(for: entry.prayer)
                     }
                     .padding(.vertical, 13)
                     .padding(.horizontal, 4)
@@ -139,6 +177,7 @@ public struct PrayerTimesView: View {
                 Text(entry.time, format: timeFormat)
                     .font(.system(size: 19, weight: .semibold).monospacedDigit())
                     .foregroundStyle(NoorColor.inkPrimary)
+                bellToggle(for: entry.prayer)
             }
             soundChips
         }
@@ -269,6 +308,29 @@ public enum AdhanSound: String, CaseIterable, Identifiable {
         case .bell: "Bell"
         case .silent: "Silent"
         }
+    }
+}
+
+/// Per-prayer notification enablement, stored in UserDefaults
+/// ("notif.fajr" … "notif.isha", default on).
+public enum PrayerNotificationPrefs {
+    public static let keys: [Prayer: String] = [
+        .fajr: "notif.fajr", .dhuhr: "notif.dhuhr", .asr: "notif.asr",
+        .maghrib: "notif.maghrib", .isha: "notif.isha",
+    ]
+
+    public static func isEnabled(_ prayer: Prayer, defaults: UserDefaults = .standard) -> Bool {
+        guard let key = keys[prayer] else { return false }
+        return defaults.object(forKey: key) == nil ? true : defaults.bool(forKey: key)
+    }
+
+    public static func setEnabled(_ enabled: Bool, for prayer: Prayer, defaults: UserDefaults = .standard) {
+        guard let key = keys[prayer] else { return }
+        defaults.set(enabled, forKey: key)
+    }
+
+    public static func enabledPrayers(defaults: UserDefaults = .standard) -> Set<Prayer> {
+        Set(keys.keys.filter { isEnabled($0, defaults: defaults) })
     }
 }
 

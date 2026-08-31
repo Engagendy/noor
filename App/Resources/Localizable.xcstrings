@@ -265,6 +265,16 @@
         }
       }
     },
+    "Connect to the internet once to download this page.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اتصل بالإنترنت مرة واحدة لتنزيل هذه الصفحة."
+          }
+        }
+      }
+    },
     "Continuous": {
       "extractionState": "stale",
       "localizations": {
@@ -406,6 +416,7 @@
       }
     },
     "Hizb quarters": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -491,6 +502,7 @@
         }
       }
     },
+    "Khatmah · page %@ of 604": {},
     "Khatmah · page %lld of 604": {
       "localizations": {
         "ar": {
@@ -609,11 +621,32 @@
       }
     },
     "My location": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "موقعي"
+          }
+        }
+      }
+    },
+    "Notification": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإشعار"
+          }
+        }
+      }
+    },
+    "Notification sound": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صوت الإشعار"
           }
         }
       }
@@ -628,6 +661,16 @@
         }
       }
     },
+    "Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen. Authentic adhan audio clips arrive once licensing is confirmed.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تُجدول الإشعارات على جهازك للأيام الاثني عشر القادمة وتتجدد تلقائيًا. يمكنك تفعيل كل صلاة على حدة من زر الجرس في شاشة الصلاة. مقاطع الأذان الصوتية ستضاف بعد تأكيد الترخيص."
+          }
+        }
+      }
+    },
     "Page %lld": {
       "extractionState": "stale",
       "localizations": {
@@ -635,6 +678,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "صفحة %lld"
+          }
+        }
+      }
+    },
+    "Page (Madani print)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صفحة (طبعة المدينة)"
+          }
+        }
+      }
+    },
+    "Page font unavailable": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خط الصفحة غير متاح"
           }
         }
       }
@@ -733,6 +796,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "مواقيت الصلاة"
+          }
+        }
+      }
+    },
+    "Preparing page %lld…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ تجهيز الصفحة %lld…"
           }
         }
       }
@@ -1059,6 +1132,7 @@
       }
     },
     "Use my current location": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -1069,11 +1143,22 @@
       }
     },
     "Using current location": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "يُستخدم الموقع الحالي"
+          }
+        }
+      }
+    },
+    "Word by word": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كلمة كلمة"
           }
         }
       }

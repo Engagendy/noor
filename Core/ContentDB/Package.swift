@@ -14,7 +14,10 @@ let package = Package(
         .target(
             name: "ContentDB",
             dependencies: [.product(name: "GRDB", package: "GRDB.swift")],
-            resources: [.copy("Resources/quran.sqlite")]
+            resources: [
+                .copy("Resources/quran.sqlite"),
+                .copy("Resources/page_layout.sqlite")
+            ]
         ),
         .testTarget(
             name: "ContentDBTests",

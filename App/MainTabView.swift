@@ -31,6 +31,12 @@ struct MainTabView: View {
     @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
     @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanShort.rawValue
     @AppStorage("notifications.enabled") private var notificationsEnabled = false
+    @AppStorage("prayer.useCustom") private var useCustomLocation = false
+    @AppStorage("notif.fajr") private var notifFajr = true
+    @AppStorage("notif.dhuhr") private var notifDhuhr = true
+    @AppStorage("notif.asr") private var notifAsr = true
+    @AppStorage("notif.maghrib") private var notifMaghrib = true
+    @AppStorage("notif.isha") private var notifIsha = true
 
     var body: some View {
         TabView(selection: $tab) {
@@ -67,7 +73,10 @@ struct MainTabView: View {
         }
         .tint(NoorColor.accentPrimary)
         .task { await rescheduleNotifications() }
-        .onChange(of: [cityName, methodRaw, madhabRaw, soundRaw, String(notificationsEnabled)]) {
+        .onChange(of: [cityName, methodRaw, madhabRaw, soundRaw,
+                       String(notificationsEnabled), String(useCustomLocation),
+                       String(notifFajr), String(notifDhuhr), String(notifAsr),
+                       String(notifMaghrib), String(notifIsha)]) {
             Task { await rescheduleNotifications() }
         }
     }
@@ -99,6 +108,7 @@ struct QuranTab: View {
 
     @State private var surahs: [Surah] = []
     @State private var structure: QuranStructure?
+    @State private var pageLayout = try? PageLayoutDatabase()
     // Last-read position survives relaunch. (Full SwiftData bookmarks/khatmah
     // come with the Library module.)
     @AppStorage("reader.lastSurah") private var lastSurah = 1
@@ -143,6 +153,7 @@ struct QuranTab: View {
                     scrollToAyah: targetAyah,
                     player: player,
                     translations: translations,
+                    layout: pageLayout,
                     bookmarkedAyat: Set((library?.bookmarks ?? [])
                         .filter { $0.surahId == selection }.map(\.ayah)),
                     onToggleBookmark: { ayah in
