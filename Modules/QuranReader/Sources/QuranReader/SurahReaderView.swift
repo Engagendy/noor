@@ -14,7 +14,9 @@ public struct SurahReaderView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .trailing, spacing: 28) {
+            // The whole reader is RTL (set below), so `.leading` here means the
+            // RIGHT edge — where Arabic text must start.
+            VStack(alignment: .leading, spacing: 28) {
                 if let surah = viewModel.surah {
                     surahHeader(surah)
                 }
@@ -23,8 +25,8 @@ public struct SurahReaderView: View {
                         .font(NoorFont.quran(size: quranFontSize))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(quranFontSize * NoorMetrics.quranLineSpacingFactor)
-                        .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityLabel("Ayah \(verse.ayah)")
                         .accessibilityValue(verse.text)
                 }
