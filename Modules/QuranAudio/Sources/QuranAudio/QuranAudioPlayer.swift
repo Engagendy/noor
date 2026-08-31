@@ -41,9 +41,11 @@ public final class QuranAudioPlayer {
             }
         }
     }
-    private var reciterRaw: String {
-        get { UserDefaults.standard.string(forKey: "audio.reciter") ?? Reciter.alafasy.rawValue }
-        set { UserDefaults.standard.set(newValue, forKey: "audio.reciter") }
+    /// Stored (→ observable, so the pill label updates) and mirrored to
+    /// UserDefaults for the Settings picker and next launch.
+    private var reciterRaw: String
+        = UserDefaults.standard.string(forKey: "audio.reciter") ?? Reciter.alafasy.rawValue {
+        didSet { UserDefaults.standard.set(reciterRaw, forKey: "audio.reciter") }
     }
 
     /// Set by the reader so the player knows the surah bounds and titles.
@@ -57,6 +59,10 @@ public final class QuranAudioPlayer {
     public init() {}
 
     public func play(surah: Int, ayahCount: Int, from ayah: Int, title: String, pageEndAyah: Int? = nil) {
+        // Settings may have changed the reciter while we were idle.
+        if let stored = UserDefaults.standard.string(forKey: "audio.reciter"), stored != reciterRaw {
+            reciterRaw = stored
+        }
         surahTitle = title
         self.ayahCount = ayahCount
         self.pageEndAyah = pageEndAyah
