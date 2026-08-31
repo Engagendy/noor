@@ -5,6 +5,8 @@ options:
     iOS: "17.0"
     macOS: "14.0"
   createIntermediateGroups: true
+  developmentLanguage: en
+  knownRegions: [en, ar]
 
 packages:
   DesignSystem:

@@ -6,7 +6,7 @@ import SwiftUI
 
 struct MainTabView: View {
     enum Tab: Hashable {
-        case today, quran, prayer
+        case today, quran, prayer, settings
     }
 
     let database: QuranDatabase
@@ -32,6 +32,10 @@ struct MainTabView: View {
             NavigationStack { PrayerTimesView() }
                 .tabItem { Label("Prayer", systemImage: "clock") }
                 .tag(Tab.prayer)
+
+            NavigationStack { SettingsView() }
+                .tabItem { Label("Settings", systemImage: "gearshape") }
+                .tag(Tab.settings)
         }
         .tint(NoorColor.accentPrimary)
     }
@@ -42,22 +46,39 @@ struct QuranTab: View {
     let database: QuranDatabase
 
     @State private var surahs: [Surah] = []
+    @State private var structure: QuranStructure?
     // Last-read position survives relaunch. (Full SwiftData bookmarks/khatmah
     // come with the Library module.)
     @AppStorage("reader.lastSurah") private var lastSurah = 1
     @State private var selection: Int?
+    @State private var targetAyah: Int?
+
+    /// Picking from the surah list clears any pending ayah target; the Juz
+    /// tab sets its target before writing selection directly.
+    private var listSelection: Binding<Int?> {
+        Binding(
+            get: { selection },
+            set: { newValue in
+                targetAyah = nil
+                selection = newValue
+            })
+    }
 
     var body: some View {
         NavigationSplitView {
-            SurahListView(surahs: surahs, selection: $selection)
+            SurahListView(surahs: surahs, structure: structure, selection: listSelection) { surahId, ayah in
+                targetAyah = ayah
+                selection = surahId
+            }
         } detail: {
             if let selection {
-                SurahReaderView(database: database, surahId: selection)
-                    .id(selection)
+                SurahReaderView(database: database, surahId: selection, scrollToAyah: targetAyah)
+                    .id("\(selection)-\(targetAyah ?? 0)")
             }
         }
         .onAppear {
             surahs = (try? database.allSurahs()) ?? []
+            structure = try? database.structure()
             if selection == nil { selection = lastSurah }
         }
         .onChange(of: selection) { _, new in

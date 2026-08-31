@@ -14,6 +14,10 @@ public final class QuranDatabase: Sendable {
 
     private let queue: DatabaseQueue
 
+    func read<T>(_ block: (Database) throws -> T) throws -> T {
+        try queue.read(block)
+    }
+
     public init() throws {
         guard let url = Bundle.module.url(forResource: "quran", withExtension: "sqlite") else {
             throw QuranDatabaseError.missingDatabase

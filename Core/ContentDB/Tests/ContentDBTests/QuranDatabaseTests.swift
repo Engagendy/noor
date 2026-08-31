@@ -27,6 +27,28 @@ final class QuranDatabaseTests: XCTestCase {
         XCTAssertFalse(verses.contains { $0.text.isEmpty })
     }
 
+    func testMushafStructure() throws {
+        let structure = try QuranDatabase().structure()
+        XCTAssertEqual(structure.juzStarts.count, 30)
+        XCTAssertEqual(structure.quarterStarts.count, 240)
+        XCTAssertEqual(structure.pageStarts.count, 604)
+
+        // Juz 2 famously begins at 2:142 ("سيقول السفهاء").
+        XCTAssertEqual(structure.juz(surahId: 2, ayah: 141), 1)
+        XCTAssertEqual(structure.juz(surahId: 2, ayah: 142), 2)
+        XCTAssertEqual(structure.juz(surahId: 114, ayah: 6), 30)
+
+        XCTAssertEqual(structure.page(surahId: 1, ayah: 1), 1)
+        XCTAssertEqual(structure.page(surahId: 114, ayah: 6), 604)
+
+        XCTAssertEqual(structure.quarterIndex(startingAtSurah: 1, ayah: 1), 1)
+        XCTAssertNil(structure.quarterIndex(startingAtSurah: 1, ayah: 2))
+
+        XCTAssertEqual(QuranStructure.quarterDescription(1).hizb, 1)
+        XCTAssertEqual(QuranStructure.quarterDescription(5).hizb, 2)
+        XCTAssertEqual(QuranStructure.quarterDescription(8).quarterInHizb, 4)
+    }
+
     func testSurahAyahCountsMatchVerseTable() throws {
         let db = try QuranDatabase()
         for surah in try db.allSurahs() {

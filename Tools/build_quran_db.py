@@ -38,13 +38,31 @@ checksum = sha.hexdigest()
 
 assert len(verses) == 6236, f"expected 6236 ayat, got {len(verses)}"
 
+root = ET.parse(META).getroot()
 suras = []
-for s in ET.parse(META).getroot().iter("sura"):
+for s in root.iter("sura"):
     suras.append((
         int(s.get("index")), s.get("name"), s.get("tname"), s.get("ename"),
         int(s.get("ayas")), s.get("type"), int(s.get("order")),
     ))
 assert len(suras) == 114
+
+
+def starts(parent_tag, child_tag):
+    parent = root.find(parent_tag)
+    return [(int(e.get("index")), int(e.get("sura")), int(e.get("aya")))
+            for e in parent.iter(child_tag)]
+
+
+juzs = starts("juzs", "juz")
+quarters = starts("hizbs", "quarter")
+pages = starts("pages", "page")
+assert len(juzs) == 30 and len(quarters) == 240 and len(pages) == 604
+
+sajdas = [(int(e.get("index")), int(e.get("sura")), int(e.get("aya")),
+           1 if e.get("type") == "obligatory" else 0)
+          for e in root.find("sajdas").iter("sajda")]
+assert len(sajdas) == 15
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 if os.path.exists(OUT):
@@ -67,9 +85,18 @@ CREATE TABLE verse (
   PRIMARY KEY (surah_id, ayah)
 ) WITHOUT ROWID;
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+-- Mushaf structure (Madani): where each division begins.
+CREATE TABLE juz_start (idx INTEGER PRIMARY KEY, surah_id INTEGER NOT NULL, ayah INTEGER NOT NULL);
+CREATE TABLE hizb_quarter_start (idx INTEGER PRIMARY KEY, surah_id INTEGER NOT NULL, ayah INTEGER NOT NULL);
+CREATE TABLE page_start (idx INTEGER PRIMARY KEY, surah_id INTEGER NOT NULL, ayah INTEGER NOT NULL);
+CREATE TABLE sajda (idx INTEGER PRIMARY KEY, surah_id INTEGER NOT NULL, ayah INTEGER NOT NULL, obligatory INTEGER NOT NULL);
 """)
 db.executemany("INSERT INTO surah VALUES (?,?,?,?,?,?,?)", suras)
 db.executemany("INSERT INTO verse VALUES (?,?,?)", verses)
+db.executemany("INSERT INTO juz_start VALUES (?,?,?)", juzs)
+db.executemany("INSERT INTO hizb_quarter_start VALUES (?,?,?)", quarters)
+db.executemany("INSERT INTO page_start VALUES (?,?,?)", pages)
+db.executemany("INSERT INTO sajda VALUES (?,?,?,?)", sajdas)
 db.executemany("INSERT INTO meta VALUES (?,?)", [
     ("source", "Tanzil.net Quran Uthmani"),
     ("source_url", "https://tanzil.net"),
