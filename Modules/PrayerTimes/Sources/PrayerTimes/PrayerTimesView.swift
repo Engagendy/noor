@@ -22,6 +22,7 @@ public struct PrayerTimesView: View {
 
     @State private var dayOffset = 0
     @State private var showSettings = false
+    @State private var showNawafil = false
     @State private var locationFetcher = OneShotLocationFetcher()
     @State private var fetchingLocation = false
     @State private var locationFailed = false
@@ -81,6 +82,7 @@ public struct PrayerTimesView: View {
                     if let day = PrayerDay.compute(location: location, method: method, madhab: madhab, date: shownDate) {
                         timeline(day: day, now: now, isToday: dayOffset == 0)
                     }
+                    nawafilRow
                     settingsRow
                 }
                 .padding(.horizontal, 20)
@@ -92,6 +94,16 @@ public struct PrayerTimesView: View {
         .sheet(isPresented: $showSettings) {
             // Presentations don't inherit layout direction — re-apply.
             settingsSheet
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, appDirection)
+        }
+        // Hear the adhan whenever the choice changes, wherever it was made.
+        .onChange(of: soundRaw) {
+            AdhanPreviewPlayer.shared.play(AdhanSound(rawValue: soundRaw) ?? .adhanShort)
+        }
+        .onDisappear { AdhanPreviewPlayer.shared.stop() }
+        .sheet(isPresented: $showNawafil) {
+            NawafilView(isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
                 .environment(\.layoutDirection, appDirection)
         }
@@ -243,6 +255,35 @@ public struct PrayerTimesView: View {
             }
         }
         .onDisappear { AdhanPreviewPlayer.shared.stop() }
+    }
+
+    /// Voluntary prayers reference (rawatib, duha, qiyam, witr).
+    private var nawafilRow: some View {
+        Button {
+            showNawafil = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "moon.stars")
+                    .font(.system(size: 15))
+                    .foregroundStyle(NoorColor.accentGold)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Nawafil")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                    Text("Voluntary prayers and their times")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.forward")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NoorColor.inkSecondary.opacity(0.6))
+            }
+            .padding(16)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .noorCard()
     }
 
     private var settingsRow: some View {

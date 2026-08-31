@@ -1539,6 +1539,38 @@
           }
         }
       }
+    },
+    "Nawafil": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "النوافل"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nawafil"
+          }
+        }
+      }
+    },
+    "Voluntary prayers and their times": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نوافل الصلاة وأوقاتها"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voluntary prayers and their times"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
