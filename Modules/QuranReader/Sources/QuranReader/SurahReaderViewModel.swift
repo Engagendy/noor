@@ -44,6 +44,28 @@ public final class SurahReaderViewModel {
         self.surahId = surahId
     }
 
+    /// Structure is immutable — cache it so view inits can position the
+    /// pager synchronously (no flash of page 1 before jumping).
+    private static var structureCache: QuranStructure?
+
+    public static func sharedStructure(_ database: QuranDatabase) -> QuranStructure? {
+        if let cached = structureCache { return cached }
+        let loaded = try? database.structure()
+        structureCache = loaded
+        return loaded
+    }
+
+    /// First page to show for a surah/ayah target, resuming reader.lastPage
+    /// when it still belongs to this surah.
+    public static func initialPage(database: QuranDatabase, surahId: Int, ayah: Int?) -> Int {
+        guard let structure = sharedStructure(database) else { return 1 }
+        if let ayah { return structure.page(surahId: surahId, ayah: ayah) }
+        let start = structure.page(surahId: surahId, ayah: 1)
+        let end = surahId < 114 ? structure.page(surahId: surahId + 1, ayah: 1) : 604
+        let last = UserDefaults.standard.integer(forKey: "reader.lastPage")
+        return (last >= start && last <= end) ? last : start
+    }
+
     public func load() {
         do {
             allSurahs = try database.allSurahs()

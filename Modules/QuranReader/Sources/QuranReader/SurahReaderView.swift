@@ -63,6 +63,9 @@ public struct SurahReaderView: View {
         self.translations = translations
         self.bookmarkedRefs = bookmarkedRefs
         self.onToggleBookmark = onToggleBookmark
+        // Position the pager before the first frame — no page-1 flash.
+        _currentPage = State(initialValue: SurahReaderViewModel.initialPage(
+            database: database, surahId: surahId, ayah: scrollToAyah))
     }
 
     private var mode: DisplayMode { DisplayMode(rawValue: modeRaw) ?? .mushaf }
@@ -112,15 +115,6 @@ public struct SurahReaderView: View {
                 didAutoHide = true
                 try? await Task.sleep(for: .seconds(2.5))
                 withAnimation(.easeInOut(duration: 0.35)) { chromeVisible = false }
-            }
-            if let ayah = scrollToAyah, let page = viewModel.page(containing: ayah) {
-                currentPage = page
-            } else if lastReadPage > 0,
-                      viewModel.sections(forPage: lastReadPage).contains(where: { $0.id == surahId }) {
-                // Resume where the reader left off (Continue Reading, rotation).
-                currentPage = lastReadPage
-            } else {
-                currentPage = viewModel.pages.first?.page ?? 1
             }
             if showTranslation { await translations?.download() }
         }
