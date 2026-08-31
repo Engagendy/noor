@@ -2,23 +2,25 @@ import ContentDB
 import DesignSystem
 import SwiftUI
 
-/// Status-ready ayah image card: paper background, gold frame, Arabic text,
-/// optional translation, reference + attribution (design §7 rules).
-struct AyahShareCard: View {
-    let verse: Verse
-    let surahName: String
+/// Status-ready branded image card: paper background, gold frame, mihrab
+/// mark, Arabic text, optional translation, reference + attribution.
+public struct NoorShareCard: View {
+    let arabicText: String
     let translation: String?
+    let reference: String
+    let attribution: String
+    let useQuranFont: Bool
 
-    var body: some View {
+    public var body: some View {
         VStack(spacing: 18) {
             MihrabLogoMark(
                 size: 44,
                 archColor: Color(red: 0.055, green: 0.420, blue: 0.361),
                 lampColor: Color(red: 0.73, green: 0.54, blue: 0.18))
-            Text(verse.text)
-                .font(NoorFont.quran(size: 30))
+            Text(arabicText)
+                .font(useQuranFont ? NoorFont.quran(size: 30) : .system(size: 24))
                 .foregroundStyle(Color(red: 0.12, green: 0.16, blue: 0.20))
-                .lineSpacing(22)
+                .lineSpacing(useQuranFont ? 22 : 14)
                 .multilineTextAlignment(.center)
                 .environment(\.layoutDirection, .rightToLeft)
             if let translation {
@@ -28,10 +30,10 @@ struct AyahShareCard: View {
                     .multilineTextAlignment(.center)
             }
             VStack(spacing: 3) {
-                Text(verbatim: "\(surahName) · \(verse.surahId):\(verse.ayah)")
+                Text(verbatim: reference)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Color(red: 0.05, green: 0.42, blue: 0.36))
-                Text(verbatim: "نور Noor · Quran text: Tanzil.net")
+                Text(verbatim: attribution)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(Color(red: 0.36, green: 0.40, blue: 0.44).opacity(0.8))
             }
@@ -43,19 +45,35 @@ struct AyahShareCard: View {
     }
 }
 
-/// Renders the card and offers the system share sheet.
-struct ShareAyahSheet: View {
-    let verse: Verse
-    let surahName: String
+/// Renders the card at 3× and offers the system share sheet.
+public struct NoorShareSheet: View {
+    let arabicText: String
     let translation: String?
+    let reference: String
+    let attribution: String
+    let useQuranFont: Bool
 
     @State private var fileURL: URL?
     @Environment(\.dismiss) private var dismiss
 
-    var body: some View {
+    public init(arabicText: String, translation: String? = nil, reference: String,
+                attribution: String, useQuranFont: Bool) {
+        self.arabicText = arabicText
+        self.translation = translation
+        self.reference = reference
+        self.attribution = attribution
+        self.useQuranFont = useQuranFont
+    }
+
+    private var card: NoorShareCard {
+        NoorShareCard(arabicText: arabicText, translation: translation,
+                      reference: reference, attribution: attribution, useQuranFont: useQuranFont)
+    }
+
+    public var body: some View {
         VStack(spacing: 20) {
             ScrollView {
-                AyahShareCard(verse: verse, surahName: surahName, translation: translation)
+                card
                     .scaleEffect(0.5, anchor: .top)
                     .frame(maxWidth: .infinity)
             }
@@ -81,12 +99,10 @@ struct ShareAyahSheet: View {
 
     @MainActor
     private func render() {
-        let renderer = ImageRenderer(
-            content: AyahShareCard(verse: verse, surahName: surahName, translation: translation)
-                .environment(\.colorScheme, .light))
+        let renderer = ImageRenderer(content: card.environment(\.colorScheme, .light))
         renderer.scale = 3
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("noor-\(verse.surahId)-\(verse.ayah).png")
+            .appendingPathComponent("noor-share-\(abs(reference.hashValue)).png")
         #if os(iOS)
         guard let image = renderer.uiImage, let data = image.pngData() else { return }
         #else
@@ -97,5 +113,21 @@ struct ShareAyahSheet: View {
         #endif
         try? data.write(to: url)
         fileURL = url
+    }
+}
+
+/// Verse convenience used by the reader.
+struct ShareAyahSheet: View {
+    let verse: Verse
+    let surahName: String
+    let translation: String?
+
+    var body: some View {
+        NoorShareSheet(
+            arabicText: verse.text,
+            translation: translation,
+            reference: "\(surahName) · \(verse.surahId):\(verse.ayah)",
+            attribution: "نور Noor · Quran text: Tanzil.net",
+            useQuranFont: true)
     }
 }

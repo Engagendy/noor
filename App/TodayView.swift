@@ -1,5 +1,6 @@
 import Athkar
 import ContentDB
+import QuranReader
 import DesignSystem
 import PrayerTimes
 import SwiftUI
@@ -13,6 +14,18 @@ struct TodayView: View {
     /// Switches to the Athkar tab (Daily Dhikr card).
     let openAthkar: () -> Void
     @State private var athkar: [DhikrCategory] = []
+
+    enum ShareItem: Identifiable {
+        case ayah(Verse, Surah)
+        case dhikr(Dhikr)
+        var id: String {
+            switch self {
+            case .ayah(let verse, _): "a\(verse.id)"
+            case .dhikr(let dhikr): "d\(dhikr.id.hashValue)"
+            }
+        }
+    }
+    @State private var shareItem: ShareItem?
 
     @AppStorage("prayer.city") private var cityName = "Makkah"
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
@@ -50,6 +63,24 @@ struct TodayView: View {
         .task {
             if athkar.isEmpty { athkar = AthkarStore.load() }
         }
+        .sheet(item: $shareItem) { item in
+            switch item {
+            case .ayah(let verse, let surah):
+                NoorShareSheet(
+                    arabicText: verse.text,
+                    reference: "\(surah.displayName(arabicUI: isArabicUI)) · \(verse.surahId):\(verse.ayah)",
+                    attribution: "نور Noor · Quran text: Tanzil.net",
+                    useQuranFont: true)
+                    .presentationDetents([.medium, .large])
+            case .dhikr(let dhikr):
+                NoorShareSheet(
+                    arabicText: dhikr.text,
+                    reference: isArabicUI ? "حصن المسلم" : "Hisn al-Muslim",
+                    attribution: "نور Noor · Hisn al-Muslim",
+                    useQuranFont: false)
+                    .presentationDetents([.medium, .large])
+            }
+        }
     }
 
     /// Time-aware dhikr: morning after Fajr, evening from Dhuhr, sleep
@@ -70,12 +101,27 @@ struct TodayView: View {
         let slot = dhikrSlot(now: now)
         let pool = slot.pool
         let dhikr = pool.isEmpty ? nil : pool[(dayOfYear &* 31) % pool.count]
-        return Button(action: openAthkar) {
-            VStack(alignment: .leading, spacing: 6) {
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack {
                 Text(slot.title)
                     .font(.system(size: 12, weight: .semibold))
                     .tracking(0.8)
                     .foregroundStyle(NoorColor.inkSecondary)
+                Spacer()
+                if let dhikr {
+                    Button {
+                        shareItem = .dhikr(dhikr)
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 14))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                            .frame(width: 32, height: 32)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Share")
+                }
+            }
                 if let dhikr {
                     Text(dhikr.text)
                         .font(.system(size: 16))
@@ -90,13 +136,27 @@ struct TodayView: View {
                             .font(NoorFont.caption)
                             .foregroundStyle(NoorColor.accentGold)
                     }
+            }
+            if let dhikr {
+                Text(dhikr.text)
+                    .font(.system(size: 16))
+                    .foregroundStyle(NoorColor.inkPrimary)
+                    .lineSpacing(6)
+                    .lineLimit(4)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .environment(\.layoutDirection, .rightToLeft)
+                if dhikr.count > 1 {
+                    Text("Repeat \(dhikr.count)×")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.accentGold)
                 }
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: openAthkar)
         .noorCard()
     }
 
@@ -229,10 +289,26 @@ struct TodayView: View {
         let index = (dayOfYear &* 271 &+ year) % max(total, 1)
         let daily = try? database.verse(globalIndex: index)
         return VStack(alignment: .leading, spacing: 6) {
-            Text("DAILY AYAH")
-                .font(.system(size: 12, weight: .semibold))
-                .tracking(0.8)
-                .foregroundStyle(NoorColor.inkSecondary)
+            HStack {
+                Text("DAILY AYAH")
+                    .font(.system(size: 12, weight: .semibold))
+                    .tracking(0.8)
+                    .foregroundStyle(NoorColor.inkSecondary)
+                Spacer()
+                if let daily {
+                    Button {
+                        shareItem = .ayah(daily.verse, daily.surah)
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 14))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                            .frame(width: 32, height: 32)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Share")
+                }
+            }
             if let daily {
                 Text(daily.verse.text)
                     .font(NoorFont.quran(size: 21))
