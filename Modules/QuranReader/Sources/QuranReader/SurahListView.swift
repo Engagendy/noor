@@ -217,7 +217,6 @@ public struct SurahListView: View {
             .padding(.bottom, 8)
             .background(NoorColor.bgPrimary)
         }
-        .navigationTitle(Text("Quran"))
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
     }
