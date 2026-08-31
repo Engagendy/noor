@@ -56,6 +56,8 @@ public struct AthkarView: View {
             }
         }
         .listStyle(.plain)
+        // Athkar content is Arabic — always right-to-left, any UI language.
+        .environment(\.layoutDirection, .rightToLeft)
         .searchable(text: $searchText, prompt: Text("Search athkar"))
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
@@ -95,6 +97,7 @@ struct DhikrListView: View {
             }
             .padding(16)
         }
+        .environment(\.layoutDirection, .rightToLeft)
         .background(NoorColor.bgPrimary)
         .navigationTitle(Text(verbatim: category.category))
         #if os(iOS)
