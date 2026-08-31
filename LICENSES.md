@@ -81,6 +81,16 @@ Attributions are displayed in Settings → About.
   given here and in Settings → About. Converted ogg→caf (format only).
 - **Attribution:** "Adhan recording by Jarih (Wikimedia Commons, CC BY-SA)."
 
+### Amiri Quran font (bundled — flow-mode Quran text)
+- **File:** `Core/DesignSystem/Sources/DesignSystem/Resources/AmiriQuran.ttf`
+- **Source:** Amiri project by Khaled Hosny (via google/fonts).
+- **License:** SIL Open Font License 1.1.
+- **Why:** the KFGQPC *text* fonts mis-position Quranic annotation marks
+  (e.g. U+06DF renders a dotted circle) under Apple's text engine; broken
+  harakat are a release blocker (design §3). The Madani page mode remains
+  100% KFGQPC via the QCF page fonts.
+- **Attribution:** "Amiri Quran font by Khaled Hosny (SIL OFL)."
+
 ## Software dependencies
 
 | Package | License | URL |

@@ -10,7 +10,10 @@ let package = Package(
     targets: [
         .target(
             name: "DesignSystem",
-            resources: [.copy("Resources/UthmanicHafs.ttf")]
+            resources: [
+                .copy("Resources/UthmanicHafs.ttf"),
+                .copy("Resources/AmiriQuran.ttf")
+            ]
         )
     ]
 )

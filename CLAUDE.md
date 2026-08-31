@@ -29,7 +29,9 @@ before any task. Follow the module structure in plan section 4 exactly.
 - All user-facing strings in String Catalogs (en + ar). Any new screen must
   be RTL-verified (add a preview with `.environment(\.layoutDirection, .rightToLeft)`).
 - Use design tokens from `Core/DesignSystem` — never hard-code colors/fonts.
-- Arabic Quran rendering only with the bundled KFGQPC/QCF fonts.
+- Arabic Quran rendering only with bundled, verified Quran fonts: QCF page
+  fonts (page mode) and Amiri Quran (flow mode — the KFGQPC text fonts
+  break Quranic marks like U+06DF under Apple's shaper; verified 2026-08-31).
 - Accessibility non-negotiable: labels, Dynamic Type, 44pt targets on every PR.
 
 ## Testing expectations

@@ -2,8 +2,12 @@ import SwiftUI
 
 /// Typography tokens from 02-DESIGN-GUIDELINES.md §3.
 public enum NoorFont {
-    /// PostScript name of the bundled KFGQPC Uthmanic Hafs font (v22).
-    public static let quranFontName = "kfgqpchafsuthmanicscript-Reg"
+    /// Flow-mode Quran text: Amiri Quran (SIL OFL) — the KFGQPC text fonts
+    /// mis-render Quranic marks (U+06DF et al.) under Apple's text engine.
+    /// Page mode remains pixel-perfect KFGQPC via the QCF page fonts.
+    public static let quranFontName = "Amiri Quran"
+    /// KFGQPC Uthmanic Hafs — kept for surah-name headers/ornaments.
+    public static let hafsFontName = "kfgqpchafsuthmanicscript-Reg"
 
     /// Quran text: user-adjustable 20–44pt, default 26pt. Line height is set
     /// at the view level (2.0–2.2 — harakat must never clip).

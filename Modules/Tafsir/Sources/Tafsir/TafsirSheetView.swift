@@ -19,6 +19,44 @@ public struct TafsirSheetView: View {
 
     private var edition: TafsirEdition { TafsirEdition.named(editionSlug) }
 
+    /// Offline pack state row (design 6.5: download state per tafsir pack).
+    @ViewBuilder
+    private var packRow: some View {
+        switch service.packState {
+        case .downloading(let surah):
+            Label {
+                Text("Downloading tafsir \(surah)/114…")
+            } icon: {
+                ProgressView().controlSize(.small)
+            }
+            .font(NoorFont.caption)
+            .foregroundStyle(NoorColor.inkSecondary)
+        case .done:
+            Label("Available offline", systemImage: "checkmark.circle")
+                .font(NoorFont.caption)
+                .foregroundStyle(NoorColor.accentPrimary)
+        case .failed(let message):
+            Text(verbatim: message)
+                .font(NoorFont.caption)
+                .foregroundStyle(.red)
+        case .idle:
+            if TafsirService.isPackDownloaded(edition: edition) {
+                Label("Available offline", systemImage: "checkmark.circle")
+                    .font(NoorFont.caption)
+                    .foregroundStyle(NoorColor.accentPrimary)
+            } else {
+                Button {
+                    Task { await service.downloadPack(edition: edition) }
+                } label: {
+                    Label("Download for offline", systemImage: "arrow.down.circle")
+                        .font(NoorFont.caption)
+                }
+                .buttonStyle(.borderless)
+                .tint(NoorColor.accentPrimary)
+            }
+        }
+    }
+
     public var body: some View {
         NavigationStack {
             ScrollView {
@@ -32,6 +70,7 @@ public struct TafsirSheetView: View {
                         .padding(14)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(NoorColor.accentGold.opacity(0.6), lineWidth: 1))
 
+                    packRow
                     HStack(spacing: 8) {
                         ForEach(TafsirEdition.all) { candidate in
                             let isOn = candidate.slug == editionSlug

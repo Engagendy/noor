@@ -65,6 +65,61 @@ public final class TafsirService {
         }
     }
 
+    // MARK: - Offline pack download
+
+    public enum PackState: Equatable {
+        case idle
+        case downloading(surah: Int)
+        case done
+        case failed(String)
+    }
+
+    public private(set) var packState: PackState = .idle
+
+    /// True when every surah of this edition is cached (spot-checked).
+    public static func isPackDownloaded(edition: TafsirEdition) -> Bool {
+        [1, 2, 18, 67, 114].allSatisfy { surah in
+            FileManager.default.fileExists(
+                atPath: cacheFile(edition: edition, surah: surah, ayah: 1).path)
+        }
+    }
+
+    /// Downloads the whole edition (114 per-surah bundles) into the same
+    /// per-ayah cache `load` reads — tafsir becomes fully offline.
+    public func downloadPack(edition: TafsirEdition) async {
+        if case .downloading = packState { return }
+        struct Item: Decodable {
+            let surah: String
+            let ayah: String
+            let text: String
+        }
+        packState = .downloading(surah: 0)
+        for surah in 1...114 {
+            packState = .downloading(surah: surah)
+            let url = URL(string:
+                "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/\(edition.slug)/\(surah).json")!
+            do {
+                let (data, response) = try await URLSession.shared.data(from: url)
+                guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                for item in try JSONDecoder().decode([Item].self, from: data) {
+                    guard let ayah = Int(item.ayah) else { continue }
+                    let file = Self.cacheFile(edition: edition, surah: surah, ayah: ayah)
+                    try? FileManager.default.createDirectory(
+                        at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+                    try? Self.stripHTML(item.text).write(to: file, atomically: true, encoding: .utf8)
+                }
+            } catch {
+                packState = .failed("\(surah): \(error.localizedDescription)")
+                return
+            }
+            // Gentle pacing for the CDN.
+            try? await Task.sleep(for: .milliseconds(80))
+        }
+        packState = .done
+    }
+
     nonisolated static func parse(_ data: Data) throws -> String {
         struct Payload: Decodable { let text: String }
         let text = try JSONDecoder().decode(Payload.self, from: data).text
