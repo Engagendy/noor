@@ -5,14 +5,33 @@ import QuranReader
 import SwiftUI
 
 struct MainTabView: View {
+    enum Tab: Hashable {
+        case today, quran, prayer
+    }
+
     let database: QuranDatabase
+    // NOOR_TAB launch env var selects the initial tab (UI tests, screenshots).
+    @State private var tab: Tab = switch ProcessInfo.processInfo.environment["NOOR_TAB"] {
+        case "quran": .quran
+        case "prayer": .prayer
+        default: .today
+    }
 
     var body: some View {
-        TabView {
+        TabView(selection: $tab) {
+            NavigationStack {
+                TodayView(database: database, openReader: { tab = .quran })
+            }
+            .tabItem { Label("Today", systemImage: "sun.max") }
+            .tag(Tab.today)
+
             QuranTab(database: database)
                 .tabItem { Label("Quran", systemImage: "book") }
+                .tag(Tab.quran)
+
             NavigationStack { PrayerTimesView() }
                 .tabItem { Label("Prayer", systemImage: "clock") }
+                .tag(Tab.prayer)
         }
         .tint(NoorColor.accentPrimary)
     }

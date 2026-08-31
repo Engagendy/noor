@@ -57,6 +57,20 @@ public final class QuranDatabase: Sendable {
     public func verseCount() throws -> Int {
         try queue.read { try Verse.fetchCount($0) }
     }
+
+    /// Verse at a global 0-based index in mushaf order (0..<6236), with its
+    /// surah — used for the deterministic daily ayah.
+    public func verse(globalIndex: Int) throws -> (verse: Verse, surah: Surah)? {
+        try queue.read { db in
+            guard let verse = try Verse
+                .order(Column("surah_id"), Column("ayah"))
+                .limit(1, offset: globalIndex)
+                .fetchOne(db),
+                let surah = try Surah.fetchOne(db, key: verse.surahId)
+            else { return nil }
+            return (verse, surah)
+        }
+    }
 }
 
 public enum QuranDatabaseError: Error, Equatable {

@@ -2,14 +2,17 @@ import Adhan
 import DesignSystem
 import SwiftUI
 
-/// Today's five prayers as a vertical timeline with the next prayer
-/// emphasized (design §6.4). Updates minute-level, calmly — no ticking.
+/// Prayer Times per design 1f: city line, week strip, vertical timeline with
+/// the next prayer enlarged (countdown + notification-sound choice), and the
+/// calculation-settings row. Updates minute-level, calmly.
 public struct PrayerTimesView: View {
     @AppStorage("prayer.city") private var cityName = "Makkah"
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
     @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
+    @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanShort.rawValue
 
-    private let service = PrayerTimesService()
+    @State private var dayOffset = 0
+    @State private var showSettings = false
 
     public init() {}
 
@@ -19,121 +22,232 @@ public struct PrayerTimesView: View {
     }
     private var madhab: MadhabChoice { MadhabChoice(rawValue: madhabRaw) ?? .shafi }
 
-    private var calendar: Calendar {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: city.timeZoneIdentifier) ?? .current
-        return calendar
-    }
-
     public var body: some View {
         TimelineView(.everyMinute) { context in
-            List {
-                Section {
-                    dateHeader(now: context.date)
-                }
-                .listRowBackground(Color.clear)
-
-                if let times = times(on: context.date) {
-                    Section {
-                        prayerRows(times: times, now: context.date)
+            let now = context.date
+            let shownDate = Calendar.current.date(byAdding: .day, value: dayOffset, to: now) ?? now
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    cityLine
+                    weekStrip(now: now)
+                    if let day = PrayerDay.compute(city: city, method: method, madhab: madhab, date: shownDate) {
+                        timeline(day: day, now: now, isToday: dayOffset == 0)
                     }
+                    settingsRow
                 }
-
-                settingsSection
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
             }
-            .scrollContentBackground(.hidden)
             .background(NoorColor.bgPrimary)
             .navigationTitle(Text("Prayer Times"))
         }
+        .sheet(isPresented: $showSettings) { settingsSheet }
     }
 
-    private func times(on date: Date) -> Adhan.PrayerTimes? {
-        service.prayerTimes(
-            latitude: city.latitude, longitude: city.longitude,
-            date: date, calendar: calendar,
-            method: method.adhanMethod, madhab: madhab.adhanMadhab)
-    }
-
-    private func dateHeader(now: Date) -> some View {
-        let hijri = now.formatted(
-            Date.FormatStyle(date: .long, calendar: Calendar(identifier: .islamicUmmAlQura)))
-        return VStack(alignment: .leading, spacing: 4) {
-            Text(hijri)
-                .font(NoorFont.sectionHeader)
-                .foregroundStyle(NoorColor.inkPrimary)
-            Text(now.formatted(date: .complete, time: .omitted))
+    private var cityLine: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "mappin.and.ellipse")
+                .font(.system(size: 12))
+            Text("\(city.name) · manual")
                 .font(NoorFont.caption)
-                .foregroundStyle(NoorColor.inkSecondary)
+        }
+        .foregroundStyle(NoorColor.inkSecondary)
+    }
+
+    private func weekStrip(now: Date) -> some View {
+        HStack(spacing: 6) {
+            ForEach(0..<7, id: \.self) { offset in
+                let date = Calendar.current.date(byAdding: .day, value: offset, to: now) ?? now
+                let isSelected = offset == dayOffset
+                VStack(spacing: 2) {
+                    Text(date.formatted(.dateTime.weekday(.abbreviated)))
+                        .font(.system(size: 12))
+                    Text(date.formatted(.dateTime.day()))
+                        .font(.system(size: 14, weight: isSelected ? .bold : .semibold))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isSelected ? NoorColor.accentPrimary : Color.clear)
+                )
+                .foregroundStyle(isSelected ? NoorColor.bgPrimary : NoorColor.inkSecondary)
+                .contentShape(Rectangle())
+                .onTapGesture { dayOffset = offset }
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+            }
         }
     }
 
     @ViewBuilder
-    private func prayerRows(times: Adhan.PrayerTimes, now: Date) -> some View {
-        let next = times.nextPrayer(at: now)
-        let rows: [(name: LocalizedStringResource, prayer: Prayer, time: Date)] = [
-            ("Fajr", .fajr, times.fajr),
-            ("Sunrise", .sunrise, times.sunrise),
-            ("Dhuhr", .dhuhr, times.dhuhr),
-            ("Asr", .asr, times.asr),
-            ("Maghrib", .maghrib, times.maghrib),
-            ("Isha", .isha, times.isha),
-        ]
-        ForEach(rows, id: \.prayer) { row in
-            let isNext = row.prayer == next
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(row.name)
-                        .font(isNext ? NoorFont.sectionHeader : .body)
-                        .foregroundStyle(isNext ? NoorColor.prayerNext : NoorColor.inkPrimary)
-                    if isNext {
-                        Text(row.time, format: .relative(presentation: .numeric))
-                            .font(NoorFont.caption)
+    private func timeline(day: PrayerDay, now: Date, isToday: Bool) -> some View {
+        let next = isToday ? day.next(at: now) : nil
+        VStack(spacing: 0) {
+            ForEach(day.entries) { entry in
+                if entry.prayer == next?.prayer {
+                    nextPrayerCard(entry, now: now)
+                        .padding(.vertical, 8)
+                } else {
+                    let passed = isToday && entry.time <= now
+                    HStack(spacing: 14) {
+                        ZStack {
+                            if passed {
+                                Circle().fill(NoorColor.accentPrimary)
+                            } else {
+                                Circle().strokeBorder(NoorColor.inkSecondary.opacity(0.4), lineWidth: 1.5)
+                            }
+                        }
+                        .frame(width: 10, height: 10)
+                        Text(entry.name)
+                            .font(.system(size: 16))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Spacer()
+                        Text(entry.time, format: timeFormat)
+                            .font(.system(size: 15).monospacedDigit())
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
+                    .padding(.vertical, 13)
+                    .padding(.horizontal, 4)
+                    .opacity(passed ? 0.6 : 1)
+                    .overlay(alignment: .top) {
+                        Divider().opacity(0.4)
+                    }
+                    .accessibilityElement(children: .combine)
                 }
-                Spacer()
-                Text(row.time, format: timeFormat)
-                    .font(.body.monospacedDigit())
-                    .foregroundStyle(isNext ? NoorColor.prayerNext : NoorColor.inkSecondary)
             }
-            .padding(.vertical, isNext ? 8 : 2)
-            .listRowBackground(isNext ? NoorColor.stateReciting : Color.clear)
-            .accessibilityElement(children: .combine)
         }
     }
 
-    /// Times are shown in the selected city's time zone, not the device's.
+    private func nextPrayerCard(_ entry: PrayerDay.Entry, now: Date) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Circle()
+                    .fill(NoorColor.accentPrimary)
+                    .frame(width: 10, height: 10)
+                    .shadow(color: NoorColor.accentPrimary.opacity(0.4), radius: 4)
+                Text(entry.name)
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(NoorColor.inkPrimary)
+                Text("next · \(entry.time, format: .relative(presentation: .numeric))")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NoorColor.accentPrimary)
+                Spacer()
+                Text(entry.time, format: timeFormat)
+                    .font(.system(size: 19, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(NoorColor.inkPrimary)
+            }
+            soundChips
+        }
+        .padding(18)
+        .noorCard()
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(NoorColor.accentPrimary.opacity(0.35), lineWidth: 1)
+        )
+    }
+
+    /// Sound choice is stored now and honored when adhan notifications land.
+    private var soundChips: some View {
+        HStack(spacing: 8) {
+            ForEach(AdhanSound.allCases) { sound in
+                let isOn = soundRaw == sound.rawValue
+                Text(sound.displayName)
+                    .font(.system(size: 12, weight: .semibold))
+                    .padding(.horizontal, 13)
+                    .padding(.vertical, 7)
+                    .background(
+                        Capsule().fill(isOn ? NoorColor.stateReciting : Color.clear)
+                    )
+                    .overlay(
+                        Capsule().stroke(
+                            isOn ? NoorColor.accentPrimary.opacity(0.5) : NoorColor.inkSecondary.opacity(0.25),
+                            lineWidth: 1)
+                    )
+                    .foregroundStyle(isOn ? NoorColor.accentPrimary : NoorColor.inkSecondary)
+                    .contentShape(Capsule())
+                    .onTapGesture { soundRaw = sound.rawValue }
+                    .accessibilityAddTraits(isOn ? .isSelected : [])
+            }
+        }
+    }
+
+    private var settingsRow: some View {
+        Button {
+            showSettings = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 14))
+                Text("\(String(localized: method.displayName)) · \(String(localized: madhab.displayName))")
+                    .font(NoorFont.caption)
+                Spacer()
+                Image(systemName: "chevron.forward")
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .foregroundStyle(NoorColor.inkSecondary)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .overlay(alignment: .top) { Divider().opacity(0.4) }
+    }
+
+    private var settingsSheet: some View {
+        NavigationStack {
+            Form {
+                Picker(selection: $cityName) {
+                    ForEach(CityPreset.all) { preset in
+                        Text(preset.name).tag(preset.name)
+                    }
+                } label: {
+                    Text("City")
+                }
+                Picker(selection: $methodRaw) {
+                    ForEach(CalculationMethodChoice.allCases) { choice in
+                        Text(choice.displayName).tag(choice.rawValue)
+                    }
+                } label: {
+                    Text("Calculation method")
+                }
+                Picker(selection: $madhabRaw) {
+                    ForEach(MadhabChoice.allCases) { choice in
+                        Text(choice.displayName).tag(choice.rawValue)
+                    }
+                } label: {
+                    Text("Asr madhab")
+                }
+            }
+            .navigationTitle(Text("Prayer Settings"))
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { showSettings = false }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    /// Times shown in the selected city's time zone, not the device's.
     private var timeFormat: Date.FormatStyle {
         var style = Date.FormatStyle(date: .omitted, time: .shortened)
         style.timeZone = TimeZone(identifier: city.timeZoneIdentifier) ?? .current
         return style
     }
+}
 
-    private var settingsSection: some View {
-        Section(header: Text("Settings").foregroundStyle(NoorColor.inkSecondary)) {
-            Picker(selection: $cityName) {
-                ForEach(CityPreset.all) { preset in
-                    Text(preset.name).tag(preset.name)
-                }
-            } label: {
-                Text("City")
-            }
-            Picker(selection: $methodRaw) {
-                ForEach(CalculationMethodChoice.allCases) { choice in
-                    Text(choice.displayName).tag(choice.rawValue)
-                }
-            } label: {
-                Text("Calculation method")
-            }
-            Picker(selection: $madhabRaw) {
-                ForEach(MadhabChoice.allCases) { choice in
-                    Text(choice.displayName).tag(choice.rawValue)
-                }
-            } label: {
-                Text("Asr madhab")
-            }
+public enum AdhanSound: String, CaseIterable, Identifiable {
+    case adhanShort, bell, silent
+
+    public var id: String { rawValue }
+    public var displayName: LocalizedStringResource {
+        switch self {
+        case .adhanShort: "Adhan (short)"
+        case .bell: "Bell"
+        case .silent: "Silent"
         }
-        .listRowBackground(NoorColor.bgElevated)
     }
 }
 
@@ -141,8 +255,7 @@ public struct PrayerTimesView: View {
     NavigationStack { PrayerTimesView() }
 }
 
-#Preview("AR RTL") {
+#Preview("Tahajjud dark") {
     NavigationStack { PrayerTimesView() }
-        .environment(\.locale, Locale(identifier: "ar"))
-        .environment(\.layoutDirection, .rightToLeft)
+        .preferredColorScheme(.dark)
 }
