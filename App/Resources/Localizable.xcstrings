@@ -927,16 +927,6 @@
         }
       }
     },
-    "Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen. Authentic adhan audio clips arrive once licensing is confirmed.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تُجدول الإشعارات على جهازك للأيام الاثني عشر القادمة وتتجدد تلقائيًا. يمكنك تفعيل كل صلاة على حدة من زر الجرس في شاشة الصلاة. مقاطع الأذان الصوتية ستضاف بعد تأكيد الترخيص."
-          }
-        }
-      }
-    },
     "OK": {
       "extractionState": "stale",
       "localizations": {
@@ -1636,6 +1626,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Adhan (melodic)"
+          }
+        }
+      }
+    },
+    "Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تُجدول الإشعارات على جهازك للأيام الاثني عشر القادمة وتتجدد تلقائيًا. يمكنك تفعيل أو إيقاف كل صلاة على حدة من زر الجرس في شاشة الصلاة."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen."
           }
         }
       }
