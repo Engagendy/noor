@@ -84,6 +84,14 @@ public struct SurahReaderView: View {
         mode == .ayah ? viewModel.surah : viewModel.surah(forPage: currentPage)
     }
 
+    /// Background tap: close the options panel, else toggle chrome.
+    /// Attached to page CONTENT (the horizontal pager consumes container taps).
+    private func backgroundTapped() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            if showOptions { showOptions = false } else { chromeVisible.toggle() }
+        }
+    }
+
     public var body: some View {
         Group {
             switch mode {
@@ -94,11 +102,6 @@ public struct SurahReaderView: View {
         }
         .environment(\.layoutDirection, .rightToLeft)
         .background(NoorColor.bgPrimary)
-        .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                if showOptions { showOptions = false } else { chromeVisible.toggle() }
-            }
-        }
         // Constant-height top strip: content never reflows — the two rows
         // just cross-fade (full controls ↔ surah·time·juz).
         .safeAreaInset(edge: .top, spacing: 0) { topBar }
@@ -107,11 +110,14 @@ public struct SurahReaderView: View {
                 optionsPanel
             }
         }
-        .overlay(alignment: .bottom) {
-            if let player {
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            // Inset, not overlay: Madani pages have no scroll and must
+            // shrink above the pill rather than be covered by it.
+            if let player, player.current != nil {
                 AudioPillView(player: player)
                     .environment(\.layoutDirection, .leftToRight)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, 6)
+                    .padding(.top, 2)
             }
         }
         #if os(iOS)
@@ -299,7 +305,8 @@ public struct SurahReaderView: View {
                 page: page, layout: layout, fontStore: fontStore,
                 surahName: { viewModel.surahInfo($0)?.nameArabic ?? "" },
                 basmala: viewModel.basmalaForAnySurah,
-                highlightKey: selectedKey ?? recitingKey
+                highlightKey: selectedKey ?? recitingKey,
+                onTap: backgroundTapped
             ) { refs in
                 let verses = viewModel.sections(forPage: page)
                     .flatMap(\.verses)
@@ -352,7 +359,8 @@ public struct SurahReaderView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 18)
-            .padding(.bottom, player?.current != nil ? 72 : 0)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: backgroundTapped)
         }
     }
 
@@ -454,7 +462,8 @@ public struct SurahReaderView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 18)
-                .padding(.bottom, player?.current != nil ? 72 : 0)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: backgroundTapped)
             }
             .onChange(of: viewModel.verses.count) {
                 if let ayah = scrollToAyah { proxy.scrollTo("a\(ayah)", anchor: .top) }

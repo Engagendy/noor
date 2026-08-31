@@ -14,6 +14,8 @@ struct MadaniPageView: View {
     var basmala: String?
     /// surah*1000+ayah to softly highlight (arrival from search/bookmarks).
     var highlightKey: Int?
+    /// Plain tap on the page (chrome toggle / close panels).
+    var onTap: (() -> Void)?
     /// Long-pressing a line reports exactly the ayat on that line.
     var onLongPressLine: (([PageLine.Ref]) -> Void)?
 
@@ -83,6 +85,8 @@ struct MadaniPageView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.horizontal, 4)
+                    .contentShape(Rectangle())
+                    .onTapGesture { onTap?() }
                 } else if fontFailed {
                     ContentUnavailableView {
                         Label("Page font unavailable", systemImage: "wifi.slash")
