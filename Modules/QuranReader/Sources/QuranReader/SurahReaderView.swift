@@ -91,7 +91,8 @@ public struct SurahReaderView: View {
             // Fires only when no word/ayah consumed the tap.
             withAnimation(.easeInOut(duration: 0.3)) { chromeVisible.toggle() }
         }
-        .overlay(alignment: .top) {
+        .safeAreaInset(edge: .top, spacing: 0) {
+            // Inset (not overlay) so the first line is never covered.
             if !chromeVisible { miniHeader }
         }
         .overlay(alignment: .bottom) {
