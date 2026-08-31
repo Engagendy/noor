@@ -88,6 +88,15 @@ struct MainTabView: View {
                 .tag(Tab.settings)
         }
         .tint(NoorColor.accentPrimary)
+        // Recitation follows you: the pill floats above the tab bar on every
+        // tab (the reader shows its own copy inside the Quran tab).
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if tab != .quran, player.current != nil {
+                AudioPillView(player: player)
+                    .environment(\.layoutDirection, .leftToRight)
+                    .padding(.bottom, 6)
+            }
+        }
         .task {
             syncWidgets()
             await rescheduleNotifications()

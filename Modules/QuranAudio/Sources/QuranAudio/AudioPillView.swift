@@ -171,13 +171,22 @@ public struct ReciterPickerSheet: View {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 14))
                         .foregroundStyle(NoorColor.inkSecondary)
-                    TextField(text: $searchText) {
-                        Text("Search reciters")
-                    }
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 15))
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    // Custom placeholder: the system one ignores the RTL
+                    // environment and anchors to the process language.
+                    TextField("", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 15))
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .overlay(alignment: .leading) {
+                            if searchText.isEmpty {
+                                Text("Search reciters")
+                                    .font(.system(size: 15))
+                                    .foregroundStyle(NoorColor.inkSecondary.opacity(0.8))
+                                    .allowsHitTesting(false)
+                            }
+                        }
+                        .accessibilityLabel("Search reciters")
                     if !searchText.isEmpty {
                         Button {
                             searchText = ""
