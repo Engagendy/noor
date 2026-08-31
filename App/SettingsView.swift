@@ -96,6 +96,7 @@ struct SettingsView: View {
                 Text(verbatim: "Tafsir: Ibn Kathir, Al-Muyassar (spa5k/tafsir_api)")
                 Text(verbatim: "Recitations: EveryAyah.com")
                 Text(verbatim: "Prayer times: adhan-swift (Batoul Apps)")
+                Text(verbatim: "Adhan sound: Jarih (Wikimedia Commons, CC BY-SA)")
             } header: {
                 Text("About")
             } footer: {

@@ -38,8 +38,13 @@ public struct AdhanNotificationScheduler: Sendable {
             content.title = String(localized: "It's time for \(planned.prayerName)")
             content.body = "\(planned.prayerName) · \(planned.timeString)"
             switch sound {
-            case .silent: content.sound = nil
-            default: content.sound = .default
+            case .silent:
+                content.sound = nil
+            case .adhanShort:
+                // 27s CC BY-SA adhan bundled in the app (see LICENSES.md).
+                content.sound = UNNotificationSound(named: UNNotificationSoundName("adhan_short.caf"))
+            case .bell:
+                content.sound = .default
             }
             let components = Calendar.current.dateComponents(
                 [.year, .month, .day, .hour, .minute], from: planned.fireDate)

@@ -26,6 +26,7 @@ public struct SurahReaderView: View {
     @State private var currentPage = 0
     @State private var tafsirVerse: Verse?
     @State private var shareVerse: Verse?
+    @State private var actionsPage: SurahReaderViewModel.PageGroup?
     @State private var downloader = SurahDownloader()
     @GestureState private var pinchScale: CGFloat = 1
     @Environment(\.locale) private var locale
@@ -139,6 +140,20 @@ public struct SurahReaderView: View {
                 readerMenu
             }
         }
+        .sheet(item: $actionsPage) { page in
+            AyahActionsSheet(
+                verses: page.verses,
+                bookmarkedAyat: bookmarkedAyat,
+                onPlay: player == nil ? nil : { startPlayback(from: $0.ayah) },
+                onTafsir: { verse in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { tafsirVerse = verse }
+                },
+                onShare: { verse in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { shareVerse = verse }
+                },
+                onToggleBookmark: onToggleBookmark)
+                .presentationDetents([.medium, .large])
+        }
         .sheet(item: $tafsirVerse) { verse in
             TafsirSheetView(surahId: surahId, ayah: verse.ayah, ayahText: verse.text)
                 .presentationDetents([.medium, .large])
@@ -158,6 +173,8 @@ public struct SurahReaderView: View {
         TabView(selection: $currentPage) {
             ForEach(viewModel.pages) { page in
                 MadaniPageView(page: page.page, layout: layout, fontStore: fontStore)
+                    .contentShape(Rectangle())
+                    .onTapGesture { actionsPage = page }
                     .tag(page.page)
             }
         }
@@ -218,6 +235,8 @@ public struct SurahReaderView: View {
             .padding(.horizontal, 24)
             .padding(.vertical, 24)
             .padding(.bottom, player?.current != nil ? 72 : 0)
+            .contentShape(Rectangle())
+            .onTapGesture { actionsPage = page }
         }
     }
 
@@ -299,7 +318,8 @@ public struct SurahReaderView: View {
         return VStack(alignment: .leading, spacing: 10) {
             if wordByWord, let layout {
                 WordByWordContainer(
-                    layout: layout, surahId: surahId, ayah: verse.ayah, fontSize: liveFontSize)
+                    layout: layout, surahId: surahId, ayah: verse.ayah, fontSize: liveFontSize,
+                    onTapWord: { _ in tafsirVerse = verse })
             } else {
                 (Text(verse.text)
                     + sajda
@@ -490,11 +510,12 @@ private struct WordByWordContainer: View {
     let surahId: Int
     let ayah: Int
     let fontSize: CGFloat
+    var onTapWord: ((PageWord) -> Void)?
 
     @State private var words: [PageWord] = []
 
     var body: some View {
-        WordByWordView(words: words, fontSize: fontSize)
+        WordByWordView(words: words, fontSize: fontSize, onTapWord: onTapWord)
             .task { words = (try? layout.words(surahId: surahId, ayah: ayah)) ?? [] }
     }
 }

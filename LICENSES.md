@@ -73,6 +73,14 @@ Attributions are displayed in Settings → About.
 - **Attribution:** "Page layout and word-by-word data courtesy of
   Quran.com (Quran Foundation)."
 
+### Adhan notification sound (bundled)
+- **File:** `App/Resources/adhan_short.caf` (27 s)
+- **Source:** Wikimedia Commons, "Adhan wiki.oga" by **Jarih** (2007) —
+  https://commons.wikimedia.org/wiki/File:Adhan_wiki.oga
+- **License:** CC BY-SA (3.0/2.5/2.0/1.0) / GFDL. Attribution required and
+  given here and in Settings → About. Converted ogg→caf (format only).
+- **Attribution:** "Adhan recording by Jarih (Wikimedia Commons, CC BY-SA)."
+
 ## Software dependencies
 
 | Package | License | URL |

@@ -13,6 +13,7 @@ struct RootView: View {
     }
 
     @State private var state: LoadState = .loading
+    @State private var showSplash = true
     @AppStorage("app.language") private var language = "system"
     @AppStorage("app.theme") private var theme = "system"
 
@@ -40,6 +41,13 @@ struct RootView: View {
             }
         }
         .background(NoorColor.bgPrimary)
+        .overlay {
+            if showSplash {
+                SplashView()
+                    .transition(.opacity)
+                    .zIndex(1)
+            }
+        }
         // Live language switch: drive locale + layout direction directly so
         // no app restart is needed.
         .environment(\.locale, language == "system" ? .current : Locale(identifier: language))
@@ -53,6 +61,9 @@ struct RootView: View {
             } catch {
                 state = .failed("The bundled Quran database failed verification: \(error)")
             }
+            // Let the intro breathe, then reveal the app (calm fade, §5).
+            try? await Task.sleep(for: .seconds(1.9))
+            withAnimation(.easeInOut(duration: 0.45)) { showSplash = false }
         }
     }
 }

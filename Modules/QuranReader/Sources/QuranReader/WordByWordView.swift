@@ -7,6 +7,7 @@ import SwiftUI
 struct WordByWordView: View {
     let words: [PageWord]
     let fontSize: CGFloat
+    var onTapWord: ((PageWord) -> Void)?
 
     var body: some View {
         RTLFlowLayout(horizontalSpacing: 10, verticalSpacing: 14) {
@@ -24,6 +25,8 @@ struct WordByWordView: View {
                 .padding(.horizontal, 4)
                 .padding(.vertical, 4)
                 .background(RoundedRectangle(cornerRadius: 6).fill(NoorColor.bgElevated.opacity(0.6)))
+                .contentShape(Rectangle())
+                .onTapGesture { onTapWord?(word) }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(word.text)
                 .accessibilityValue(word.translation)
