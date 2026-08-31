@@ -94,6 +94,7 @@ targets:
         UILaunchScreen:
           UIColorName: LaunchBackground
         ITSAppUsesNonExemptEncryption: false
+        LSApplicationCategoryType: public.app-category.reference
         NSLocationWhenInUseUsageDescription: "Your location is used only on this device to calculate prayer times and qibla direction. It never leaves your device."
     settings:
       base:
@@ -102,6 +103,8 @@ targets:
         # App group only on iOS (widget sharing); macOS build stays plain.
         "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": App/Noor.entitlements
         "CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]": App/Noor.entitlements
+        # Mac App Store requires the sandbox; separate entitlements file.
+        "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": App/NoorMac.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         PRODUCT_NAME: Noor

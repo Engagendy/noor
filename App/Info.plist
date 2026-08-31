@@ -20,6 +20,8 @@
 	<string>1</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.reference</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Your location is used only on this device to calculate prayer times and qibla direction. It never leaves your device.</string>
 	<key>UIBackgroundModes</key>
