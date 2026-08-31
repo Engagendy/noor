@@ -54,13 +54,48 @@ struct TodayView: View {
         return String(localized: resource)
     }
 
+    /// Arrow chip that nudges the carousel (also hints that it swipes).
+    private func carouselArrow(direction: Int) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.4)) {
+                cardPage = (cardPage + direction + 4) % 4
+            }
+        } label: {
+            Image(systemName: direction > 0 ? "chevron.forward" : "chevron.backward")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(NoorColor.accentPrimary)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(NoorColor.bgElevated.opacity(0.92))
+                    .shadow(color: .black.opacity(0.12), radius: 4))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 2)
+        .accessibilityLabel(direction > 0 ? "Next card" : "Previous card")
+    }
+
+    /// Clearly visible page dots in app colors.
+    private var carouselDots: some View {
+        HStack(spacing: 7) {
+            ForEach(0..<4, id: \.self) { index in
+                Circle()
+                    .fill(index == cardPage ? NoorColor.accentPrimary : NoorColor.inkSecondary.opacity(0.3))
+                    .frame(width: index == cardPage ? 8 : 6, height: index == cardPage ? 8 : 6)
+                    .animation(.easeInOut(duration: 0.25), value: cardPage)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 2)
+        .padding(.bottom, 6)
+
+    }
+
     /// One carousel page: card pinned to the top, page dots below.
     private func carouselPage<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         VStack(spacing: 0) {
             content()
             Spacer(minLength: 0)
         }
-        .padding(.bottom, 26)  // clear the page dots
         .padding(.horizontal, 2)
     }
 
@@ -92,8 +127,7 @@ struct TodayView: View {
                     carouselPage { onThisDayCard(now: context.date) }.tag(3)
                 }
                 #if os(iOS)
-                .tabViewStyle(.page(indexDisplayMode: .always))
-                .indexViewStyle(.page(backgroundDisplayMode: .never))
+                .tabViewStyle(.page(indexDisplayMode: .never))
                 #endif
                 .onReceive(cardTimer) { _ in
                     withAnimation(.easeInOut(duration: 0.6)) {
@@ -101,6 +135,10 @@ struct TodayView: View {
                     }
                 }
                 .frame(maxHeight: .infinity)
+                // Swipe affordance: arrows at the sides + tinted dots below.
+                .overlay(alignment: .leading) { carouselArrow(direction: -1) }
+                .overlay(alignment: .trailing) { carouselArrow(direction: 1) }
+                carouselDots
             }
             .padding(.horizontal, 20)
             .padding(.top, 12)
@@ -216,6 +254,7 @@ struct TodayView: View {
             }
         }
         .padding(16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .onTapGesture(perform: openAthkar)
@@ -251,6 +290,7 @@ struct TodayView: View {
                         .foregroundStyle(NoorColor.accentPrimary)
                 }
                 .padding(16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -349,6 +389,7 @@ struct TodayView: View {
                 }
             }
             .padding(16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .frame(maxWidth: .infinity, alignment: .leading)
             .noorCard()
         }
@@ -642,6 +683,7 @@ struct TodayView: View {
             }
         }
         .padding(16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .frame(maxWidth: .infinity, alignment: .leading)
         .noorCard()
     }
