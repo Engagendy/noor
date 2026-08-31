@@ -28,6 +28,7 @@ struct TodayView: View {
         }
     }
     @State private var shareItem: ShareItem?
+    @State private var detailEvent: IslamicEvent?
 
     @AppStorage("prayer.city") private var cityName = "Makkah"
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
@@ -65,6 +66,11 @@ struct TodayView: View {
         }
         .task {
             if athkar.isEmpty { athkar = AthkarStore.load() }
+        }
+        .sheet(item: $detailEvent) { event in
+            EventDetailSheet(event: event, isArabicUI: isArabicUI)
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
         .sheet(item: $shareItem) { item in
             switch item {
@@ -207,6 +213,9 @@ struct TodayView: View {
                     .accessibilityLabel("Share")
                 }
                 ForEach(Array(events.enumerated()), id: \.offset) { _, event in
+                    Button {
+                        detailEvent = event
+                    } label: {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(verbatim: isArabicUI ? event.arabic : event.english)
                             .font(.system(size: 15))
@@ -224,10 +233,14 @@ struct TodayView: View {
                                      ? "بعد \(upcoming.inDays.arabicIndic) يومًا تقريبًا"
                                      : "in about \(upcoming.inDays) days")
                             }
+                            Text(isArabicUI ? "التفاصيل ←" : "Details →")
                         }
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.accentGold)
                     }
+                    .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(16)
@@ -407,5 +420,84 @@ struct TodayView: View {
         var style = Date.FormatStyle(date: .omitted, time: .shortened)
         style.timeZone = TimeZone(identifier: PrayerLocation.current().timeZoneIdentifier) ?? .current
         return style
+    }
+}
+
+
+/// Full story of an Islamic-history event, with its own share button.
+struct EventDetailSheet: View {
+    let event: IslamicEvent
+    let isArabicUI: Bool
+    @Environment(\.dismiss) private var dismiss
+    @State private var sharing = false
+
+    private var dateLine: String {
+        let month = event.monthName(arabicUI: isArabicUI)
+        if isArabicUI {
+            let year = event.yearHijri.map { " سنة \($0.arabicIndic) هـ" } ?? ""
+            return "\(event.day.arabicIndic) \(month)\(year)"
+        }
+        let year = event.yearHijri.map { ", \($0) AH" } ?? ""
+        return "\(event.day) \(month)\(year)"
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text(verbatim: isArabicUI ? event.arabic : event.english)
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                        .lineSpacing(6)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(spacing: 8) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 13))
+                        Text(verbatim: dateLine)
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundStyle(NoorColor.accentGold)
+                    Rectangle()
+                        .fill(NoorColor.accentGold.opacity(0.3))
+                        .frame(height: 0.7)
+                    Text(verbatim: isArabicUI ? event.detailArabic : event.detailEnglish)
+                        .font(.system(size: 16.5))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                        .lineSpacing(9)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(20)
+            }
+            .background(NoorColor.bgPrimary)
+            .navigationTitle(Text("ON THIS DAY"))
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        sharing = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .accessibilityLabel("Share")
+                }
+            }
+            .sheet(isPresented: $sharing) {
+                NoorShareSheet(
+                    arabicText: isArabicUI ? event.arabic : event.english,
+                    translation: isArabicUI ? nil : nil,
+                    reference: dateLine,
+                    attribution: "نور Noor",
+                    useQuranFont: false)
+                    .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                    .presentationDetents([.medium, .large])
+            }
+        }
     }
 }

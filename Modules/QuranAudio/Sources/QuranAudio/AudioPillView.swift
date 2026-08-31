@@ -143,6 +143,10 @@ public struct ReciterPickerSheet: View {
                     dismiss()
                 } label: {
                     HStack(spacing: 12) {
+                        if !reciter.flag.isEmpty {
+                            Text(verbatim: reciter.flag)
+                                .font(.system(size: 18))
+                        }
                         Text(verbatim: reciter.displayName(arabicUI: isArabicUI))
                             .font(.system(size: 16, weight: selection == reciter.rawValue ? .semibold : .regular))
                             .foregroundStyle(NoorColor.inkPrimary)

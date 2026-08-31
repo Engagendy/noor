@@ -88,10 +88,22 @@ public final class TafsirService {
     /// per-ayah cache `load` reads — tafsir becomes fully offline.
     public func downloadPack(edition: TafsirEdition) async {
         if case .downloading = packState { return }
+        // CDN bundles carry ayah/surah as numbers (some editions as
+        // strings) — accept both.
         struct Item: Decodable {
-            let surah: String
-            let ayah: String
+            let ayah: Int
             let text: String
+
+            enum CodingKeys: String, CodingKey { case ayah, text }
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                text = try container.decode(String.self, forKey: .text)
+                if let number = try? container.decode(Int.self, forKey: .ayah) {
+                    ayah = number
+                } else {
+                    ayah = Int(try container.decode(String.self, forKey: .ayah)) ?? 0
+                }
+            }
         }
         packState = .downloading(surah: 0)
         for surah in 1...114 {
@@ -104,8 +116,8 @@ public final class TafsirService {
                     throw URLError(.badServerResponse)
                 }
                 for item in try JSONDecoder().decode([Item].self, from: data) {
-                    guard let ayah = Int(item.ayah) else { continue }
-                    let file = Self.cacheFile(edition: edition, surah: surah, ayah: ayah)
+                    guard item.ayah > 0 else { continue }
+                    let file = Self.cacheFile(edition: edition, surah: surah, ayah: item.ayah)
                     try? FileManager.default.createDirectory(
                         at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
                     try? Self.stripHTML(item.text).write(to: file, atomically: true, encoding: .utf8)

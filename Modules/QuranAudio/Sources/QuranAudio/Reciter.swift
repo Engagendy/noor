@@ -108,6 +108,22 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         }
     }
 
+    /// Country flag emoji (reciter's homeland); empty when not certain.
+    public var flag: String {
+        switch self {
+        case .alafasy: "🇰🇼"
+        case .husary, .minshawi, .abdulBasit, .abdulBasitMujawwad,
+             .minshawiMujawwad, .tablawi, .banna, .jibreel, .salamah: "🇪🇬"
+        case .ghamdi, .sudais, .muaiqly, .shuraym, .ayyoub, .shatri, .rifai,
+             .hudhaify, .dussary, .basfar, .qatami, .ajamy, .muhsinQasim,
+             .juhany, .budair, .aliJaber, .matroud: "🇸🇦"
+        case .sowaid: "🇸🇾"
+        case .faresAbbad: "🇾🇪"
+        case .bukhatir: "🇦🇪"
+        case .abdulKareem: ""
+        }
+    }
+
     /// Legacy accessor (English).
     public var displayName: String { englishName }
 
