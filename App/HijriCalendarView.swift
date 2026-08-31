@@ -80,7 +80,7 @@ struct HijriCalendarView: View {
                         Button { monthOffset -= 1 } label: {
                             Image(systemName: "chevron.backward")
                                 .font(.system(size: 15, weight: .semibold))
-                                .frame(width: 38, height: 38)
+                                .frame(width: 44, height: 44)
                                 .contentShape(Rectangle())
                         }
                         .accessibilityLabel("Previous month")
@@ -92,7 +92,7 @@ struct HijriCalendarView: View {
                         Button { monthOffset += 1 } label: {
                             Image(systemName: "chevron.forward")
                                 .font(.system(size: 15, weight: .semibold))
-                                .frame(width: 38, height: 38)
+                                .frame(width: 44, height: 44)
                                 .contentShape(Rectangle())
                         }
                         .accessibilityLabel("Next month")

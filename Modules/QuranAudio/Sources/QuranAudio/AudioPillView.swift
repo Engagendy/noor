@@ -54,6 +54,8 @@ public struct AudioPillView: View {
 
                 Button { player.previous() } label: {
                     Image(systemName: "backward.fill").font(.system(size: 14))
+                        .frame(width: 38, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .accessibilityLabel("Previous ayah")
 
@@ -68,6 +70,8 @@ public struct AudioPillView: View {
 
                 Button { player.next() } label: {
                     Image(systemName: "forward.fill").font(.system(size: 14))
+                        .frame(width: 38, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .accessibilityLabel("Next ayah")
 
@@ -75,11 +79,15 @@ public struct AudioPillView: View {
                     Image(systemName: modeIcon)
                         .font(.system(size: 14))
                         .foregroundStyle(player.mode == .continuous ? NoorColor.inkSecondary : NoorColor.accentPrimary)
+                        .frame(width: 38, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .accessibilityLabel("Playback mode")
 
                 Button { player.stop() } label: {
                     Image(systemName: "xmark").font(.system(size: 13, weight: .semibold))
+                        .frame(width: 36, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .accessibilityLabel("Stop")
             }

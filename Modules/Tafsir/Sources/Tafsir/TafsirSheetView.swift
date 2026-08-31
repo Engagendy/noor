@@ -65,8 +65,9 @@ public struct TafsirSheetView: View {
                         .font(NoorFont.quran(size: 20))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(14)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .environment(\.layoutDirection, .rightToLeft)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
                         .padding(14)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(NoorColor.accentGold.opacity(0.6), lineWidth: 1))
 

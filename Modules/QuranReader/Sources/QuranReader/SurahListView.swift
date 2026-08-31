@@ -192,7 +192,7 @@ public struct SurahListView: View {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 16))
                             .foregroundStyle(NoorColor.inkSecondary)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 40, height: 40)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)

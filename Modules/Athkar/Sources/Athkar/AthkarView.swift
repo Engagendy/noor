@@ -191,7 +191,7 @@ struct DhikrCard: View {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 14))
                             .foregroundStyle(NoorColor.accentPrimary)
-                            .frame(width: 34, height: 34)
+                            .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.borderless)

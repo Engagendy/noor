@@ -207,6 +207,7 @@ public struct SurahReaderView: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(NoorColor.accentPrimary)
                         .frame(width: 38, height: 38)
+                        .frame(width: 44, height: 44)
                         .background(
                             Circle()
                                 .fill(NoorColor.bgElevated)
