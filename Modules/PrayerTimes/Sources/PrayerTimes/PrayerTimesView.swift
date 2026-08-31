@@ -427,13 +427,15 @@ public struct PrayerTimesView: View {
 }
 
 public enum AdhanSound: String, CaseIterable, Identifiable {
-    case adhanShort, adhanMakkah, adhanAzeez, bell, silent
+    case adhanShort, adhanMakkah, adhanMadinah, adhanMelodic, adhanAzeez, bell, silent
 
     public var id: String { rawValue }
     public var displayName: LocalizedStringResource {
         switch self {
         case .adhanShort: "Adhan (short)"
         case .adhanMakkah: "Adhan (Makkah)"
+        case .adhanMadinah: "Adhan (Madinah)"
+        case .adhanMelodic: "Adhan (melodic)"
         case .adhanAzeez: "Adhan (Azeez)"
         case .bell: "Bell"
         case .silent: "Silent"
@@ -445,6 +447,8 @@ public enum AdhanSound: String, CaseIterable, Identifiable {
         switch self {
         case .adhanShort: "adhan_short.caf"
         case .adhanMakkah: "adhan_makkah.caf"
+        case .adhanMadinah: "adhan_madinah.caf"
+        case .adhanMelodic: "adhan_melodic.caf"
         case .adhanAzeez: "adhan_azeez.caf"
         case .bell, .silent: nil
         }

@@ -1607,6 +1607,38 @@
           }
         }
       }
+    },
+    "Adhan (Madinah)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أذان الحرم النبوي"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adhan (Madinah)"
+          }
+        }
+      }
+    },
+    "Adhan (melodic)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أذان مجوّد"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adhan (melodic)"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

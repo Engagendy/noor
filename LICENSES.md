@@ -124,3 +124,13 @@ Attributions are displayed in Settings → About.
 - **Source:** Wikimedia Commons, "The Adhan - Muslim Call to Prayer - Aaqib Azeez.mp3" (uploaded by User:Atcovi)
 - **License:** CC BY-SA 4.0
 - **Attribution:** "Adhan by Aaqib Azeez (Wikimedia Commons, CC BY-SA 4.0)."
+
+### Adhan — Prophet's Mosque, Madinah (bundled, trimmed to 28s)
+- **Source:** Wikimedia Commons, "33937 ejaz215 call-to-prayer-from-the-prophet-s-mo.ogg"
+- **License:** CC BY 3.0
+- **Attribution:** "Adhan recorded at the Prophet's Mosque, Madinah (Wikimedia Commons, CC BY 3.0)."
+
+### Adhan — melodic (bundled, trimmed to 28s)
+- **Source:** Wikimedia Commons, "Beautiful adhan.ogg"
+- **License:** CC0 (public domain)
+- **Attribution:** none required (credited as courtesy).
