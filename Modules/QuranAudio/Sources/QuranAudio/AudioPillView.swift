@@ -6,7 +6,6 @@ import SwiftUI
 public struct AudioPillView: View {
     @Bindable var player: QuranAudioPlayer
     @Environment(\.locale) private var locale
-    @Environment(\.layoutDirection) private var direction
     @State private var showReciterPicker = false
     @State private var showModePicker = false
 
@@ -94,15 +93,17 @@ public struct AudioPillView: View {
             )
             .padding(.horizontal, 20)
             .transition(.move(edge: .bottom).combined(with: .opacity))
+            // The pill itself is forced LTR (control order), so derive the
+            // sheets' direction from the UI language, not the inherited env.
             .sheet(isPresented: $showReciterPicker) {
                 ReciterPickerSheet(player: player, isArabicUI: isArabicUI)
                     .environment(\.locale, locale)
-                    .environment(\.layoutDirection, direction)
+                    .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
             }
             .sheet(isPresented: $showModePicker) {
                 PlaybackModeSheet(player: player)
                     .environment(\.locale, locale)
-                    .environment(\.layoutDirection, direction)
+                    .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
             }
         }
     }
