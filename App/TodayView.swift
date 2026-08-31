@@ -163,15 +163,33 @@ struct TodayView: View {
         return isArabicUI ? "في مثل هذا اليوم" : "On this day"
     }
 
-    /// "On this day" in Islamic history, matched by the Hijri date.
+    /// Next event in the Hijri year when today has none — the card always
+    /// has something to show.
+    private func upcomingEvent(day: Int, month: Int) -> (event: IslamicEvent, inDays: Int)? {
+        let today = month * 30 + day
+        return IslamicEvent.all
+            .map { event -> (IslamicEvent, Int) in
+                let target = event.month * 30 + event.day
+                let delta = target >= today ? target - today : target + 360 - today
+                return (event, delta)
+            }
+            .min { $0.1 < $1.1 }
+            .map { (event: $0.0, inDays: $0.1) }
+    }
+
+    /// "On this day" in Islamic history, matched by the Hijri date; falls
+    /// back to the next upcoming event.
     @ViewBuilder
     private func onThisDayCard(now: Date) -> some View {
         let hijri = Calendar(identifier: .islamicUmmAlQura).dateComponents([.day, .month], from: now)
-        let events = IslamicEvent.events(day: hijri.day ?? 0, month: hijri.month ?? 0)
+        let todays = IslamicEvent.events(day: hijri.day ?? 0, month: hijri.month ?? 0)
+        let upcoming = todays.isEmpty
+            ? upcomingEvent(day: hijri.day ?? 0, month: hijri.month ?? 0) : nil
+        let events = todays.isEmpty ? (upcoming.map { [$0.event] } ?? []) : todays
         if !events.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text("ON THIS DAY")
+                    Text(upcoming == nil ? "ON THIS DAY" : "COMING UP IN ISLAMIC HISTORY")
                         .font(.system(size: 12, weight: .semibold))
                         .tracking(0.8)
                         .foregroundStyle(NoorColor.inkSecondary)
@@ -197,11 +215,18 @@ struct TodayView: View {
                             .multilineTextAlignment(isArabicUI ? .leading : .leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
-                        if let year = event.yearHijri {
-                            Text(verbatim: isArabicUI ? "سنة \(year.arabicIndic) هـ" : "\(year) AH")
-                                .font(NoorFont.caption)
-                                .foregroundStyle(NoorColor.accentGold)
+                        HStack(spacing: 8) {
+                            if let year = event.yearHijri {
+                                Text(verbatim: isArabicUI ? "سنة \(year.arabicIndic) هـ" : "\(year) AH")
+                            }
+                            if let upcoming {
+                                Text(verbatim: isArabicUI
+                                     ? "بعد \(upcoming.inDays.arabicIndic) يومًا تقريبًا"
+                                     : "in about \(upcoming.inDays) days")
+                            }
                         }
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.accentGold)
                     }
                 }
             }

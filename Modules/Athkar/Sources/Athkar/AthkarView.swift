@@ -72,6 +72,8 @@ public struct AthkarView: View {
 struct DhikrListView: View {
     let category: DhikrCategory
     @State private var progress: [String: Int] = [:]
+    @State private var sharing: Dhikr?
+    @Environment(\.locale) private var locale
 
     var body: some View {
         ScrollView {
@@ -92,10 +94,19 @@ struct DhikrListView: View {
                                 }
                                 #endif
                             }
-                        })
+                        },
+                        onShare: { sharing = dhikr })
                 }
             }
             .padding(16)
+        }
+        .sheet(item: $sharing) { dhikr in
+            NoorShareSheet(
+                arabicText: dhikr.text,
+                reference: category.category,
+                attribution: "نور Noor · حصن المسلم",
+                useQuranFont: false)
+                .environment(\.locale, locale)
         }
         .environment(\.layoutDirection, .rightToLeft)
         .background(NoorColor.bgPrimary)
@@ -121,6 +132,7 @@ struct DhikrCard: View {
     let dhikr: Dhikr
     let done: Int
     let onTap: () -> Void
+    var onShare: (() -> Void)?
 
     private var isComplete: Bool { done >= dhikr.count }
 
@@ -153,6 +165,17 @@ struct DhikrCard: View {
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.accentGold)
                 }
+                if let onShare {
+                    Button(action: onShare) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 14))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                            .frame(width: 34, height: 34)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Share")
+                }
             }
             .environment(\.layoutDirection, .leftToRight)
         }
@@ -179,10 +202,46 @@ struct DhikrCard: View {
 /// Free tasbih: tap the big dial; gentle haptic every 33.
 struct TasbihView: View {
     @AppStorage("tasbih.count") private var count = 0
+    @AppStorage("tasbih.phrase") private var phraseIndex = 0
+
+    private static let phrases = [
+        "سبحان الله", "الحمد لله", "الله أكبر",
+        "لا إله إلا الله", "أستغفر الله", "لا حول ولا قوة إلا بالله",
+    ]
+    private var phrase: String {
+        Self.phrases[min(max(phraseIndex, 0), Self.phrases.count - 1)]
+    }
 
     var body: some View {
-        VStack(spacing: 34) {
+        VStack(spacing: 28) {
             Spacer()
+            // The dhikr being counted — tap a chip to switch (resets count).
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(Array(Self.phrases.enumerated()), id: \.offset) { index, text in
+                        Button {
+                            if phraseIndex != index {
+                                phraseIndex = index
+                                count = 0
+                            }
+                        } label: {
+                            Text(verbatim: text)
+                                .font(.system(size: 14, weight: phraseIndex == index ? .semibold : .regular))
+                                .foregroundStyle(phraseIndex == index ? NoorColor.bgPrimary : NoorColor.inkPrimary)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 9)
+                                .background(
+                                    Capsule().fill(phraseIndex == index
+                                                   ? AnyShapeStyle(NoorColor.accentPrimary)
+                                                   : AnyShapeStyle(NoorColor.bgElevated))
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+            .environment(\.layoutDirection, .rightToLeft)
             Button {
                 count += 1
                 #if os(iOS)
@@ -200,9 +259,15 @@ struct TasbihView: View {
                         .trim(from: 0, to: CGFloat(count % 33) / 33)
                         .stroke(NoorColor.accentGold, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                         .rotationEffect(.degrees(-90))
-                    VStack(spacing: 4) {
+                    VStack(spacing: 6) {
+                        Text(verbatim: phrase)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                            .padding(.horizontal, 24)
                         Text(verbatim: "\(count)")
-                            .font(.system(size: 64, weight: .semibold).monospacedDigit())
+                            .font(.system(size: 58, weight: .semibold).monospacedDigit())
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: "\(count / 33) × ٣٣")
                             .font(NoorFont.caption)

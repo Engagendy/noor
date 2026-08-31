@@ -2,6 +2,9 @@ import AVFoundation
 import Foundation
 import MediaPlayer
 import Observation
+#if os(iOS)
+import UIKit
+#endif
 
 /// Ayah-by-ayah recitation player. Streams from EveryAyah, caches every
 /// finished download so replays are offline, advances automatically, and
@@ -50,20 +53,27 @@ public final class QuranAudioPlayer {
 
     /// Set by the reader so the player knows the surah bounds and titles.
     public var surahTitle = ""
+    /// Arabic surah name — what the lock screen / Control Center shows.
+    public var surahTitleArabic = ""
     private var ayahCount = 0
 
-    private var player: AVPlayer?
+    private var player: AVQueuePlayer?
+    /// Next ayah pre-enqueued in the queue player — the hand-off happens
+    /// inside AVFoundation, so there is no fetch-then-swap pause.
+    private var queuedNext: (item: AVPlayerItem, ref: Reference)?
     private var endObserver: NSObjectProtocol?
     private var commandsConfigured = false
 
     public init() {}
 
-    public func play(surah: Int, ayahCount: Int, from ayah: Int, title: String, pageEndAyah: Int? = nil) {
+    public func play(surah: Int, ayahCount: Int, from ayah: Int, title: String,
+                     arabicTitle: String? = nil, pageEndAyah: Int? = nil) {
         // Settings may have changed the reciter while we were idle.
         if let stored = UserDefaults.standard.string(forKey: "audio.reciter"), stored != reciterRaw {
             reciterRaw = stored
         }
         surahTitle = title
+        surahTitleArabic = arabicTitle ?? title
         self.ayahCount = ayahCount
         self.pageEndAyah = pageEndAyah
         configureSessionAndCommands()
@@ -95,9 +105,9 @@ public final class QuranAudioPlayer {
     }
 
     public func stop() {
-        if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
-        endObserver = nil
         player?.pause()
+        player?.removeAllItems()
+        queuedNext = nil
         player = nil
         current = nil
         isPlaying = false
@@ -135,29 +145,75 @@ public final class QuranAudioPlayer {
                 return
             }
             self.startPlayer(with: local)
-            if reference.ayah < ayahCount {
-                _ = await AudioCache.ensureLocal(
-                    reciter: reciter, surah: reference.surah, ayah: reference.ayah + 1)
-            }
         }
+        _ = ayahCount
     }
 
     private func startPlayer(with url: URL) {
         let item = AVPlayerItem(url: url)
-        if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
-        endObserver = NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime, object: item, queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor in self?.advanceAfterFinish() }
-        }
+        queuedNext = nil
         if let player {
-            player.replaceCurrentItem(with: item)
+            player.removeAllItems()
+            player.insert(item, after: nil)
         } else {
-            player = AVPlayer(playerItem: item)
+            player = AVQueuePlayer(items: [item])
         }
+        installEndObserver()
         player?.play()
         isPlaying = true
         updateNowPlaying()
+        enqueueNextIfNeeded()
+    }
+
+    /// One persistent end-of-item observer for whatever we play.
+    private func installEndObserver() {
+        guard endObserver == nil else { return }
+        endObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.itemDidEnd() }
+        }
+    }
+
+    private func itemDidEnd() {
+        guard let cur = current else { return }
+        if mode == .repeatAyah {
+            playAyah(cur)  // rebuilds the queue (drops any pre-enqueued next)
+            return
+        }
+        if mode == .pageOnly, let end = pageEndAyah, cur.ayah >= end {
+            stop()
+            return
+        }
+        if let next = queuedNext {
+            // The queue player already rolled into the next item gaplessly —
+            // just catch our state up and stage the one after.
+            queuedNext = nil
+            current = next.ref
+            updateNowPlaying()
+            enqueueNextIfNeeded()
+        } else {
+            advanceAfterFinish()
+        }
+    }
+
+    /// Downloads (or reads from cache) the next ayah and appends it to the
+    /// queue while the current one is still playing.
+    private func enqueueNextIfNeeded() {
+        guard queuedNext == nil, mode != .repeatAyah,
+              let cur = current, cur.ayah < ayahCount else { return }
+        if mode == .pageOnly, let end = pageEndAyah, cur.ayah >= end { return }
+        let nextRef = Reference(surah: cur.surah, ayah: cur.ayah + 1)
+        let reciter = self.reciter
+        Task { [weak self] in
+            guard let local = await AudioCache.ensureLocal(
+                reciter: reciter, surah: nextRef.surah, ayah: nextRef.ayah) else { return }
+            guard let self, self.current == cur, self.queuedNext == nil,
+                  self.reciter == reciter, self.player != nil else { return }
+            let item = AVPlayerItem(url: local)
+            self.player?.insert(item, after: nil)
+            self.queuedNext = (item, nextRef)
+        }
     }
 
     private func configureSessionAndCommands() {
@@ -190,13 +246,28 @@ public final class QuranAudioPlayer {
         }
     }
 
+    /// App-icon artwork for the lock screen, rendered once.
+    private static let lockScreenArtwork: MPMediaItemArtwork? = {
+        #if os(iOS)
+        guard let icon = UIImage(named: "AppIcon") ?? Bundle.main.iconImage else { return nil }
+        return MPMediaItemArtwork(boundsSize: icon.size) { _ in icon }
+        #else
+        return nil
+        #endif
+    }()
+
     private func updateNowPlaying() {
         guard let current else { return }
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = [
-            MPMediaItemPropertyTitle: "\(surahTitle) · \(current.ayah)",
-            MPMediaItemPropertyArtist: reciter.displayName,
+        let title = surahTitleArabic.isEmpty ? surahTitle : surahTitleArabic
+        var info: [String: Any] = [
+            MPMediaItemPropertyTitle: "\(title) · \(current.ayah.arabicIndicDigits)",
+            MPMediaItemPropertyArtist: reciter.arabicName,
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
         ]
+        if let artwork = Self.lockScreenArtwork {
+            info[MPMediaItemPropertyArtwork] = artwork
+        }
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 }
 
@@ -231,3 +302,28 @@ enum AudioCache {
         return nil
     }
 }
+
+
+extension Int {
+    /// ٠١٢٣… for lock-screen ayah numbers.
+    var arabicIndicDigits: String {
+        String(self).map { c -> String in
+            guard let d = c.wholeNumberValue else { return String(c) }
+            return String(UnicodeScalar(0x0660 + d)!)
+        }.joined()
+    }
+}
+
+#if os(iOS)
+extension Bundle {
+    /// Largest icon listed in Info.plist (works when the asset catalog
+    /// doesn't expose "AppIcon" as a named image).
+    var iconImage: UIImage? {
+        guard let icons = infoDictionary?["CFBundleIcons"] as? [String: Any],
+              let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
+              let files = primary["CFBundleIconFiles"] as? [String],
+              let name = files.last else { return nil }
+        return UIImage(named: name)
+    }
+}
+#endif

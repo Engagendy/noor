@@ -541,7 +541,8 @@ public struct SurahReaderView: View {
             surah: surah.id,
             ayahCount: surah.ayahCount,
             from: verse.ayah,
-            title: surah.nameTransliterated,
+            title: surah.displayName(arabicUI: isArabicUI),
+            arabicTitle: surah.nameArabic,
             pageEndAyah: player?.pageEndAyah)
         withAnimation(.easeInOut(duration: 0.25)) { selectedKey = nil }
     }
