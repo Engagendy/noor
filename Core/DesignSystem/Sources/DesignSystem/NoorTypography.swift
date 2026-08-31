@@ -11,13 +11,15 @@ public enum NoorFont {
         .custom(quranFontName, size: size)
     }
 
-    /// Translation & tafsir body — serif ("sacred book" feel).
-    public static let translation = Font.system(size: 17, design: .serif)
-    public static let tafsir = Font.system(size: 16, design: .serif)
+    /// Translation & tafsir body — serif ("sacred book" feel). UI text
+    /// follows Dynamic Type (design §3); only the Quran font has its own
+    /// in-reader size control.
+    public static let translation = Font.system(.body, design: .serif)
+    public static let tafsir = Font.system(.callout, design: .serif)
 
-    public static let screenTitle = Font.system(size: 28, weight: .semibold)
-    public static let sectionHeader = Font.system(size: 20, weight: .semibold)
-    public static let caption = Font.system(size: 13)
+    public static let screenTitle = Font.system(.title, design: .default).weight(.semibold)
+    public static let sectionHeader = Font.system(.title3, design: .default).weight(.semibold)
+    public static let caption = Font.system(.footnote)
 }
 
 public enum NoorMetrics {
