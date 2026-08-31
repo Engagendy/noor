@@ -114,3 +114,13 @@ Attributions are displayed in Settings → About.
 - Tafsir packs — per-source
 - Recitations (EveryAyah / Quran Foundation audio) — per-reciter
 - Hadith (Sunnah.com) — per-collection
+
+### Adhan — Great Mosque of Mecca recording (bundled, trimmed to 28s)
+- **Source:** Wikimedia Commons, "Adhan, Great Mosque of Mecca - Jan 21, 2013.webm"
+- **License:** CC BY 3.0
+- **Attribution:** "Adhan recorded at the Great Mosque of Mecca (Wikimedia Commons, CC BY 3.0)."
+
+### Adhan — Aaqib Azeez (bundled, trimmed to 28s)
+- **Source:** Wikimedia Commons, "The Adhan - Muslim Call to Prayer - Aaqib Azeez.mp3" (uploaded by User:Atcovi)
+- **License:** CC BY-SA 4.0
+- **Attribution:** "Adhan by Aaqib Azeez (Wikimedia Commons, CC BY-SA 4.0)."

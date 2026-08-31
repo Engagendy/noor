@@ -1,5 +1,6 @@
 import Adhan
 import DesignSystem
+import AVFoundation
 import SwiftUI
 
 /// Prayer Times per design 1f: city line, week strip, vertical timeline with
@@ -206,12 +207,20 @@ public struct PrayerTimesView: View {
         )
     }
 
-    /// Sound choice is stored now and honored when adhan notifications land.
+    /// Sound choice is stored now and honored when adhan notifications
+    /// land. Tapping a chip also plays a preview so you choose by ear.
     private var soundChips: some View {
-        HStack(spacing: 8) {
-            ForEach(AdhanSound.allCases) { sound in
-                let isOn = soundRaw == sound.rawValue
-                Text(sound.displayName)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(AdhanSound.allCases) { sound in
+                    let isOn = soundRaw == sound.rawValue
+                    HStack(spacing: 5) {
+                        if sound.fileName != nil {
+                            Image(systemName: "speaker.wave.2")
+                                .font(.system(size: 10))
+                        }
+                        Text(sound.displayName)
+                    }
                     .font(.system(size: 12, weight: .semibold))
                     .padding(.horizontal, 13)
                     .padding(.vertical, 7)
@@ -225,10 +234,15 @@ public struct PrayerTimesView: View {
                     )
                     .foregroundStyle(isOn ? NoorColor.accentPrimary : NoorColor.inkSecondary)
                     .contentShape(Capsule())
-                    .onTapGesture { soundRaw = sound.rawValue }
+                    .onTapGesture {
+                        soundRaw = sound.rawValue
+                        AdhanPreviewPlayer.shared.play(sound)
+                    }
                     .accessibilityAddTraits(isOn ? .isSelected : [])
+                }
             }
         }
+        .onDisappear { AdhanPreviewPlayer.shared.stop() }
     }
 
     private var settingsRow: some View {
@@ -335,14 +349,26 @@ public struct PrayerTimesView: View {
 }
 
 public enum AdhanSound: String, CaseIterable, Identifiable {
-    case adhanShort, bell, silent
+    case adhanShort, adhanMakkah, adhanAzeez, bell, silent
 
     public var id: String { rawValue }
     public var displayName: LocalizedStringResource {
         switch self {
         case .adhanShort: "Adhan (short)"
+        case .adhanMakkah: "Adhan (Makkah)"
+        case .adhanAzeez: "Adhan (Azeez)"
         case .bell: "Bell"
         case .silent: "Silent"
+        }
+    }
+
+    /// Bundled notification sound file (≤30s, caf); nil = system/none.
+    public var fileName: String? {
+        switch self {
+        case .adhanShort: "adhan_short.caf"
+        case .adhanMakkah: "adhan_makkah.caf"
+        case .adhanAzeez: "adhan_azeez.caf"
+        case .bell, .silent: nil
         }
     }
 }
@@ -377,4 +403,31 @@ public enum PrayerNotificationPrefs {
 #Preview("Tahajjud dark") {
     NavigationStack { PrayerTimesView() }
         .preferredColorScheme(.dark)
+}
+
+
+/// Plays a bundled adhan clip when a sound chip is tapped, so the choice
+/// can be made by ear. Stops when the screen goes away.
+@MainActor
+final class AdhanPreviewPlayer {
+    static let shared = AdhanPreviewPlayer()
+    private var player: AVAudioPlayer?
+
+    func play(_ sound: AdhanSound) {
+        stop()
+        guard let file = sound.fileName,
+              let url = Bundle.main.url(forResource: (file as NSString).deletingPathExtension,
+                                        withExtension: (file as NSString).pathExtension)
+        else { return }
+        #if os(iOS)
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+        #endif
+        player = try? AVAudioPlayer(contentsOf: url)
+        player?.play()
+    }
+
+    func stop() {
+        player?.stop()
+        player = nil
+    }
 }

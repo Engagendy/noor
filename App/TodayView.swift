@@ -162,11 +162,13 @@ struct TodayView: View {
     }
 
     private func eventReference(_ event: IslamicEvent) -> String {
+        let month = event.monthName(arabicUI: isArabicUI)
+        let date = isArabicUI ? "\(event.day.arabicIndic) \(month)" : "\(event.day) \(month)"
         if let year = event.yearHijri {
-            return isArabicUI ? "في مثل هذا اليوم · سنة \(year.arabicIndic) هـ"
-                              : "On this day · \(year) AH"
+            return isArabicUI ? "\(date) · سنة \(year.arabicIndic) هـ"
+                              : "\(date) · \(year) AH"
         }
-        return isArabicUI ? "في مثل هذا اليوم" : "On this day"
+        return date
     }
 
     /// Next event in the Hijri year when today has none — the card always

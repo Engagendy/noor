@@ -37,14 +37,11 @@ public struct AdhanNotificationScheduler: Sendable {
             // Calm microcopy per design §7 — no exclamation marks.
             content.title = String(localized: "It's time for \(planned.prayerName)")
             content.body = "\(planned.prayerName) · \(planned.timeString)"
-            switch sound {
-            case .silent:
-                content.sound = nil
-            case .adhanShort:
-                // 27s CC BY-SA adhan bundled in the app (see LICENSES.md).
-                content.sound = UNNotificationSound(named: UNNotificationSoundName("adhan_short.caf"))
-            case .bell:
-                content.sound = .default
+            if let file = sound.fileName {
+                // Bundled adhan clips, all ≤30s (see LICENSES.md).
+                content.sound = UNNotificationSound(named: UNNotificationSoundName(file))
+            } else {
+                content.sound = sound == .silent ? nil : .default
             }
             let components = Calendar.current.dateComponents(
                 [.year, .month, .day, .hour, .minute], from: planned.fireDate)
