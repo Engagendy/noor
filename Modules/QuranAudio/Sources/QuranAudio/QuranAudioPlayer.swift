@@ -51,6 +51,10 @@ public final class QuranAudioPlayer {
         didSet { UserDefaults.standard.set(reciterRaw, forKey: "audio.reciter") }
     }
 
+    /// Supplies the next surah's metadata so continuous playback flows
+    /// across surah boundaries (set by the reader, which owns the DB).
+    public var surahAdvance: ((Int) -> (ayahCount: Int, title: String, arabicTitle: String)?)?
+
     /// Set by the reader so the player knows the surah bounds and titles.
     public var surahTitle = ""
     /// Arabic surah name — what the lock screen / Control Center shows.
@@ -115,11 +119,24 @@ public final class QuranAudioPlayer {
     }
 
     public func next() {
-        guard let current, current.ayah < ayahCount else {
+        guard let current else {
             stop()
             return
         }
-        playAyah(Reference(surah: current.surah, ayah: current.ayah + 1))
+        if current.ayah < ayahCount {
+            playAyah(Reference(surah: current.surah, ayah: current.ayah + 1))
+            return
+        }
+        // End of surah: in continuous mode, flow into the next surah.
+        if mode == .continuous, current.surah < 114,
+           let next = surahAdvance?(current.surah + 1) {
+            surahTitle = next.title
+            surahTitleArabic = next.arabicTitle
+            ayahCount = next.ayahCount
+            playAyah(Reference(surah: current.surah + 1, ayah: 1))
+        } else {
+            stop()
+        }
     }
 
     public func previous() {
@@ -132,6 +149,8 @@ public final class QuranAudioPlayer {
     private func playAyah(_ reference: Reference) {
         current = reference
         isPlaying = true
+        UserDefaults.standard.set(reference.surah, forKey: "audio.lastSurah")
+        UserDefaults.standard.set(reference.ayah, forKey: "audio.lastAyah")
         let reciter = self.reciter
         let ayahCount = self.ayahCount
         // Fetch-then-play: tries EveryAyah then the mirror, caches the file

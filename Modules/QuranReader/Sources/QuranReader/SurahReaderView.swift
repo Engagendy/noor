@@ -533,6 +533,13 @@ public struct SurahReaderView: View {
 
     private func startPlayback(from verse: Verse) {
         guard let surah = viewModel.surahInfo(verse.surahId) else { return }
+        // Continuous playback flows into the next surah.
+        player?.surahAdvance = { [weak viewModel] surahId in
+            guard let next = viewModel?.surahInfo(surahId) else { return nil }
+            return (ayahCount: next.ayahCount,
+                    title: next.displayName(arabicUI: isArabicUI),
+                    arabicTitle: next.nameArabic)
+        }
         if let page = viewModel.page(surahId: verse.surahId, ayah: verse.ayah),
            let last = viewModel.sections(forPage: page).flatMap(\.verses).last {
             player?.pageEndAyah = last.surahId == verse.surahId ? last.ayah : surah.ayahCount
