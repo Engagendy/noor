@@ -1,4 +1,5 @@
 import ContentDB
+import Athkar
 import DesignSystem
 import Library
 import Notifications
@@ -12,7 +13,7 @@ import WidgetKit
 
 struct MainTabView: View {
     enum Tab: Hashable {
-        case today, quran, prayer, settings
+        case today, quran, prayer, athkar, settings
     }
 
     let database: QuranDatabase
@@ -74,6 +75,10 @@ struct MainTabView: View {
             }
             .tabItem { Label("Prayer", systemImage: "clock") }
             .tag(Tab.prayer)
+
+            NavigationStack { AthkarView() }
+                .tabItem { Label("Athkar", systemImage: "sparkles") }
+                .tag(Tab.athkar)
 
             NavigationStack { SettingsView() }
                 .tabItem { Label("Settings", systemImage: "gearshape") }

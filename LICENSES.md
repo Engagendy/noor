@@ -92,6 +92,15 @@ Attributions are displayed in Settings → About.
   100% KFGQPC via the QCF page fonts.
 - **Attribution:** "Amiri Quran font by Khaled Hosny (SIL OFL)."
 
+### Athkar — Hisn al-Muslim (bundled)
+- **File:** `Modules/Athkar/Sources/Athkar/Resources/athkar.json`
+  (132 categories, 267 adhkar).
+- **Source text:** "Hisn al-Muslim" (حصن المسلم) by Sa'id ibn Ali ibn Wahf
+  al-Qahtani — distributed by the author as a charitable endowment (waqf)
+  for free use and reproduction. JSON transcription via
+  github.com/rn0x/Adhkar-json (no explicit license; text itself is waqf).
+- **Attribution:** "Adhkar from Hisn al-Muslim by Sa'id al-Qahtani."
+
 ## Software dependencies
 
 | Package | License | URL |
