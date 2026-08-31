@@ -86,6 +86,37 @@ struct PrayerProvider: AppIntentTimelineProvider {
     }
 }
 
+// MARK: - Theme (explicit — widget backgrounds are ours, never system)
+
+/// Mushaf palette in light, Tahajjud in dark (design §2).
+enum WidgetTheme {
+    static let paper = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.059, green: 0.082, blue: 0.071, alpha: 1)   // #0F1512
+            : UIColor(red: 0.980, green: 0.965, blue: 0.933, alpha: 1)   // #FAF6EE
+    })
+    static let ink = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.929, green: 0.906, blue: 0.855, alpha: 1)   // #EDE7DA
+            : UIColor(red: 0.122, green: 0.161, blue: 0.200, alpha: 1)   // #1F2933
+    })
+    static let inkSecondary = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.604, green: 0.643, blue: 0.620, alpha: 1)   // #9AA49E
+            : UIColor(red: 0.361, green: 0.400, blue: 0.439, alpha: 1)   // #5C6670
+    })
+    static let green = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.310, green: 0.702, blue: 0.627, alpha: 1)   // #4FB3A0
+            : UIColor(red: 0.055, green: 0.420, blue: 0.361, alpha: 1)   // #0E6B5C
+    })
+    static let gold = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.847, green: 0.698, blue: 0.369, alpha: 1)   // #D8B25E
+            : UIColor(red: 0.725, green: 0.541, blue: 0.184, alpha: 1)   // #B98A2F
+    })
+}
+
 // MARK: - Views
 
 struct NextPrayerSmallView: View {
@@ -96,16 +127,17 @@ struct NextPrayerSmallView: View {
             Text(entry.nextName.uppercased())
                 .font(.system(size: 11, weight: .bold))
                 .tracking(1.2)
-                .foregroundStyle(Color(red: 0.05, green: 0.42, blue: 0.36))
+                .foregroundStyle(WidgetTheme.green)
             Text(entry.nextTime, style: .timer)
                 .font(.system(size: 26, weight: .bold).monospacedDigit())
+                .foregroundStyle(WidgetTheme.ink)
             Text(entry.nextTime, style: .time)
                 .font(.system(size: 12))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(WidgetTheme.inkSecondary)
             Spacer(minLength: 0)
             Text(entry.cityName)
                 .font(.system(size: 10))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(WidgetTheme.inkSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -117,27 +149,29 @@ struct TodayPrayersMediumView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("\(entry.nextName) · ")
+                (Text("\(entry.nextName) · ")
                     .font(.system(size: 13, weight: .bold))
                 + Text(entry.nextTime, style: .timer)
-                    .font(.system(size: 13, weight: .bold).monospacedDigit())
+                    .font(.system(size: 13, weight: .bold).monospacedDigit()))
+                    .foregroundStyle(WidgetTheme.green)
                 Spacer()
                 Text(entry.cityName)
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(WidgetTheme.inkSecondary)
             }
-            .foregroundStyle(Color(red: 0.05, green: 0.42, blue: 0.36))
             HStack {
                 ForEach(entry.times, id: \.name) { item in
                     VStack(spacing: 2) {
                         Text(item.name)
                             .font(.system(size: 11, weight: item.isNext ? .bold : .regular))
+                            .foregroundStyle(item.isNext ? WidgetTheme.green : WidgetTheme.inkSecondary)
                         Text(item.time, style: .time)
                             .font(.system(size: 12, weight: item.isNext ? .bold : .semibold).monospacedDigit())
+                            .foregroundStyle(WidgetTheme.ink)
                     }
                     .padding(.vertical, 4)
                     .padding(.horizontal, 6)
-                    .background(item.isNext ? Color(red: 0.05, green: 0.42, blue: 0.36).opacity(0.14) : .clear,
+                    .background(item.isNext ? WidgetTheme.green.opacity(0.14) : .clear,
                                 in: RoundedRectangle(cornerRadius: 8))
                     if item.name != entry.times.last?.name { Spacer(minLength: 0) }
                 }
@@ -154,7 +188,7 @@ struct NextPrayerWidget: Widget {
             kind: "NoorNextPrayer", intent: PrayerWidgetIntent.self, provider: PrayerProvider()
         ) { entry in
             NextPrayerWidgetView(entry: entry)
-                .containerBackground(Color(red: 0.98, green: 0.965, blue: 0.933), for: .widget)
+                .containerBackground(WidgetTheme.paper, for: .widget)
         }
         .configurationDisplayName("Next Prayer")
         .description("Countdown to the next prayer.")

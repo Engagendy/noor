@@ -57,11 +57,11 @@ struct DailyAyahWidgetView: View {
             Text("DAILY AYAH")
                 .font(.system(size: 10, weight: .bold))
                 .tracking(1.1)
-                .foregroundStyle(Color(red: 0.73, green: 0.54, blue: 0.18))
+                .foregroundStyle(WidgetTheme.gold)
             Spacer(minLength: 0)
             Text(entry.arabic)
                 .font(.custom(NoorFont.quranFontName, size: family == .systemMedium ? 20 : 16))
-                .foregroundStyle(Color(red: 0.12, green: 0.16, blue: 0.20))
+                .foregroundStyle(WidgetTheme.ink)
                 .lineSpacing(6)
                 .minimumScaleFactor(0.5)
                 .environment(\.layoutDirection, .rightToLeft)
@@ -69,7 +69,7 @@ struct DailyAyahWidgetView: View {
             Spacer(minLength: 0)
             Text(entry.reference)
                 .font(.system(size: 10))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(WidgetTheme.inkSecondary)
         }
     }
 }
@@ -78,7 +78,7 @@ struct DailyAyahWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "NoorDailyAyah", provider: DailyAyahProvider()) { entry in
             DailyAyahWidgetView(entry: entry)
-                .containerBackground(Color(red: 0.98, green: 0.965, blue: 0.933), for: .widget)
+                .containerBackground(WidgetTheme.paper, for: .widget)
         }
         .configurationDisplayName("Daily Ayah")
         .description("One ayah each day, from the mushaf.")
