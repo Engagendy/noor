@@ -34,6 +34,7 @@ public struct SurahReaderView: View {
     @State private var fontStore = PageFontStore()
     @GestureState private var pinchScale: CGFloat = 1
     @Environment(\.locale) private var locale
+    @Environment(\.dismiss) private var dismiss
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
@@ -93,9 +94,9 @@ public struct SurahReaderView: View {
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.3)) { chromeVisible.toggle() }
         }
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if !chromeVisible { miniHeader }
-        }
+        // Constant-height top strip: content never reflows — the two rows
+        // just cross-fade (full controls ↔ surah·time·juz).
+        .safeAreaInset(edge: .top, spacing: 0) { topBar }
         .overlay(alignment: .bottom) {
             if let player {
                 AudioPillView(player: player)
@@ -104,8 +105,10 @@ public struct SurahReaderView: View {
             }
         }
         #if os(iOS)
-        .toolbar(chromeVisible ? .visible : .hidden, for: .navigationBar)
-        .toolbar(chromeVisible ? .visible : .hidden, for: .tabBar)
+        // System bars stay hidden for the whole reading session — the page
+        // keeps one stable size; our own strip carries the controls.
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
         .statusBarHidden(!chromeVisible)
         #endif
         .simultaneousGesture(pinch)
@@ -127,41 +130,6 @@ public struct SurahReaderView: View {
         .onChange(of: currentPage) { _, page in
             if page > khatmahMaxPage { khatmahMaxPage = page }
             if page > 0 && mode != .ayah { lastReadPage = page }
-        }
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                VStack(spacing: 0) {
-                    Text(titleSurah?.displayName(arabicUI: isArabicUI) ?? "")
-                        .font(isArabicUI ? NoorFont.quran(size: 17) : .system(size: 16, weight: .semibold))
-                        .foregroundStyle(NoorColor.inkPrimary)
-                    Text(mode != .ayah && currentPage > 0
-                         ? "Juz \(viewModel.juz(forPage: currentPage)) · Page \(currentPage)"
-                         : "Juz \(viewModel.juz)")
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(NoorColor.inkSecondary)
-                }
-            }
-            if player != nil {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        if mode == .ayah {
-                            if let first = viewModel.verses.first { startPlayback(from: first) }
-                        } else if let first = viewModel.sections(forPage: currentPage).first?.verses.first {
-                            startPlayback(from: first)
-                        }
-                    } label: {
-                        Image(systemName: "play.fill")
-                            .foregroundStyle(NoorColor.accentPrimary)
-                    }
-                    .accessibilityLabel("Play recitation")
-                }
-            }
-            ToolbarItem(placement: .primaryAction) {
-                readerMenu
-            }
         }
         .sheet(item: $actionVerses) { group in
             AyahActionsSheet(
@@ -190,28 +158,82 @@ public struct SurahReaderView: View {
         }
     }
 
-    /// Whisper-thin header while chrome is hidden: surah · time · juz/page.
-    private var miniHeader: some View {
-        TimelineView(.everyMinute) { context in
-            HStack {
-                Text(titleSurah?.displayName(arabicUI: true) ?? "")
-                    .font(NoorFont.quran(size: 15))
+    /// Fixed-height strip: full controls ↔ minimal line, pure cross-fade.
+    private var topBar: some View {
+        ZStack {
+            // Full chrome row
+            HStack(spacing: 12) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.backward")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                        .frame(width: 40, height: 40)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Back")
                 Spacer()
-                Text(context.date, format: .dateTime.hour().minute())
-                    .font(.system(size: 12).monospacedDigit())
+                VStack(spacing: 0) {
+                    Text(titleSurah?.displayName(arabicUI: isArabicUI) ?? "")
+                        .font(isArabicUI ? NoorFont.quran(size: 16) : .system(size: 15, weight: .semibold))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                        .lineLimit(1)
+                    Text(mode != .ayah && currentPage > 0
+                         ? "Juz \(viewModel.juz(forPage: currentPage)) · Page \(currentPage)"
+                         : "Juz \(viewModel.juz)")
+                        .font(.system(size: 11))
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
                 Spacer()
-                Text(mode != .ayah && currentPage > 0
-                     ? "Juz \(viewModel.juz(forPage: currentPage)) · Page \(currentPage)"
-                     : "Juz \(viewModel.juz)")
-                    .font(.system(size: 12))
+                if player != nil {
+                    Button {
+                        if mode == .ayah {
+                            if let first = viewModel.verses.first { startPlayback(from: first) }
+                        } else if let first = viewModel.sections(forPage: currentPage).first?.verses.first {
+                            startPlayback(from: first)
+                        }
+                    } label: {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                            .frame(width: 36, height: 40)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Play recitation")
+                }
+                readerMenu
+                    .frame(width: 40, height: 40)
             }
-            .foregroundStyle(NoorColor.inkSecondary)
-            .padding(.horizontal, 16)
-            .padding(.top, 6)
-            .padding(.bottom, 8)
-            .background(NoorColor.bgPrimary.opacity(0.9))
+            .opacity(chromeVisible ? 1 : 0)
+
+            // Minimal reading row
+            TimelineView(.everyMinute) { context in
+                HStack {
+                    Text(titleSurah?.displayName(arabicUI: true) ?? "")
+                        .font(NoorFont.quran(size: 15))
+                    Spacer()
+                    Text(context.date, format: .dateTime.hour().minute())
+                        .font(.system(size: 12).monospacedDigit())
+                    Spacer()
+                    Text(mode != .ayah && currentPage > 0
+                         ? "Juz \(viewModel.juz(forPage: currentPage)) · Page \(currentPage)"
+                         : "Juz \(viewModel.juz)")
+                        .font(.system(size: 12))
+                }
+                .foregroundStyle(NoorColor.inkSecondary)
+            }
+            .opacity(chromeVisible ? 0 : 1)
         }
-        .transition(.move(edge: .top).combined(with: .opacity))
+        .padding(.horizontal, 14)
+        .frame(height: 46)
+        .background(NoorColor.bgPrimary.opacity(0.92))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.3)) { chromeVisible.toggle() }
+        }
     }
 
     // MARK: Madani page mode — the whole mushaf, pixel-faithful
