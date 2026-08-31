@@ -32,6 +32,17 @@ packages:
   Athkar:
     path: Modules/Athkar
 
+schemes:
+  Noor:
+    build:
+      targets:
+        Noor: all
+    run:
+      config: Debug
+      executable: Noor
+    archive:
+      config: Release
+
 targets:
   NoorWidgets:
     type: app-extension
