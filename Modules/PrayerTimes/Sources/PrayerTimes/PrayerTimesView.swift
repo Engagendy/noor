@@ -23,6 +23,7 @@ public struct PrayerTimesView: View {
     @State private var dayOffset = 0
     @State private var showSettings = false
     @State private var showNawafil = false
+    @State private var showAdhanSounds = false
     @State private var locationFetcher = OneShotLocationFetcher()
     @State private var fetchingLocation = false
     @State private var locationFailed = false
@@ -82,6 +83,7 @@ public struct PrayerTimesView: View {
                     if let day = PrayerDay.compute(location: location, method: method, madhab: madhab, date: shownDate) {
                         timeline(day: day, now: now, isToday: dayOffset == 0)
                     }
+                    adhanSoundRow
                     nawafilRow
                     settingsRow
                 }
@@ -102,6 +104,11 @@ public struct PrayerTimesView: View {
             AdhanPreviewPlayer.shared.play(AdhanSound(rawValue: soundRaw) ?? .adhanShort)
         }
         .onDisappear { AdhanPreviewPlayer.shared.stop() }
+        .sheet(isPresented: $showAdhanSounds) {
+            AdhanSoundPickerView(soundRaw: $soundRaw)
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, appDirection)
+        }
         .sheet(isPresented: $showNawafil) {
             NawafilView(isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
@@ -255,6 +262,36 @@ public struct PrayerTimesView: View {
             }
         }
         .onDisappear { AdhanPreviewPlayer.shared.stop() }
+    }
+
+    /// Always-visible entry to the adhan sound picker (the inline chips
+    /// only exist on the next-prayer card, which vanishes after Isha).
+    private var adhanSoundRow: some View {
+        Button {
+            showAdhanSounds = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "speaker.wave.2")
+                    .font(.system(size: 15))
+                    .foregroundStyle(NoorColor.accentPrimary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Adhan sound")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                    Text((AdhanSound(rawValue: soundRaw) ?? .adhanShort).displayName)
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.forward")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NoorColor.inkSecondary.opacity(0.6))
+            }
+            .padding(16)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .noorCard()
     }
 
     /// Voluntary prayers reference (rawatib, duha, qiyam, witr).
@@ -470,5 +507,71 @@ final class AdhanPreviewPlayer {
     func stop() {
         player?.stop()
         player = nil
+    }
+}
+
+
+/// Adhan sound list: tapping a row selects it AND plays it immediately.
+struct AdhanSoundPickerView: View {
+    @Binding var soundRaw: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List(AdhanSound.allCases) { sound in
+                let isOn = soundRaw == sound.rawValue
+                Button {
+                    soundRaw = sound.rawValue
+                    AdhanPreviewPlayer.shared.play(sound)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: sound.fileName != nil ? "play.circle.fill"
+                              : sound == .bell ? "bell" : "bell.slash")
+                            .font(.system(size: 22))
+                            .foregroundStyle(sound.fileName != nil
+                                             ? NoorColor.accentPrimary : NoorColor.inkSecondary)
+                        Text(sound.displayName)
+                            .font(.system(size: 16, weight: isOn ? .semibold : .regular))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        if isOn {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(NoorColor.accentPrimary)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .listRowBackground(Color.clear)
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(NoorColor.bgPrimary)
+            .safeAreaInset(edge: .top) {
+                Text("Tap a sound to hear it")
+                    .font(NoorFont.caption)
+                    .foregroundStyle(NoorColor.inkSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .background(NoorColor.bgPrimary)
+            }
+            .navigationTitle(Text("Adhan sound"))
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") {
+                        AdhanPreviewPlayer.shared.stop()
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .onDisappear { AdhanPreviewPlayer.shared.stop() }
     }
 }
