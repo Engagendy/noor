@@ -46,10 +46,13 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $tab) {
             NavigationStack {
-                TodayView(database: database, openReader: {
-                    tab = .quran
-                    quranOpenRequest = UserDefaults.standard.integer(forKey: "reader.lastSurah")
-                })
+                TodayView(
+                    database: database,
+                    openReader: {
+                        tab = .quran
+                        quranOpenRequest = UserDefaults.standard.integer(forKey: "reader.lastSurah")
+                    },
+                    openAthkar: { tab = .athkar })
             }
             .tabItem { Label("Today", systemImage: "sun.max") }
             .tag(Tab.today)

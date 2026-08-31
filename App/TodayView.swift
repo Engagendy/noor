@@ -1,3 +1,4 @@
+import Athkar
 import ContentDB
 import DesignSystem
 import PrayerTimes
@@ -9,6 +10,9 @@ struct TodayView: View {
     let database: QuranDatabase
     /// Switches the tab bar to the Quran tab (Continue Reading card).
     let openReader: () -> Void
+    /// Switches to the Athkar tab (Daily Dhikr card).
+    let openAthkar: () -> Void
+    @State private var athkar: [DhikrCategory] = []
 
     @AppStorage("prayer.city") private var cityName = "Makkah"
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
@@ -18,6 +22,13 @@ struct TodayView: View {
     @Environment(\.locale) private var locale
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
+
+    /// String(localized:) uses the process language; resolve in the app's.
+    private func localizedName(_ resource: LocalizedStringResource) -> String {
+        var resource = resource
+        resource.locale = locale
+        return String(localized: resource)
+    }
 
     var body: some View {
         TimelineView(.everyMinute) { context in
@@ -29,19 +40,73 @@ struct TodayView: View {
                     }
                     continueReadingCard
                     dailyAyahCard(now: context.date)
+                    dailyDhikrCard(now: context.date)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
             }
             .background(NoorColor.bgPrimary)
         }
+        .task {
+            if athkar.isEmpty { athkar = AthkarStore.load() }
+        }
+    }
+
+    /// Time-aware dhikr: morning after Fajr, evening from Dhuhr, sleep
+    /// after Isha — keyed to the user's actual prayer times.
+    private func dhikrSlot(now: Date) -> (title: LocalizedStringKey, pool: [Dhikr]) {
+        let morningEvening = athkar.first { $0.category.contains("الصباح") }?.items ?? []
+        let sleep = athkar.first { $0.category == "أذكار النوم" }?.items ?? []
+        guard let day = prayerDay(date: now) else { return ("MORNING ATHKAR", morningEvening) }
+        let times = Dictionary(uniqueKeysWithValues: day.entries.map { ($0.prayer, $0.time) })
+        if let isha = times[.isha], now >= isha { return ("SLEEP ATHKAR", sleep) }
+        if let dhuhr = times[.dhuhr], now >= dhuhr { return ("EVENING ATHKAR", morningEvening) }
+        if let fajr = times[.fajr], now < fajr { return ("SLEEP ATHKAR", sleep) }
+        return ("MORNING ATHKAR", morningEvening)
+    }
+
+    private func dailyDhikrCard(now: Date) -> some View {
+        let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: now) ?? 1
+        let slot = dhikrSlot(now: now)
+        let pool = slot.pool
+        let dhikr = pool.isEmpty ? nil : pool[(dayOfYear &* 31) % pool.count]
+        return Button(action: openAthkar) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(slot.title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .tracking(0.8)
+                    .foregroundStyle(NoorColor.inkSecondary)
+                if let dhikr {
+                    Text(dhikr.text)
+                        .font(.system(size: 16))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                        .lineSpacing(6)
+                        .lineLimit(4)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .environment(\.layoutDirection, .rightToLeft)
+                    if dhikr.count > 1 {
+                        Text("Repeat \(dhikr.count)×")
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.accentGold)
+                    }
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .noorCard()
     }
 
     private func header(now: Date) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            let hijri = now.formatted(
-                Date.FormatStyle(date: .long, calendar: Calendar(identifier: .islamicUmmAlQura)))
-            Text("\(hijri) · \(now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))")
+            var hijriStyle = Date.FormatStyle(date: .long, calendar: Calendar(identifier: .islamicUmmAlQura))
+            let _ = hijriStyle.locale = locale
+            var gregStyle = Date.FormatStyle().weekday(.wide).month(.abbreviated).day()
+            let _ = gregStyle.locale = locale
+            Text("\(now.formatted(hijriStyle)) · \(now.formatted(gregStyle))")
                 .font(NoorFont.caption)
                 .foregroundStyle(NoorColor.inkSecondary)
             Text("As-salamu alaykum")
@@ -64,7 +129,7 @@ struct TodayView: View {
         let passed = day.passedCount(at: now)
         return VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(next.map { String(localized: $0.name).uppercased() } ?? String(localized: "Isha").uppercased())
+                Text(next.map { localizedName($0.name).uppercased() } ?? localizedName("Isha").uppercased())
                     .font(.system(size: 13, weight: .semibold))
                     .tracking(1.5)
                     .opacity(0.85)
@@ -137,7 +202,9 @@ struct TodayView: View {
                         }
                         .frame(height: 3)
                         .padding(.top, 6)
-                        Text("Khatmah · page \(khatmahMaxPage) of 604")
+                        Text(verbatim: isArabicUI
+                             ? "الختمة · صفحة \(khatmahMaxPage.arabicIndic) من ٦٠٤"
+                             : "Khatmah · page \(khatmahMaxPage) of 604")
                             .font(.system(size: 11))
                             .foregroundStyle(NoorColor.inkSecondary)
                             .padding(.top, 2)
@@ -171,9 +238,10 @@ struct TodayView: View {
                     .font(NoorFont.quran(size: 21))
                     .foregroundStyle(NoorColor.inkPrimary)
                     .lineSpacing(12)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .environment(\.layoutDirection, .rightToLeft)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                Text("\(daily.surah.displayName(arabicUI: isArabicUI)) \(daily.verse.surahId):\(daily.verse.ayah)")
+                Text(verbatim: "\u{200F}\(daily.surah.displayName(arabicUI: isArabicUI)) \(daily.verse.surahId):\(daily.verse.ayah)")
                     .font(NoorFont.caption)
                     .foregroundStyle(NoorColor.inkSecondary)
             }

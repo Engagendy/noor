@@ -125,14 +125,14 @@ struct DhikrCard: View {
     private var isComplete: Bool { done >= dhikr.count }
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 10) {
+        VStack(alignment: .leading, spacing: 10) {
+            // Inside RTL, .leading is the right edge — where Arabic starts.
             Text(dhikr.text)
                 .font(.system(size: 19))
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineSpacing(8)
-                .environment(\.layoutDirection, .rightToLeft)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .multilineTextAlignment(.trailing)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
             HStack {
                 if isComplete {
                     Label {
