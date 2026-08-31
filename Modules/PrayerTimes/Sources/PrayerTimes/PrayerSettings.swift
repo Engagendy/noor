@@ -143,4 +143,18 @@ public struct CityPreset: Identifiable, Hashable {
     public static func named(_ name: String) -> CityPreset {
         all.first { $0.name == name } ?? all[0]
     }
+
+    /// Nearest preset to a coordinate — offline label for "my location".
+    public static func nearest(latitude: Double, longitude: Double) -> CityPreset {
+        all.min { lhs, rhs in
+            distance(lhs, latitude, longitude) < distance(rhs, latitude, longitude)
+        } ?? all[0]
+    }
+
+    private static func distance(_ city: CityPreset, _ lat: Double, _ lon: Double) -> Double {
+        let dLat = city.latitude - lat
+        // Rough longitude scaling by latitude — plenty for a nearest label.
+        let dLon = (city.longitude - lon) * cos(lat * .pi / 180)
+        return dLat * dLat + dLon * dLon
+    }
 }

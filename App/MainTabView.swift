@@ -8,6 +8,7 @@ import QuranAudio
 import QuranReader
 import SwiftUI
 import Translations
+import WidgetKit
 
 struct MainTabView: View {
     enum Tab: Hashable {
@@ -37,6 +38,8 @@ struct MainTabView: View {
     @AppStorage("notif.asr") private var notifAsr = true
     @AppStorage("notif.maghrib") private var notifMaghrib = true
     @AppStorage("notif.isha") private var notifIsha = true
+    @AppStorage("app.language") private var appLanguage = "system"
+    @AppStorage("prayer.customLabel") private var customLabel = ""
 
     var body: some View {
         TabView(selection: $tab) {
@@ -72,13 +75,24 @@ struct MainTabView: View {
                 .tag(Tab.settings)
         }
         .tint(NoorColor.accentPrimary)
-        .task { await rescheduleNotifications() }
+        .task {
+            syncWidgets()
+            await rescheduleNotifications()
+        }
         .onChange(of: [cityName, methodRaw, madhabRaw, soundRaw,
                        String(notificationsEnabled), String(useCustomLocation),
                        String(notifFajr), String(notifDhuhr), String(notifAsr),
-                       String(notifMaghrib), String(notifIsha)]) {
+                       String(notifMaghrib), String(notifIsha),
+                       appLanguage, customLabel]) {
+            syncWidgets()
             Task { await rescheduleNotifications() }
         }
+    }
+
+    /// Mirrors settings into the app group and refreshes the widgets.
+    private func syncWidgets() {
+        NoorShared.syncFromApp()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private func rescheduleNotifications() async {

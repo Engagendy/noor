@@ -9,6 +9,7 @@ struct DailyAyahEntry: TimelineEntry {
     let date: Date
     let arabic: String
     let reference: String
+    let isArabicUI: Bool
 }
 
 struct DailyAyahProvider: TimelineProvider {
@@ -16,16 +17,18 @@ struct DailyAyahProvider: TimelineProvider {
         let calendar = Calendar.current
         let dayOfYear = calendar.ordinality(of: .day, in: .year, for: date) ?? 1
         let year = calendar.component(.year, from: date)
+        let isArabic = WidgetSettings.isArabic
         guard let db = try? QuranDatabase(),
               let total = try? db.verseCount(),
               let daily = try? db.verse(globalIndex: (dayOfYear &* 271 &+ year) % max(total, 1))
         else {
-            return DailyAyahEntry(date: date, arabic: "", reference: "")
+            return DailyAyahEntry(date: date, arabic: "", reference: "", isArabicUI: isArabic)
         }
         return DailyAyahEntry(
             date: date,
             arabic: daily.verse.text,
-            reference: "\(daily.surah.nameTransliterated) \(daily.verse.surahId):\(daily.verse.ayah)")
+            reference: "\(daily.surah.displayName(arabicUI: isArabic)) \(daily.verse.surahId):\(daily.verse.ayah)",
+            isArabicUI: isArabic)
     }
 
     func placeholder(in context: Context) -> DailyAyahEntry {
@@ -54,7 +57,7 @@ struct DailyAyahWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("DAILY AYAH")
+            Text(entry.isArabicUI ? "آية اليوم" : "DAILY AYAH")
                 .font(.system(size: 10, weight: .bold))
                 .tracking(1.1)
                 .foregroundStyle(WidgetTheme.gold)

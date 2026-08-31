@@ -1,6 +1,29 @@
 import CoreLocation
 import Foundation
 
+/// Shared container between the app and its widgets.
+public enum NoorShared {
+    public static let appGroup = "group.com.engagendy.noor"
+
+    public static var defaults: UserDefaults {
+        UserDefaults(suiteName: appGroup) ?? .standard
+    }
+
+    /// Keys the app mirrors into the shared suite for widgets.
+    public static let mirroredKeys = [
+        "prayer.city", "prayer.useCustom", "prayer.customLat", "prayer.customLon",
+        "prayer.customLabel", "prayer.method", "prayer.madhab", "app.language",
+    ]
+
+    /// Copies widget-relevant settings from standard defaults to the group.
+    public static func syncFromApp() {
+        let shared = UserDefaults(suiteName: appGroup)
+        for key in mirroredKeys {
+            shared?.set(UserDefaults.standard.object(forKey: key), forKey: key)
+        }
+    }
+}
+
 /// Where prayer times are computed for: a manual city preset or a one-shot
 /// device location. Coordinates never leave the device (CLAUDE.md rule 3).
 public struct PrayerLocation: Equatable, Sendable {
@@ -27,7 +50,7 @@ public struct PrayerLocation: Equatable, Sendable {
                 latitude: defaults.double(forKey: "prayer.customLat"),
                 longitude: defaults.double(forKey: "prayer.customLon"),
                 timeZoneIdentifier: TimeZone.current.identifier,
-                label: String(localized: "My location"),
+                label: defaults.string(forKey: "prayer.customLabel") ?? String(localized: "My location"),
                 isCustom: true)
         }
         let city = CityPreset.named(defaults.string(forKey: "prayer.city") ?? "Makkah")
@@ -35,9 +58,11 @@ public struct PrayerLocation: Equatable, Sendable {
     }
 
     public static func saveCustom(latitude: Double, longitude: Double,
+                                  label: String,
                                   defaults: UserDefaults = .standard) {
         defaults.set(latitude, forKey: "prayer.customLat")
         defaults.set(longitude, forKey: "prayer.customLon")
+        defaults.set(label, forKey: "prayer.customLabel")
         defaults.set(true, forKey: "prayer.useCustom")
     }
 
@@ -54,7 +79,8 @@ extension CityPreset {
 }
 
 /// One-shot when-in-use location fetch. The coordinate is stored locally and
-/// reused offline; no continuous tracking.
+/// reused offline; no continuous tracking, no geocoding — nothing leaves the
+/// device.
 public final class OneShotLocationFetcher: NSObject, CLLocationManagerDelegate, @unchecked Sendable {
     private let manager = CLLocationManager()
     private var continuation: CheckedContinuation<CLLocationCoordinate2D?, Never>?
@@ -66,26 +92,35 @@ public final class OneShotLocationFetcher: NSObject, CLLocationManagerDelegate, 
     }
 
     public func fetch() async -> CLLocationCoordinate2D? {
-        if manager.authorizationStatus == .notDetermined {
-            manager.requestWhenInUseAuthorization()
-        }
-        return await withCheckedContinuation { continuation in
+        await withCheckedContinuation { continuation in
             self.continuation = continuation
-            manager.requestLocation()
+            switch manager.authorizationStatus {
+            case .notDetermined:
+                // Wait for the grant; didChangeAuthorization requests the fix.
+                manager.requestWhenInUseAuthorization()
+            case .denied, .restricted:
+                resume(nil)
+            default:
+                manager.requestLocation()
+            }
         }
+    }
+
+    private func resume(_ coordinate: CLLocationCoordinate2D?) {
+        continuation?.resume(returning: coordinate)
+        continuation = nil
     }
 
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        continuation?.resume(returning: locations.first?.coordinate)
-        continuation = nil
+        resume(locations.first?.coordinate)
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        continuation?.resume(returning: nil)
-        continuation = nil
+        resume(nil)
     }
 
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        guard continuation != nil else { return }
         let status = manager.authorizationStatus
         #if os(macOS)
         let authorized = status == .authorized || status == .authorizedAlways
@@ -95,8 +130,7 @@ public final class OneShotLocationFetcher: NSObject, CLLocationManagerDelegate, 
         if authorized {
             manager.requestLocation()
         } else if status == .denied || status == .restricted {
-            continuation?.resume(returning: nil)
-            continuation = nil
+            resume(nil)
         }
     }
 }

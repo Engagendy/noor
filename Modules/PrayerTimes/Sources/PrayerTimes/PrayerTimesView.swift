@@ -22,6 +22,8 @@ public struct PrayerTimesView: View {
     @State private var dayOffset = 0
     @State private var showSettings = false
     @State private var locationFetcher = OneShotLocationFetcher()
+    @State private var fetchingLocation = false
+    @State private var locationFailed = false
 
     private func notificationBinding(for prayer: Prayer) -> Binding<Bool>? {
         switch prayer {
@@ -239,17 +241,33 @@ public struct PrayerTimesView: View {
         NavigationStack {
             Form {
                 Button {
+                    fetchingLocation = true
                     Task {
+                        defer { fetchingLocation = false }
                         if let coordinate = await locationFetcher.fetch() {
-                            PrayerLocation.saveCustom(
+                            let nearest = CityPreset.nearest(
                                 latitude: coordinate.latitude, longitude: coordinate.longitude)
+                            PrayerLocation.saveCustom(
+                                latitude: coordinate.latitude,
+                                longitude: coordinate.longitude,
+                                label: String(localized: "Near \(nearest.name)"))
+                            cityName = nearest.name
                             useCustomLocation = true
+                        } else {
+                            locationFailed = true
                         }
                     }
                 } label: {
-                    Label(useCustomLocation ? "Using current location" : "Use my current location",
-                          systemImage: useCustomLocation ? "location.fill" : "location")
+                    HStack {
+                        Label(useCustomLocation ? "Using current location" : "Use my current location",
+                              systemImage: useCustomLocation ? "location.fill" : "location")
+                        if fetchingLocation {
+                            Spacer()
+                            ProgressView()
+                        }
+                    }
                 }
+                .disabled(fetchingLocation)
                 NavigationLink {
                     CityPickerView(cityName: $cityName)
                 } label: {
@@ -284,10 +302,10 @@ public struct PrayerTimesView: View {
                     Button("Done") { showSettings = false }
                 }
             }
-            .onChange(of: cityName) {
-                // Picking a city switches back to manual mode.
-                PrayerLocation.clearCustom()
-                useCustomLocation = false
+            .alert(Text("Couldn't get your location"), isPresented: $locationFailed) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Allow location access in Settings, or pick a city manually.")
             }
         }
         .presentationDetents([.medium])

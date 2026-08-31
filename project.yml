@@ -51,6 +51,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.engagendy.Noor.widgets
         DEVELOPMENT_TEAM: 7JM77223V5
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: Widgets/NoorWidgets.entitlements
         SWIFT_VERSION: 5.10
         SKIP_INSTALL: YES
 
@@ -84,6 +85,9 @@ targets:
       base:
         DEVELOPMENT_TEAM: 7JM77223V5
         CODE_SIGN_STYLE: Automatic
+        # App group only on iOS (widget sharing); macOS build stays plain.
+        "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": App/Noor.entitlements
+        "CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]": App/Noor.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         PRODUCT_NAME: Noor

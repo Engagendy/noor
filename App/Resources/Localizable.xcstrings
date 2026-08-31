@@ -93,6 +93,16 @@
         }
       }
     },
+    "Allow location access in Settings, or pick a city manually.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسمح بالوصول إلى الموقع من الإعدادات، أو اختر مدينة يدويًا."
+          }
+        }
+      }
+    },
     "Appearance": {
       "localizations": {
         "ar": {
@@ -310,11 +320,22 @@
       }
     },
     "Copy": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "نسخ"
+          }
+        }
+      }
+    },
+    "Couldn't get your location": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذر تحديد موقعك"
           }
         }
       }
@@ -675,6 +696,16 @@
         }
       }
     },
+    "Near %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قرب %@"
+          }
+        }
+      }
+    },
     "Notification": {
       "extractionState": "stale",
       "localizations": {
@@ -713,6 +744,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تُجدول الإشعارات على جهازك للأيام الاثني عشر القادمة وتتجدد تلقائيًا. يمكنك تفعيل كل صلاة على حدة من زر الجرس في شاشة الصلاة. مقاطع الأذان الصوتية ستضاف بعد تأكيد الترخيص."
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حسنًا"
           }
         }
       }
