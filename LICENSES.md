@@ -121,3 +121,8 @@ Attributions are displayed in Settings → About.
 - **Source:** Wikimedia Commons, "Beautiful adhan.ogg"
 - **License:** CC0 (public domain)
 - **Attribution:** none required (credited as courtesy).
+
+### Hadith — An-Nawawi's Forty + Forty Hadith Qudsi (bundled)
+- **Source:** fawazahmed0/hadith-api (github.com/fawazahmed0/hadith-api), editions ara/eng-nawawi and ara/eng-qudsi
+- **License:** Unlicense (public domain dataset); the classical texts themselves are public domain
+- **Attribution:** "Hadith data courtesy of the hadith-api project."

@@ -14,6 +14,8 @@ struct TodayView: View {
     /// Switches to the Athkar tab (Daily Dhikr card).
     let openAthkar: () -> Void
     @State private var athkar: [DhikrCategory] = []
+    @State private var hadiths: [HadithItem] = []
+    @State private var showHadithList = false
 
     enum ShareItem: Identifiable {
         case ayah(Verse, Surah)
@@ -61,6 +63,7 @@ struct TodayView: View {
                     khatmahCard(now: context.date)
                     dailyAyahCard(now: context.date)
                     dailyDhikrCard(now: context.date)
+                    dailyHadithCard(now: context.date)
                     onThisDayCard(now: context.date)
                 }
                 .padding(.horizontal, 20)
@@ -70,6 +73,13 @@ struct TodayView: View {
         }
         .task {
             if athkar.isEmpty { athkar = AthkarStore.load() }
+            if hadiths.isEmpty { hadiths = HadithStore.load() }
+        }
+        .sheet(isPresented: $showHadithList) {
+            HadithListView(items: hadiths, isArabicUI: isArabicUI,
+                           initial: HadithStore.daily(from: hadiths, date: Date()))
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
         .sheet(isPresented: $showKhatmahGoal) {
             KhatmahGoalSheet(currentPage: khatmahMaxPage,
@@ -169,6 +179,42 @@ struct TodayView: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: openAthkar)
         .noorCard()
+    }
+
+    /// Daily hadith from the bundled Nawawi + Qudsi collections.
+    @ViewBuilder
+    private func dailyHadithCard(now: Date) -> some View {
+        if let hadith = HadithStore.daily(from: hadiths, date: now) {
+            Button { showHadithList = true } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("DAILY HADITH")
+                            .font(.system(size: 12, weight: .semibold))
+                            .tracking(0.8)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                        Spacer()
+                        Text(verbatim: isArabicUI ? hadith.collectionArabic : hadith.collectionEnglish)
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.accentGold)
+                    }
+                    Text(verbatim: hadith.arabic)
+                        .font(.system(size: 16))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                        .lineSpacing(7)
+                        .lineLimit(4)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .environment(\.layoutDirection, .rightToLeft)
+                    Text(isArabicUI ? "اقرأ الحديث كاملًا ←" : "Read the full hadith →")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.accentPrimary)
+                }
+                .padding(16)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .noorCard()
+        }
     }
 
     private func eventReference(_ event: IslamicEvent) -> String {

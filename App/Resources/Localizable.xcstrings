@@ -1725,6 +1725,38 @@
           }
         }
       }
+    },
+    "DAILY HADITH": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حديث اليوم"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DAILY HADITH"
+          }
+        }
+      }
+    },
+    "Hadith": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحديث"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hadith"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
