@@ -6,11 +6,11 @@ import SwiftUI
 /// direct actions — play, tafsir, share, bookmark.
 struct AyahActionsSheet: View {
     let verses: [Verse]
-    let bookmarkedAyat: Set<Int>
+    let bookmarkedRefs: Set<String>
     let onPlay: ((Verse) -> Void)?
     let onTafsir: (Verse) -> Void
     let onShare: (Verse) -> Void
-    let onToggleBookmark: ((Int) -> Void)?
+    let onToggleBookmark: ((Int, Int) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -55,9 +55,9 @@ struct AyahActionsSheet: View {
                     .accessibilityLabel("Share")
                     if let onToggleBookmark {
                         Button {
-                            onToggleBookmark(verse.ayah)
+                            onToggleBookmark(verse.surahId, verse.ayah)
                         } label: {
-                            Image(systemName: bookmarkedAyat.contains(verse.ayah) ? "bookmark.fill" : "bookmark")
+                            Image(systemName: bookmarkedRefs.contains(verse.id) ? "bookmark.fill" : "bookmark")
                                 .foregroundStyle(NoorColor.accentGold)
                         }
                         .buttonStyle(.borderless)

@@ -64,6 +64,21 @@ public struct QuranStructure: Sendable {
 }
 
 extension QuranDatabase {
+    /// All verses printed on one Madani page (may span surahs).
+    public func verses(page: Int, structure: QuranStructure) throws -> [Verse] {
+        guard let start = structure.pageStarts.first(where: { $0.idx == page }) else { return [] }
+        let startKey = start.surahId * 1000 + start.ayah
+        let endKey = structure.pageStarts.first { $0.idx == page + 1 }
+            .map { $0.surahId * 1000 + $0.ayah } ?? Int.max
+        return try read { db in
+            try Verse.fetchAll(db, sql: """
+                SELECT * FROM verse
+                WHERE (surah_id * 1000 + ayah) >= ? AND (surah_id * 1000 + ayah) < ?
+                ORDER BY surah_id, ayah
+                """, arguments: [startKey, endKey])
+        }
+    }
+
     public func structure() throws -> QuranStructure {
         try read { db in
             QuranStructure(

@@ -5,12 +5,10 @@ import SwiftUI
 import Tafsir
 import Translations
 
-/// Flow-mode reader. Two display modes:
-/// - Mushaf (default): one Madani page per screen, swiped horizontally in
-///   RTL direction like a printed mushaf — pages load lazily.
-/// - Ayah by ayah: lazy vertical list, tap-to-select action chips, optional
-///   translation below each ayah.
-/// While reciting, the current ayah is tinted and the view follows it.
+/// The reader. Mushaf and Madani-print modes page through the WHOLE mushaf
+/// (1…604) — swiping past a surah's end continues into the next, with the
+/// ornament header and basmala appearing inline, like a printed mushaf.
+/// Ayah-by-ayah mode stays scoped to the opened surah.
 public struct SurahReaderView: View {
     public enum DisplayMode: String {
         case mushaf, ayah, page
@@ -20,18 +18,18 @@ public struct SurahReaderView: View {
     @AppStorage("reader.fontSize") private var quranFontSize = 26.0
     @AppStorage("reader.mode") private var modeRaw = DisplayMode.mushaf.rawValue
     @AppStorage("reader.showTranslation") private var showTranslation = false
+    @AppStorage("reader.wordByWord") private var wordByWord = false
     /// Furthest mushaf page ever reached — drives khatmah progress on Today.
     @AppStorage("khatmah.maxPage") private var khatmahMaxPage = 0
-    @State private var selectedAyah: Int?
+    @State private var selectedKey: Int?          // surah*1000 + ayah
     @State private var currentPage = 0
     @State private var tafsirVerse: Verse?
     @State private var shareVerse: Verse?
-    @State private var actionsPage: SurahReaderViewModel.PageGroup?
-    /// Chrome-less by default after a moment (design 6.2): tap background
-    /// to toggle bars; a minimal surah·time·juz header remains.
+    @State private var actionVerses: SurahReaderViewModel.PageGroup?
     @State private var chromeVisible = true
     @State private var didAutoHide = false
     @State private var downloader = SurahDownloader()
+    @State private var fontStore = PageFontStore()
     @GestureState private var pinchScale: CGFloat = 1
     @Environment(\.locale) private var locale
 
@@ -42,10 +40,8 @@ public struct SurahReaderView: View {
     private let layout: PageLayoutDatabase?
     private let surahId: Int
     private let scrollToAyah: Int?
-    private let bookmarkedAyat: Set<Int>
-    private let onToggleBookmark: ((Int) -> Void)?
-    @AppStorage("reader.wordByWord") private var wordByWord = false
-    @State private var fontStore = PageFontStore()
+    private let bookmarkedRefs: Set<String>       // "surah:ayah"
+    private let onToggleBookmark: ((Int, Int) -> Void)?
 
     public init(
         database: QuranDatabase,
@@ -54,8 +50,8 @@ public struct SurahReaderView: View {
         player: QuranAudioPlayer? = nil,
         translations: TranslationStore? = nil,
         layout: PageLayoutDatabase? = nil,
-        bookmarkedAyat: Set<Int> = [],
-        onToggleBookmark: ((Int) -> Void)? = nil
+        bookmarkedRefs: Set<String> = [],
+        onToggleBookmark: ((Int, Int) -> Void)? = nil
     ) {
         self.layout = layout
         _viewModel = State(initialValue: SurahReaderViewModel(database: database, surahId: surahId))
@@ -63,7 +59,7 @@ public struct SurahReaderView: View {
         self.scrollToAyah = scrollToAyah
         self.player = player
         self.translations = translations
-        self.bookmarkedAyat = bookmarkedAyat
+        self.bookmarkedRefs = bookmarkedRefs
         self.onToggleBookmark = onToggleBookmark
     }
 
@@ -71,10 +67,12 @@ public struct SurahReaderView: View {
     private var liveFontSize: CGFloat {
         (quranFontSize * pinchScale).clamped(to: NoorMetrics.quranSizeRange)
     }
-    /// The ayah currently being recited in this surah, if any.
-    private var recitingAyah: Int? {
-        guard let current = player?.current, current.surah == surahId else { return nil }
-        return current.ayah
+    private var recitingKey: Int? {
+        guard let current = player?.current else { return nil }
+        return current.surah * 1000 + current.ayah
+    }
+    private var titleSurah: Surah? {
+        mode == .ayah ? viewModel.surah : viewModel.surah(forPage: currentPage)
     }
 
     public var body: some View {
@@ -88,11 +86,9 @@ public struct SurahReaderView: View {
         .environment(\.layoutDirection, .rightToLeft)
         .background(NoorColor.bgPrimary)
         .onTapGesture {
-            // Fires only when no word/ayah consumed the tap.
             withAnimation(.easeInOut(duration: 0.3)) { chromeVisible.toggle() }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            // Inset (not overlay) so the first line is never covered.
             if !chromeVisible { miniHeader }
         }
         .overlay(alignment: .bottom) {
@@ -118,12 +114,14 @@ public struct SurahReaderView: View {
             if let ayah = scrollToAyah, let page = viewModel.page(containing: ayah) {
                 currentPage = page
             } else {
-                currentPage = viewModel.pages.first?.page ?? 0
+                currentPage = viewModel.pages.first?.page ?? 1
             }
             if showTranslation { await translations?.download() }
         }
-        .onChange(of: recitingAyah) { _, new in
-            guard mode == .mushaf, let new, let page = viewModel.page(containing: new) else { return }
+        .onChange(of: recitingKey) { _, new in
+            guard mode != .ayah, let new,
+                  let page = viewModel.page(surahId: new / 1000, ayah: new % 1000)
+            else { return }
             withAnimation(.easeInOut(duration: 0.3)) { currentPage = page }
         }
         .onChange(of: currentPage) { _, page in
@@ -135,11 +133,11 @@ public struct SurahReaderView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 0) {
-                    Text(viewModel.surah?.displayName(arabicUI: isArabicUI) ?? "")
+                    Text(titleSurah?.displayName(arabicUI: isArabicUI) ?? "")
                         .font(isArabicUI ? NoorFont.quran(size: 17) : .system(size: 16, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
-                    Text(mode == .mushaf && currentPage > 0
-                         ? "Juz \(viewModel.juz) · Page \(currentPage)"
+                    Text(mode != .ayah && currentPage > 0
+                         ? "Juz \(viewModel.juz(forPage: currentPage)) · Page \(currentPage)"
                          : "Juz \(viewModel.juz)")
                         .font(.system(size: 11.5))
                         .foregroundStyle(NoorColor.inkSecondary)
@@ -148,9 +146,11 @@ public struct SurahReaderView: View {
             if player != nil {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        startPlayback(from: mode == .mushaf
-                            ? (viewModel.pages.first { $0.page == currentPage }?.verses.first?.ayah ?? 1)
-                            : 1)
+                        if mode == .ayah {
+                            if let first = viewModel.verses.first { startPlayback(from: first) }
+                        } else if let first = viewModel.sections(forPage: currentPage).first?.verses.first {
+                            startPlayback(from: first)
+                        }
                     } label: {
                         Image(systemName: "play.fill")
                             .foregroundStyle(NoorColor.accentPrimary)
@@ -162,11 +162,11 @@ public struct SurahReaderView: View {
                 readerMenu
             }
         }
-        .sheet(item: $actionsPage) { page in
+        .sheet(item: $actionVerses) { group in
             AyahActionsSheet(
-                verses: page.verses,
-                bookmarkedAyat: bookmarkedAyat,
-                onPlay: player == nil ? nil : { startPlayback(from: $0.ayah) },
+                verses: group.verses,
+                bookmarkedRefs: bookmarkedRefs,
+                onPlay: player == nil ? nil : { startPlayback(from: $0) },
                 onTafsir: { verse in
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { tafsirVerse = verse }
                 },
@@ -177,14 +177,14 @@ public struct SurahReaderView: View {
                 .presentationDetents([.medium, .large])
         }
         .sheet(item: $tafsirVerse) { verse in
-            TafsirSheetView(surahId: surahId, ayah: verse.ayah, ayahText: verse.text)
+            TafsirSheetView(surahId: verse.surahId, ayah: verse.ayah, ayahText: verse.text)
                 .presentationDetents([.medium, .large])
         }
         .sheet(item: $shareVerse) { verse in
             ShareAyahSheet(
                 verse: verse,
-                surahName: viewModel.surah?.nameTransliterated ?? "",
-                translation: showTranslation ? translations?.translation(surah: surahId, ayah: verse.ayah) : nil)
+                surahName: viewModel.surahInfo(verse.surahId)?.nameTransliterated ?? "",
+                translation: showTranslation ? translations?.translation(surah: verse.surahId, ayah: verse.ayah) : nil)
                 .presentationDetents([.medium, .large])
         }
     }
@@ -193,14 +193,14 @@ public struct SurahReaderView: View {
     private var miniHeader: some View {
         TimelineView(.everyMinute) { context in
             HStack {
-                Text(viewModel.surah?.displayName(arabicUI: true) ?? "")
+                Text(titleSurah?.displayName(arabicUI: true) ?? "")
                     .font(NoorFont.quran(size: 15))
                 Spacer()
                 Text(context.date, format: .dateTime.hour().minute())
                     .font(.system(size: 12).monospacedDigit())
                 Spacer()
                 Text(mode != .ayah && currentPage > 0
-                     ? "Juz \(viewModel.juz) · Page \(currentPage)"
+                     ? "Juz \(viewModel.juz(forPage: currentPage)) · Page \(currentPage)"
                      : "Juz \(viewModel.juz)")
                     .font(.system(size: 12))
             }
@@ -213,20 +213,19 @@ public struct SurahReaderView: View {
         .transition(.move(edge: .top).combined(with: .opacity))
     }
 
-    // MARK: Madani page mode — pixel-faithful QCF pages
+    // MARK: Madani page mode — the whole mushaf, pixel-faithful
 
     private var madaniPager: some View {
         TabView(selection: $currentPage) {
-            ForEach(viewModel.pages) { page in
-                MadaniPageView(page: page.page, layout: layout, fontStore: fontStore) { refs in
-                    // Only this surah's ayat on the tapped line.
-                    let verses = viewModel.verses.filter { verse in
-                        refs.contains { $0.surahId == surahId && $0.ayah == verse.ayah }
-                    }
+            ForEach(1...604, id: \.self) { page in
+                MadaniPageView(page: page, layout: layout, fontStore: fontStore) { refs in
+                    let verses = viewModel.sections(forPage: page)
+                        .flatMap(\.verses)
+                        .filter { verse in refs.contains { $0.surahId == verse.surahId && $0.ayah == verse.ayah } }
                     guard !verses.isEmpty else { return }
-                    actionsPage = SurahReaderViewModel.PageGroup(page: page.page, verses: verses)
+                    actionVerses = SurahReaderViewModel.PageGroup(page: page, verses: verses)
                 }
-                .tag(page.page)
+                .tag(page)
             }
         }
         #if os(iOS)
@@ -234,13 +233,13 @@ public struct SurahReaderView: View {
         #endif
     }
 
-    // MARK: Mushaf mode — one page per screen, RTL page turns
+    // MARK: Mushaf mode — the whole mushaf, flowing text
 
     private var mushafPager: some View {
         TabView(selection: $currentPage) {
-            ForEach(viewModel.pages) { page in
+            ForEach(1...604, id: \.self) { page in
                 mushafPage(page)
-                    .tag(page.page)
+                    .tag(page)
             }
         }
         #if os(iOS)
@@ -248,37 +247,37 @@ public struct SurahReaderView: View {
         #endif
     }
 
-    private func mushafPage(_ page: SurahReaderViewModel.PageGroup) -> some View {
+    private func mushafPage(_ page: Int) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 6) {
-                if page.page == viewModel.pages.first?.page {
-                    if let surah = viewModel.surah {
+                ForEach(viewModel.sections(forPage: page)) { section in
+                    if let headerSurah = section.headerSurah {
                         SurahOrnamentFrame {
-                            Text(surah.nameArabic)
+                            Text(headerSurah.nameArabic)
                                 .font(NoorFont.quran(size: 24))
                                 .foregroundStyle(NoorColor.inkPrimary)
                         }
-                        .padding(.bottom, 10)
+                        .padding(.vertical, 10)
                     }
-                    if let basmala = viewModel.basmala {
+                    if let basmala = section.basmala {
                         Text(basmala)
                             .font(NoorFont.quran(size: liveFontSize * 0.92))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .frame(maxWidth: .infinity)
                             .multilineTextAlignment(.center)
-                            .padding(.bottom, 14)
+                            .padding(.bottom, 12)
                     }
+                    tappableFlow(section: section, page: page)
                 }
-                tappableFlow(page)
                 HStack(spacing: 10) {
                     Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
-                    Text(page.page.arabicIndic)
+                    Text(page.arabicIndic)
                         .font(.system(size: 12))
                         .foregroundStyle(NoorColor.accentGold)
                     Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
                 }
                 .padding(.top, 10)
-                .accessibilityLabel("Page \(page.page)")
+                .accessibilityLabel("Page \(page)")
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 18)
@@ -286,18 +285,18 @@ public struct SurahReaderView: View {
         }
     }
 
-    /// Every word is tappable — tap selects ITS ayah (highlight + chips).
-    private func tappableFlow(_ page: SurahReaderViewModel.PageGroup) -> some View {
+    /// Every word is tappable — tap selects ITS ayah; long-press = actions.
+    private func tappableFlow(section: SurahReaderViewModel.PageSection, page: Int) -> some View {
         RTLFlowLayout(horizontalSpacing: liveFontSize * 0.3,
                       verticalSpacing: liveFontSize * NoorMetrics.quranLineSpacingFactor) {
-            ForEach(viewModel.flowItems(for: page)) { item in
-                let isSelected = selectedAyah == item.ayah
-                let isReciting = recitingAyah == item.ayah
+            ForEach(viewModel.flowItems(section: section, page: page)) { item in
+                let key = item.surahId * 1000 + item.ayah
+                let isSelected = selectedKey == key
                 Text(item.text)
                     .font(NoorFont.quran(size: item.kind == .marker ? liveFontSize * 0.62 : liveFontSize))
                     .foregroundStyle(
                         item.kind == .word
-                            ? (isReciting ? NoorColor.accentPrimary : NoorColor.inkPrimary)
+                            ? (recitingKey == key ? NoorColor.accentPrimary : NoorColor.inkPrimary)
                             : NoorColor.accentGold)
                     .padding(.horizontal, 2)
                     .background(
@@ -305,14 +304,15 @@ public struct SurahReaderView: View {
                             .fill(isSelected ? NoorColor.stateReciting : Color.clear)
                     )
                     .contentShape(Rectangle())
-                    // Tap = subtle select; long-press = context menu (design 6.2).
                     .onTapGesture {
                         withAnimation(.easeInOut(duration: 0.25)) {
-                            selectedAyah = isSelected ? nil : item.ayah
+                            selectedKey = isSelected ? nil : key
                         }
                     }
                     .contextMenu {
-                        if let verse = page.verses.first(where: { $0.ayah == item.ayah }) {
+                        if let verse = section.verses.first(where: {
+                            $0.surahId == item.surahId && $0.ayah == item.ayah
+                        }) {
                             contextActions(for: verse)
                         }
                     }
@@ -327,7 +327,7 @@ public struct SurahReaderView: View {
     private func contextActions(for verse: Verse) -> some View {
         if player != nil {
             Button {
-                startPlayback(from: verse.ayah)
+                startPlayback(from: verse)
             } label: {
                 Label("Play from here", systemImage: "play.fill")
             }
@@ -339,10 +339,10 @@ public struct SurahReaderView: View {
         }
         if let onToggleBookmark {
             Button {
-                onToggleBookmark(verse.ayah)
+                onToggleBookmark(verse.surahId, verse.ayah)
             } label: {
                 Label("Bookmark",
-                      systemImage: bookmarkedAyat.contains(verse.ayah) ? "bookmark.fill" : "bookmark")
+                      systemImage: bookmarkedRefs.contains(verse.id) ? "bookmark.fill" : "bookmark")
             }
         }
         Button {
@@ -363,7 +363,7 @@ public struct SurahReaderView: View {
         }
     }
 
-    // MARK: Ayah mode — lazy vertical list
+    // MARK: Ayah mode — lazy vertical list (opened surah)
 
     private var ayahList: some View {
         ScrollViewReader { proxy in
@@ -389,32 +389,33 @@ public struct SurahReaderView: View {
                         ayahBlock(verse).id("a\(verse.ayah)")
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 24)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 18)
                 .padding(.bottom, player?.current != nil ? 72 : 0)
             }
             .onChange(of: viewModel.verses.count) {
                 if let ayah = scrollToAyah { proxy.scrollTo("a\(ayah)", anchor: .top) }
             }
-            .onChange(of: recitingAyah) { _, new in
-                guard let new else { return }
+            .onChange(of: recitingKey) { _, new in
+                guard let new, new / 1000 == surahId else { return }
                 withAnimation(.easeInOut(duration: 0.3)) {
-                    proxy.scrollTo("a\(new)", anchor: .center)
+                    proxy.scrollTo("a\(new % 1000)", anchor: .center)
                 }
             }
         }
     }
 
     private func ayahBlock(_ verse: Verse) -> some View {
-        let isSelected = selectedAyah == verse.ayah
-        let isReciting = recitingAyah == verse.ayah
-        let sajda = viewModel.sajdaAyat.contains(verse.ayah)
+        let key = verse.surahId * 1000 + verse.ayah
+        let isSelected = selectedKey == key
+        let isReciting = recitingKey == key
+        let sajda = viewModel.sajdaKeys.contains(key)
             ? Text(verbatim: " ۩").foregroundStyle(NoorColor.accentGold)
             : Text(verbatim: "")
         return VStack(alignment: .leading, spacing: 10) {
             if wordByWord, let layout {
                 WordByWordContainer(
-                    layout: layout, surahId: surahId, ayah: verse.ayah, fontSize: liveFontSize,
+                    layout: layout, surahId: verse.surahId, ayah: verse.ayah, fontSize: liveFontSize,
                     onTapWord: { _ in tafsirVerse = verse })
             } else {
                 (Text(verse.text)
@@ -423,12 +424,13 @@ public struct SurahReaderView: View {
                         .font(NoorFont.quran(size: liveFontSize * 0.62))
                         .foregroundStyle(NoorColor.accentGold))
                     .font(NoorFont.quran(size: liveFontSize))
-                    .foregroundStyle(NoorColor.inkPrimary)
+                    .foregroundStyle(isReciting ? NoorColor.accentPrimary : NoorColor.inkPrimary)
                     .lineSpacing(liveFontSize * NoorMetrics.quranLineSpacingFactor)
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            if showTranslation, let translation = translations?.translation(surah: surahId, ayah: verse.ayah) {
+            if showTranslation,
+               let translation = translations?.translation(surah: verse.surahId, ayah: verse.ayah) {
                 Text(translation)
                     .font(NoorFont.translation)
                     .foregroundStyle(NoorColor.inkSecondary)
@@ -447,7 +449,7 @@ public struct SurahReaderView: View {
         .contentShape(Rectangle())
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.25)) {
-                selectedAyah = isSelected ? nil : verse.ayah
+                selectedKey = isSelected ? nil : key
             }
         }
         .contextMenu { contextActions(for: verse) }
@@ -456,20 +458,19 @@ public struct SurahReaderView: View {
         .accessibilityValue(verse.text)
     }
 
-    private func startPlayback(from ayah: Int) {
-        guard let surah = viewModel.surah else { return }
-        // "This page only" mode stops at the end of the page the ayah is on.
-        if let page = viewModel.page(containing: ayah),
-           let group = viewModel.pages.first(where: { $0.page == page }) {
-            player?.pageEndAyah = group.verses.last?.ayah
+    private func startPlayback(from verse: Verse) {
+        guard let surah = viewModel.surahInfo(verse.surahId) else { return }
+        if let page = viewModel.page(surahId: verse.surahId, ayah: verse.ayah),
+           let last = viewModel.sections(forPage: page).flatMap(\.verses).last {
+            player?.pageEndAyah = last.surahId == verse.surahId ? last.ayah : surah.ayahCount
         }
         player?.play(
             surah: surah.id,
             ayahCount: surah.ayahCount,
-            from: ayah,
+            from: verse.ayah,
             title: surah.nameTransliterated,
             pageEndAyah: player?.pageEndAyah)
-        withAnimation(.easeInOut(duration: 0.25)) { selectedAyah = nil }
+        withAnimation(.easeInOut(duration: 0.25)) { selectedKey = nil }
     }
 
     // MARK: Controls
@@ -484,13 +485,6 @@ public struct SurahReaderView: View {
 
     private var readerMenu: some View {
         Menu {
-            if player != nil {
-                Button {
-                    startPlayback(from: 1)
-                } label: {
-                    Label("Play surah", systemImage: "play.fill")
-                }
-            }
             Picker(selection: $modeRaw) {
                 Text("Mushaf (continuous)").tag(DisplayMode.mushaf.rawValue)
                 if layout != nil {
@@ -562,6 +556,12 @@ public struct SurahReaderView: View {
     }
 }
 
+extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self {
+        min(max(self, range.lowerBound), range.upperBound)
+    }
+}
+
 /// Loads one ayah's words off the layout DB and renders the wbw grid.
 private struct WordByWordContainer: View {
     let layout: PageLayoutDatabase
@@ -575,22 +575,6 @@ private struct WordByWordContainer: View {
     var body: some View {
         WordByWordView(words: words, fontSize: fontSize, onTapWord: onTapWord)
             .task { words = (try? layout.words(surahId: surahId, ayah: ayah)) ?? [] }
-    }
-}
-
-extension Comparable {
-    func clamped(to range: ClosedRange<Self>) -> Self {
-        min(max(self, range.lowerBound), range.upperBound)
-    }
-}
-
-private extension View {
-    func chipStyle(filled: Bool = false) -> some View {
-        font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(filled ? NoorColor.bgPrimary : NoorColor.accentPrimary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(Capsule().fill(filled ? NoorColor.accentPrimary : NoorColor.accentPrimary.opacity(0.12)))
     }
 }
 

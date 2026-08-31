@@ -171,10 +171,9 @@ struct QuranTab: View {
             player: player,
             translations: translations,
             layout: pageLayout,
-            bookmarkedAyat: Set((library?.bookmarks ?? [])
-                .filter { $0.surahId == surahId }.map(\.ayah)),
-            onToggleBookmark: { toggled in
-                library?.toggle(surahId: surahId, ayah: toggled)
+            bookmarkedRefs: Set((library?.bookmarks ?? []).map(\.id)),
+            onToggleBookmark: { bookmarkSurah, bookmarkAyah in
+                library?.toggle(surahId: bookmarkSurah, ayah: bookmarkAyah)
             })
             .id("\(surahId)-\(ayah ?? 0)")
     }
