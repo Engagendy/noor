@@ -55,26 +55,6 @@ struct TodayView: View {
         return String(localized: resource)
     }
 
-    /// Arrow chip that nudges the carousel (also hints that it swipes).
-    private func carouselArrow(direction: Int) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.4)) {
-                cardPage = (cardPage + direction + 4) % 4
-            }
-        } label: {
-            Image(systemName: direction > 0 ? "chevron.forward" : "chevron.backward")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(NoorColor.accentPrimary)
-                .frame(width: 30, height: 30)
-                .background(Circle().fill(NoorColor.bgElevated.opacity(0.92))
-                    .shadow(color: .black.opacity(0.12), radius: 4))
-                .contentShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 2)
-        .accessibilityLabel(direction > 0 ? "Next card" : "Previous card")
-    }
-
     /// Clearly visible page dots in app colors.
     private var carouselDots: some View {
         HStack(spacing: 7) {
@@ -136,9 +116,6 @@ struct TodayView: View {
                     }
                 }
                 .frame(maxHeight: .infinity)
-                // Swipe affordance: arrows at the sides + tinted dots below.
-                .overlay(alignment: .leading) { carouselArrow(direction: -1) }
-                .overlay(alignment: .trailing) { carouselArrow(direction: 1) }
                 carouselDots
             }
             .padding(.horizontal, 20)
