@@ -175,6 +175,12 @@ struct QuranTab: View {
             onRemoveBookmark: { ref in
                 library?.remove(BookmarkItem(surahId: ref.surahId, ayah: ref.ayah, createdAt: ref.createdAt))
             })
+            #if os(iOS)
+            // The reader hides these; restore them when popping back or the
+            // index loses its title and tab bar.
+            .toolbar(.visible, for: .navigationBar)
+            .toolbar(.visible, for: .tabBar)
+            #endif
     }
 
     private func reader(surahId: Int, ayah: Int?) -> some View {
