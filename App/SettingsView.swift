@@ -16,7 +16,7 @@ struct SettingsView: View {
     @State private var showReciterPicker = false
     @State private var showAdhanSounds = false
     @AppStorage("notifications.enabled") private var notificationsEnabled = false
-    @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanShort.rawValue
+    @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanMadinah.rawValue
     @Environment(\.locale) private var locale
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
@@ -51,7 +51,7 @@ struct SettingsView: View {
                         Text("Notification sound")
                             .foregroundStyle(NoorColor.inkPrimary)
                         Spacer()
-                        Text((AdhanSound(rawValue: soundRaw) ?? .adhanShort).displayName)
+                        Text((AdhanSound(rawValue: soundRaw) ?? .adhanMadinah).displayName)
                             .foregroundStyle(NoorColor.inkSecondary)
                         Image(systemName: "chevron.forward")
                             .font(.system(size: 13, weight: .semibold))

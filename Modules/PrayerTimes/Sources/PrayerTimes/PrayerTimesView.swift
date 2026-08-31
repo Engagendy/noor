@@ -11,7 +11,7 @@ public struct PrayerTimesView: View {
     @AppStorage("prayer.useCustom") private var useCustomLocation = false
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
     @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
-    @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanShort.rawValue
+    @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanMadinah.rawValue
 
     // Per-prayer notification toggles (design 6.4: inline on the timeline).
     @AppStorage("notif.fajr") private var notifFajr = true
@@ -101,7 +101,7 @@ public struct PrayerTimesView: View {
         }
         // Hear the adhan whenever the choice changes, wherever it was made.
         .onChange(of: soundRaw) {
-            AdhanPreviewPlayer.shared.play(AdhanSound(rawValue: soundRaw) ?? .adhanShort)
+            AdhanPreviewPlayer.shared.play(AdhanSound(rawValue: soundRaw) ?? .adhanMadinah)
         }
         .onDisappear { AdhanPreviewPlayer.shared.stop() }
         .sheet(isPresented: $showAdhanSounds) {
@@ -278,7 +278,7 @@ public struct PrayerTimesView: View {
                     Text("Adhan sound")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
-                    Text((AdhanSound(rawValue: soundRaw) ?? .adhanShort).displayName)
+                    Text((AdhanSound(rawValue: soundRaw) ?? .adhanMadinah).displayName)
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
@@ -427,13 +427,11 @@ public struct PrayerTimesView: View {
 }
 
 public enum AdhanSound: String, CaseIterable, Identifiable {
-    case adhanShort, adhanMakkah, adhanMadinah, adhanMelodic, adhanAzeez, bell, silent
+    case adhanMadinah, adhanMelodic, adhanAzeez, bell, silent
 
     public var id: String { rawValue }
     public var displayName: LocalizedStringResource {
         switch self {
-        case .adhanShort: "Adhan (short)"
-        case .adhanMakkah: "Adhan (Makkah)"
         case .adhanMadinah: "Adhan (Madinah)"
         case .adhanMelodic: "Adhan (melodic)"
         case .adhanAzeez: "Adhan (Azeez)"
@@ -445,8 +443,6 @@ public enum AdhanSound: String, CaseIterable, Identifiable {
     /// Bundled notification sound file (≤30s, caf); nil = system/none.
     public var fileName: String? {
         switch self {
-        case .adhanShort: "adhan_short.caf"
-        case .adhanMakkah: "adhan_makkah.caf"
         case .adhanMadinah: "adhan_madinah.caf"
         case .adhanMelodic: "adhan_melodic.caf"
         case .adhanAzeez: "adhan_azeez.caf"

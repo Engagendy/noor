@@ -74,14 +74,6 @@ Attributions are displayed in Settings → About.
 - **Attribution:** "Page layout and word-by-word data courtesy of
   Quran.com (Quran Foundation)."
 
-### Adhan notification sound (bundled)
-- **File:** `App/Resources/adhan_short.caf` (27 s)
-- **Source:** Wikimedia Commons, "Adhan wiki.oga" by **Jarih** (2007) —
-  https://commons.wikimedia.org/wiki/File:Adhan_wiki.oga
-- **License:** CC BY-SA (3.0/2.5/2.0/1.0) / GFDL. Attribution required and
-  given here and in Settings → About. Converted ogg→caf (format only).
-- **Attribution:** "Adhan recording by Jarih (Wikimedia Commons, CC BY-SA)."
-
 ### Amiri Quran font (bundled — flow-mode Quran text)
 - **File:** `Core/DesignSystem/Sources/DesignSystem/Resources/AmiriQuran.ttf`
 - **Source:** Amiri project by Khaled Hosny (via google/fonts).
@@ -114,11 +106,6 @@ Attributions are displayed in Settings → About.
 - Tafsir packs — per-source
 - Recitations (EveryAyah / Quran Foundation audio) — per-reciter
 - Hadith (Sunnah.com) — per-collection
-
-### Adhan — Great Mosque of Mecca recording (bundled, trimmed to 28s)
-- **Source:** Wikimedia Commons, "Adhan, Great Mosque of Mecca - Jan 21, 2013.webm"
-- **License:** CC BY 3.0
-- **Attribution:** "Adhan recorded at the Great Mosque of Mecca (Wikimedia Commons, CC BY 3.0)."
 
 ### Adhan — Aaqib Azeez (bundled, trimmed to 28s)
 - **Source:** Wikimedia Commons, "The Adhan - Muslim Call to Prayer - Aaqib Azeez.mp3" (uploaded by User:Atcovi)

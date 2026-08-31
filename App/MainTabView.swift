@@ -32,7 +32,7 @@ struct MainTabView: View {
     @AppStorage("prayer.city") private var cityName = "Makkah"
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
     @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
-    @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanShort.rawValue
+    @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanMadinah.rawValue
     @AppStorage("notifications.enabled") private var notificationsEnabled = false
     @AppStorage("prayer.useCustom") private var useCustomLocation = false
     @AppStorage("notif.fajr") private var notifFajr = true
@@ -141,7 +141,7 @@ struct MainTabView: View {
             location: PrayerLocation.current(),
             method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
             madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
-            sound: AdhanSound(rawValue: soundRaw) ?? .adhanShort)
+            sound: AdhanSound(rawValue: soundRaw) ?? .adhanMadinah)
     }
 }
 
