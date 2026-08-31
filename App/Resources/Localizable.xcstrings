@@ -1490,6 +1490,22 @@
           }
         }
       }
+    },
+    "Search reciters": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ابحث عن قارئ"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search reciters"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

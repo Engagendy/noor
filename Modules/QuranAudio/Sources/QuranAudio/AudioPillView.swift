@@ -115,10 +115,20 @@ struct ReciterPickerSheet: View {
     @Bindable var player: QuranAudioPlayer
     let isArabicUI: Bool
     @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+
+    private var filtered: [Reciter] {
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return Reciter.allCases }
+        return Reciter.allCases.filter {
+            $0.arabicName.localizedCaseInsensitiveContains(query)
+                || $0.englishName.localizedCaseInsensitiveContains(query)
+        }
+    }
 
     var body: some View {
         NavigationStack {
-            List(Reciter.allCases) { reciter in
+            List(filtered) { reciter in
                 Button {
                     player.reciter = reciter
                     dismiss()
@@ -143,6 +153,35 @@ struct ReciterPickerSheet: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(NoorColor.bgPrimary)
+            .safeAreaInset(edge: .top) {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 14))
+                        .foregroundStyle(NoorColor.inkSecondary)
+                    TextField(text: $searchText) {
+                        Text("Search reciters")
+                    }
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 15))
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 15))
+                                .foregroundStyle(NoorColor.inkSecondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Clear search")
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .background(RoundedRectangle(cornerRadius: 11).fill(NoorColor.bgElevated))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(NoorColor.bgPrimary)
+            }
             .navigationTitle(Text("Reciter"))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

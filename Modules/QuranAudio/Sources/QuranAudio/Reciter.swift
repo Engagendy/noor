@@ -13,6 +13,14 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
     case ayyoub
     case shatri
     case rifai
+    case hudhaify
+    case jibreel
+    case dussary
+    case basfar
+    case sowaid
+    case tablawi
+    case abdulBasitMujawwad
+    case minshawiMujawwad
 
     public var id: String { rawValue }
 
@@ -29,6 +37,14 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .ayyoub: "Muhammad Ayyoub"
         case .shatri: "Abu Bakr Ash-Shatri"
         case .rifai: "Hani Ar-Rifai"
+        case .hudhaify: "Ali Al-Hudhaify"
+        case .jibreel: "Muhammad Jibreel"
+        case .dussary: "Yasser Ad-Dussary"
+        case .basfar: "Abdullah Basfar"
+        case .sowaid: "Ayman Sowaid"
+        case .tablawi: "Mohammad At-Tablawi"
+        case .abdulBasitMujawwad: "Abdul Basit (Mujawwad)"
+        case .minshawiMujawwad: "Al-Minshawi (Mujawwad)"
         }
     }
 
@@ -45,6 +61,14 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .ayyoub: "محمد أيوب"
         case .shatri: "أبو بكر الشاطري"
         case .rifai: "هاني الرفاعي"
+        case .hudhaify: "علي الحذيفي"
+        case .jibreel: "محمد جبريل"
+        case .dussary: "ياسر الدوسري"
+        case .basfar: "عبد الله بصفر"
+        case .sowaid: "أيمن سويد"
+        case .tablawi: "محمد الطبلاوي"
+        case .abdulBasitMujawwad: "عبد الباسط (مجوّد)"
+        case .minshawiMujawwad: "المنشاوي (مجوّد)"
         }
     }
 
@@ -69,6 +93,15 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .ayyoub: "Muhammad_Ayyoub_128kbps"
         case .shatri: "Abu_Bakr_Ash-Shaatree_128kbps"
         case .rifai: "Hani_Rifai_192kbps"
+        // Folders below verified reachable on BOTH hosts (2026-08-31).
+        case .hudhaify: "Hudhaify_128kbps"
+        case .jibreel: "Muhammad_Jibreel_128kbps"
+        case .dussary: "Yasser_Ad-Dussary_128kbps"
+        case .basfar: "Abdullah_Basfar_192kbps"
+        case .sowaid: "Ayman_Sowaid_64kbps"
+        case .tablawi: "Mohammad_al_Tablaway_128kbps"
+        case .abdulBasitMujawwad: "Abdul_Basit_Mujawwad_128kbps"
+        case .minshawiMujawwad: "Minshawy_Mujawwad_192kbps"
         }
     }
 
