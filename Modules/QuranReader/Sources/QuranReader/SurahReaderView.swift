@@ -121,8 +121,9 @@ public struct SurahReaderView: View {
             }
         }
         #if os(iOS)
-        // Bar visibility is owned by the navigation stack (QuranTab) —
-        // per-view toggles leak across pushes in both directions.
+        // Reader: fully immersive — no system bars, ever.
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
         .statusBarHidden(!chromeVisible)
         #endif
         .simultaneousGesture(pinch)

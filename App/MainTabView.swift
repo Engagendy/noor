@@ -175,6 +175,12 @@ struct QuranTab: View {
             onRemoveBookmark: { ref in
                 library?.remove(BookmarkItem(surahId: ref.surahId, ayah: ref.ayah, createdAt: ref.createdAt))
             })
+            #if os(iOS)
+            // Bars are declared per screen (stack-level modifiers don't
+            // reach pushed destinations): index = own header + tabs.
+            .toolbar(.hidden, for: .navigationBar)
+            .toolbar(.visible, for: .tabBar)
+            #endif
     }
 
     private func reader(surahId: Int, ayah: Int?) -> some View {
@@ -202,10 +208,7 @@ struct QuranTab: View {
                             reader(surahId: target.surahId, ayah: target.ayah)
                         }
                 }
-                // Single owner of bar visibility for the whole stack: the
-                // index draws its own title; tabs hide while reading.
-                .toolbar(.hidden, for: .navigationBar)
-                .toolbar(compactPath.isEmpty ? .visible : .hidden, for: .tabBar)
+
             } else {
                 splitView
             }
