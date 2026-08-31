@@ -9,12 +9,14 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../../Core/ContentDB"),
-        .package(path: "../../Core/DesignSystem")
+        .package(path: "../../Core/DesignSystem"),
+        .package(path: "../../Core/Translations"),
+        .package(path: "../QuranAudio")
     ],
     targets: [
         .target(
             name: "QuranReader",
-            dependencies: ["ContentDB", "DesignSystem"]
+            dependencies: ["ContentDB", "DesignSystem", "Translations", "QuranAudio"]
         )
     ]
 )

@@ -33,6 +33,22 @@ Attributions are displayed in Settings → About.
 - **Attribution:** "Uthmanic Hafs font by King Fahd Glorious Quran Printing
   Complex."
 
+### Quran translation — Saheeh International (English)
+- **Source:** Tanzil translations collection (https://tanzil.net/trans/), id `en.sahih`.
+- **Access:** downloaded on demand to Application Support; fully offline after.
+- **License:** Tanzil translation terms — free for non-commercial use with
+  source cited; this app is free and non-commercial.
+- **Attribution:** "English translation: Saheeh International, via Tanzil.net."
+
+### Recitations — EveryAyah.com (streamed/cached on demand)
+- **Reciters:** Mishary Alafasy, Mahmoud Khalil Al-Husary, Mohamed Siddiq
+  Al-Minshawi (128 kbps ayah-by-ayah sets).
+- **Source:** https://everyayah.com (community-hosted recitation archive).
+- **Access:** streamed at listen time, cached to the device Caches directory.
+- **Attribution:** "Recitations courtesy of EveryAyah.com."
+- **Note:** verify redistribution terms before App Store submission; audio is
+  never bundled, only fetched by the user's explicit playback.
+
 ## Software dependencies
 
 | Package | License | URL |

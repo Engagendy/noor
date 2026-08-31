@@ -1,8 +1,12 @@
 import ContentDB
 import DesignSystem
+import Notifications
 import PrayerTimes
+import Qibla
+import QuranAudio
 import QuranReader
 import SwiftUI
+import Translations
 
 struct MainTabView: View {
     enum Tab: Hashable {
@@ -16,6 +20,15 @@ struct MainTabView: View {
         case "prayer": .prayer
         default: .today
     }
+    @State private var player = QuranAudioPlayer()
+    @State private var translations = TranslationStore()
+
+    // Prayer settings — observed so adhan notifications reschedule on change.
+    @AppStorage("prayer.city") private var cityName = "Makkah"
+    @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
+    @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
+    @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanShort.rawValue
+    @AppStorage("notifications.enabled") private var notificationsEnabled = false
 
     var body: some View {
         TabView(selection: $tab) {
@@ -25,25 +38,61 @@ struct MainTabView: View {
             .tabItem { Label("Today", systemImage: "sun.max") }
             .tag(Tab.today)
 
-            QuranTab(database: database)
+            QuranTab(database: database, player: player, translations: translations)
                 .tabItem { Label("Quran", systemImage: "book") }
                 .tag(Tab.quran)
 
-            NavigationStack { PrayerTimesView() }
-                .tabItem { Label("Prayer", systemImage: "clock") }
-                .tag(Tab.prayer)
+            NavigationStack {
+                PrayerTimesView()
+                    .toolbar {
+                        ToolbarItem(placement: .primaryAction) {
+                            NavigationLink {
+                                QiblaView()
+                            } label: {
+                                Image(systemName: "safari")
+                                    .foregroundStyle(NoorColor.accentPrimary)
+                            }
+                            .accessibilityLabel("Qibla")
+                        }
+                    }
+            }
+            .tabItem { Label("Prayer", systemImage: "clock") }
+            .tag(Tab.prayer)
 
             NavigationStack { SettingsView() }
                 .tabItem { Label("Settings", systemImage: "gearshape") }
                 .tag(Tab.settings)
         }
         .tint(NoorColor.accentPrimary)
+        .task { await rescheduleNotifications() }
+        .onChange(of: [cityName, methodRaw, madhabRaw, soundRaw, String(notificationsEnabled)]) {
+            Task { await rescheduleNotifications() }
+        }
+    }
+
+    private func rescheduleNotifications() async {
+        let scheduler = AdhanNotificationScheduler()
+        guard notificationsEnabled else {
+            scheduler.cancelAll()
+            return
+        }
+        guard await scheduler.requestAuthorization() else {
+            notificationsEnabled = false
+            return
+        }
+        await scheduler.reschedule(
+            city: CityPreset.named(cityName),
+            method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
+            madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
+            sound: AdhanSound(rawValue: soundRaw) ?? .adhanShort)
     }
 }
 
 /// Two-pane on iPad/Mac, stacked on iPhone (plan §5 Phase 1).
 struct QuranTab: View {
     let database: QuranDatabase
+    let player: QuranAudioPlayer
+    let translations: TranslationStore
 
     @State private var surahs: [Surah] = []
     @State private var structure: QuranStructure?
@@ -72,7 +121,12 @@ struct QuranTab: View {
             }
         } detail: {
             if let selection {
-                SurahReaderView(database: database, surahId: selection, scrollToAyah: targetAyah)
+                SurahReaderView(
+                    database: database,
+                    surahId: selection,
+                    scrollToAyah: targetAyah,
+                    player: player,
+                    translations: translations)
                     .id("\(selection)-\(targetAyah ?? 0)")
             }
         }

@@ -6,6 +6,7 @@ struct SettingsView: View {
     @AppStorage("app.language") private var language = "system"
     @AppStorage("reader.fontSize") private var quranFontSize = 26.0
     @AppStorage("reader.mode") private var readerMode = "mushaf"
+    @AppStorage("notifications.enabled") private var notificationsEnabled = false
     @State private var showRestartNote = false
 
     var body: some View {
@@ -23,6 +24,16 @@ struct SettingsView: View {
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.accentPrimary)
                 }
+            }
+
+            Section {
+                Toggle(isOn: $notificationsEnabled) {
+                    Text("Adhan notifications")
+                }
+            } header: {
+                Text("Prayer")
+            } footer: {
+                Text("Notifications are scheduled on your device for the next 12 days and roll forward automatically.")
             }
 
             Section {

@@ -13,10 +13,18 @@ packages:
     path: Core/DesignSystem
   ContentDB:
     path: Core/ContentDB
+  Translations:
+    path: Core/Translations
   QuranReader:
     path: Modules/QuranReader
   PrayerTimes:
     path: Modules/PrayerTimes
+  QuranAudio:
+    path: Modules/QuranAudio
+  Notifications:
+    path: Modules/Notifications
+  Qibla:
+    path: Modules/Qibla
 
 targets:
   Noor:
@@ -27,11 +35,20 @@ targets:
     dependencies:
       - package: DesignSystem
       - package: ContentDB
+      - package: Translations
       - package: QuranReader
       - package: PrayerTimes
+      - package: QuranAudio
+      - package: Notifications
+      - package: Qibla
+    info:
+      path: App/Info.plist
+      properties:
+        UIBackgroundModes: [audio]
+        UILaunchScreen: {}
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
-        GENERATE_INFOPLIST_FILE: YES
         DEVELOPMENT_TEAM: 7JM77223V5
         CODE_SIGN_STYLE: Automatic
         PRODUCT_NAME: Noor

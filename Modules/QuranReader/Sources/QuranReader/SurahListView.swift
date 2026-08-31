@@ -86,19 +86,22 @@ public struct SurahListView: View {
         .background(NoorColor.bgPrimary)
     }
 
+    @State private var expandedJuz: Set<Int> = []
+
     /// 30 ajza, each expandable to its 8 hizb quarters (ربع الحزب).
+    /// Tapping the row opens the reader; the chevron expands the quarters.
     private var juzList: some View {
         List {
             if let structure {
                 ForEach(structure.juzStarts, id: \.idx) { juz in
-                    DisclosureGroup {
+                    juzRow(juz)
+                        .listRowBackground(Color.clear)
+                    if expandedJuz.contains(juz.idx) {
                         ForEach(quarters(inJuz: juz.idx, structure: structure), id: \.idx) { quarter in
                             quarterRow(quarter)
+                                .listRowBackground(Color.clear)
                         }
-                    } label: {
-                        juzRow(juz)
                     }
-                    .listRowBackground(Color.clear)
                 }
             }
         }
@@ -111,24 +114,44 @@ public struct SurahListView: View {
     }
 
     private func juzRow(_ juz: DivisionStart) -> some View {
-        Button {
-            openReference(juz.surahId, juz.ayah)
-        } label: {
-            HStack(spacing: 12) {
-                SurahNumberBadge(juz.idx)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Juz \(juz.idx)")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(NoorColor.inkPrimary)
-                    Text(referenceLabel(juz))
-                        .font(NoorFont.caption)
-                        .foregroundStyle(NoorColor.inkSecondary)
+        HStack(spacing: 12) {
+            Button {
+                openReference(juz.surahId, juz.ayah)
+            } label: {
+                HStack(spacing: 12) {
+                    SurahNumberBadge(juz.idx)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Juz \(juz.idx)")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Text(referenceLabel(juz))
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                    }
+                    Spacer()
                 }
-                Spacer()
+                .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
+            .buttonStyle(.borderless)
+
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    if expandedJuz.contains(juz.idx) {
+                        expandedJuz.remove(juz.idx)
+                    } else {
+                        expandedJuz.insert(juz.idx)
+                    }
+                }
+            } label: {
+                Image(systemName: expandedJuz.contains(juz.idx) ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NoorColor.accentPrimary)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("Hizb quarters")
         }
-        .buttonStyle(.plain)
     }
 
     private func quarterRow(_ quarter: DivisionStart) -> some View {
@@ -154,7 +177,7 @@ public struct SurahListView: View {
             .padding(.vertical, 2)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.borderless)
     }
 
     private func quarterName(_ quarterInHizb: Int) -> LocalizedStringKey {
