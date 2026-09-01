@@ -181,10 +181,20 @@ public struct SurahListView: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 15))
                     .foregroundStyle(NoorColor.inkSecondary)
-                TextField(text: $searchText) {
-                    Text("Surah, word, or 2:255")
-                }
-                .textFieldStyle(.plain)
+                // Custom placeholder: the system one anchors to the
+                // process language and ignores the RTL environment.
+                TextField("", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .overlay(alignment: .leading) {
+                        if searchText.isEmpty {
+                            Text("Surah, word, or 2:255")
+                                .foregroundStyle(NoorColor.inkSecondary.opacity(0.8))
+                                .allowsHitTesting(false)
+                        }
+                    }
+                    .accessibilityLabel("Search")
                 if !searchText.isEmpty {
                     Button {
                         searchText = ""
