@@ -68,6 +68,12 @@ class QuranDb private constructor(private val db: SQLiteDatabase) {
             Verse(c.getInt(0), c.getInt(1), c.getString(2)) to c.getString(3)
         }
 
+    /// From the verified DB (never typed): Al-Fatiha 1:1.
+    fun basmala(): String? =
+        db.rawQuery("SELECT text FROM verse WHERE surah_id=1 AND ayah=1", null).use { c ->
+            if (c.moveToFirst()) c.getString(0) else null
+        }
+
     fun verses(surahId: Int): List<Verse> =
         db.rawQuery(
             "SELECT surah_id, ayah, text FROM verse WHERE surah_id = ? ORDER BY ayah",

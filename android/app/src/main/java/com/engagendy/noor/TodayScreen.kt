@@ -350,8 +350,8 @@ private fun DailyAyahCard() {
             val db = QuranDb.get(context)
             val today = LocalDate.now()
             val index = (today.dayOfYear * 271 + today.year) % maxOf(db.verseCount(), 1)
-            db.verseAt(index)?.let { verse ->
-                verse to db.surahs().first { it.id == verse.surahId }
+            db.verseAt(index)?.let { pair ->
+                pair.first to db.surahs().first { it.id == pair.first.surahId }
             }
         }
     }
