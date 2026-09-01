@@ -20,6 +20,7 @@ struct TodayView: View {
     @State private var showHadithList = false
     @State private var dailyHadithDetail: HadithItem?
     @State private var showHijriCalendar = false
+    @State private var showSettings = false
     @State private var showAllEvents = false
     @State private var cardPage = 0
     private let cardTimer = Timer.publish(every: 12, on: .main, in: .common).autoconnect()
@@ -141,6 +142,18 @@ struct TodayView: View {
             AllEventsView(isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
                 .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+        }
+        .sheet(isPresented: $showSettings) {
+            NavigationStack {
+                SettingsView()
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Done") { showSettings = false }
+                        }
+                    }
+            }
+            .environment(\.locale, locale)
+            .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
         .sheet(isPresented: $showHijriCalendar) {
             HijriCalendarView(isArabicUI: isArabicUI)
@@ -472,6 +485,16 @@ struct TodayView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Hijri Calendar")
+                Button { showSettings = true } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 19, weight: .medium))
+                        .foregroundStyle(NoorColor.inkSecondary)
+                        .frame(width: 44, height: 44)
+                        .background(Circle().fill(NoorColor.inkPrimary.opacity(0.06)))
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Settings")
             }
             Text("As-salamu alaykum")
                 .font(NoorFont.screenTitle)

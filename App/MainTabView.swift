@@ -13,7 +13,7 @@ import WidgetKit
 
 struct MainTabView: View {
     enum Tab: Hashable {
-        case today, quran, prayer, athkar, settings
+        case today, quran, prayer, athkar, hadith
     }
 
     let database: QuranDatabase
@@ -118,11 +118,11 @@ struct MainTabView: View {
                 .tag(Tab.athkar)
 
             NavigationStack {
-                SettingsView()
+                HadithTab()
                     .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
             }
-                .tabItem { Label("Settings", systemImage: "gearshape") }
-                .tag(Tab.settings)
+                .tabItem { Label("Hadith", systemImage: "text.book.closed") }
+                .tag(Tab.hadith)
         }
     }
 
