@@ -762,9 +762,15 @@ struct TodayView: View {
                             .foregroundStyle(NoorColor.inkSecondary)
                         streakBadge(now: now)
                         Spacer()
-                        Text(verbatim: isArabicUI
-                             ? "اليوم \(plan.dayNumber(now: now).arabicIndic) من \(plan.goalDays.arabicIndic)"
-                             : "Day \(plan.dayNumber(now: now)) of \(plan.goalDays)")
+                        Text(verbatim: {
+                            let base = isArabicUI
+                                ? "اليوم \(plan.dayNumber(now: now).arabicIndic) من \(plan.goalDays.arabicIndic)"
+                                : "Day \(plan.dayNumber(now: now)) of \(plan.goalDays)"
+                            let done = KhatmahPlan.completions()
+                            guard done > 0 else { return base }
+                            return isArabicUI ? "\(base) · ختمة \((done + 1).arabicIndic)"
+                                              : "\(base) · khatmah #\(done + 1)"
+                        }())
                             .font(NoorFont.caption)
                             .foregroundStyle(NoorColor.accentGold)
                         Button {
@@ -780,9 +786,29 @@ struct TodayView: View {
                         .accessibilityLabel("Edit plan")
                     }
                     if plan.isFinished(currentPage: lastRead) {
-                        Text(isArabicUI ? "ما شاء الله، أتممت الختمة 🎉" : "Masha'Allah — khatmah complete 🎉")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(NoorColor.accentPrimary)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(isArabicUI ? "ما شاء الله، أتممت الختمة 🎉" : "Masha'Allah — khatmah complete 🎉")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(NoorColor.accentPrimary)
+                            Text(verbatim: isArabicUI
+                                 ? "تقبّل الله — هذه ختمتك رقم \((KhatmahPlan.completions() + 1).arabicIndic)"
+                                 : "May Allah accept — khatmah #\(KhatmahPlan.completions() + 1)")
+                                .font(NoorFont.caption)
+                                .foregroundStyle(NoorColor.accentGold)
+                            Button {
+                                KhatmahPlan.recordCompletion()
+                                KhatmahPlan.start(days: plan.goalDays)
+                                khatmahPlanVersion += 1
+                            } label: {
+                                Text(isArabicUI ? "ابدأ ختمة جديدة" : "Start a new khatmah")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(NoorColor.bgPrimary)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 7)
+                                    .background(Capsule().fill(NoorColor.accentPrimary))
+                            }
+                            .buttonStyle(.plain)
+                        }
                     } else if left == 0 {
                         Text(isArabicUI ? "أنجزت وِرد اليوم، تقبّل الله" : "Today's portion done — may Allah accept")
                             .font(.system(size: 15, weight: .semibold))

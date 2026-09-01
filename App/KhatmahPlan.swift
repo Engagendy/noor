@@ -43,6 +43,21 @@ struct KhatmahPlan {
         defaults.set(0, forKey: "khatmah.goalDays")
     }
 
+    /// Completed khatmahs (count persists; dates for future history UI).
+    static func completions(defaults: UserDefaults = .standard) -> Int {
+        defaults.integer(forKey: "khatmah.completions")
+    }
+
+    /// Records the completion once, then a new plan can begin.
+    static func recordCompletion(defaults: UserDefaults = .standard) {
+        guard defaults.integer(forKey: "khatmah.goalDays") > 0 else { return }
+        defaults.set(completions(defaults: defaults) + 1, forKey: "khatmah.completions")
+        var dates = defaults.array(forKey: "khatmah.completionDates") as? [Double] ?? []
+        dates.append(Date().timeIntervalSince1970)
+        defaults.set(dates, forKey: "khatmah.completionDates")
+        clear(defaults: defaults)
+    }
+
     /// 1-based day number within the plan (day 1 = start day).
     func dayNumber(now: Date) -> Int {
         let days = Calendar.current.dateComponents(
