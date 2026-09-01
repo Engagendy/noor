@@ -124,6 +124,23 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         }
     }
 
+    /// Quran Foundation recitation id with word-level timing segments
+    /// (verified 2026-09-01); nil = follow-along unavailable.
+    public var qfTimingId: Int? {
+        switch self {
+        case .alafasy: 7
+        case .husary: 6
+        case .minshawi: 9
+        case .abdulBasit: 2
+        case .shatri: 4
+        case .sudais: 3
+        case .shuraym: 10
+        case .rifai: 5
+        case .dussary: 97
+        default: nil
+        }
+    }
+
     /// Legacy accessor (English).
     public var displayName: String { englishName }
 

@@ -636,14 +636,14 @@ public struct SurahReaderView: View {
            let last = viewModel.sections(forPage: page).flatMap(\.verses).last {
             player?.pageEndAyah = last.surahId == verse.surahId ? last.ayah : surah.ayahCount
         }
-        // Word-by-word + Alafasy: gapless follow-along with word tracking
-        // (timings are recorded against this reciter's murattal).
-        if wordByWord, player?.reciter == .alafasy, let player {
+        // Word-by-word + a timing-capable reciter: gapless follow-along
+        // (Alafasy, Husary, Minshawi, Abdul Basit, and more).
+        if wordByWord, let player, let qfId = player.reciter.qfTimingId {
             let title = surah.displayName(arabicUI: isArabicUI)
             Task {
                 let ok = await player.playFollowAlong(
                     surah: surah.id, ayahCount: surah.ayahCount, from: verse.ayah,
-                    title: title, arabicTitle: surah.nameArabic)
+                    title: title, arabicTitle: surah.nameArabic, qfReciterId: qfId)
                 if !ok {
                     player.play(surah: surah.id, ayahCount: surah.ayahCount, from: verse.ayah,
                                 title: title, arabicTitle: surah.nameArabic,

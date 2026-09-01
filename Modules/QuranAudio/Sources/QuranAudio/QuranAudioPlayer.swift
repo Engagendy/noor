@@ -241,13 +241,15 @@ public final class QuranAudioPlayer {
     /// Plays the gapless surah with word tracking. Falls back to normal
     /// ayah playback when timings/audio are unavailable.
     public func playFollowAlong(surah: Int, ayahCount: Int, from ayah: Int,
-                                title: String, arabicTitle: String) async -> Bool {
+                                title: String, arabicTitle: String,
+                                qfReciterId: Int = WordTimingService.alafasyReciterId) async -> Bool {
         surahTitle = title
         surahTitleArabic = arabicTitle
         self.ayahCount = ayahCount
         configureSessionAndCommands()
-        guard let timings = await WordTimingService.timings(surah: surah),
-              let local = await WordTimingService.localAudio(surah: surah, remote: timings.audioURL)
+        guard let timings = await WordTimingService.timings(reciter: qfReciterId, surah: surah),
+              let local = await WordTimingService.localAudio(reciter: qfReciterId, surah: surah,
+                                                             remote: timings.audioURL)
         else { return false }
         player?.pause()
         player?.removeAllItems()

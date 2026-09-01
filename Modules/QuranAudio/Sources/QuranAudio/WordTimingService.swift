@@ -31,25 +31,25 @@ public enum WordTimingService {
     /// qurancdn reciter id for gapless Alafasy murattal.
     public static let alafasyReciterId = 7
 
-    private static func cacheURL(surah: Int) -> URL {
+    private static func cacheURL(reciter: Int, surah: Int) -> URL {
         let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        return base.appendingPathComponent("timings/alafasy_\(surah).json")
+        return base.appendingPathComponent("timings/qf\(reciter)_\(surah).json")
     }
 
-    private static func audioCacheURL(surah: Int) -> URL {
+    private static func audioCacheURL(reciter: Int, surah: Int) -> URL {
         let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        return base.appendingPathComponent("timings/alafasy_\(surah).mp3")
+        return base.appendingPathComponent("timings/qf\(reciter)_\(surah).mp3")
     }
 
     /// Timings from cache or network.
-    public static func timings(surah: Int) async -> SurahTimings? {
-        let cache = cacheURL(surah: surah)
+    public static func timings(reciter: Int = alafasyReciterId, surah: Int) async -> SurahTimings? {
+        let cache = cacheURL(reciter: reciter, surah: surah)
         if let data = try? Data(contentsOf: cache),
            let cached = try? JSONDecoder().decode(SurahTimings.self, from: data) {
             return cached
         }
         guard let url = URL(string:
-            "https://api.qurancdn.com/api/qdc/audio/reciters/\(alafasyReciterId)/audio_files?chapter=\(surah)&segments=true"),
+            "https://api.qurancdn.com/api/qdc/audio/reciters/\(reciter)/audio_files?chapter=\(surah)&segments=true"),
             let (data, response) = try? await URLSession.shared.data(from: url),
             (response as? HTTPURLResponse)?.statusCode == 200
         else { return nil }
@@ -82,8 +82,8 @@ public enum WordTimingService {
     }
 
     /// Local gapless surah audio, downloading once (~0.3–6 MB).
-    public static func localAudio(surah: Int, remote: String) async -> URL? {
-        let local = audioCacheURL(surah: surah)
+    public static func localAudio(reciter: Int = alafasyReciterId, surah: Int, remote: String) async -> URL? {
+        let local = audioCacheURL(reciter: reciter, surah: surah)
         if FileManager.default.fileExists(atPath: local.path) { return local }
         guard let url = URL(string: remote),
               let (temp, response) = try? await URLSession.shared.download(from: url),
