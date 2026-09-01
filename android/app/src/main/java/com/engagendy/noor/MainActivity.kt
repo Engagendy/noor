@@ -68,6 +68,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun NoorApp() {
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
+    // Madani page requested from Today (khatmah frontier); 0 = none.
+    var mushafPage by rememberSaveable { mutableStateOf(0) }
     Scaffold(
         containerColor = NoorColor.bgPrimary,
         bottomBar = {
@@ -95,8 +97,12 @@ fun NoorApp() {
     ) { padding ->
         val modifier = Modifier.padding(padding)
         when (tab) {
-            Tab.TODAY -> TodayScreen(modifier, openQuran = { tab = Tab.QURAN })
-            Tab.QURAN -> QuranScreen(modifier)
+            Tab.TODAY -> TodayScreen(
+                modifier,
+                openQuran = { tab = Tab.QURAN },
+                openPage = { page -> mushafPage = page; tab = Tab.QURAN })
+            Tab.QURAN -> QuranScreen(modifier, mushafPage = mushafPage,
+                                     onMushafClosed = { mushafPage = 0 })
             Tab.PRAYER -> PrayerScreen(modifier)
             Tab.ATHKAR -> AthkarScreen(modifier)
         }

@@ -29,11 +29,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun QuranScreen(modifier: Modifier = Modifier) {
+fun QuranScreen(
+    modifier: Modifier = Modifier,
+    mushafPage: Int = 0,
+    onMushafClosed: () -> Unit = {},
+) {
     val context = LocalContext.current
     val db = remember { QuranDb.get(context) }
     val surahs = remember { db.surahs() }
     var openSurah by remember { mutableStateOf<Surah?>(null) }
+    // Madani page mode: opened from Today (frontier) or the mushaf button.
+    var openMushafAt by remember(mushafPage) { mutableStateOf(mushafPage) }
+
+    if (openMushafAt > 0) {
+        MushafScreen(
+            startPage = openMushafAt,
+            onBack = { openMushafAt = 0; onMushafClosed() },
+            modifier = modifier)
+        return
+    }
 
     val current = openSurah
     if (current != null) {
@@ -43,13 +57,27 @@ fun QuranScreen(modifier: Modifier = Modifier) {
 
     LazyColumn(modifier = modifier.fillMaxSize()) {
         item {
-            Text(
-                "القرآن",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = NoorColor.inkPrimary,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    "القرآن",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NoorColor.inkPrimary
+                )
+                Text(
+                    "المصحف",
+                    color = NoorColor.accentPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clickable {
+                        openMushafAt = KhatmahPlan.prefs(context)
+                            .getInt("reader.lastPage", 0).coerceAtLeast(1)
+                    }.padding(8.dp)
+                )
+            }
         }
         items(surahs) { surah ->
             Row(
