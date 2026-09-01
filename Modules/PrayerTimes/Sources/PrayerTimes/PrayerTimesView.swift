@@ -24,6 +24,7 @@ public struct PrayerTimesView: View {
     @State private var showSettings = false
     @State private var showNawafil = false
     @State private var showAdhanSounds = false
+    @AppStorage("liveactivity.on") private var liveActivityOn = false
     @State private var locationFetcher = OneShotLocationFetcher()
     @State private var fetchingLocation = false
     @State private var locationFailed = false
@@ -276,21 +277,23 @@ public struct PrayerTimesView: View {
             NotificationCenter.default.post(name: .noorToggleLiveActivity, object: nil)
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: "clock.badge")
+                Image(systemName: liveActivityOn ? "clock.badge.checkmark" : "clock.badge")
                     .font(.system(size: 15))
-                    .foregroundStyle(NoorColor.accentPrimary)
+                    .foregroundStyle(liveActivityOn ? NoorColor.accentGold : NoorColor.accentPrimary)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Lock-screen countdown")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
-                    Text("Live countdown to the next prayer")
+                    Text(liveActivityOn ? "Active — tap to turn off"
+                                        : "Live countdown to the next prayer")
                         .font(NoorFont.caption)
-                        .foregroundStyle(NoorColor.inkSecondary)
+                        .foregroundStyle(liveActivityOn ? NoorColor.accentGold : NoorColor.inkSecondary)
                 }
                 Spacer()
-                Image(systemName: "chevron.forward")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(NoorColor.inkSecondary.opacity(0.6))
+                Toggle("", isOn: .constant(liveActivityOn))
+                    .labelsHidden()
+                    .allowsHitTesting(false)
+                    .tint(NoorColor.accentPrimary)
             }
             .padding(16)
             .contentShape(Rectangle())

@@ -787,6 +787,23 @@
         }
       }
     },
+    "End of surah": {
+      "extractionState": "stale",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نهاية السورة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End of surah"
+          }
+        }
+      }
+    },
     "Enter the gold price to compute the nisab.": {
       "localizations": {
         "ar": {
@@ -890,6 +907,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "From ayah"
+          }
+        }
+      }
+    },
+    "Go": {
+      "extractionState": "stale",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "انتقل"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go"
+          }
+        }
+      }
+    },
+    "Go to page": {
+      "extractionState": "stale",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الانتقال إلى صفحة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go to page"
           }
         }
       }
@@ -1154,6 +1205,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "فاتح (مصحف)"
+          }
+        }
+      }
+    },
+    "Live countdown to the next prayer": {
+      "extractionState": "stale",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عد تنازلي مباشر للصلاة القادمة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live countdown to the next prayer"
+          }
+        }
+      }
+    },
+    "Lock-screen countdown": {
+      "extractionState": "stale",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عدّاد على شاشة القفل"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock-screen countdown"
           }
         }
       }
@@ -1473,6 +1558,23 @@
         }
       }
     },
+    "Or jump to a juz": {
+      "extractionState": "stale",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أو انتقل إلى جزء"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Or jump to a juz"
+          }
+        }
+      }
+    },
     "Page (Madani print)": {
       "extractionState": "stale",
       "localizations": {
@@ -1760,6 +1862,23 @@
         }
       }
     },
+    "Ruqyah": {
+      "extractionState": "stale",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الرقية الشرعية"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruqyah"
+          }
+        }
+      }
+    },
     "Search athkar": {
       "extractionState": "stale",
       "localizations": {
@@ -1795,6 +1914,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "القسم"
+          }
+        }
+      }
+    },
+    "Selected duas": {
+      "extractionState": "stale",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أدعية مختارة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected duas"
           }
         }
       }
@@ -2368,130 +2504,18 @@
         }
       }
     },
-    "Go to page": {
+    "Active — tap to turn off": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "الانتقال إلى صفحة"
+            "value": "نشط — اضغط للإيقاف"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Go to page"
-          }
-        }
-      }
-    },
-    "Go": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "انتقل"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Go"
-          }
-        }
-      }
-    },
-    "Or jump to a juz": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أو انتقل إلى جزء"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Or jump to a juz"
-          }
-        }
-      }
-    },
-    "End of surah": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "نهاية السورة"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "End of surah"
-          }
-        }
-      }
-    },
-    "Ruqyah": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الرقية الشرعية"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ruqyah"
-          }
-        }
-      }
-    },
-    "Selected duas": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أدعية مختارة"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Selected duas"
-          }
-        }
-      }
-    },
-    "Lock-screen countdown": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "عدّاد على شاشة القفل"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lock-screen countdown"
-          }
-        }
-      }
-    },
-    "Live countdown to the next prayer": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "عد تنازلي مباشر للصلاة القادمة"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Live countdown to the next prayer"
+            "value": "Active — tap to turn off"
           }
         }
       }

@@ -209,6 +209,9 @@ private struct TabLifecycle: ViewModifier {
                 if phase == .background || phase == .inactive { CloudSync.pushLocal() }
             }
             .task {
+                if ProcessInfo.processInfo.environment["NOOR_TEST_LA"] == "1" {
+                    NotificationCenter.default.post(name: .noorToggleLiveActivity, object: nil)
+                }
                 CloudSync.start()
                 syncWidgets()
                 await reschedule()
