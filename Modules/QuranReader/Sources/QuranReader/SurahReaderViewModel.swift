@@ -96,6 +96,14 @@ public final class SurahReaderViewModel {
         structure.map { $0.page(surahId: surahId, ayah: ayah) }
     }
 
+    /// First page of a juz (jump-to-juz).
+    public func page(forJuz juz: Int) -> Int? {
+        guard let structure,
+              let start = structure.juzStarts.first(where: { $0.idx == juz })
+        else { return nil }
+        return page(surahId: start.surahId, ayah: start.ayah)
+    }
+
     public func juz(forPage page: Int) -> Int {
         guard let structure,
               let start = structure.pageStarts.first(where: { $0.idx == page })

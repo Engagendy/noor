@@ -23,6 +23,7 @@ public struct SurahReaderView: View {
     @AppStorage("reader.hifz") private var hifzMode = false
     @State private var revealedKeys: Set<Int> = []
     @State private var selectedKey: Int?          // surah*1000 + ayah
+    @State private var showGoToPage = false
     @State private var showOptions =
         ProcessInfo.processInfo.environment["NOOR_SHOWOPTIONS"] == "1"
     @State private var currentPage = 0
@@ -179,6 +180,14 @@ public struct SurahReaderView: View {
             guard mode == .ayah, let key else { return }
             persistPosition(page: viewModel.page(surahId: key / 1000, ayah: key % 1000))
         }
+        .sheet(isPresented: $showGoToPage) {
+            GoToPageSheet(currentPage: max(currentPage, 1),
+                          pageForJuz: { viewModel.page(forJuz: $0) }) { page in
+                withAnimation(.easeInOut(duration: 0.3)) { currentPage = page }
+            }
+            .environment(\.locale, locale)
+            .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+        }
         .sheet(item: $actionVerses) { group in
             AyahActionsSheet(
                 verses: group.verses,
@@ -240,11 +249,24 @@ public struct SurahReaderView: View {
                         .font(isArabicUI ? NoorFont.quran(size: 16) : .system(size: 15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(1)
-                    Text(mode != .ayah && currentPage > 0
-                         ? "Juz \(viewModel.juz(forPage: currentPage)) · Page \(currentPage)"
-                         : "Juz \(viewModel.juz)")
-                        .font(.system(size: 11))
+                    Button {
+                        if mode != .ayah { showGoToPage = true }
+                    } label: {
+                        HStack(spacing: 3) {
+                            Text(mode != .ayah && currentPage > 0
+                                 ? "Juz \(viewModel.juz(forPage: currentPage)) · Page \(currentPage)"
+                                 : "Juz \(viewModel.juz)")
+                                .font(.system(size: 11))
+                            if mode != .ayah {
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.system(size: 8, weight: .semibold))
+                            }
+                        }
                         .foregroundStyle(NoorColor.inkSecondary)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Go to page")
                 }
                 Spacer()
                 if player != nil {
@@ -808,5 +830,102 @@ private struct WordByWordContainer: View {
             .environment(\.locale, Locale(identifier: "ar"))
             .environment(\.layoutDirection, .rightToLeft)
             .preferredColorScheme(.dark)
+    }
+}
+
+
+/// Jump anywhere in the mushaf: type a page (1–604) or tap a juz.
+struct GoToPageSheet: View {
+    let currentPage: Int
+    let pageForJuz: (Int) -> Int?
+    let go: (Int) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
+    @State private var pageText = ""
+    @FocusState private var focused: Bool
+
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
+    private var typedPage: Int? {
+        let western = pageText.map { ch -> Character in
+            if let v = ch.wholeNumberValue, (0...9).contains(v) {
+                return Character(String(v))
+            }
+            return ch
+        }
+        guard let page = Int(String(western)), (1...604).contains(page) else { return nil }
+        return page
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(spacing: 10) {
+                    TextField(text: $pageText) {
+                        Text(verbatim: isArabicUI ? "رقم الصفحة (١–٦٠٤)" : "Page number (1–604)")
+                    }
+                    .textFieldStyle(.plain)
+                    #if os(iOS)
+                    .keyboardType(.numberPad)
+                    #endif
+                    .focused($focused)
+                    .font(.system(size: 22, weight: .semibold).monospacedDigit())
+                    .multilineTextAlignment(.leading)
+                    .padding(14)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(NoorColor.bgElevated))
+                    Button {
+                        if let page = typedPage {
+                            go(page)
+                            dismiss()
+                        }
+                    } label: {
+                        Text("Go")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(NoorColor.bgPrimary)
+                            .padding(.horizontal, 22)
+                            .frame(height: 50)
+                            .background(RoundedRectangle(cornerRadius: 12)
+                                .fill(typedPage == nil ? NoorColor.inkSecondary.opacity(0.3)
+                                                       : NoorColor.accentPrimary))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(typedPage == nil)
+                }
+                Text("Or jump to a juz")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NoorColor.inkSecondary)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 8) {
+                    ForEach(1...30, id: \.self) { juz in
+                        Button {
+                            if let page = pageForJuz(juz) {
+                                go(page)
+                                dismiss()
+                            }
+                        } label: {
+                            Text(verbatim: isArabicUI ? juz.arabicIndic : "\(juz)")
+                                .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 42)
+                                .background(RoundedRectangle(cornerRadius: 10).fill(NoorColor.bgElevated))
+                                .foregroundStyle(NoorColor.inkPrimary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                Spacer()
+            }
+            .padding(18)
+            .background(NoorColor.bgPrimary)
+            .navigationTitle(Text("Go to page"))
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .onAppear { focused = true }
+        }
+        .presentationDetents([.medium, .large])
     }
 }
