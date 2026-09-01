@@ -504,7 +504,9 @@ public struct PrayerTimesView: View {
                 Text("Allow location access in Settings, or pick a city manually.")
             }
         }
-        .presentationDetents([.medium])
+        // The sheet grew (pre-alerts + manual adjustments): open at medium,
+        // pull up to full height.
+        .presentationDetents([.medium, .large])
     }
 
     /// Times shown in the selected location's time zone, not the device's.
