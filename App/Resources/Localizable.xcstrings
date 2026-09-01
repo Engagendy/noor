@@ -2519,6 +2519,38 @@
           }
         }
       }
+    },
+    "Hadith library": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مكتبة الحديث"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hadith library"
+          }
+        }
+      }
+    },
+    "Downloaded once, readable forever offline. Public-domain dataset; see licenses in Settings.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تُنزَّل مرة واحدة وتُقرأ دون إنترنت دائمًا. البيانات في الملك العام؛ انظر التراخيص في الإعدادات."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloaded once, readable forever offline. Public-domain dataset; see licenses in Settings."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -50,6 +50,28 @@ struct HadithListView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    NavigationLink {
+                        HadithCollectionsView(isArabicUI: isArabicUI)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "books.vertical.fill")
+                                .font(.system(size: 18))
+                                .foregroundStyle(NoorColor.accentPrimary)
+                                .frame(width: 30)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Hadith library")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(NoorColor.inkPrimary)
+                                Text(verbatim: "صحيح البخاري · صحيح مسلم")
+                                    .font(NoorFont.caption)
+                                    .foregroundStyle(NoorColor.inkSecondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .listRowBackground(Color.clear)
+                }
                 ForEach(collections, id: \.key) { collection in
                     Section {
                         ForEach(collection.items) { hadith in

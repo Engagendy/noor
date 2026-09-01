@@ -131,3 +131,8 @@ Attributions are displayed in Settings → About.
 - **Source:** mustafa0x/qpc-fonts, mushaf-v1.5 (KFGQPC Quran Complex fonts)
 - **License:** KFGQPC terms (free use with text integrity), same as v2
 - **Attribution:** "Madani mushaf fonts by the King Fahd Glorious Quran Printing Complex."
+
+### Hadith — Sahih al-Bukhari & Sahih Muslim (downloaded on demand)
+- **Source:** fawazahmed0/hadith-api, editions ara/eng-bukhari and ara/eng-muslim
+- **License:** Unlicense (public domain dataset); classical texts are public domain
+- **Attribution:** "Hadith data courtesy of the hadith-api project."
