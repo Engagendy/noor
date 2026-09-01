@@ -255,37 +255,34 @@ struct PlaybackModeSheet: View {
 
     var body: some View {
         NavigationStack {
-            List(options, id: \.0) { option in
-                Button {
-                    player.mode = option.0
-                    dismiss()
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: option.2)
-                            .font(.system(size: 15))
-                            .foregroundStyle(NoorColor.accentPrimary)
-                            .frame(width: 26)
-                        Text(option.1)
-                            .font(.system(size: 16, weight: player.mode == option.0 ? .semibold : .regular))
-                            .foregroundStyle(NoorColor.inkPrimary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        if player.mode == option.0 {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .semibold))
+            ScrollView {
+              VStack(alignment: .leading, spacing: 14) {
+                ForEach(options, id: \.0) { option in
+                    Button {
+                        player.mode = option.0
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: option.2)
+                                .font(.system(size: 15))
                                 .foregroundStyle(NoorColor.accentPrimary)
+                                .frame(width: 26)
+                            Text(option.1)
+                                .font(.system(size: 16, weight: player.mode == option.0 ? .semibold : .regular))
+                                .foregroundStyle(NoorColor.inkPrimary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            if player.mode == option.0 {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(NoorColor.accentPrimary)
+                            }
                         }
+                        .padding(.vertical, 8)
+                        .contentShape(Rectangle())
                     }
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
+                    .buttonStyle(.plain)
+                    Divider()
                 }
-                .buttonStyle(.borderless)
-                .listRowBackground(Color.clear)
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(NoorColor.bgPrimary)
-            .safeAreaInset(edge: .bottom) {
-              VStack(spacing: 10) {
                 // Playback speed
                 HStack(spacing: 8) {
                     Image(systemName: "speedometer")
@@ -374,8 +371,8 @@ struct PlaybackModeSheet: View {
                 .buttonStyle(.plain)
               }
               .padding(16)
-              .background(NoorColor.bgPrimary)
             }
+            .background(NoorColor.bgPrimary)
             .sheet(isPresented: $showMemorize) {
                 MemorizeRangeSheet(player: player)
             }
@@ -389,7 +386,7 @@ struct PlaybackModeSheet: View {
                 }
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents([.height(430)])
     }
 }
 
