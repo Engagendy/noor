@@ -29,9 +29,10 @@ struct MadaniPageView: View {
             : String(localized: "Ayahs \(first.ayah) to \(last.ayah)")
     }
 
-    /// v1 fonts consume the v1 codes; v2 fonts the v2 codes.
+    /// v1 fonts consume the v1 codes; v2 fonts the v2 codes — always from
+    /// the SAME observed variant the font name uses, never mixed.
     private func lineGlyphs(_ line: PageLine) -> String {
-        if PageFontStore.variant == "v1" { return line.glyphs }
+        if fontVariant == "v1" { return line.glyphs }
         return line.glyphsV2.isEmpty ? line.glyphs : line.glyphsV2
     }
 
@@ -45,6 +46,8 @@ struct MadaniPageView: View {
     @State private var lines: [PageLine] = []
     @State private var fontReady = false
     @State private var fontFailed = false
+    /// Re-registers and re-renders when the mushaf typeface changes.
+    @AppStorage("mushaf.font") private var fontVariant = "v2"
 
     var body: some View {
         GeometryReader { geometry in
@@ -122,7 +125,8 @@ struct MadaniPageView: View {
             }
         }
         .foregroundStyle(NoorColor.inkPrimary)
-        .task(id: page) {
+        .task(id: "\(page)-\(fontVariant)") {
+            fontReady = false
             lines = (try? layout?.lines(page: page)) ?? []
             await fontStore.ensure(page: page)
             fontReady = fontStore.isReady(page: page)

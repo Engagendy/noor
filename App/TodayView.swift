@@ -153,8 +153,7 @@ struct TodayView: View {
                 .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
         .sheet(isPresented: $showKhatmahGoal) {
-            KhatmahGoalSheet(currentPage: khatmahMaxPage,
-                             onChanged: { khatmahPlanVersion += 1 })
+            KhatmahGoalSheet(onChanged: { khatmahPlanVersion += 1 })
                 .environment(\.locale, locale)
                 .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
@@ -861,7 +860,6 @@ struct EventDetailSheet: View {
 
 /// Choose the khatmah duration; shows the resulting daily portion live.
 struct KhatmahGoalSheet: View {
-    let currentPage: Int
     var onChanged: () -> Void
     @State private var days = 30
     @State private var reachedPage = KhatmahPlan.lastRead()
@@ -870,7 +868,7 @@ struct KhatmahGoalSheet: View {
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
     private var pagesPerDay: Int {
-        Int((Double(KhatmahPlan.totalPages - min(currentPage, 603)) / Double(days)).rounded(.up))
+        Int((Double(KhatmahPlan.totalPages) / Double(days)).rounded(.up))
     }
 
     var body: some View {
@@ -918,7 +916,7 @@ struct KhatmahGoalSheet: View {
                     .font(.system(size: 14))
                     .foregroundStyle(NoorColor.accentGold)
                 Button {
-                    KhatmahPlan.start(days: days, currentPage: currentPage)
+                    KhatmahPlan.start(days: days)
                     onChanged()
                     dismiss()
                 } label: {

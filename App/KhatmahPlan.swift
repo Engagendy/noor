@@ -20,22 +20,18 @@ struct KhatmahPlan {
             startPage: defaults.integer(forKey: "khatmah.goalStartPage"))
     }
 
-    static func start(days: Int, currentPage: Int, defaults: UserDefaults = .standard) {
+    /// A khatmah always covers the whole mushaf: start at page 1.
+    static func start(days: Int, defaults: UserDefaults = .standard) {
         defaults.set(days, forKey: "khatmah.goalDays")
         defaults.set(Date().timeIntervalSince1970, forKey: "khatmah.goalStart")
-        defaults.set(max(0, currentPage), forKey: "khatmah.goalStartPage")
-        // The frontier: next page to read. Reading it advances the plan.
-        defaults.set(max(1, min(currentPage + 1, totalPages)), forKey: "khatmah.page")
+        defaults.set(0, forKey: "khatmah.goalStartPage")
+        defaults.set(1, forKey: "khatmah.page")  // frontier: first unread page
     }
 
-    /// Next unread page of the plan (the frontier), migrating old plans
-    /// that predate frontier tracking.
+    /// Next unread page of the plan (the frontier).
     static func frontier(defaults: UserDefaults = .standard) -> Int {
         let stored = defaults.integer(forKey: "khatmah.page")
-        if stored > 0 { return min(stored, totalPages) }
-        let migrated = min(max(defaults.integer(forKey: "khatmah.maxPage"), 0) + 1, totalPages)
-        defaults.set(migrated, forKey: "khatmah.page")
-        return migrated
+        return stored > 0 ? min(stored, totalPages) : 1
     }
 
     /// Last page actually read within the plan.
