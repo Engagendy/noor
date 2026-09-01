@@ -1,6 +1,7 @@
 import AppIntents
 import PrayerTimes
 import SwiftUI
+import DesignSystem
 import WidgetKit
 
 // MARK: - Configuration
@@ -280,7 +281,12 @@ struct NextPrayerWidgetView: View {
         switch family {
         case .systemMedium:
             TodayPrayersMediumView(entry: entry)
-                .containerBackground(WidgetTheme.darkBG, for: .widget)
+                .containerBackground(for: .widget) {
+                    ZStack {
+                        WidgetTheme.darkBG
+                        IslamicLattice(tint: .white.opacity(0.045), tile: 52)
+                    }
+                }
         #if os(iOS)
         case .accessoryRectangular:
             LockRectangularView(entry: entry)
@@ -295,7 +301,12 @@ struct NextPrayerWidgetView: View {
         #endif
         default:
             NextPrayerSmallView(entry: entry)
-                .containerBackground(WidgetTheme.paper, for: .widget)
+                .containerBackground(for: .widget) {
+                    ZStack {
+                        WidgetTheme.paper
+                        IslamicLattice(tint: WidgetTheme.gold.opacity(0.06), tile: 46)
+                    }
+                }
         }
     }
 }

@@ -692,6 +692,8 @@ struct TodayView: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .background(IslamicLattice(tint: NoorColor.accentGold.opacity(0.06), tile: 58)
+                    .clipShape(RoundedRectangle(cornerRadius: 18)))
                 .noorCard()
             }
         }
