@@ -184,12 +184,22 @@ public struct SurahReaderView: View {
             persistPosition(page: page)
         }
         .onAppear {
-            if ProcessInfo.processInfo.environment["NOOR_TEST_WBW"] == "1" {
+            switch ProcessInfo.processInfo.environment["NOOR_TEST_WBW"] {
+            case "1":
                 wordByWord = true
                 modeRaw = DisplayMode.ayah.rawValue
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     if let first = viewModel.verses.first { startPlayback(from: first) }
                 }
+            case "2":
+                wordByWord = false
+                modeRaw = DisplayMode.page.rawValue
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                    if let first = viewModel.sections(forPage: currentPage).first?.verses.first {
+                        startPlayback(from: first)
+                    }
+                }
+            default: break
             }
             // Opening a page counts even without swiping (resume accuracy
             // + khatmah credit for single-page sessions).
@@ -386,7 +396,9 @@ public struct SurahReaderView: View {
                 page: page, layout: layout, fontStore: fontStore,
                 surahName: { viewModel.surahInfo($0)?.nameArabic ?? "" },
                 basmala: viewModel.basmalaForAnySurah,
-                highlightKey: selectedKey ?? recitingKey,
+                // Recitation wins while playing; a tapped/arrival selection
+                // shows only when nothing is being recited.
+                highlightKey: recitingKey ?? selectedKey,
                 onTap: backgroundTapped
             ) { refs in
                 let verses = viewModel.sections(forPage: page)
