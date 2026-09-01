@@ -50,6 +50,8 @@ fun NoorApp() {
     Scaffold(
         containerColor = NoorColor.bgPrimary,
         bottomBar = {
+          androidx.compose.foundation.layout.Column {
+            PlayerBar()
             NavigationBar(containerColor = NoorColor.bgElevated) {
                 Tab.entries.forEach { item ->
                     NavigationBarItem(
@@ -67,6 +69,7 @@ fun NoorApp() {
                     )
                 }
             }
+          }
         }
     ) { padding ->
         val modifier = Modifier.padding(padding)

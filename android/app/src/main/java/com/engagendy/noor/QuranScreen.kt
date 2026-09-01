@@ -114,6 +114,15 @@ fun ReaderScreen(surah: Surah, onBack: () -> Unit, modifier: Modifier = Modifier
                 color = NoorColor.inkPrimary
             )
             Text(
+                if (NoorPlayer.isPlaying && NoorPlayer.currentSurah == surah.id) "⏸" else "▶ استمع",
+                color = NoorColor.accentPrimary,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clickable {
+                    if (NoorPlayer.currentSurah == surah.id) NoorPlayer.toggle()
+                    else NoorPlayer.play(surah.id, surah.ayahCount, 1, surah.nameArabic)
+                }.padding(8.dp)
+            )
+            Text(
                 "رجوع",
                 color = NoorColor.accentPrimary,
                 fontWeight = FontWeight.SemiBold,
