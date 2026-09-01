@@ -50,6 +50,24 @@ class QuranDb private constructor(private val db: SQLiteDatabase) {
             }
         }
 
+    fun verseCount(): Int =
+        db.rawQuery("SELECT COUNT(*) FROM verse", null).use { c ->
+            c.moveToFirst()
+            c.getInt(0)
+        }
+
+    /// One verse by global position, with its surah's Arabic name —
+    /// backs the deterministic daily ayah.
+    fun verseAt(globalIndex: Int): Pair<Verse, String>? =
+        db.rawQuery(
+            "SELECT v.surah_id, v.ayah, v.text, s.name_arabic FROM verse v " +
+                "JOIN surah s ON s.id = v.surah_id ORDER BY v.surah_id, v.ayah LIMIT 1 OFFSET ?",
+            arrayOf(globalIndex.toString())
+        ).use { c ->
+            if (!c.moveToFirst()) return null
+            Verse(c.getInt(0), c.getInt(1), c.getString(2)) to c.getString(3)
+        }
+
     fun verses(surahId: Int): List<Verse> =
         db.rawQuery(
             "SELECT surah_id, ayah, text FROM verse WHERE surah_id = ? ORDER BY ayah",

@@ -16,11 +16,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -90,6 +95,8 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun TodayScreen(modifier: Modifier = Modifier, openQuran: () -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val city = Cities.all[0]
     val entries = remember { PrayerEngine.today(city) }
     val next = PrayerEngine.next(entries)
@@ -132,6 +139,54 @@ fun TodayScreen(modifier: Modifier = Modifier, openQuran: () -> Unit) {
             Text("متابعة القراءة", fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.inkPrimary)
             Text("←", color = NoorColor.accentPrimary)
+        }
+
+        // Daily ayah — same deterministic pick as iOS, from the verified DB.
+        val daily = remember {
+            val db = QuranDb.get(context)
+            val calendar = java.util.Calendar.getInstance()
+            val day = calendar.get(java.util.Calendar.DAY_OF_YEAR)
+            val year = calendar.get(java.util.Calendar.YEAR)
+            val total = db.verseCount().coerceAtLeast(1)
+            db.verseAt((day * 271 + year) % total)
+        }
+        if (daily != null) {
+            val (verse, surahName) = daily
+            val reference = "سورة $surahName · ${verse.surahId.arabicIndic()}:${verse.ayah.arabicIndic()}"
+            Column(
+                Modifier
+                    .padding(top = 12.dp)
+                    .fillMaxWidth()
+                    .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
+                    .padding(18.dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("آية اليوم", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                         color = NoorColor.inkSecondary)
+                    Text("مشاركة", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                         color = NoorColor.accentPrimary,
+                         modifier = Modifier
+                             .clickable {
+                                 scope.launch {
+                                     val bitmap = withContext(Dispatchers.IO) {
+                                         ShareCard.render(
+                                             context, verse.text, reference,
+                                             attribution = "نور Noor · Quran text: Tanzil.net",
+                                             useQuranFont = true)
+                                     }
+                                     ShareCard.share(context, bitmap)
+                                 }
+                             }
+                             .padding(4.dp))
+                }
+                Text(verse.text, fontFamily = QuranFont, fontSize = 21.sp, lineHeight = 44.sp,
+                     color = NoorColor.inkPrimary, modifier = Modifier.padding(top = 6.dp))
+                Text(reference, fontSize = 12.sp, color = NoorColor.inkSecondary,
+                     modifier = Modifier.padding(top = 6.dp))
+            }
         }
     }
 }

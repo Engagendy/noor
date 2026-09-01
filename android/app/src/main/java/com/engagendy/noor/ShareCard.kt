@@ -1,0 +1,158 @@
+package com.engagendy.noor
+
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Typeface
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextDirectionHeuristics
+import android.text.TextPaint
+import androidx.core.content.FileProvider
+import androidx.core.content.res.ResourcesCompat
+import java.io.File
+import kotlin.math.cos
+import kotlin.math.sin
+
+/// Status-ready branded image card, 1:1 with the iOS NoorShareCard:
+/// paper background, gold frame, corner stars, Arabic text, reference
+/// + the green «نور Noor» footer. Rendered at 2× for crisp sharing.
+object ShareCard {
+
+    private const val WIDTH = 1240
+    private const val PADDING = 72f
+    private val paper = Color.parseColor("#FAF6EE")
+    private val gold = Color.parseColor("#BA8A2E")
+    private val green = Color.parseColor("#0E6B5C")
+    private val ink = Color.parseColor("#1F2933")
+    private val gray = Color.parseColor("#5C6670")
+
+    private fun layout(text: String, paint: TextPaint, width: Int): StaticLayout =
+        StaticLayout.Builder.obtain(text, 0, text.length, paint, width)
+            .setAlignment(Layout.Alignment.ALIGN_CENTER)
+            .setTextDirection(TextDirectionHeuristics.RTL)
+            .setLineSpacing(0f, 1.55f)
+            .setIncludePad(true)
+            .build()
+
+    /// Draws the card into a bitmap. Call from Dispatchers.IO.
+    fun render(
+        context: Context,
+        arabicText: String,
+        reference: String,
+        attribution: String = "نور Noor",
+        useQuranFont: Boolean = false,
+    ): Bitmap {
+        val textWidth = (WIDTH - 2 * PADDING).toInt()
+
+        val arabicPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ink
+            textSize = if (useQuranFont) 60f else 48f
+            typeface = if (useQuranFont)
+                ResourcesCompat.getFont(context, R.font.amiri_quran) ?: Typeface.DEFAULT
+            else Typeface.DEFAULT
+        }
+        val referencePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = green
+            textSize = 28f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+        val attributionPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = green
+            textSize = 24f
+        }
+        val arabicLayout = layout(arabicText, arabicPaint, textWidth)
+        val referenceLayout = layout(reference, referencePaint, textWidth)
+        val attributionLayout = layout(attribution, attributionPaint, textWidth)
+
+        val lampGap = 130f
+        val height = (PADDING + lampGap + arabicLayout.height + 36f +
+            referenceLayout.height + 8f + attributionLayout.height + PADDING).toInt()
+
+        val bitmap = Bitmap.createBitmap(WIDTH, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawColor(paper)
+
+        // Gold frame, inset like the iOS card.
+        val frame = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = gold
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+        }
+        canvas.drawRect(20f, 20f, WIDTH - 20f, height - 20f, frame)
+
+        // Corner eight-point stars.
+        val star = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = gold
+            alpha = 140
+            style = Paint.Style.FILL
+        }
+        for ((x, y) in listOf(44f to 44f, WIDTH - 44f to 44f, 44f to height - 44f, WIDTH - 44f to height - 44f)) {
+            canvas.drawPath(eightPointStar(x, y, 16f), star)
+        }
+
+        // Mihrab lamp mark: green arch + hanging gold lamp.
+        val cx = WIDTH / 2f
+        val archTop = PADDING + 8f
+        val arch = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = green
+            style = Paint.Style.STROKE
+            strokeWidth = 5f
+            strokeCap = Paint.Cap.ROUND
+        }
+        val archPath = Path().apply {
+            moveTo(cx - 40f, archTop + 88f)
+            lineTo(cx - 40f, archTop + 40f)
+            cubicTo(cx - 40f, archTop, cx + 40f, archTop, cx + 40f, archTop + 40f)
+            lineTo(cx + 40f, archTop + 88f)
+        }
+        canvas.drawPath(archPath, arch)
+        val lamp = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gold }
+        canvas.drawLine(cx, archTop + 10f, cx, archTop + 34f, arch.apply { strokeWidth = 3f })
+        canvas.drawCircle(cx, archTop + 46f, 12f, lamp)
+
+        var y = PADDING + lampGap
+        canvas.withTranslation(PADDING, y) { arabicLayout.draw(this) }
+        y += arabicLayout.height + 36f
+        canvas.withTranslation(PADDING, y) { referenceLayout.draw(this) }
+        y += referenceLayout.height + 8f
+        canvas.withTranslation(PADDING, y) { attributionLayout.draw(this) }
+        return bitmap
+    }
+
+    private inline fun Canvas.withTranslation(x: Float, y: Float, block: Canvas.() -> Unit) {
+        save(); translate(x, y); block(); restore()
+    }
+
+    private fun eightPointStar(cx: Float, cy: Float, radius: Float): Path {
+        val path = Path()
+        for (i in 0 until 16) {
+            val r = if (i % 2 == 0) radius else radius * 0.42f
+            val angle = Math.PI * i / 8 - Math.PI / 2
+            val x = cx + r * cos(angle).toFloat()
+            val y = cy + r * sin(angle).toFloat()
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        path.close()
+        return path
+    }
+
+    /// Saves the bitmap into the shared cache and opens the system share
+    /// sheet. Call from the main thread with a pre-rendered bitmap.
+    fun share(context: Context, bitmap: Bitmap) {
+        val dir = File(context.cacheDir, "shared").apply { mkdirs() }
+        val file = File(dir, "noor-share.png")
+        file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "image/png"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intent, null))
+    }
+}
