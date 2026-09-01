@@ -57,6 +57,7 @@ drawable ic_call_decline_low
 drawable ic_clock
 drawable ic_launcher_bg
 drawable ic_launcher_fg
+drawable ic_sparkle
 drawable ic_sun
 drawable notification_action_background
 drawable notification_bg

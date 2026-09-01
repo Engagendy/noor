@@ -4,6 +4,7 @@ drawable ic_book
 drawable ic_clock
 drawable ic_launcher_bg
 drawable ic_launcher_fg
+drawable ic_sparkle
 drawable ic_sun
 font amiri_quran
 font uthmanic_hafs

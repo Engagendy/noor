@@ -26,6 +26,7 @@ enum class Tab(val titleArabic: String, val icon: Int) {
     TODAY("اليوم", R.drawable.ic_sun),
     QURAN("القرآن", R.drawable.ic_book),
     PRAYER("الصلاة", R.drawable.ic_clock),
+    ATHKAR("الأذكار", R.drawable.ic_sparkle),
 }
 
 class MainActivity : ComponentActivity() {
@@ -73,6 +74,7 @@ fun NoorApp() {
             Tab.TODAY -> TodayScreen(modifier, openQuran = { tab = Tab.QURAN })
             Tab.QURAN -> QuranScreen(modifier)
             Tab.PRAYER -> PrayerScreen(modifier)
+            Tab.ATHKAR -> AthkarScreen(modifier)
         }
     }
 }

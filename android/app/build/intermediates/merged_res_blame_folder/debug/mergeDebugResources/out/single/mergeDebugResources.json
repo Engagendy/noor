@@ -1,34 +1,38 @@
 [
     {
-        "merged": "com.engagendy.noor.app-debug-46:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "com.engagendy.noor.app-main-48:/mipmap-anydpi-v26/ic_launcher.xml"
+        "merged": "com.engagendy.noor.app-debug-46:/drawable_ic_sparkle.xml.flat",
+        "source": "com.engagendy.noor.app-main-48:/drawable/ic_sparkle.xml"
     },
     {
-        "merged": "com.engagendy.noor.app-debug-46:/drawable_ic_sun.xml.flat",
-        "source": "com.engagendy.noor.app-main-48:/drawable/ic_sun.xml"
+        "merged": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-debug-46:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-main-48:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
-        "merged": "com.engagendy.noor.app-debug-46:/drawable_ic_launcher_bg.xml.flat",
-        "source": "com.engagendy.noor.app-main-48:/drawable/ic_launcher_bg.xml"
+        "merged": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-debug-46:/drawable_ic_book.xml.flat",
+        "source": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-main-48:/drawable/ic_book.xml"
     },
     {
-        "merged": "com.engagendy.noor.app-debug-46:/drawable_ic_launcher_fg.xml.flat",
-        "source": "com.engagendy.noor.app-main-48:/drawable/ic_launcher_fg.xml"
+        "merged": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-debug-46:/drawable_ic_sun.xml.flat",
+        "source": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-main-48:/drawable/ic_sun.xml"
     },
     {
-        "merged": "com.engagendy.noor.app-debug-46:/drawable_ic_book.xml.flat",
-        "source": "com.engagendy.noor.app-main-48:/drawable/ic_book.xml"
+        "merged": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-debug-46:/drawable_ic_clock.xml.flat",
+        "source": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-main-48:/drawable/ic_clock.xml"
     },
     {
-        "merged": "com.engagendy.noor.app-debug-46:/drawable_ic_clock.xml.flat",
-        "source": "com.engagendy.noor.app-main-48:/drawable/ic_clock.xml"
+        "merged": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-debug-46:/font_amiri_quran.ttf.flat",
+        "source": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-main-48:/font/amiri_quran.ttf"
     },
     {
-        "merged": "com.engagendy.noor.app-debug-46:/font_amiri_quran.ttf.flat",
-        "source": "com.engagendy.noor.app-main-48:/font/amiri_quran.ttf"
+        "merged": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-debug-46:/font_uthmanic_hafs.ttf.flat",
+        "source": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-main-48:/font/uthmanic_hafs.ttf"
     },
     {
-        "merged": "com.engagendy.noor.app-debug-46:/font_uthmanic_hafs.ttf.flat",
-        "source": "com.engagendy.noor.app-main-48:/font/uthmanic_hafs.ttf"
+        "merged": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-debug-46:/drawable_ic_launcher_fg.xml.flat",
+        "source": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-main-48:/drawable/ic_launcher_fg.xml"
+    },
+    {
+        "merged": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-debug-46:/drawable_ic_launcher_bg.xml.flat",
+        "source": "/Users/engagendy/.gradle/daemon/8.13/com.engagendy.noor.app-main-48:/drawable/ic_launcher_bg.xml"
     }
 ]

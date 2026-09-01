@@ -1,0 +1,130 @@
+package com.engagendy.noor
+
+import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.json.JSONArray
+
+data class Dhikr(val text: String, val count: Int)
+data class DhikrCategory(val title: String, val items: List<Dhikr>)
+
+object AthkarStore {
+    fun load(context: Context): List<DhikrCategory> {
+        val raw = context.assets.open("athkar.json").bufferedReader().readText()
+        val array = JSONArray(raw)
+        return buildList {
+            for (i in 0 until array.length()) {
+                val obj = array.getJSONObject(i)
+                val itemsJson = obj.getJSONArray("items")
+                val items = buildList {
+                    for (j in 0 until itemsJson.length()) {
+                        val item = itemsJson.getJSONObject(j)
+                        add(Dhikr(item.getString("text"), item.optInt("count", 1)))
+                    }
+                }
+                add(DhikrCategory(obj.getString("category"), items))
+            }
+        }
+    }
+}
+
+@Composable
+fun AthkarScreen(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val categories = remember { AthkarStore.load(context) }
+    var open by remember { mutableStateOf<DhikrCategory?>(null) }
+
+    val current = open
+    if (current != null) {
+        DhikrListScreen(current, onBack = { open = null }, modifier = modifier)
+        return
+    }
+    LazyColumn(modifier.fillMaxSize()) {
+        item {
+            Text("الأذكار", fontSize = 28.sp, fontWeight = FontWeight.Bold,
+                 color = NoorColor.inkPrimary,
+                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
+        }
+        items(categories) { category ->
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { open = category }
+                    .padding(horizontal = 20.dp, vertical = 14.dp)
+            ) {
+                Text(category.title, fontSize = 16.sp, color = NoorColor.inkPrimary)
+                Text(category.items.size.arabicIndic(), fontSize = 13.sp,
+                     color = NoorColor.inkSecondary)
+            }
+            HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
+        }
+    }
+}
+
+@Composable
+fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val progress = remember { mutableStateMapOf<Int, Int>() }
+    Column(modifier.fillMaxSize()) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
+        ) {
+            Text(category.title, fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                 color = NoorColor.inkPrimary)
+            Text("رجوع", color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
+                 modifier = Modifier.clickable(onClick = onBack).padding(8.dp))
+        }
+        LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+            items(category.items.indices.toList()) { index ->
+                val dhikr = category.items[index]
+                val done = progress[index] ?: 0
+                val complete = done >= dhikr.count
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .background(
+                            if (complete) NoorColor.stateReciting else NoorColor.bgElevated,
+                            RoundedCornerShape(14.dp)
+                        )
+                        .clickable {
+                            if (!complete) progress[index] = done + 1
+                        }
+                        .padding(16.dp)
+                ) {
+                    Text(dhikr.text, fontSize = 18.sp, lineHeight = 32.sp,
+                         color = NoorColor.inkPrimary)
+                    Text(
+                        if (complete) "تم ✓" else "${done.arabicIndic()} / ${dhikr.count.arabicIndic()}",
+                        fontSize = 13.sp,
+                        color = if (complete) NoorColor.accentPrimary else NoorColor.inkSecondary,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            }
+        }
+    }
+}
