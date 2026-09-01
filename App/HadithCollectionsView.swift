@@ -111,8 +111,8 @@ struct HadithBooksView: View {
                             .foregroundStyle(NoorColor.inkPrimary)
                             .multilineTextAlignment(.leading)
                         Text(verbatim: isArabicUI
-                             ? "\(book.hadiths.count.arabicIndic) حديثًا"
-                             : "\(book.hadiths.count) hadiths")
+                             ? "\(book.count.arabicIndic) حديثًا"
+                             : "\(book.count) hadiths")
                             .font(NoorFont.caption)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
@@ -144,14 +144,15 @@ struct HadithBookView: View {
     let book: HadithBook
     let collection: HadithCollectionID
     let isArabicUI: Bool
+    @State private var hadithList: [LibraryHadith] = []
     @State private var searchText = ""
     @State private var selected: LibraryHadith?
     @Environment(\.locale) private var locale
 
     private var filtered: [LibraryHadith] {
         let query = searchText.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return book.hadiths }
-        return book.hadiths.filter {
+        guard !query.isEmpty else { return hadithList }
+        return hadithList.filter {
             $0.arabic.contains(query)
                 || $0.english.localizedCaseInsensitiveContains(query)
                 || $0.number == query
@@ -192,8 +193,12 @@ struct HadithBookView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
+        .task {
+            hadithList = await HadithLibrary.shared.hadiths(
+                collection: collection, book: book.index)
+        }
         .sheet(item: $selected) { hadith in
-            LibraryHadithDetail(hadiths: book.hadiths, initialId: hadith.id,
+            LibraryHadithDetail(hadiths: hadithList, initialId: hadith.id,
                                 collection: collection,
                                 bookTitle: isArabicUI ? book.arabicTitle : book.englishTitle,
                                 isArabicUI: isArabicUI)

@@ -86,23 +86,19 @@ struct HadithBookmarksView: View {
             guard parts.count == 2 else { continue }
             let (source, number) = (parts[0], parts[1])
             if let collection = HadithCollectionID(rawValue: source) {
-                guard library.states[collection] == .ready else { continue }
-                let books = await library.books(for: collection)
-                for book in books {
-                    if let hadith = book.hadiths.first(where: { $0.number == number }) {
-                        let bookTitle = isArabicUI ? book.arabicTitle : book.englishTitle
-                        entries.append(Entry(
-                            key: key,
-                            title: isArabicUI
-                                ? "\(collection.arabicName) · \(bookTitle) · \(number)"
-                                : "\(collection.englishName) · \(bookTitle) · \(number)",
-                            arabic: hadith.arabic,
-                            forty: nil,
-                            sahih: HadithLibrary.SearchHit(
-                                collection: collection, bookTitle: bookTitle, hadith: hadith)))
-                        break
-                    }
-                }
+                guard library.states[collection] == .ready,
+                      let found = await library.lookup(collection: collection, number: number)
+                else { continue }
+                let bookTitle = isArabicUI ? found.bookAr : found.bookEn
+                entries.append(Entry(
+                    key: key,
+                    title: isArabicUI
+                        ? "\(collection.arabicName) · \(bookTitle) · \(number)"
+                        : "\(collection.englishName) · \(bookTitle) · \(number)",
+                    arabic: found.hadith.arabic,
+                    forty: nil,
+                    sahih: HadithLibrary.SearchHit(
+                        collection: collection, bookTitle: bookTitle, hadith: found.hadith)))
             } else if let hadith = forty.first(where: {
                 $0.collection == source && String($0.number) == number
             }) {
