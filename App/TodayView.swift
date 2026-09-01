@@ -17,6 +17,7 @@ struct TodayView: View {
     let openAthkar: () -> Void
     @State private var athkar: [DhikrCategory] = []
     @State private var hadiths: [HadithItem] = []
+    @State private var dailySahih: (hadith: LibraryHadith, collection: HadithCollectionID)?
     @State private var showHadithList = false
     @State private var dailyHadithDetail: HadithItem?
     @State private var showHijriCalendar = false
@@ -30,12 +31,14 @@ struct TodayView: View {
         case dhikr(Dhikr)
         case event(IslamicEvent)
         case hadith(HadithItem)
+        case sahihHadith(LibraryHadith, HadithCollectionID)
         var id: String {
             switch self {
             case .ayah(let verse, _): "a\(verse.id)"
             case .dhikr(let dhikr): "d\(dhikr.id.hashValue)"
             case .event(let event): "e\(event.day)-\(event.month)-\(event.arabic.hashValue)"
             case .hadith(let hadith): "h\(hadith.id)"
+            case .sahihHadith(let hadith, let collection): "s\(collection.rawValue)-\(hadith.number)"
             }
         }
     }
@@ -132,6 +135,7 @@ struct TodayView: View {
         .task {
             if athkar.isEmpty { athkar = AthkarStore.load() }
             if hadiths.isEmpty { hadiths = HadithStore.load() }
+            dailySahih = await HadithLibrary.shared.dailySahih(date: Date())
             // Screenshot/repro hook: simulate tapping the khatmah card.
             if ProcessInfo.processInfo.environment["NOOR_TAP_KHATMAH"] == "1" {
                 try? await Task.sleep(for: .seconds(3))
@@ -200,6 +204,15 @@ struct TodayView: View {
                 NoorShareSheet(
                     arabicText: isArabicUI ? event.arabic : event.english,
                     reference: eventReference(event),
+                    attribution: "نور Noor",
+                    useQuranFont: false)
+                    .presentationDetents([.medium, .large])
+            case .sahihHadith(let hadith, let collection):
+                NoorShareSheet(
+                    arabicText: hadith.arabic,
+                    reference: isArabicUI
+                        ? "\(collection.arabicName) · \(hadith.number)"
+                        : "\(collection.englishName) · \(hadith.number)",
                     attribution: "نور Noor",
                     useQuranFont: false)
                     .presentationDetents([.medium, .large])
@@ -279,10 +292,61 @@ struct TodayView: View {
         .noorCard()
     }
 
-    /// Daily hadith from the bundled Nawawi + Qudsi collections.
+    /// Daily hadith: from a downloaded Sahih when available, else the
+    /// bundled Forty collections.
     @ViewBuilder
     private func dailyHadithCard(now: Date) -> some View {
-        if let hadith = HadithStore.daily(from: hadiths, date: now) {
+        if let daily = dailySahih {
+            Button {
+                showHadithList = true
+            } label: {
+                VStack(spacing: 10) {
+                    HStack {
+                        Text("DAILY HADITH")
+                            .font(.system(size: 12, weight: .semibold))
+                            .tracking(0.8)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                        Spacer()
+                        Text(verbatim: isArabicUI
+                             ? daily.collection.arabicName : daily.collection.englishName)
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.accentGold)
+                        Button {
+                            shareItem = .sahihHadith(daily.hadith, daily.collection)
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(NoorColor.accentPrimary)
+                                .frame(width: 40, height: 40)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel("Share")
+                    }
+                    Spacer(minLength: 0)
+                    Text(verbatim: daily.hadith.arabic)
+                        .font(.noorScaled(16))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                        .lineSpacing(7)
+                        .lineLimit(4)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .environment(\.layoutDirection, .rightToLeft)
+                    Spacer(minLength: 0)
+                    Text(isArabicUI ? "اقرأ الحديث كاملًا" : "Read the full hadith")
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(NoorColor.bgPrimary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(NoorColor.accentPrimary))
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .noorCard()
+        } else if let hadith = HadithStore.daily(from: hadiths, date: now) {
             Button { dailyHadithDetail = hadith } label: {
                 VStack(spacing: 10) {
                     HStack {

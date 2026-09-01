@@ -3,9 +3,14 @@ import SwiftUI
 
 /// The Hadith tab: the two Sahihs (offline packs) + the Forty collections.
 struct HadithTab: View {
-    @State private var library = HadithLibrary()
+    @State private var library = HadithLibrary.shared
+    @State private var bookmarks = HadithBookmarks.shared
     @State private var forty: [HadithItem] = []
     @State private var selected: HadithItem?
+    @State private var searchText = ""
+    @State private var results: [HadithLibrary.SearchHit] = []
+    @State private var searchTask: Task<Void, Never>?
+    @State private var selectedHit: HadithLibrary.SearchHit?
     @Environment(\.locale) private var locale
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
@@ -20,6 +25,10 @@ struct HadithTab: View {
 
     var body: some View {
         List {
+            if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
+                searchResults
+            } else {
+            bookmarksSection
             Section {
                 ForEach(HadithCollectionID.allCases) { collection in
                     collectionRow(collection)
@@ -61,14 +70,99 @@ struct HadithTab: View {
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(NoorColor.accentPrimary)
             }
+            }
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
         .environment(\.layoutDirection, .rightToLeft)
         .navigationTitle(Text("Hadith"))
+        .searchable(text: $searchText,
+                    prompt: Text(verbatim: isArabicUI ? "ابحث في كل الأحاديث" : "Search all hadiths"))
+        .onChange(of: searchText) { _, query in
+            searchTask?.cancel()
+            searchTask = Task {
+                try? await Task.sleep(for: .milliseconds(350))
+                guard !Task.isCancelled else { return }
+                results = await library.search(query, isArabicUI: isArabicUI)
+            }
+        }
+        .sheet(item: $selectedHit) { hit in
+            LibraryHadithDetail(hadiths: [hit.hadith], initialId: hit.hadith.id,
+                                collection: hit.collection,
+                                bookTitle: hit.bookTitle, isArabicUI: isArabicUI)
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+        }
         .task {
             if forty.isEmpty { forty = HadithStore.load() }
+        }
+    }
+
+    /// Global results across every downloaded collection.
+    @ViewBuilder
+    private var searchResults: some View {
+        Section {
+            if results.isEmpty {
+                Text(verbatim: isArabicUI
+                     ? "لا نتائج — نزّل الصحيحين للبحث فيهما"
+                     : "No results — download the Sahihs to search them")
+                    .font(.system(size: 14))
+                    .foregroundStyle(NoorColor.inkSecondary)
+                    .listRowBackground(Color.clear)
+            }
+            ForEach(results) { hit in
+                Button {
+                    selectedHit = hit
+                } label: {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(verbatim: hit.hadith.arabic)
+                            .font(.system(size: 15))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text(verbatim: isArabicUI
+                             ? "\(hit.collection.arabicName) · \(hit.bookTitle) · \(hit.hadith.number)"
+                             : "\(hit.collection.englishName) · \(hit.bookTitle) · \(hit.hadith.number)")
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.accentGold)
+                    }
+                    .padding(.vertical, 4)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .listRowBackground(Color.clear)
+            }
+        }
+    }
+
+    /// Saved hadiths (any source), resolved lazily against loaded data.
+    @ViewBuilder
+    private var bookmarksSection: some View {
+        if !bookmarks.keys.isEmpty {
+            Section {
+                NavigationLink {
+                    HadithBookmarksView(isArabicUI: isArabicUI)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "bookmark.fill")
+                            .font(.system(size: 17))
+                            .foregroundStyle(NoorColor.accentGold)
+                            .frame(width: 30)
+                        Text(verbatim: isArabicUI ? "المحفوظات" : "Bookmarked")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Spacer()
+                        Text(verbatim: isArabicUI
+                             ? bookmarks.keys.count.arabicIndic : "\(bookmarks.keys.count)")
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                    }
+                    .padding(.vertical, 4)
+                }
+                .listRowBackground(Color.clear)
+            }
         }
     }
 

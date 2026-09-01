@@ -204,6 +204,18 @@ struct HadithDetailView: View {
                     }
                     .accessibilityLabel("Share")
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    let key = HadithBookmarks.key(
+                        collection: hadith.collection, number: String(hadith.number))
+                    Button {
+                        HadithBookmarks.shared.toggle(key)
+                    } label: {
+                        Image(systemName: HadithBookmarks.shared.isBookmarked(key)
+                              ? "bookmark.fill" : "bookmark")
+                            .foregroundStyle(NoorColor.accentGold)
+                    }
+                    .accessibilityLabel("Bookmark")
+                }
             }
             .sheet(isPresented: $sharing) {
                 NoorShareSheet(

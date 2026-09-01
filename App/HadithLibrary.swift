@@ -48,6 +48,9 @@ struct HadithBook: Identifiable {
 @Observable
 @MainActor
 final class HadithLibrary {
+    /// One instance app-wide so parses are shared (9 MB JSON each).
+    static let shared = HadithLibrary()
+
     enum PackState: Equatable {
         case notDownloaded, downloading, ready, failed
     }
@@ -94,6 +97,50 @@ final class HadithLibrary {
             }
         }
         states[collection] = .ready
+    }
+
+    struct SearchHit: Identifiable {
+        let collection: HadithCollectionID
+        let bookTitle: String
+        let hadith: LibraryHadith
+        var id: String { "\(collection.rawValue)-\(hadith.book)-\(hadith.number)" }
+    }
+
+    /// Search every downloaded collection (Arabic + English + number).
+    func search(_ query: String, isArabicUI: Bool, limit: Int = 80) async -> [SearchHit] {
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        guard trimmed.count >= 2 else { return [] }
+        var hits: [SearchHit] = []
+        for collection in HadithCollectionID.allCases where states[collection] == .ready {
+            let books = await books(for: collection)
+            for book in books {
+                for hadith in book.hadiths {
+                    if hadith.arabic.contains(trimmed)
+                        || hadith.english.localizedCaseInsensitiveContains(trimmed)
+                        || hadith.number == trimmed {
+                        hits.append(SearchHit(
+                            collection: collection,
+                            bookTitle: isArabicUI ? book.arabicTitle : book.englishTitle,
+                            hadith: hadith))
+                        if hits.count >= limit { return hits }
+                    }
+                }
+            }
+        }
+        return hits
+    }
+
+    /// Deterministic daily hadith from the downloaded Sahihs (nil when
+    /// nothing is downloaded — caller falls back to the Forty).
+    func dailySahih(date: Date) async -> (hadith: LibraryHadith, collection: HadithCollectionID)? {
+        let ready = HadithCollectionID.allCases.filter { states[$0] == .ready }
+        guard !ready.isEmpty else { return nil }
+        let day = Calendar.current.ordinality(of: .day, in: .year, for: date) ?? 1
+        let collection = ready[day % ready.count]
+        let books = await books(for: collection)
+        let all = books.flatMap(\.hadiths)
+        guard !all.isEmpty else { return nil }
+        return (all[(day &* 37) % all.count], collection)
     }
 
     func remove(_ collection: HadithCollectionID) {
