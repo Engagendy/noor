@@ -8,12 +8,13 @@ let package = Package(
         .library(name: "Athkar", targets: ["Athkar"])
     ],
     dependencies: [
-        .package(path: "../../Core/DesignSystem")
+        .package(path: "../../Core/DesignSystem"),
+        .package(path: "../../Core/ContentDB")
     ],
     targets: [
         .target(
             name: "Athkar",
-            dependencies: ["DesignSystem"],
+            dependencies: ["DesignSystem", "ContentDB"],
             resources: [.copy("Resources/athkar.json")]
         ),
         .testTarget(name: "AthkarTests", dependencies: ["Athkar"])

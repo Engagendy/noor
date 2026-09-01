@@ -2431,6 +2431,38 @@
           }
         }
       }
+    },
+    "Ruqyah": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الرقية الشرعية"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruqyah"
+          }
+        }
+      }
+    },
+    "Selected duas": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أدعية مختارة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selected duas"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

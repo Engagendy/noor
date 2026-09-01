@@ -38,6 +38,48 @@ public struct AthkarView: View {
             .listRowBackground(Color.clear)
 
             NavigationLink {
+                RuqyahView()
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "shield.lefthalf.filled")
+                        .font(.system(size: 20))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                        .frame(width: 30)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Ruqyah")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Text(verbatim: "الرقية الشرعية من الكتاب والسنة")
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .listRowBackground(Color.clear)
+
+            NavigationLink {
+                SelectedDuasView()
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "hands.and.sparkles")
+                        .font(.system(size: 20))
+                        .foregroundStyle(NoorColor.accentGold)
+                        .frame(width: 30)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Selected duas")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Text(verbatim: "أدعية قرآنية ونبوية والاستخارة")
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .listRowBackground(Color.clear)
+
+            NavigationLink {
                 AsmaulHusnaView()
             } label: {
                 HStack(spacing: 14) {
