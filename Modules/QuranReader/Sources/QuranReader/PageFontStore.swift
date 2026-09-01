@@ -27,18 +27,32 @@ public final class PageFontStore {
 
     public static func fontName(page: Int) -> String {
         variant == "v1"
-            ? String(format: "AQF_P%03d_HA", page)
+            ? String(format: "QCF_P%03d", page)
             : String(format: "QCF2%03d", page)
     }
 
     private static func localURL(page: Int) -> URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return base.appendingPathComponent("pagefonts/\(variant)_page_\(page).ttf")
+        // v1b: cache key bumped after the v1.5 mispairing (resequenced
+        // glyph codes rendered shifted text — files must not be reused).
+        let prefix = variant == "v1" ? "v1b" : variant
+        return base.appendingPathComponent("pagefonts/\(prefix)_page_\(page).ttf")
+    }
+
+    /// One-time cleanup of caches from the v1.5 experiment.
+    public static func purgeStaleCaches() {
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("pagefonts")
+        guard let files = try? FileManager.default.contentsOfDirectory(atPath: dir.path) else { return }
+        for file in files where file.hasPrefix("v1_page_") || (file.hasPrefix("page_") && file.hasSuffix(".ttf")) {
+            try? FileManager.default.removeItem(at: dir.appendingPathComponent(file))
+        }
     }
 
     private static func remoteURL(page: Int) -> URL {
         variant == "v1"
-            ? URL(string: "https://raw.githubusercontent.com/mustafa0x/qpc-fonts/master/mushaf-v1.5/page_\(page).ttf")!
+            ? URL(string: String(format:
+                "https://raw.githubusercontent.com/mustafa0x/qpc-fonts/master/mushaf/QCF_P%03d.TTF", page))!
             : URL(string: String(format:
                 "https://raw.githubusercontent.com/mustafa0x/qpc-fonts/master/mushaf-v2/QCF2%03d.ttf", page))!
     }
@@ -65,7 +79,8 @@ public final class PageFontStore {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("pagefonts")
         let files = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
-        return files.filter { $0.hasPrefix("\(variant)_page_") }.count
+        let prefix = variant == "v1" ? "v1b" : variant
+        return files.filter { $0.hasPrefix("\(prefix)_page_") }.count
     }
 
     /// Downloads every remaining page font (~600 KB each, ≤604 total) so

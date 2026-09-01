@@ -11,14 +11,14 @@ public struct MushafDownloadRow: View {
 
     public init() {}
 
-    private var sizeLabel: String { fontVariant == "v1" ? "~45 MB" : "~350 MB" }
+    private var sizeLabel: String { fontVariant == "v1" ? "~100 MB" : "~350 MB" }
 
     private var isComplete: Bool { cached >= 604 }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Picker(selection: $fontVariant) {
-                Text("Compact (~45 MB)").tag("v1")
+                Text("Compact (~100 MB)").tag("v1")
                 Text("Print quality (~350 MB)").tag("v2")
             } label: {
                 Text("Mushaf typeface")

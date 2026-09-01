@@ -532,23 +532,6 @@
         }
       }
     },
-    "Compact (~45 MB)": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مضغوط (~٤٥ م.ب)"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Compact (~45 MB)"
-          }
-        }
-      }
-    },
     "Connect to the internet once to download this page.": {
       "extractionState": "stale",
       "localizations": {
@@ -2548,6 +2531,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Downloaded once, readable forever offline. Public-domain dataset; see licenses in Settings."
+          }
+        }
+      }
+    },
+    "Compact (~100 MB)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مضغوط (~١٠٠ م.ب)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compact (~100 MB)"
           }
         }
       }

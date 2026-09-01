@@ -1,5 +1,6 @@
 import DesignSystem
 import PrayerTimes
+import QuranReader
 import SwiftUI
 import UserNotifications
 
@@ -12,6 +13,7 @@ struct NoorApp: App {
         UserDefaults.standard.removeObject(forKey: "AppleLanguages")
         // Adhan must sound even when the app is frontmost.
         UNUserNotificationCenter.current().delegate = NoorNotificationDelegate.shared
+        PageFontStore.purgeStaleCaches()
     }
 
     var body: some Scene {
