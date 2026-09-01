@@ -2628,6 +2628,198 @@
           }
         }
       }
+    },
+    "Storage": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التخزين"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Storage"
+          }
+        }
+      }
+    },
+    "Mushaf page fonts": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خطوط صفحات المصحف"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mushaf page fonts"
+          }
+        }
+      }
+    },
+    "Madani print typefaces": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خط مصحف المدينة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Madani print typefaces"
+          }
+        }
+      }
+    },
+    "Recitations": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التلاوات"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recitations"
+          }
+        }
+      }
+    },
+    "Downloaded ayah audio": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صوتيات الآيات المنزلة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloaded ayah audio"
+          }
+        }
+      }
+    },
+    "Follow-along audio": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صوتيات تتبع الكلمات"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow-along audio"
+          }
+        }
+      }
+    },
+    "Word-tracking surah files": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ملفات السور لوضع التتبع"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Word-tracking surah files"
+          }
+        }
+      }
+    },
+    "Tafsir packs": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حزم التفسير"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tafsir packs"
+          }
+        }
+      }
+    },
+    "Offline tafsir texts": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نصوص التفسير دون اتصال"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline tafsir texts"
+          }
+        }
+      }
+    },
+    "Hadith packs": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حزم الحديث"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hadith packs"
+          }
+        }
+      }
+    },
+    "Sahih al-Bukhari and Muslim": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صحيحا البخاري ومسلم"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sahih al-Bukhari and Muslim"
+          }
+        }
+      }
+    },
+    "Deleting only removes downloaded copies — everything re-downloads when you use it again. The Quran text itself is part of the app and cannot be removed.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحذف يزيل النسخ المنزلة فقط — وكل شيء يُنزَّل مجددًا عند استخدامه. نص القرآن جزء من التطبيق ولا يُحذف."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleting only removes downloaded copies — everything re-downloads when you use it again. The Quran text itself is part of the app and cannot be removed."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

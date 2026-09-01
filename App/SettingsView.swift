@@ -77,6 +77,17 @@ struct SettingsView: View {
             }
 
             Section {
+                NavigationLink {
+                    StorageView()
+                } label: {
+                    HStack {
+                        Image(systemName: "internaldrive")
+                            .font(.system(size: 14))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                        Text("Storage")
+                            .foregroundStyle(NoorColor.inkPrimary)
+                    }
+                }
                 Button {
                     showZakat = true
                 } label: {
