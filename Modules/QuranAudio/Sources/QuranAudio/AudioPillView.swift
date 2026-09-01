@@ -252,6 +252,8 @@ struct PlaybackModeSheet: View {
         (.pageOnly, "This page only", "doc.text"),
     ]
     @State private var showMemorize = false
+    /// Local mirror so chip highlights update instantly on tap.
+    @State private var selectedRate: Double = 1.0
 
     var body: some View {
         NavigationStack {
@@ -289,8 +291,9 @@ struct PlaybackModeSheet: View {
                         .font(.system(size: 14))
                         .foregroundStyle(NoorColor.inkSecondary)
                     ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { speed in
-                        let isOn = abs(Double(player.rate) - speed) < 0.01
+                        let isOn = abs(selectedRate - speed) < 0.01
                         Button {
+                            selectedRate = speed
                             player.rate = Float(speed)
                         } label: {
                             Text(verbatim: speed == 1.0 ? "1×" : String(format: "%g×", speed))
@@ -376,6 +379,7 @@ struct PlaybackModeSheet: View {
             .sheet(isPresented: $showMemorize) {
                 MemorizeRangeSheet(player: player)
             }
+            .onAppear { selectedRate = Double(player.rate) }
             .navigationTitle(Text("Playback mode"))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
