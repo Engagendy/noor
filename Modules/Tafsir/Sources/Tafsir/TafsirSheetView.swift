@@ -57,6 +57,15 @@ public struct TafsirSheetView: View {
         }
     }
 
+    /// Splits the tafsir into renderable paragraphs (never empty).
+    private func paragraphs(of text: String) -> [String] {
+        let parts = text
+            .components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        return parts.isEmpty ? [text] : parts
+    }
+
     public var body: some View {
         NavigationStack {
             ScrollView {
@@ -92,13 +101,21 @@ public struct TafsirSheetView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.top, 40)
                     case .ready(let text):
-                        Text(text)
-                            .font(edition.isArabic ? .system(size: 18) : NoorFont.tafsir)
-                            .foregroundStyle(NoorColor.inkPrimary)
-                            .lineSpacing(edition.isArabic ? 10 : 6)
-                            .environment(\.layoutDirection, edition.isArabic ? .rightToLeft : .leftToRight)
-                            .frame(maxWidth: .infinity, alignment: edition.isArabic ? .trailing : .leading)
-                            .textSelection(.enabled)
+                        // One paragraph per Text: monolithic multi-thousand-
+                        // character Arabic strings hit a SwiftUI layout path
+                        // that drops shaping/bidi (seen with Ibn Kathir 3:7).
+                        LazyVStack(alignment: .leading, spacing: 14) {
+                            ForEach(Array(paragraphs(of: text).enumerated()), id: \.offset) { _, paragraph in
+                                Text(paragraph)
+                                    .font(edition.isArabic ? .system(size: 18) : NoorFont.tafsir)
+                                    .foregroundStyle(NoorColor.inkPrimary)
+                                    .lineSpacing(edition.isArabic ? 10 : 6)
+                                    .multilineTextAlignment(.leading)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .textSelection(.enabled)
+                            }
+                        }
+                        .environment(\.layoutDirection, edition.isArabic ? .rightToLeft : .leftToRight)
                     case .failed(let message):
                         ContentUnavailableView {
                             Label("Tafsir unavailable", systemImage: "wifi.slash")
