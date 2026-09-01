@@ -14,9 +14,6 @@ struct HadithCollectionsView: View {
                     collectionRow(collection)
                         .listRowBackground(Color.clear)
                 }
-            } footer: {
-                Text("Downloaded once, readable forever offline. Public-domain dataset; see licenses in Settings.")
-                    .font(NoorFont.caption)
             }
         }
         .listStyle(.plain)
@@ -51,11 +48,11 @@ struct HadithCollectionsView: View {
                 Text(verbatim: isArabicUI ? collection.arabicName : collection.englishName)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(NoorColor.inkPrimary)
-                Text(verbatim: state == .ready
-                     ? (isArabicUI ? "متاح دون إنترنت" : "Available offline")
-                     : collection.sizeLabel)
-                    .font(NoorFont.caption)
-                    .foregroundStyle(state == .ready ? NoorColor.accentPrimary : NoorColor.inkSecondary)
+                if state != .ready {
+                    Text(verbatim: collection.sizeLabel)
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
             }
             Spacer()
             switch state {

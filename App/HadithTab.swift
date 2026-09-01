@@ -29,9 +29,6 @@ struct HadithTab: View {
                 Text(verbatim: isArabicUI ? "الصحيحان" : "The two Sahihs")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(NoorColor.accentPrimary)
-            } footer: {
-                Text("Downloaded once, readable forever offline. Public-domain dataset; see licenses in Settings.")
-                    .font(NoorFont.caption)
             }
 
             Section {
@@ -100,11 +97,11 @@ struct HadithTab: View {
                 Text(verbatim: isArabicUI ? collection.arabicName : collection.englishName)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(NoorColor.inkPrimary)
-                Text(verbatim: state == .ready
-                     ? (isArabicUI ? "متاح دون إنترنت" : "Available offline")
-                     : collection.sizeLabel)
-                    .font(NoorFont.caption)
-                    .foregroundStyle(state == .ready ? NoorColor.accentPrimary : NoorColor.inkSecondary)
+                if state != .ready {
+                    Text(verbatim: collection.sizeLabel)
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
             }
             Spacer()
             switch state {
