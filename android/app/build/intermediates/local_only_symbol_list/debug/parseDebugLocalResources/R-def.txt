@@ -1,0 +1,11 @@
+R_DEF: Internal format may change without notice
+local
+drawable ic_book
+drawable ic_clock
+drawable ic_launcher_bg
+drawable ic_launcher_fg
+drawable ic_sun
+font amiri_quran
+font uthmanic_hafs
+mipmap ic_launcher
+style Theme.Noor

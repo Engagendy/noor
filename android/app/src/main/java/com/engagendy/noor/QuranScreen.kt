@@ -1,0 +1,149 @@
+package com.engagendy.noor
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+@Composable
+fun QuranScreen(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val db = remember { QuranDb.get(context) }
+    val surahs = remember { db.surahs() }
+    var openSurah by remember { mutableStateOf<Surah?>(null) }
+
+    val current = openSurah
+    if (current != null) {
+        ReaderScreen(surah = current, onBack = { openSurah = null }, modifier = modifier)
+        return
+    }
+
+    LazyColumn(modifier = modifier.fillMaxSize()) {
+        item {
+            Text(
+                "القرآن",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = NoorColor.inkPrimary,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+            )
+        }
+        items(surahs) { surah ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { openSurah = surah }
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(1.dp, NoorColor.accentGold, CircleShape)
+                ) {
+                    Text(surah.id.arabicIndic(), fontSize = 13.sp, color = NoorColor.accentGold)
+                }
+                Column(Modifier.padding(horizontal = 14.dp).weight(1f)) {
+                    Text(
+                        surah.nameArabic,
+                        fontFamily = HafsFont,
+                        fontSize = 20.sp,
+                        color = NoorColor.inkPrimary
+                    )
+                    Text(
+                        "${surah.ayahCount.arabicIndic()} آية · ${if (surah.revelation == "Meccan") "مكية" else "مدنية"}",
+                        fontSize = 12.sp,
+                        color = NoorColor.inkSecondary
+                    )
+                }
+            }
+            HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
+        }
+    }
+}
+
+@Composable
+fun ReaderScreen(surah: Surah, onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val db = remember { QuranDb.get(context) }
+    val verses = remember(surah.id) { db.verses(surah.id) }
+    // Continuous mushaf-style flow: one attributed stream with ayah markers.
+    val flow = remember(surah.id) {
+        buildString {
+            verses.forEach { verse ->
+                append(verse.text)
+                append(" ⁧﴿${verse.ayah.arabicIndic()}﴾⁩ ")
+            }
+        }
+    }
+
+    Column(modifier.fillMaxSize()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
+        ) {
+            Text(
+                surah.nameArabic,
+                fontFamily = HafsFont,
+                fontSize = 22.sp,
+                color = NoorColor.inkPrimary
+            )
+            Text(
+                "رجوع",
+                color = NoorColor.accentPrimary,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clickable(onClick = onBack).padding(8.dp)
+            )
+        }
+        LazyColumn(Modifier.fillMaxSize().padding(horizontal = 18.dp)) {
+            if (surah.id != 9 && surah.id != 1) {
+                item {
+                    Text(
+                        "بِسْمِ اللَّهِ الرَّحْمَـٰنِ الرَّحِيمِ",
+                        fontFamily = QuranFont,
+                        fontSize = 22.sp,
+                        textAlign = TextAlign.Center,
+                        color = NoorColor.inkPrimary,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
+                    )
+                }
+            }
+            item {
+                Text(
+                    flow,
+                    fontFamily = QuranFont,
+                    fontSize = 26.sp,
+                    lineHeight = 58.sp,
+                    color = NoorColor.inkPrimary,
+                    textAlign = TextAlign.Justify,
+                    modifier = Modifier.padding(bottom = 40.dp)
+                )
+            }
+        }
+    }
+}

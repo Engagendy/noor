@@ -9,3 +9,4 @@ DerivedData/
 /Noor.xcodeproj
 Config/secrets.local.json
 Screenshots/
+android/local.properties
