@@ -782,7 +782,10 @@ public struct SurahReaderView: View {
                 .foregroundStyle(NoorColor.accentPrimary)
             }
 
-            HStack(spacing: 12) {
+// The printed Madani page has fixed geometry — size buttons
+            // only apply to the flow and ayah modes.
+            if mode != .page {
+                        HStack(spacing: 12) {
                 Text("Quran text size")
                     .font(.system(size: 14))
                     .foregroundStyle(NoorColor.inkSecondary)
@@ -808,6 +811,7 @@ public struct SurahReaderView: View {
                 .accessibilityLabel("Larger")
             }
             .foregroundStyle(NoorColor.accentPrimary)
+            }
         }
         .padding(16)
         .background(
