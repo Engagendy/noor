@@ -52,21 +52,21 @@ class QuranDb private constructor(private val db: SQLiteDatabase) {
 
     fun verseCount(): Int =
         db.rawQuery("SELECT COUNT(*) FROM verse", null).use { c ->
-            if (c.moveToFirst()) c.getInt(0) else 6236
+            c.moveToFirst()
+            c.getInt(0)
         }
 
-    /// Verse at a global 0-based index in mushaf order (daily ayah pick).
-    fun verseAt(globalIndex: Int): Verse? =
+    /// One verse by global position, with its surah's Arabic name —
+    /// backs the deterministic daily ayah.
+    fun verseAt(globalIndex: Int): Pair<Verse, String>? =
         db.rawQuery(
-            "SELECT surah_id, ayah, text FROM verse ORDER BY surah_id, ayah LIMIT 1 OFFSET ?",
+            "SELECT v.surah_id, v.ayah, v.text, s.name_arabic FROM verse v " +
+                "JOIN surah s ON s.id = v.surah_id ORDER BY v.surah_id, v.ayah LIMIT 1 OFFSET ?",
             arrayOf(globalIndex.toString())
         ).use { c ->
-            if (c.moveToFirst()) Verse(c.getInt(0), c.getInt(1), c.getString(2)) else null
+            if (!c.moveToFirst()) return null
+            Verse(c.getInt(0), c.getInt(1), c.getString(2)) to c.getString(3)
         }
-
-    /// Basmala for injected print-mode lines — the verified DB text of
-    /// 1:1, never typed in code.
-    fun basmala(): String? = verses(1).firstOrNull()?.text
 
     fun verses(surahId: Int): List<Verse> =
         db.rawQuery(

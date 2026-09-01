@@ -1,4 +1,7 @@
 local.properties
 .gradle/
 build/
+<<<<<<< HEAD
 app/build/
+=======
+>>>>>>> worktree-wf_2b929f08-a35-3

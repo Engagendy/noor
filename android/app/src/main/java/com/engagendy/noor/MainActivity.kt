@@ -30,6 +30,7 @@ enum class Tab(val titleArabic: String, val icon: Int) {
     TODAY("اليوم", R.drawable.ic_sun),
     QURAN("القرآن", R.drawable.ic_book),
     PRAYER("الصلاة", R.drawable.ic_clock),
+    HADITH("الحديث", R.drawable.ic_hadith),
     ATHKAR("الأذكار", R.drawable.ic_sparkle),
 }
 
@@ -104,6 +105,7 @@ fun NoorApp() {
             Tab.QURAN -> QuranScreen(modifier, mushafPage = mushafPage,
                                      onMushafClosed = { mushafPage = 0 })
             Tab.PRAYER -> PrayerScreen(modifier)
+            Tab.HADITH -> HadithScreen(modifier)
             Tab.ATHKAR -> AthkarScreen(modifier)
         }
     }
