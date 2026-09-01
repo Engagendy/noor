@@ -370,17 +370,24 @@ public struct PrayerTimesView: View {
         Button {
             showSettings = true
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 14))
-                Text("\(String(localized: method.displayName)) · \(String(localized: madhab.displayName))")
-                    .font(NoorFont.caption)
+                    .font(.system(size: 15))
+                    .foregroundStyle(NoorColor.accentPrimary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Prayer settings")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                    Text("\(String(localized: method.displayName)) · \(String(localized: madhab.displayName))")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
                 Spacer()
                 Image(systemName: "chevron.forward")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NoorColor.inkSecondary.opacity(0.6))
             }
-            .foregroundStyle(NoorColor.inkSecondary)
-            .padding(.vertical, 12)
+            .padding(16)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

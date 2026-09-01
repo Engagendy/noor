@@ -2820,6 +2820,22 @@
           }
         }
       }
+    },
+    "Prayer settings": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إعدادات الصلاة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prayer settings"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
