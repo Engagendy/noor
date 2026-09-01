@@ -247,17 +247,27 @@ public final class QuranAudioPlayer {
         surahTitleArabic = arabicTitle
         self.ayahCount = ayahCount
         configureSessionAndCommands()
-        guard let timings = await WordTimingService.timings(reciter: qfReciterId, surah: surah),
-              let local = await WordTimingService.localAudio(reciter: qfReciterId, surah: surah,
-                                                             remote: timings.audioURL)
+        guard let timings = await WordTimingService.timings(reciter: qfReciterId, surah: surah)
         else { return false }
+        // Play immediately: cached file if present, else STREAM the remote
+        // (long surahs run to ~100 MB — downloading first meant silence).
+        let playURL: URL
+        if let cached = WordTimingService.cachedAudio(reciter: qfReciterId, surah: surah) {
+            playURL = cached
+        } else if let remote = URL(string: timings.audioURL) {
+            playURL = remote
+            WordTimingService.prefetchAudio(reciter: qfReciterId, surah: surah,
+                                            remote: timings.audioURL)
+        } else {
+            return false
+        }
         player?.pause()
         player?.removeAllItems()
         queuedNext = nil
         stopFollowAlong()
         followTimings = timings
         isFollowAlong = true
-        let avPlayer = AVPlayer(url: local)
+        let avPlayer = AVPlayer(url: playURL)
         followPlayer = avPlayer
         current = Reference(surah: surah, ayah: ayah)
         if let verse = timings.verses.first(where: { $0.ayah == ayah }) {

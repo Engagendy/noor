@@ -81,7 +81,20 @@ public enum WordTimingService {
         return timings
     }
 
-    /// Local gapless surah audio, downloading once (~0.3–6 MB).
+    /// Already-cached audio, if any (long surahs stream first instead).
+    public static func cachedAudio(reciter: Int, surah: Int) -> URL? {
+        let local = audioCacheURL(reciter: reciter, surah: surah)
+        return FileManager.default.fileExists(atPath: local.path) ? local : nil
+    }
+
+    /// Background prefetch so the NEXT playback of this surah is offline.
+    public static func prefetchAudio(reciter: Int, surah: Int, remote: String) {
+        Task.detached(priority: .utility) {
+            _ = await localAudio(reciter: reciter, surah: surah, remote: remote)
+        }
+    }
+
+    /// Local gapless surah audio, downloading once.
     public static func localAudio(reciter: Int = alafasyReciterId, surah: Int, remote: String) async -> URL? {
         let local = audioCacheURL(reciter: reciter, surah: surah)
         if FileManager.default.fileExists(atPath: local.path) { return local }
