@@ -24,6 +24,12 @@ public struct PrayerTimesView: View {
     @State private var showSettings = false
     @State private var showNawafil = false
     @State private var showAdhanSounds = false
+    @AppStorage("prayer.prealert") private var preAlertMinutes = 0
+    @AppStorage("prayer.adj.fajr") private var adjFajr = 0
+    @AppStorage("prayer.adj.dhuhr") private var adjDhuhr = 0
+    @AppStorage("prayer.adj.asr") private var adjAsr = 0
+    @AppStorage("prayer.adj.maghrib") private var adjMaghrib = 0
+    @AppStorage("prayer.adj.isha") private var adjIsha = 0
     @AppStorage("liveactivity.on") private var liveActivityOn = false
     @State private var locationFetcher = OneShotLocationFetcher()
     @State private var fetchingLocation = false
@@ -381,6 +387,19 @@ public struct PrayerTimesView: View {
         .overlay(alignment: .top) { Divider().opacity(0.4) }
     }
 
+    private func adjustmentStepper(_ title: LocalizedStringKey,
+                                   value: Binding<Int>) -> some View {
+        Stepper(value: value, in: -30...30) {
+            HStack {
+                Text(title)
+                Spacer()
+                Text(verbatim: value.wrappedValue > 0 ? "+\(value.wrappedValue)" : "\(value.wrappedValue)")
+                    .foregroundStyle(value.wrappedValue == 0 ? NoorColor.inkSecondary : NoorColor.accentPrimary)
+                    .monospacedDigit()
+            }
+        }
+    }
+
     private var settingsSheet: some View {
         NavigationStack {
             Form {
@@ -412,6 +431,32 @@ public struct PrayerTimesView: View {
                     }
                 }
                 .disabled(fetchingLocation)
+                Section {
+                    Picker(selection: $preAlertMinutes) {
+                        Text("Off").tag(0)
+                        Text(verbatim: "5").tag(5)
+                        Text(verbatim: "10").tag(10)
+                        Text(verbatim: "15").tag(15)
+                        Text(verbatim: "30").tag(30)
+                    } label: {
+                        Text("Alert before prayer (minutes)")
+                    }
+                } footer: {
+                    Text("A gentle reminder before each adhan — time for wudu and the walk to the masjid.")
+                }
+
+                Section {
+                    adjustmentStepper("Fajr", value: $adjFajr)
+                    adjustmentStepper("Dhuhr", value: $adjDhuhr)
+                    adjustmentStepper("Asr", value: $adjAsr)
+                    adjustmentStepper("Maghrib", value: $adjMaghrib)
+                    adjustmentStepper("Isha", value: $adjIsha)
+                } header: {
+                    Text("Manual adjustments (minutes)")
+                } footer: {
+                    Text("Match your local masjid exactly. Applies everywhere: timeline, widgets, and notifications.")
+                }
+
                 NavigationLink {
                     CityPickerView(cityName: $cityName)
                 } label: {

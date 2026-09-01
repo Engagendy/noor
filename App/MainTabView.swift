@@ -47,6 +47,7 @@ struct MainTabView: View {
     @AppStorage("app.language") private var appLanguage = "system"
     @AppStorage("prayer.customLabel") private var customLabel = ""
     @AppStorage("fasting.reminders") private var fastingReminders = false
+    @AppStorage("prayer.prealert") private var preAlertMinutes = 0
 
     var body: some View {
         mainTabs
@@ -60,7 +61,8 @@ struct MainTabView: View {
                           String(notificationsEnabled), String(useCustomLocation),
                           String(notifFajr), String(notifDhuhr), String(notifAsr),
                           String(notifMaghrib), String(notifIsha),
-                          appLanguage, customLabel, String(fastingReminders)]))
+                          appLanguage, customLabel, String(fastingReminders),
+                          String(preAlertMinutes)]))
     }
 
     private var mainTabs: some View {
@@ -181,7 +183,8 @@ struct MainTabView: View {
             method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
             madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
             sound: AdhanSound(rawValue: soundRaw) ?? .adhanMadinah,
-            arabic: isArabicNotifications)
+            arabic: isArabicNotifications,
+            preAlertMinutes: preAlertMinutes)
         await FastingReminderScheduler().reschedule(
             arabic: isArabicNotifications, enabled: fastingReminders)
     }

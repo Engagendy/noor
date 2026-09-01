@@ -26,15 +26,36 @@ public struct AdhanNotificationScheduler: Sendable {
         method: CalculationMethodChoice,
         madhab: MadhabChoice,
         sound: AdhanSound,
-        arabic: Bool = false
+        arabic: Bool = false,
+        preAlertMinutes: Int = 0
     ) async {
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
 
+        // Pre-alerts double the request count: shrink the day window to
+        // stay inside iOS's 64-pending limit (5d*5*2=50 + fasting ≈ 58).
+        let days = preAlertMinutes > 0 ? 5 : AdhanNotificationPlanner.defaultDays
         for planned in AdhanNotificationPlanner.plan(
             location: location, method: method, madhab: madhab,
             enabledPrayers: PrayerNotificationPrefs.enabledPrayers(),
-            arabic: arabic) {
+            days: days, arabic: arabic) {
+            if preAlertMinutes > 0 {
+                let preFire = planned.fireDate.addingTimeInterval(TimeInterval(-preAlertMinutes * 60))
+                if preFire > Date() {
+                    let pre = UNMutableNotificationContent()
+                    pre.title = arabic
+                        ? "بقي \(preAlertMinutes) دقيقة على صلاة \(planned.prayerName)"
+                        : "\(planned.prayerName) in \(preAlertMinutes) minutes"
+                    pre.body = "\(planned.prayerName) · \(planned.timeString)"
+                    pre.sound = .default
+                    let comps = Calendar.current.dateComponents(
+                        [.year, .month, .day, .hour, .minute], from: preFire)
+                    try? await center.add(UNNotificationRequest(
+                        identifier: "pre-\(planned.id)",
+                        content: pre,
+                        trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)))
+                }
+            }
             let content = UNMutableNotificationContent()
             // Calm microcopy per design §7 — no exclamation marks.
             content.title = arabic

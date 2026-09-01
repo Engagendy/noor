@@ -2548,6 +2548,86 @@
           }
         }
       }
+    },
+    "Alert before prayer (minutes)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تنبيه قبل الصلاة (دقائق)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alert before prayer (minutes)"
+          }
+        }
+      }
+    },
+    "Off": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بدون"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        }
+      }
+    },
+    "A gentle reminder before each adhan — time for wudu and the walk to the masjid.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تذكير لطيف قبل كل أذان — وقت للوضوء والمشي إلى المسجد."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A gentle reminder before each adhan — time for wudu and the walk to the masjid."
+          }
+        }
+      }
+    },
+    "Manual adjustments (minutes)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعديل يدوي (بالدقائق)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manual adjustments (minutes)"
+          }
+        }
+      }
+    },
+    "Match your local masjid exactly. Applies everywhere: timeline, widgets, and notifications.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "طابق مسجدك المحلي تمامًا. يسري على كل شيء: المواقيت والودجات والتنبيهات."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Match your local masjid exactly. Applies everywhere: timeline, widgets, and notifications."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

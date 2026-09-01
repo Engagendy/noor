@@ -37,12 +37,17 @@ public struct PrayerDay {
             date: date, calendar: calendar,
             method: method.adhanMethod, madhab: madhab.adhanMadhab
         ) else { return nil }
+        // Manual per-prayer offsets (match the local mosque exactly).
+        func adjusted(_ time: Date, _ key: String) -> Date {
+            time.addingTimeInterval(TimeInterval(
+                UserDefaults.standard.integer(forKey: "prayer.adj.\(key)") * 60))
+        }
         let entries: [Entry] = [
-            Entry(prayer: .fajr, name: "Fajr", time: times.fajr),
-            Entry(prayer: .dhuhr, name: "Dhuhr", time: times.dhuhr),
-            Entry(prayer: .asr, name: "Asr", time: times.asr),
-            Entry(prayer: .maghrib, name: "Maghrib", time: times.maghrib),
-            Entry(prayer: .isha, name: "Isha", time: times.isha),
+            Entry(prayer: .fajr, name: "Fajr", time: adjusted(times.fajr, "fajr")),
+            Entry(prayer: .dhuhr, name: "Dhuhr", time: adjusted(times.dhuhr, "dhuhr")),
+            Entry(prayer: .asr, name: "Asr", time: adjusted(times.asr, "asr")),
+            Entry(prayer: .maghrib, name: "Maghrib", time: adjusted(times.maghrib, "maghrib")),
+            Entry(prayer: .isha, name: "Isha", time: adjusted(times.isha, "isha")),
         ]
         return PrayerDay(entries: entries, location: location, times: times)
     }
