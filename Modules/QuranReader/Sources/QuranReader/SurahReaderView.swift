@@ -284,22 +284,27 @@ public struct SurahReaderView: View {
                     .accessibilityLabel("Go to page")
                 }
                 Spacer()
-                if player != nil {
+                if let player {
                     Button {
-                        if mode == .ayah {
+                        // Toggles when something is loaded; starts otherwise.
+                        if player.current != nil {
+                            player.togglePlayPause()
+                        } else if mode == .ayah {
                             if let first = viewModel.verses.first { startPlayback(from: first) }
                         } else if let first = viewModel.sections(forPage: currentPage).first?.verses.first {
                             startPlayback(from: first)
                         }
                     } label: {
-                        Image(systemName: "play.fill")
+                        Image(systemName: player.current != nil && player.isPlaying
+                              ? "pause.fill" : "play.fill")
                             .font(.system(size: 16))
                             .foregroundStyle(NoorColor.accentPrimary)
                             .frame(width: 36, height: 40)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Play recitation")
+                    .accessibilityLabel(player.current != nil && player.isPlaying
+                                        ? "Pause" : "Play recitation")
                 }
                 readerMenu
                     .frame(width: 40, height: 40)
