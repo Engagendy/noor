@@ -48,7 +48,7 @@ targets:
     type: app-extension
     platform: iOS
     deploymentTarget: "17.0"
-    sources: [Widgets]
+    sources: [Widgets, Shared]
     dependencies:
       - package: PrayerTimes
       - package: ContentDB
@@ -73,6 +73,7 @@ targets:
     supportedDestinations: [iOS, macOS]
     sources:
       - App
+      - path: Shared
     dependencies:
       - package: DesignSystem
       - package: ContentDB
@@ -95,6 +96,7 @@ targets:
           UIColorName: LaunchBackground
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.reference
+        NSSupportsLiveActivities: true
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft

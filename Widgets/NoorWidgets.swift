@@ -346,5 +346,6 @@ struct NoorWidgetsBundle: WidgetBundle {
     var body: some Widget {
         NextPrayerWidget()
         DailyAyahWidget()
+        PrayerLiveActivity()
     }
 }

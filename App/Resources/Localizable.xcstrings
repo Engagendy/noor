@@ -2463,6 +2463,38 @@
           }
         }
       }
+    },
+    "Lock-screen countdown": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عدّاد على شاشة القفل"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock-screen countdown"
+          }
+        }
+      }
+    },
+    "Live countdown to the next prayer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عد تنازلي مباشر للصلاة القادمة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live countdown to the next prayer"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

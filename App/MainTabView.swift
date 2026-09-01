@@ -191,6 +191,11 @@ private struct TabLifecycle: ViewModifier {
             .onReceive(NotificationCenter.default.publisher(for: .noorOpenPendingPage)) { _ in
                 openPendingPage()
             }
+            #if os(iOS)
+            .onReceive(NotificationCenter.default.publisher(for: .noorToggleLiveActivity)) { _ in
+                Task { await PrayerLiveActivityController.toggle() }
+            }
+            #endif
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { openPendingPage() }
                 // Push reading progress to iCloud when leaving the front.

@@ -83,6 +83,7 @@ public struct PrayerTimesView: View {
                     if let day = PrayerDay.compute(location: location, method: method, madhab: madhab, date: shownDate) {
                         timeline(day: day, now: now, isToday: dayOffset == 0)
                     }
+                    liveActivityRow
                     adhanSoundRow
                     nawafilRow
                     settingsRow
@@ -266,6 +267,39 @@ public struct PrayerTimesView: View {
 
     /// Always-visible entry to the adhan sound picker (the inline chips
     /// only exist on the next-prayer card, which vanishes after Isha).
+    /// Live Activity: countdown on the lock screen / Dynamic Island.
+    /// The activity targets the next prayer; refreshed on each start.
+    @ViewBuilder
+    private var liveActivityRow: some View {
+        #if os(iOS)
+        Button {
+            NotificationCenter.default.post(name: .noorToggleLiveActivity, object: nil)
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "clock.badge")
+                    .font(.system(size: 15))
+                    .foregroundStyle(NoorColor.accentPrimary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Lock-screen countdown")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                    Text("Live countdown to the next prayer")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.forward")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NoorColor.inkSecondary.opacity(0.6))
+            }
+            .padding(16)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .noorCard()
+        #endif
+    }
+
     private var adhanSoundRow: some View {
         Button {
             showAdhanSounds = true
@@ -578,4 +612,10 @@ public struct AdhanSoundPickerView: View {
         .presentationDetents([.medium, .large])
         .onDisappear { AdhanPreviewPlayer.shared.stop() }
     }
+}
+
+
+extension Notification.Name {
+    /// Posted by the Prayer tab; the app layer owns ActivityKit.
+    public static let noorToggleLiveActivity = Notification.Name("noorToggleLiveActivity")
 }
