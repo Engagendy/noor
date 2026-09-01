@@ -144,12 +144,26 @@ final class HadithLibrary {
         }
     }
 
+    /// Authentic Arabic book titles (the dataset's "Arabic" metadata is in
+    /// English) — bundled mapping extracted from AhmedBaset/hadith-json.
+    nonisolated private static func arabicTitles(_ collection: String) -> [String: String] {
+        guard let url = Bundle.main.url(forResource: "hadith_books_ar", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let all = try? JSONDecoder().decode([String: [String: String]].self, from: data)
+        else { return [:] }
+        return all[collection] ?? [:]
+    }
+
     nonisolated private static func parse(araURL: URL, engURL: URL) -> [HadithBook] {
         guard let araData = try? Data(contentsOf: araURL),
               let engData = try? Data(contentsOf: engURL),
               let ara = try? JSONDecoder().decode(Edition.self, from: araData),
               let eng = try? JSONDecoder().decode(Edition.self, from: engData)
         else { return [] }
+        let collection = araURL.lastPathComponent
+            .replacingOccurrences(of: "ara-", with: "")
+            .replacingOccurrences(of: ".json", with: "")
+        let arabicByIndex = arabicTitles(collection)
         let engByNumber = Dictionary(eng.hadiths.map { ($0.hadithnumber.value, $0.text) },
                                      uniquingKeysWith: { first, _ in first })
         var byBook: [Int: [LibraryHadith]] = [:]
@@ -165,7 +179,8 @@ final class HadithLibrary {
             guard let hadiths = byBook[index], !hadiths.isEmpty else { return nil }
             return HadithBook(
                 index: index,
-                arabicTitle: ara.metadata.sections[String(index)] ?? "كتاب \(index)",
+                arabicTitle: arabicByIndex[String(index)]
+                    ?? ara.metadata.sections[String(index)] ?? "كتاب \(index)",
                 englishTitle: eng.metadata.sections[String(index)] ?? "Book \(index)",
                 hadiths: hadiths)
         }

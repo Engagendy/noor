@@ -136,3 +136,8 @@ Attributions are displayed in Settings → About.
 - **Source:** fawazahmed0/hadith-api, editions ara/eng-bukhari and ara/eng-muslim
 - **License:** Unlicense (public domain dataset); classical texts are public domain
 - **Attribution:** "Hadith data courtesy of the hadith-api project."
+
+### Hadith Arabic book titles (bundled mapping)
+- **Source:** AhmedBaset/hadith-json (github.com/AhmedBaset/hadith-json)
+- **License:** MIT (data of classical public-domain texts)
+- **Attribution:** "Arabic book titles courtesy of the hadith-json project."
