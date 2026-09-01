@@ -281,7 +281,7 @@ public struct PrayerTimesView: View {
                     .font(.system(size: 15))
                     .foregroundStyle(liveActivityOn ? NoorColor.accentGold : NoorColor.accentPrimary)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Lock-screen countdown")
+                    Text("Live countdown")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text(liveActivityOn ? "Active — tap to turn off"

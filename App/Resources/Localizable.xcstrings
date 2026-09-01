@@ -1192,40 +1192,6 @@
         }
       }
     },
-    "Live countdown to the next prayer": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "عد تنازلي مباشر للصلاة القادمة"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Live countdown to the next prayer"
-          }
-        }
-      }
-    },
-    "Lock-screen countdown": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "عدّاد على شاشة القفل"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lock-screen countdown"
-          }
-        }
-      }
-    },
     "Madani": {
       "extractionState": "stale",
       "localizations": {
@@ -2547,6 +2513,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Compact (~100 MB)"
+          }
+        }
+      }
+    },
+    "Live countdown": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "العداد المباشر للصلاة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live countdown"
+          }
+        }
+      }
+    },
+    "Lock screen and Dynamic Island": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "على شاشة القفل وفي الجزيرة الديناميكية معًا"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock screen and Dynamic Island"
           }
         }
       }
