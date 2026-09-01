@@ -36,26 +36,41 @@ public struct BookmarkItem: Identifiable, Hashable, Sendable {
 @Observable
 @MainActor
 public final class LibraryStore {
+    /// One instance app-wide — repeated construction spawned repeated
+    /// CloudKit container builds.
+    public static let sharedInstance = try? LibraryStore()
+
     public private(set) var bookmarks: [BookmarkItem] = []
 
-    private let container: ModelContainer
+    /// Built asynchronously: the CloudKit container can block for seconds
+    /// on a signed-in device — doing that in init froze app launch.
+    private var container: ModelContainer?
 
     public init(inMemory: Bool = false) throws {
         if inMemory {
             let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
             container = try ModelContainer(for: Bookmark.self, configurations: configuration)
-        } else if let cloud = try? ModelContainer(
-            for: Bookmark.self,
-            configurations: ModelConfiguration(
-                cloudKitDatabase: .private("iCloud.com.engagendy.Noor"))) {
-            // Bookmarks sync via the user's private iCloud (nothing shared).
-            container = cloud
-        } else {
-            // No iCloud account / entitlement (e.g. macOS dev build): local.
-            let configuration = ModelConfiguration(isStoredInMemoryOnly: false)
-            container = try ModelContainer(for: Bookmark.self, configurations: configuration)
+            refresh()
+            return
         }
-        refresh()
+        Task.detached(priority: .userInitiated) {
+            let built: ModelContainer?
+            if let cloud = try? ModelContainer(
+                for: Bookmark.self,
+                configurations: ModelConfiguration(
+                    cloudKitDatabase: .private("iCloud.com.engagendy.Noor"))) {
+                // Bookmarks sync via the user's private iCloud.
+                built = cloud
+            } else {
+                built = try? ModelContainer(
+                    for: Bookmark.self,
+                    configurations: ModelConfiguration(isStoredInMemoryOnly: false))
+            }
+            await MainActor.run { [weak self] in
+                self?.container = built
+                self?.refresh()
+            }
+        }
     }
 
     /// CloudKit merges arrive in the background — re-read on demand.
@@ -66,6 +81,7 @@ public final class LibraryStore {
     }
 
     public func toggle(surahId: Int, ayah: Int) {
+        guard let container else { return }
         let context = container.mainContext
         if let existing = try? context.fetch(Self.descriptor(surahId: surahId, ayah: ayah)).first {
             context.delete(existing)
@@ -77,6 +93,7 @@ public final class LibraryStore {
     }
 
     public func remove(_ item: BookmarkItem) {
+        guard let container else { return }
         let context = container.mainContext
         for model in (try? context.fetch(Self.descriptor(surahId: item.surahId, ayah: item.ayah))) ?? [] {
             context.delete(model)
@@ -90,6 +107,7 @@ public final class LibraryStore {
     }
 
     private func refresh() {
+        guard let container else { return }
         let all = (try? container.mainContext.fetch(
             FetchDescriptor<Bookmark>(sortBy: [SortDescriptor(\.createdAt, order: .reverse)]))) ?? []
         bookmarks = all.map { BookmarkItem(surahId: $0.surahId, ayah: $0.ayah, createdAt: $0.createdAt) }

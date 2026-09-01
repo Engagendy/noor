@@ -31,7 +31,7 @@ struct MainTabView: View {
     @State private var quranOpenTarget: ReaderTarget?
     @State private var translations = TranslationStore()
     @AppStorage("translation.id") private var translationId = "en.sahih"
-    @State private var library = try? LibraryStore()
+    @State private var library = LibraryStore.sharedInstance
 
     // Prayer settings — observed so adhan notifications reschedule on change.
     @AppStorage("prayer.city") private var cityName = "Makkah"

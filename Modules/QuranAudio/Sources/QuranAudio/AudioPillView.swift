@@ -295,6 +295,7 @@ struct PlaybackModeSheet: View {
                         Button {
                             selectedRate = speed
                             player.rate = Float(speed)
+                            player.persistRate()
                         } label: {
                             Text(verbatim: speed == 1.0 ? "1×" : String(format: "%g×", speed))
                                 .font(.system(size: 13, weight: .semibold))

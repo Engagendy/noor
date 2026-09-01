@@ -85,8 +85,16 @@ public final class QuranAudioPlayer {
         didSet {
             player?.rate = isPlaying ? rate : 0
             followPlayer?.rate = isPlaying ? rate : 0
-            UserDefaults.standard.set(rate, forKey: "audio.rate")
+            // NO defaults write here: @Observable routes init assignments
+            // through the setter, and a defaults write invalidates every
+            // @AppStorage — with the discarded per-body player inits that
+            // made an infinite render loop. Persisted in persistRate().
         }
+    }
+
+    /// Called by the speed UI after a deliberate change.
+    public func persistRate() {
+        UserDefaults.standard.set(rate, forKey: "audio.rate")
     }
     private var sleepTimer: Timer?
 
