@@ -273,6 +273,73 @@ struct PlaybackModeSheet: View {
             .scrollContentBackground(.hidden)
             .background(NoorColor.bgPrimary)
             .safeAreaInset(edge: .bottom) {
+              VStack(spacing: 10) {
+                // Playback speed
+                HStack(spacing: 8) {
+                    Image(systemName: "speedometer")
+                        .font(.system(size: 14))
+                        .foregroundStyle(NoorColor.inkSecondary)
+                    ForEach([0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { speed in
+                        let isOn = abs(Double(player.rate) - speed) < 0.01
+                        Button {
+                            player.rate = Float(speed)
+                        } label: {
+                            Text(verbatim: speed == 1.0 ? "1×" : String(format: "%g×", speed))
+                                .font(.system(size: 13, weight: .semibold))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(isOn ? NoorColor.accentPrimary : NoorColor.bgElevated))
+                                .foregroundStyle(isOn ? NoorColor.bgPrimary : NoorColor.inkPrimary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Spacer()
+                }
+                // Sleep timer
+                HStack(spacing: 8) {
+                    Image(systemName: "moon.zzz")
+                        .font(.system(size: 14))
+                        .foregroundStyle(NoorColor.inkSecondary)
+                    ForEach([15, 30, 60], id: \.self) { minutes in
+                        Button {
+                            player.setSleepTimer(minutes: minutes)
+                        } label: {
+                            Text(verbatim: "\(minutes)")
+                                .font(.system(size: 13, weight: .semibold))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(NoorColor.bgElevated))
+                                .foregroundStyle(NoorColor.inkPrimary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Button {
+                        player.stopAfterSurah.toggle()
+                    } label: {
+                        Text("End of surah")
+                            .font(.system(size: 13, weight: .semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(player.stopAfterSurah ? NoorColor.accentPrimary : NoorColor.bgElevated))
+                            .foregroundStyle(player.stopAfterSurah ? NoorColor.bgPrimary : NoorColor.inkPrimary)
+                    }
+                    .buttonStyle(.plain)
+                    if let deadline = player.sleepDeadline {
+                        Button {
+                            player.setSleepTimer(minutes: nil)
+                        } label: {
+                            HStack(spacing: 3) {
+                                Text(deadline, style: .timer)
+                                    .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 12))
+                            }
+                            .foregroundStyle(NoorColor.accentGold)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Spacer()
+                }
                 Button {
                     showMemorize = true
                 } label: {
@@ -293,8 +360,9 @@ struct PlaybackModeSheet: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .padding(16)
-                .background(NoorColor.bgPrimary)
+              }
+              .padding(16)
+              .background(NoorColor.bgPrimary)
             }
             .sheet(isPresented: $showMemorize) {
                 MemorizeRangeSheet(player: player)

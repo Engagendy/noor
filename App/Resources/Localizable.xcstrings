@@ -2415,6 +2415,22 @@
           }
         }
       }
+    },
+    "End of surah": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نهاية السورة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End of surah"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

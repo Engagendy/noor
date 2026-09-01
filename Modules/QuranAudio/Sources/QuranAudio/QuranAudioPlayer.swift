@@ -76,13 +76,47 @@ public final class QuranAudioPlayer {
     /// surah*1_000_000 + ayah*1_000 + wordNumber while following, else nil.
     public private(set) var recitingWordKey: Int?
     public private(set) var isFollowAlong = false
+
+    // Sleep timer + playback rate.
+    public private(set) var sleepDeadline: Date?
+    public var stopAfterSurah = false
+    public var rate: Float = 1.0 {
+        didSet {
+            player?.rate = isPlaying ? rate : 0
+            followPlayer?.rate = isPlaying ? rate : 0
+            UserDefaults.standard.set(rate, forKey: "audio.rate")
+        }
+    }
+    private var sleepTimer: Timer?
+
+    /// Arms (or clears, with nil) the sleep timer.
+    public func setSleepTimer(minutes: Int?) {
+        sleepTimer?.invalidate()
+        sleepTimer = nil
+        guard let minutes else {
+            sleepDeadline = nil
+            return
+        }
+        let deadline = Date().addingTimeInterval(TimeInterval(minutes * 60))
+        sleepDeadline = deadline
+        sleepTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(minutes * 60),
+                                          repeats: false) { [weak self] _ in
+            Task { @MainActor in
+                self?.sleepDeadline = nil
+                self?.stop()
+            }
+        }
+    }
     /// Next ayah pre-enqueued in the queue player — the hand-off happens
     /// inside AVFoundation, so there is no fetch-then-swap pause.
     private var queuedNext: (item: AVPlayerItem, ref: Reference)?
     private var endObserver: NSObjectProtocol?
     private var commandsConfigured = false
 
-    public init() {}
+    public init() {
+        let stored = UserDefaults.standard.float(forKey: "audio.rate")
+        if stored > 0 { rate = stored }
+    }
 
     public func play(surah: Int, ayahCount: Int, from ayah: Int, title: String,
                      arabicTitle: String? = nil, pageEndAyah: Int? = nil) {
@@ -146,18 +180,20 @@ public final class QuranAudioPlayer {
 
     public func togglePlayPause() {
         if isFollowAlong, let followPlayer {
-            if isPlaying { followPlayer.pause() } else { followPlayer.play() }
+            if isPlaying { followPlayer.pause() } else { followPlayer.play(); followPlayer.rate = rate }
             isPlaying.toggle()
             updateNowPlaying()
             return
         }
         guard let player else { return }
-        if isPlaying { player.pause() } else { player.play() }
+        if isPlaying { player.pause() } else { player.play(); player.rate = rate }
         isPlaying.toggle()
         updateNowPlaying()
     }
 
     public func stop() {
+        setSleepTimer(minutes: nil)
+        stopAfterSurah = false
         stopFollowAlong()
         player?.pause()
         player?.removeAllItems()
@@ -176,6 +212,10 @@ public final class QuranAudioPlayer {
         }
         if current.ayah < ayahCount {
             playAyah(Reference(surah: current.surah, ayah: current.ayah + 1))
+            return
+        }
+        if stopAfterSurah {
+            stop()
             return
         }
         // End of surah: in continuous mode, flow into the next surah.
@@ -228,6 +268,7 @@ public final class QuranAudioPlayer {
             Task { @MainActor in self?.followTick(ms: Int(time.seconds * 1000), surah: surah) }
         }
         avPlayer.play()
+        avPlayer.rate = rate
         isPlaying = true
         updateNowPlaying()
         return true
@@ -306,6 +347,7 @@ public final class QuranAudioPlayer {
         }
         installEndObserver()
         player?.play()
+        player?.rate = rate
         isPlaying = true
         updateNowPlaying()
         enqueueNextIfNeeded()
