@@ -1,5 +1,8 @@
 import DesignSystem
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Compact floating player pill (design 1c): reciter, ayah reference,
 /// previous/play/next, stop. Shown over the reader while audio plays.
@@ -31,11 +34,7 @@ public struct AudioPillView: View {
                 // the process language, breaking RTL — custom sheet instead).
                 Button { showReciterPicker = true } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: "person.wave.2")
-                            .font(.system(size: 15))
-                            .foregroundStyle(NoorColor.accentPrimary)
-                            .frame(width: 38, height: 38)
-                            .background(Circle().fill(NoorColor.accentPrimary.opacity(0.15)))
+                        ReciterAvatar(reciter: player.reciter, size: 38)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(verbatim: player.reciter.displayName(arabicUI: isArabicUI))
                                 .font(.system(size: 14, weight: .semibold))
@@ -152,9 +151,10 @@ public struct ReciterPickerSheet: View {
                     dismiss()
                 } label: {
                     HStack(spacing: 12) {
+                        ReciterAvatar(reciter: reciter, size: 38)
                         if !reciter.flag.isEmpty {
                             Text(verbatim: reciter.flag)
-                                .font(.system(size: 18))
+                                .font(.system(size: 15))
                         }
                         Text(verbatim: reciter.displayName(arabicUI: isArabicUI))
                             .font(.system(size: 16, weight: selection == reciter.rawValue ? .semibold : .regular))
@@ -386,7 +386,7 @@ struct PlaybackModeSheet: View {
                 }
             }
         }
-        .presentationDetents([.height(260), .medium])
+        .presentationDetents([.large])
     }
 }
 
@@ -454,5 +454,55 @@ struct MemorizeRangeSheet: View {
             }
         }
         .presentationDetents([.medium])
+    }
+}
+
+
+/// Reciter avatar: a bundled image named after the reciter's rawValue
+/// when present (licensed photos can be dropped in later), else a
+/// deterministic colored monogram of the Arabic initial.
+public struct ReciterAvatar: View {
+    let reciter: Reciter
+    let size: CGFloat
+
+    public init(reciter: Reciter, size: CGFloat) {
+        self.reciter = reciter
+        self.size = size
+    }
+
+    private var initialLetter: String {
+        String(reciter.arabicName.trimmingCharacters(in: .whitespaces).prefix(1))
+    }
+
+    private var hue: Double {
+        let value = reciter.rawValue.unicodeScalars.reduce(0) { $0 + Int($1.value) }
+        return Double(value % 360) / 360.0
+    }
+
+    public var body: some View {
+        #if canImport(UIKit)
+        if let image = UIImage(named: "reciter_\(reciter.rawValue)") {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: size, height: size)
+                .clipShape(Circle())
+        } else {
+            monogram
+        }
+        #else
+        monogram
+        #endif
+    }
+
+    private var monogram: some View {
+        ZStack {
+            Circle()
+                .fill(Color(hue: hue, saturation: 0.32, brightness: 0.52))
+            Text(verbatim: initialLetter)
+                .font(.system(size: size * 0.48, weight: .semibold))
+                .foregroundStyle(.white)
+        }
+        .frame(width: size, height: size)
     }
 }
