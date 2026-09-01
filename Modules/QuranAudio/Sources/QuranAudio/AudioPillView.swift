@@ -159,7 +159,16 @@ public struct ReciterPickerSheet: View {
                         Text(verbatim: reciter.displayName(arabicUI: isArabicUI))
                             .font(.system(size: 16, weight: selection == reciter.rawValue ? .semibold : .regular))
                             .foregroundStyle(NoorColor.inkPrimary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        if reciter.qfTimingId != nil {
+                            // Supports word-by-word follow-along.
+                            Text(isArabicUI ? "تتبع الكلمات" : "word tracking")
+                                .font(.system(size: 10, weight: .semibold))
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(NoorColor.accentPrimary.opacity(0.12)))
+                                .foregroundStyle(NoorColor.accentPrimary)
+                        }
+                        Spacer(minLength: 4)
                         if selection == reciter.rawValue {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 14, weight: .semibold))

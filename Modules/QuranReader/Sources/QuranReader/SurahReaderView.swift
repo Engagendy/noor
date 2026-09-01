@@ -166,6 +166,13 @@ public struct SurahReaderView: View {
             persistPosition(page: page)
         }
         .onAppear {
+            if ProcessInfo.processInfo.environment["NOOR_TEST_WBW"] == "1" {
+                wordByWord = true
+                modeRaw = DisplayMode.ayah.rawValue
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    if let first = viewModel.verses.first { startPlayback(from: first) }
+                }
+            }
             // Opening a page counts even without swiping (resume accuracy
             // + khatmah credit for single-page sessions).
             if mode == .ayah {

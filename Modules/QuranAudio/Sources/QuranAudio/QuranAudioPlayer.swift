@@ -73,6 +73,7 @@ public final class QuranAudioPlayer {
     private var followPlayer: AVPlayer?
     private var followObserver: Any?
     private var followTimings: SurahTimings?
+    private var followReciterId = WordTimingService.alafasyReciterId
     /// surah*1_000_000 + ayah*1_000 + wordNumber while following, else nil.
     public private(set) var recitingWordKey: Int?
     public private(set) var isFollowAlong = false
@@ -249,6 +250,7 @@ public final class QuranAudioPlayer {
         configureSessionAndCommands()
         guard let timings = await WordTimingService.timings(reciter: qfReciterId, surah: surah)
         else { return false }
+        followReciterId = qfReciterId
         // Play immediately: cached file if present, else STREAM the remote
         // (long surahs run to ~100 MB — downloading first meant silence).
         let playURL: URL
@@ -297,9 +299,23 @@ public final class QuranAudioPlayer {
                 updateNowPlaying()
             }
         }
-        // Finished the surah?
+        // Finished the surah: flow into the next one (continuous mode),
+        // exactly like ayah playback does.
         if let last = timings.verses.last, ms >= last.toMs {
-            stop()
+            guard mode == .continuous, surah < 114,
+                  let next = surahAdvance?(surah + 1) else {
+                stop()
+                return
+            }
+            let reciterId = followReciterId
+            Task { [weak self] in
+                guard let self else { return }
+                let ok = await self.playFollowAlong(
+                    surah: surah + 1, ayahCount: next.ayahCount, from: 1,
+                    title: next.title, arabicTitle: next.arabicTitle,
+                    qfReciterId: reciterId)
+                if !ok { self.stop() }
+            }
         }
     }
 
