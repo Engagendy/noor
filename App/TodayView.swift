@@ -15,6 +15,11 @@ struct TodayView: View {
     let openPage: (Int) -> Void
     /// Opens the reader at (surah, ayah) to resume listening.
     let openListening: (Int, Int) -> Void
+
+    private func openListeningNoAutoplay(_ surah: Int) {
+        UserDefaults.standard.set(false, forKey: "pending.autoplay")
+        openListening(surah, 1)
+    }
     /// Switches to the Athkar tab (Daily Dhikr card).
     let openAthkar: () -> Void
     @State private var athkar: [DhikrCategory] = []
@@ -110,6 +115,7 @@ struct TodayView: View {
                 if inRamadan(context.date) {
                     ramadanCard(now: context.date)
                 }
+                jumuahCard(now: context.date)
                 continueReadingCard
                 khatmahCard(now: context.date)
                 TabView(selection: $cardPage) {
@@ -659,6 +665,45 @@ struct TodayView: View {
             .padding(.vertical, 4)
             .background(Capsule().fill(NoorColor.accentGold.opacity(0.12)))
             .accessibilityLabel("Reading streak: \(streak) days")
+        }
+    }
+
+    /// Friday: Surat al-Kahf + salawat reminder (sunnah of the day).
+    @ViewBuilder
+    private func jumuahCard(now: Date) -> some View {
+        if Calendar(identifier: .gregorian).component(.weekday, from: now) == 6 {
+            Button {
+                openListeningNoAutoplay(18)
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 16))
+                        .foregroundStyle(NoorColor.accentGold)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(verbatim: isArabicUI ? "جمعة مباركة" : "Blessed Jumu'ah")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(NoorColor.accentGold)
+                        Text(verbatim: isArabicUI
+                             ? "سورة الكهف وكثرة الصلاة على النبي ﷺ"
+                             : "Surat al-Kahf and abundant salawat upon the Prophet ﷺ")
+                            .font(.system(size: 13.5))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                    }
+                    Spacer()
+                    Text(isArabicUI ? "اقرأ الكهف" : "Read al-Kahf")
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(NoorColor.bgPrimary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(NoorColor.accentPrimary))
+                }
+                .padding(14)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .background(IslamicLattice(tint: NoorColor.accentGold.opacity(0.05), tile: 54)
+                .clipShape(RoundedRectangle(cornerRadius: 18)))
+            .noorCard()
         }
     }
 
