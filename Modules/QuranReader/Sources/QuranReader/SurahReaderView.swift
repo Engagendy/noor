@@ -161,21 +161,23 @@ public struct SurahReaderView: View {
             withAnimation(.easeInOut(duration: 0.3)) { currentPage = page }
         }
         .onChange(of: currentPage) { _, page in
-            guard page > 0, mode != .ayah else { return }
-            // Direct defaults writes: the reader must NOT observe these via
-            // @AppStorage or every swipe re-renders the whole pager.
-            let defaults = UserDefaults.standard
-            if page > defaults.integer(forKey: "khatmah.maxPage") {
-                defaults.set(page, forKey: "khatmah.maxPage")
+            guard mode != .ayah else { return }
+            persistPosition(page: page)
+        }
+        .onAppear {
+            // Opening a page counts even without swiping (resume accuracy
+            // + khatmah credit for single-page sessions).
+            if mode == .ayah {
+                persistPosition(page: viewModel.page(surahId: surahId, ayah: scrollToAyah ?? 1))
+            } else {
+                persistPosition(page: currentPage)
             }
-            defaults.set(page, forKey: "reader.lastPage")
-            // Khatmah frontier: only SEQUENTIAL reading advances the plan —
-            // viewing the next-unread page marks it read. Jumping around
-            // (search, bookmarks, browsing) never inflates progress.
-            let frontier = defaults.integer(forKey: "khatmah.page")
-            if frontier > 0, page == frontier {
-                defaults.set(page + 1, forKey: "khatmah.page")
-            }
+        }
+        .onChange(of: selectedKey) { _, key in
+            // Ayah-list mode: selecting an ayah pins the resume point to
+            // its exact page.
+            guard mode == .ayah, let key else { return }
+            persistPosition(page: viewModel.page(surahId: key / 1000, ayah: key % 1000))
         }
         .sheet(item: $actionVerses) { group in
             AyahActionsSheet(
@@ -562,6 +564,27 @@ public struct SurahReaderView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Ayah \(verse.ayah)")
         .accessibilityValue(verse.text)
+    }
+
+    /// Direct defaults writes: the reader must NOT observe these via
+    /// @AppStorage or every swipe re-renders the whole pager.
+    private func persistPosition(page: Int?) {
+        guard let page, page > 0 else { return }
+        let defaults = UserDefaults.standard
+        if page > defaults.integer(forKey: "khatmah.maxPage") {
+            defaults.set(page, forKey: "khatmah.maxPage")
+        }
+        defaults.set(page, forKey: "reader.lastPage")
+        if let surah = viewModel.surah(forPage: page) {
+            defaults.set(surah.id, forKey: "reader.lastSurah")
+        }
+        // Khatmah frontier: only SEQUENTIAL reading advances the plan —
+        // viewing the next-unread page marks it read. Jumping around
+        // (search, bookmarks, browsing) never inflates progress.
+        let frontier = defaults.integer(forKey: "khatmah.page")
+        if frontier > 0, page == frontier {
+            defaults.set(page + 1, forKey: "khatmah.page")
+        }
     }
 
     private func startPlayback(from verse: Verse) {

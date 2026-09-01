@@ -298,11 +298,14 @@ extension QuranTab {
         // Page requests resolve to the exact (surah, ayah) that page starts
         // with, so the reader lands on that precise mushaf page.
         if let page = openPageRequest {
+            // Keep the request until the structure is loaded (onAppear
+            // retries) — consuming early dropped taps on cold tab switches.
+            guard let structure else { return }
             openPageRequest = nil
-            if let start = structure?.pageStarts.first(where: { $0.idx == page }) {
+            if let start = structure.pageStarts.first(where: { $0.idx == page }) {
                 open(start.surahId, start.ayah)
-                return
             }
+            return
         }
         guard let request = openRequest else { return }
         openRequest = nil

@@ -1,2355 +1,2377 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "%@  %@%@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@  %2$@%3$@"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@  %@%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@  %2$@%3$@"
           }
         }
       }
     },
-    "%@ · %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@ · %2$@"
+    "%@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
           }
         }
       }
     },
-    "%@ · manual": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ · يدوي"
+    "%@ · manual" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · يدوي"
           }
         }
       }
     },
-    "%@ −%@:%@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@ −%2$@:%3$@"
+    "%@ −%@:%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ −%2$@:%3$@"
           }
         }
       }
     },
-    "½ Hizb": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "نصف الحزب"
-          }
-        }
-      }
-    },
-    "¼ Hizb": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ربع الحزب"
-          }
-        }
-      }
-    },
-    "¾ Hizb": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ثلاثة أرباع الحزب"
-          }
-        }
-      }
-    },
-    "About": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "حول التطبيق"
-          }
-        }
-      }
-    },
-    "Adhan (Azeez)": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أذان (عاقب عزيز)"
+    "%lld of 604 pages · ~350 MB total" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld من ٦٠٤ صفحات · نحو ٣٥٠ م.ب"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adhan (Azeez)"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld of 604 pages · ~350 MB total"
           }
         }
       }
     },
-    "Adhan (Makkah)": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أذان الحرم المكي"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adhan (Makkah)"
+    "½ Hizb" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نصف الحزب"
           }
         }
       }
     },
-    "Adhan (short)": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أذان قصير"
+    "¼ Hizb" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ربع الحزب"
           }
         }
       }
     },
-    "Adhan notifications": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "إشعارات الأذان"
+    "¾ Hizb" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ثلاثة أرباع الحزب"
           }
         }
       }
     },
-    "All prayers done for today": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "انقضت صلوات اليوم"
+    "About" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حول التطبيق"
           }
         }
       }
     },
-    "Allow location access in Settings, or pick a city manually.": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اسمح بالوصول إلى الموقع من الإعدادات، أو اختر مدينة يدويًا."
-          }
-        }
-      }
-    },
-    "Appearance": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "المظهر"
-          }
-        }
-      }
-    },
-    "As-salamu alaykum": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "السلام عليكم"
-          }
-        }
-      }
-    },
-    "Asr": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "العصر"
-          }
-        }
-      }
-    },
-    "Asr madhab": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مذهب العصر"
-          }
-        }
-      }
-    },
-    "Athkar": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الأذكار"
-          }
-        }
-      }
-    },
-    "Audio downloaded": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تم تنزيل الصوت"
-          }
-        }
-      }
-    },
-    "Available offline": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "متاح دون اتصال"
-          }
-        }
-      }
-    },
-    "Ayah %lld": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الآية %lld"
-          }
-        }
-      }
-    },
-    "Ayah actions": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "إجراءات الآية"
-          }
-        }
-      }
-    },
-    "Ayah by ayah": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "آية آية"
-          }
-        }
-      }
-    },
-    "Ayat": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "آيات"
-          }
-        }
-      }
-    },
-    "Bearing from true north": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الاتجاه من الشمال الحقيقي"
-          }
-        }
-      }
-    },
-    "Bell": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تنبيه"
-          }
-        }
-      }
-    },
-    "Bookmark": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "علامة"
-          }
-        }
-      }
-    },
-    "Bookmarks": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "العلامات"
-          }
-        }
-      }
-    },
-    "Calculation method": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "طريقة الحساب"
-          }
-        }
-      }
-    },
-    "Check your connection and try again. (%@)": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تحقق من الاتصال وحاول مجددًا. (%@)"
-          }
-        }
-      }
-    },
-    "City": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "المدينة"
-          }
-        }
-      }
-    },
-    "City name": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اسم المدينة"
-          }
-        }
-      }
-    },
-    "COMING UP IN ISLAMIC HISTORY": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "قريبًا في التاريخ الإسلامي"
+    "Adhan (Azeez)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذان (عاقب عزيز)"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "COMING UP IN ISLAMIC HISTORY"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adhan (Azeez)"
           }
         }
       }
     },
-    "Connect to the internet once to download this page.": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اتصل بالإنترنت مرة واحدة لتنزيل هذه الصفحة."
-          }
-        }
-      }
-    },
-    "CONTINUE READING": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "متابعة القراءة"
-          }
-        }
-      }
-    },
-    "Continuous": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "متواصل"
-          }
-        }
-      }
-    },
-    "Copy": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "نسخ"
-          }
-        }
-      }
-    },
-    "Couldn't get your location": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تعذر تحديد موقعك"
-          }
-        }
-      }
-    },
-    "DAILY AYAH": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "آية اليوم"
-          }
-        }
-      }
-    },
-    "DAILY DHIKR": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ذكر اليوم"
-          }
-        }
-      }
-    },
-    "Dark (Tahajjud)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "داكن (تهجّد)"
-          }
-        }
-      }
-    },
-    "Dhuhr": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الظهر"
-          }
-        }
-      }
-    },
-    "Done": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تم"
-          }
-        }
-      }
-    },
-    "Download for offline": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تنزيل للاستخدام دون اتصال"
-          }
-        }
-      }
-    },
-    "Download surah audio": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تنزيل صوت السورة"
-          }
-        }
-      }
-    },
-    "Downloading %lld/%lld…": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "جارٍ التنزيل %1$lld/%2$lld…"
-          }
-        }
-      }
-    },
-    "Downloading tafsir %lld/114…": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "جارٍ تنزيل التفسير %lld/114…"
-          }
-        }
-      }
-    },
-    "Dubai": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "دبي"
-          }
-        }
-      }
-    },
-    "Egyptian General Authority": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الهيئة المصرية العامة"
-          }
-        }
-      }
-    },
-    "EVENING ATHKAR": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أذكار المساء"
-          }
-        }
-      }
-    },
-    "Facing the qibla": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أنت باتجاه القبلة"
-          }
-        }
-      }
-    },
-    "Fajr": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الفجر"
-          }
-        }
-      }
-    },
-    "Free forever — fi sabilillah. No ads, no tracking.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مجاني للأبد — في سبيل الله. بلا إعلانات، بلا تتبع."
-          }
-        }
-      }
-    },
-    "Hanafi": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الحنفي"
-          }
-        }
-      }
-    },
-    "Hizb %lld": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الحزب %lld"
-          }
-        }
-      }
-    },
-    "Hizb quarters": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أرباع الحزب"
-          }
-        }
-      }
-    },
-    "Hizb start": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "بداية الحزب"
-          }
-        }
-      }
-    },
-    "Isha": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "العشاء"
-          }
-        }
-      }
-    },
-    "ISNA (North America)": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "إسنا (أمريكا الشمالية)"
-          }
-        }
-      }
-    },
-    "It's time for %@": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "حان وقت %@"
-          }
-        }
-      }
-    },
-    "Juz": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الأجزاء"
-          }
-        }
-      }
-    },
-    "Juz %lld": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الجزء %lld"
-          }
-        }
-      }
-    },
-    "Juz %lld · Page %lld": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الجزء %1$lld · صفحة %2$lld"
-          }
-        }
-      }
-    },
-    "Khatmah · page %@ of 604": {},
-    "Khatmah · page %lld of 604": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الختمة · صفحة %lld من ٦٠٤"
-          }
-        }
-      }
-    },
-    "Language": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اللغة"
-          }
-        }
-      }
-    },
-    "Larger": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أكبر"
-          }
-        }
-      }
-    },
-    "Light (Mushaf)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "فاتح (مصحف)"
-          }
-        }
-      }
-    },
-    "Madani": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مدنية"
-          }
-        }
-      }
-    },
-    "Maghrib": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "المغرب"
-          }
-        }
-      }
-    },
-    "Makki": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مكية"
-          }
-        }
-      }
-    },
-    "Moonsighting Committee": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "لجنة رؤية الهلال"
-          }
-        }
-      }
-    },
-    "MORNING ATHKAR": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أذكار الصباح"
-          }
-        }
-      }
-    },
-    "Mushaf": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مصحف"
-          }
-        }
-      }
-    },
-    "Mushaf (continuous)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مصحف (متصل)"
-          }
-        }
-      }
-    },
-    "Mushaf symbols": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "رموز المصحف"
-          }
-        }
-      }
-    },
-    "Muslim World League": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "رابطة العالم الإسلامي"
-          }
-        }
-      }
-    },
-    "My location": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "موقعي"
-          }
-        }
-      }
-    },
-    "Nawafil": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "النوافل"
+    "Adhan (Madinah)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذان الحرم النبوي"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nawafil"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adhan (Madinah)"
           }
         }
       }
     },
-    "Near %@": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "قرب %@"
-          }
-        }
-      }
-    },
-    "next · %@": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "التالية · %@"
-          }
-        }
-      }
-    },
-    "Notification": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الإشعار"
-          }
-        }
-      }
-    },
-    "Notification sound": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "صوت الإشعار"
-          }
-        }
-      }
-    },
-    "Notifications are scheduled on your device for the next 12 days and roll forward automatically.": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تُجدول الإشعارات على جهازك للأيام الاثني عشر القادمة وتتجدد تلقائيًا."
-          }
-        }
-      }
-    },
-    "OK": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "حسنًا"
-          }
-        }
-      }
-    },
-    "ON THIS DAY": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "في مثل هذا اليوم"
-          }
-        }
-      }
-    },
-    "Page (Madani print)": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "صفحة (طبعة المدينة)"
-          }
-        }
-      }
-    },
-    "Page %lld": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "صفحة %lld"
-          }
-        }
-      }
-    },
-    "Page font unavailable": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "خط الصفحة غير متاح"
-          }
-        }
-      }
-    },
-    "Pause marks (علامات الوقف)": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "علامات الوقف"
-          }
-        }
-      }
-    },
-    "Play from here": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "التشغيل من هنا"
-          }
-        }
-      }
-    },
-    "Play recitation": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تشغيل التلاوة"
-          }
-        }
-      }
-    },
-    "Play surah": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تشغيل السورة"
-          }
-        }
-      }
-    },
-    "Playback mode": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "وضع التشغيل"
-          }
-        }
-      }
-    },
-    "Point the arrow at the Kaaba": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "وجّه السهم نحو الكعبة"
-          }
-        }
-      }
-    },
-    "Prayer": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الصلاة"
-          }
-        }
-      }
-    },
-    "Prayer Settings": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "إعدادات الصلاة"
-          }
-        }
-      }
-    },
-    "Prayer Times": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مواقيت الصلاة"
-          }
-        }
-      }
-    },
-    "Preparing page %lld…": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "جارٍ تجهيز الصفحة %lld…"
-          }
-        }
-      }
-    },
-    "Qibla": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "القبلة"
-          }
-        }
-      }
-    },
-    "Quran": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "القرآن"
-          }
-        }
-      }
-    },
-    "Quran text size": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "حجم نص القرآن"
-          }
-        }
-      }
-    },
-    "Reading mode": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "وضع القراءة"
-          }
-        }
-      }
-    },
-    "Reciter": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "القارئ"
-          }
-        }
-      }
-    },
-    "Repeat %@×": {},
-    "Repeat %lld×": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "يُكرر %lld مرة"
-          }
-        }
-      }
-    },
-    "Repeat ayah": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تكرار الآية"
-          }
-        }
-      }
-    },
-    "Reset": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "إعادة الضبط"
-          }
-        }
-      }
-    },
-    "Restart Noor to apply the language change.": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أعد تشغيل نور لتطبيق تغيير اللغة."
-          }
-        }
-      }
-    },
-    "Search athkar": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ابحث في الأذكار"
-          }
-        }
-      }
-    },
-    "Search reciters": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ابحث عن قارئ"
+    "Adhan (Makkah)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذان الحرم المكي"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search reciters"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adhan (Makkah)"
           }
         }
       }
     },
-    "Section": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "القسم"
-          }
-        }
-      }
-    },
-    "Settings": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الإعدادات"
-          }
-        }
-      }
-    },
-    "Shafi'i, Maliki, Hanbali": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الشافعي والمالكي والحنبلي"
-          }
-        }
-      }
-    },
-    "Share": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مشاركة"
-          }
-        }
-      }
-    },
-    "Share image": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مشاركة الصورة"
-          }
-        }
-      }
-    },
-    "Show translation": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "عرض الترجمة"
-          }
-        }
-      }
-    },
-    "Silent": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "صامت"
-          }
-        }
-      }
-    },
-    "SLEEP ATHKAR": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أذكار النوم"
-          }
-        }
-      }
-    },
-    "Smaller": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أصغر"
-          }
-        }
-      }
-    },
-    "Sunrise": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الشروق"
-          }
-        }
-      }
-    },
-    "Surah": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "السور"
-          }
-        }
-      }
-    },
-    "Surah name or 2:255": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اسم السورة أو 2:255"
-          }
-        }
-      }
-    },
-    "Surah, word, or 2:255": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "سورة، كلمة، أو 2:255"
-          }
-        }
-      }
-    },
-    "System": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "لغة النظام"
-          }
-        }
-      }
-    },
-    "Tafsir": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "التفسير"
-          }
-        }
-      }
-    },
-    "Tafsir — %lld:%lld": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "التفسير — %1$lld:%2$lld"
-          }
-        }
-      }
-    },
-    "Tafsir unavailable": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "التفسير غير متاح"
-          }
-        }
-      }
-    },
-    "Tajweed Guide": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "دليل التجويد"
-          }
-        }
-      }
-    },
-    "Tajweed rules (أحكام التجويد)": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أحكام التجويد"
-          }
-        }
-      }
-    },
-    "Tasbih": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "السبحة"
-          }
-        }
-      }
-    },
-    "This page only": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "هذه الصفحة فقط"
-          }
-        }
-      }
-    },
-    "Today": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اليوم"
-          }
-        }
-      }
-    },
-    "Turn left": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اذهب نحو اليسار"
-          }
-        }
-      }
-    },
-    "Turn right": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اذهب نحو اليمين"
-          }
-        }
-      }
-    },
-    "Turn until the arrow points up": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "در حتى يشير السهم إلى الأعلى"
-          }
-        }
-      }
-    },
-    "Umm al-Qura (Makkah)": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أم القرى (مكة)"
-          }
-        }
-      }
-    },
-    "University of Karachi": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "جامعة كراتشي"
-          }
-        }
-      }
-    },
-    "Use my current location": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "استخدام موقعي الحالي"
-          }
-        }
-      }
-    },
-    "Using current location": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "يُستخدم الموقع الحالي"
-          }
-        }
-      }
-    },
-    "Voluntary prayers and their times": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "نوافل الصلاة وأوقاتها"
+    "Adhan (melodic)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذان مجوّد"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Voluntary prayers and their times"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adhan (melodic)"
           }
         }
       }
     },
-    "Word by word": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "كلمة كلمة"
+    "Adhan (short)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذان قصير"
           }
         }
       }
     },
-    "Your bookmarks will gather here.": {
-      "extractionState": "stale",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ستتجمع علاماتك هنا."
+    "Adhan notifications" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إشعارات الأذان"
           }
         }
       }
     },
-    "Adhan sound": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "صوت الأذان"
+    "Adhan sound" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صوت الأذان"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adhan sound"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adhan sound"
           }
         }
       }
     },
-    "Tap a sound to hear it": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اضغط على أي صوت لسماعه"
+    "All 604 pages are offline" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جميع الصفحات الـ٦٠٤ متاحة دون إنترنت"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap a sound to hear it"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All 604 pages are offline"
           }
         }
       }
     },
-    "Adhan (Madinah)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أذان الحرم النبوي"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adhan (Madinah)"
+    "All prayers done for today" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انقضت صلوات اليوم"
           }
         }
       }
     },
-    "Adhan (melodic)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أذان مجوّد"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adhan (melodic)"
+    "Allow location access in Settings, or pick a city manually." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسمح بالوصول إلى الموقع من الإعدادات، أو اختر مدينة يدويًا."
           }
         }
       }
     },
-    "Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تُجدول الإشعارات على جهازك للأيام الاثني عشر القادمة وتتجدد تلقائيًا. يمكنك تفعيل أو إيقاف كل صلاة على حدة من زر الجرس في شاشة الصلاة."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen."
+    "Appearance" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المظهر"
           }
         }
       }
     },
-    "KHATMAH PLAN": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "خطة الختمة"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "KHATMAH PLAN"
+    "As-salamu alaykum" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السلام عليكم"
           }
         }
       }
     },
-    "Start a khatmah plan": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ابدأ خطة ختمة"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start a khatmah plan"
+    "Asr" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العصر"
           }
         }
       }
     },
-    "Finish the Quran in": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أتم القرآن خلال"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Finish the Quran in"
+    "Asr madhab" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مذهب العصر"
           }
         }
       }
     },
-    "Start plan": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ابدأ الخطة"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start plan"
+    "Athkar" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأذكار"
           }
         }
       }
     },
-    "Stop plan": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "إيقاف الخطة"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop plan"
+    "Audio downloaded" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم تنزيل الصوت"
           }
         }
       }
     },
-    "DAILY HADITH": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "حديث اليوم"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DAILY HADITH"
+    "Available offline" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متاح دون اتصال"
           }
         }
       }
     },
-    "Hadith": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الحديث"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hadith"
+    "Ayah %lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآية %lld"
           }
         }
       }
     },
-    "Names of Allah": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أسماء الله الحسنى"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Names of Allah"
+    "Ayah actions" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إجراءات الآية"
           }
         }
       }
     },
-    "Hijri Calendar": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "التقويم الهجري"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hijri Calendar"
+    "Ayah by ayah" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "آية آية"
           }
         }
       }
     },
-    "Zakat Calculator": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "حاسبة الزكاة"
+    "Ayahs %lld to %lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآيات %lld إلى %lld"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zakat Calculator"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayahs %lld to %lld"
           }
         }
       }
     },
-    "Tools": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أدوات"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tools"
+    "Ayat" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "آيات"
           }
         }
       }
     },
-    "Your currency": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "بعملتك المحلية"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your currency"
+    "Bearing from true north" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاتجاه من الشمال الحقيقي"
           }
         }
       }
     },
-    "Gold price per gram": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "سعر جرام الذهب"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gold price per gram"
+    "Bell" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنبيه"
           }
         }
       }
     },
-    "Enter today's local gold price — the nisab is the value of 85 grams of gold.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أدخل سعر جرام الذهب اليوم — النصاب هو قيمة ٨٥ جرامًا من الذهب."
+    "Below the nisab — no zakat is due." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أقل من النصاب — لا زكاة عليك."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter today's local gold price — the nisab is the value of 85 grams of gold."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Below the nisab — no zakat is due."
           }
         }
       }
     },
-    "Zakatable wealth": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الأموال الزكوية"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zakatable wealth"
+    "Bookmark" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "علامة"
           }
         }
       }
     },
-    "Cash (in hand and bank)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "النقد (في اليد والبنك)"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cash (in hand and bank)"
+    "Bookmarks" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العلامات"
           }
         }
       }
     },
-    "Gold (grams)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الذهب (بالجرام)"
+    "Business inventory" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عروض التجارة"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gold (grams)"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Business inventory"
           }
         }
       }
     },
-    "Silver (grams)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الفضة (بالجرام)"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Silver (grams)"
+    "Calculation method" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طريقة الحساب"
           }
         }
       }
     },
-    "Investments / shares": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "استثمارات وأسهم"
+    "Cash (in hand and bank)" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النقد (في اليد والبنك)"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Investments / shares"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cash (in hand and bank)"
           }
         }
       }
     },
-    "Business inventory": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "عروض التجارة"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Business inventory"
+    "Check your connection and try again. (%@)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحقق من الاتصال وحاول مجددًا. (%@)"
           }
         }
       }
     },
-    "Money owed to you": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ديون لك عند الناس"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Money owed to you"
+    "City" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المدينة"
           }
         }
       }
     },
-    "Debts due now (subtract)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ديون عليك حالّة (تُخصم)"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Debts due now (subtract)"
+    "City name" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسم المدينة"
           }
         }
       }
     },
-    "Result": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "النتيجة"
+    "COMING UP IN ISLAMIC HISTORY" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قريبًا في التاريخ الإسلامي"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Result"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMING UP IN ISLAMIC HISTORY"
           }
         }
       }
     },
-    "Enter the gold price to compute the nisab.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أدخل سعر الذهب لحساب النصاب."
+    "Compact (~45 MB)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مضغوط (~٤٥ م.ب)"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter the gold price to compute the nisab."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compact (~45 MB)"
           }
         }
       }
     },
-    "Nisab": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "النصاب"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nisab"
+    "Connect to the internet once to download this page." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اتصل بالإنترنت مرة واحدة لتنزيل هذه الصفحة."
           }
         }
       }
     },
-    "Net wealth": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "صافي المال"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Net wealth"
+    "CONTINUE READING" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متابعة القراءة"
           }
         }
       }
     },
-    "Zakat due (2.5%)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الزكاة المستحقة (٢٫٥٪)"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zakat due (2.5%)"
+    "Continuous" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متواصل"
           }
         }
       }
     },
-    "Below the nisab — no zakat is due.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أقل من النصاب — لا زكاة عليك."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Below the nisab — no zakat is due."
+    "Copy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسخ"
           }
         }
       }
     },
-    "Zakat is due when net zakatable wealth has remained at or above the nisab for one full hijri year. This calculator is a guide — consult a scholar for complex cases. All figures stay on your device.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تجب الزكاة إذا بلغ صافي المال النصاب وحال عليه الحول الهجري. هذه الحاسبة للاسترشاد — استشر أهل العلم في الحالات المركبة. جميع الأرقام تبقى على جهازك."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zakat is due when net zakatable wealth has remained at or above the nisab for one full hijri year. This calculator is a guide — consult a scholar for complex cases. All figures stay on your device."
+    "Couldn't get your location" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذر تحديد موقعك"
           }
         }
       }
     },
-    "Sunnah fasting reminders": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تذكير بصيام السنة"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sunnah fasting reminders"
+    "DAILY AYAH" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "آية اليوم"
           }
         }
       }
     },
-    "Hifz mode (hide text)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "وضع الحفظ (إخفاء النص)"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hifz mode (hide text)"
+    "DAILY DHIKR" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ذكر اليوم"
           }
         }
       }
     },
-    "Memorize a range": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "حفظ مقطع"
+    "DAILY HADITH" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حديث اليوم"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Memorize a range"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DAILY HADITH"
           }
         }
       }
     },
-    "From ayah": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "من الآية"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "From ayah"
+    "Dark (Tahajjud)" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "داكن (تهجّد)"
           }
         }
       }
     },
-    "To ayah": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "إلى الآية"
+    "Debts due now (subtract)" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ديون عليك حالّة (تُخصم)"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "To ayah"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Debts due now (subtract)"
           }
         }
       }
     },
-    "Repeat each ayah": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تكرار كل آية"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Repeat each ayah"
+    "Dhuhr" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الظهر"
           }
         }
       }
     },
-    "Start memorizing": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ابدأ الحفظ"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start memorizing"
+    "Done" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم"
           }
         }
       }
     },
-    "Ayahs %lld to %lld": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الآيات %lld إلى %lld"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ayahs %lld to %lld"
+    "Download for offline" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنزيل للاستخدام دون اتصال"
           }
         }
       }
     },
-    "Download full mushaf": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تنزيل المصحف كاملًا"
+    "Download full mushaf" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنزيل المصحف كاملًا"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Download full mushaf"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download full mushaf"
           }
         }
       }
     },
-    "All 604 pages are offline": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "جميع الصفحات الـ٦٠٤ متاحة دون إنترنت"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "All 604 pages are offline"
+    "Download surah audio" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنزيل صوت السورة"
           }
         }
       }
     },
-    "%lld of 604 pages · ~350 MB total": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld من ٦٠٤ صفحات · نحو ٣٥٠ م.ب"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld of 604 pages · ~350 MB total"
+    "Downloading %lld/%lld…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ التنزيل %1$lld/%2$lld…"
           }
         }
       }
     },
-    "Mushaf typeface": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "خط المصحف"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mushaf typeface"
+    "Downloading tafsir %lld/114…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ تنزيل التفسير %lld/114…"
           }
         }
       }
     },
-    "Compact (~45 MB)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مضغوط (~٤٥ م.ب)"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Compact (~45 MB)"
+    "Dubai" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دبي"
           }
         }
       }
     },
-    "Print quality (~350 MB)": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "جودة الطباعة (~٣٥٠ م.ب)"
+    "Edit plan" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل الخطة"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Print quality (~350 MB)"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit plan"
           }
         }
       }
     },
-    "Edit plan": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تعديل الخطة"
+    "Egyptian General Authority" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الهيئة المصرية العامة"
+          }
+        }
+      }
+    },
+    "Enter the gold price to compute the nisab." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل سعر الذهب لحساب النصاب."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit plan"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the gold price to compute the nisab."
+          }
+        }
+      }
+    },
+    "Enter today's local gold price — the nisab is the value of 85 grams of gold." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل سعر جرام الذهب اليوم — النصاب هو قيمة ٨٥ جرامًا من الذهب."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter today's local gold price — the nisab is the value of 85 grams of gold."
+          }
+        }
+      }
+    },
+    "EVENING ATHKAR" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذكار المساء"
+          }
+        }
+      }
+    },
+    "Facing the qibla" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أنت باتجاه القبلة"
+          }
+        }
+      }
+    },
+    "Fajr" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الفجر"
+          }
+        }
+      }
+    },
+    "Finish the Quran in" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أتم القرآن خلال"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish the Quran in"
+          }
+        }
+      }
+    },
+    "Free forever — fi sabilillah. No ads, no tracking." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مجاني للأبد — في سبيل الله. بلا إعلانات، بلا تتبع."
+          }
+        }
+      }
+    },
+    "From ayah" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من الآية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From ayah"
+          }
+        }
+      }
+    },
+    "Gold (grams)" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الذهب (بالجرام)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gold (grams)"
+          }
+        }
+      }
+    },
+    "Gold price per gram" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سعر جرام الذهب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gold price per gram"
+          }
+        }
+      }
+    },
+    "Hadith" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحديث"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hadith"
+          }
+        }
+      }
+    },
+    "Hanafi" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحنفي"
+          }
+        }
+      }
+    },
+    "Hifz mode (hide text)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وضع الحفظ (إخفاء النص)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hifz mode (hide text)"
+          }
+        }
+      }
+    },
+    "Hijri Calendar" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التقويم الهجري"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hijri Calendar"
+          }
+        }
+      }
+    },
+    "Hizb %lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحزب %lld"
+          }
+        }
+      }
+    },
+    "Hizb quarters" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أرباع الحزب"
+          }
+        }
+      }
+    },
+    "Hizb start" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بداية الحزب"
+          }
+        }
+      }
+    },
+    "Investments / shares" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استثمارات وأسهم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Investments / shares"
+          }
+        }
+      }
+    },
+    "Isha" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العشاء"
+          }
+        }
+      }
+    },
+    "ISNA (North America)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إسنا (أمريكا الشمالية)"
+          }
+        }
+      }
+    },
+    "It's time for %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حان وقت %@"
+          }
+        }
+      }
+    },
+    "Juz" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأجزاء"
+          }
+        }
+      }
+    },
+    "Juz %lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الجزء %lld"
+          }
+        }
+      }
+    },
+    "Juz %lld · Page %lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الجزء %1$lld · صفحة %2$lld"
+          }
+        }
+      }
+    },
+    "Khatmah · page %@ of 604" : {
+
+    },
+    "Khatmah · page %lld of 604" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الختمة · صفحة %lld من ٦٠٤"
+          }
+        }
+      }
+    },
+    "KHATMAH PLAN" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خطة الختمة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "KHATMAH PLAN"
+          }
+        }
+      }
+    },
+    "Language" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اللغة"
+          }
+        }
+      }
+    },
+    "Larger" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أكبر"
+          }
+        }
+      }
+    },
+    "Light (Mushaf)" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فاتح (مصحف)"
+          }
+        }
+      }
+    },
+    "Madani" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مدنية"
+          }
+        }
+      }
+    },
+    "Maghrib" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المغرب"
+          }
+        }
+      }
+    },
+    "Makki" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مكية"
+          }
+        }
+      }
+    },
+    "Memorize a range" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ مقطع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memorize a range"
+          }
+        }
+      }
+    },
+    "Money owed to you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ديون لك عند الناس"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Money owed to you"
+          }
+        }
+      }
+    },
+    "Moonsighting Committee" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لجنة رؤية الهلال"
+          }
+        }
+      }
+    },
+    "MORNING ATHKAR" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذكار الصباح"
+          }
+        }
+      }
+    },
+    "Mushaf" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مصحف"
+          }
+        }
+      }
+    },
+    "Mushaf (continuous)" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مصحف (متصل)"
+          }
+        }
+      }
+    },
+    "Mushaf symbols" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رموز المصحف"
+          }
+        }
+      }
+    },
+    "Mushaf typeface" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خط المصحف"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mushaf typeface"
+          }
+        }
+      }
+    },
+    "Muslim World League" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رابطة العالم الإسلامي"
+          }
+        }
+      }
+    },
+    "My location" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "موقعي"
+          }
+        }
+      }
+    },
+    "Names of Allah" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أسماء الله الحسنى"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Names of Allah"
+          }
+        }
+      }
+    },
+    "Nawafil" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النوافل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nawafil"
+          }
+        }
+      }
+    },
+    "Near %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قرب %@"
+          }
+        }
+      }
+    },
+    "Net wealth" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صافي المال"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Net wealth"
+          }
+        }
+      }
+    },
+    "next · %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التالية · %@"
+          }
+        }
+      }
+    },
+    "Nisab" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النصاب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nisab"
+          }
+        }
+      }
+    },
+    "Notification" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإشعار"
+          }
+        }
+      }
+    },
+    "Notification sound" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صوت الإشعار"
+          }
+        }
+      }
+    },
+    "Notifications are scheduled on your device for the next 12 days and roll forward automatically." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُجدول الإشعارات على جهازك للأيام الاثني عشر القادمة وتتجدد تلقائيًا."
+          }
+        }
+      }
+    },
+    "Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُجدول الإشعارات على جهازك للأيام الاثني عشر القادمة وتتجدد تلقائيًا. يمكنك تفعيل أو إيقاف كل صلاة على حدة من زر الجرس في شاشة الصلاة."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen."
+          }
+        }
+      }
+    },
+    "OK" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حسنًا"
+          }
+        }
+      }
+    },
+    "ON THIS DAY" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في مثل هذا اليوم"
+          }
+        }
+      }
+    },
+    "Page (Madani print)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صفحة (طبعة المدينة)"
+          }
+        }
+      }
+    },
+    "Page %lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صفحة %lld"
+          }
+        }
+      }
+    },
+    "Page font unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خط الصفحة غير متاح"
+          }
+        }
+      }
+    },
+    "Pause marks (علامات الوقف)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "علامات الوقف"
+          }
+        }
+      }
+    },
+    "Play from here" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التشغيل من هنا"
+          }
+        }
+      }
+    },
+    "Play recitation" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تشغيل التلاوة"
+          }
+        }
+      }
+    },
+    "Play surah" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تشغيل السورة"
+          }
+        }
+      }
+    },
+    "Playback mode" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وضع التشغيل"
+          }
+        }
+      }
+    },
+    "Point the arrow at the Kaaba" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وجّه السهم نحو الكعبة"
+          }
+        }
+      }
+    },
+    "Prayer" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصلاة"
+          }
+        }
+      }
+    },
+    "Prayer Settings" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعدادات الصلاة"
+          }
+        }
+      }
+    },
+    "Prayer Times" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مواقيت الصلاة"
+          }
+        }
+      }
+    },
+    "Preparing page %lld…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ تجهيز الصفحة %lld…"
+          }
+        }
+      }
+    },
+    "Print quality (~350 MB)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جودة الطباعة (~٣٥٠ م.ب)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Print quality (~350 MB)"
+          }
+        }
+      }
+    },
+    "Qibla" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القبلة"
+          }
+        }
+      }
+    },
+    "Quran" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القرآن"
+          }
+        }
+      }
+    },
+    "Quran text size" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حجم نص القرآن"
+          }
+        }
+      }
+    },
+    "Reading mode" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وضع القراءة"
+          }
+        }
+      }
+    },
+    "Reciter" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القارئ"
+          }
+        }
+      }
+    },
+    "Repeat %@×" : {
+
+    },
+    "Repeat %lld×" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُكرر %lld مرة"
+          }
+        }
+      }
+    },
+    "Repeat ayah" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تكرار الآية"
+          }
+        }
+      }
+    },
+    "Repeat each ayah" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تكرار كل آية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeat each ayah"
+          }
+        }
+      }
+    },
+    "Reset" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعادة الضبط"
+          }
+        }
+      }
+    },
+    "Restart Noor to apply the language change." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أعد تشغيل نور لتطبيق تغيير اللغة."
+          }
+        }
+      }
+    },
+    "Result" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النتيجة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Result"
+          }
+        }
+      }
+    },
+    "Search athkar" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابحث في الأذكار"
+          }
+        }
+      }
+    },
+    "Search reciters" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابحث عن قارئ"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search reciters"
+          }
+        }
+      }
+    },
+    "Section" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القسم"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإعدادات"
+          }
+        }
+      }
+    },
+    "Shafi'i, Maliki, Hanbali" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الشافعي والمالكي والحنبلي"
+          }
+        }
+      }
+    },
+    "Share" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مشاركة"
+          }
+        }
+      }
+    },
+    "Share image" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مشاركة الصورة"
+          }
+        }
+      }
+    },
+    "Show translation" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض الترجمة"
+          }
+        }
+      }
+    },
+    "Silent" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صامت"
+          }
+        }
+      }
+    },
+    "Silver (grams)" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الفضة (بالجرام)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Silver (grams)"
+          }
+        }
+      }
+    },
+    "SLEEP ATHKAR" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذكار النوم"
+          }
+        }
+      }
+    },
+    "Smaller" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أصغر"
+          }
+        }
+      }
+    },
+    "Start a khatmah plan" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابدأ خطة ختمة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a khatmah plan"
+          }
+        }
+      }
+    },
+    "Start memorizing" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابدأ الحفظ"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start memorizing"
+          }
+        }
+      }
+    },
+    "Start plan" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابدأ الخطة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start plan"
+          }
+        }
+      }
+    },
+    "Stop plan" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف الخطة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop plan"
+          }
+        }
+      }
+    },
+    "Sunnah fasting reminders" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تذكير بصيام السنة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sunnah fasting reminders"
+          }
+        }
+      }
+    },
+    "Sunrise" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الشروق"
+          }
+        }
+      }
+    },
+    "Surah" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السور"
+          }
+        }
+      }
+    },
+    "Surah name or 2:255" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسم السورة أو 2:255"
+          }
+        }
+      }
+    },
+    "Surah, word, or 2:255" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سورة، كلمة، أو 2:255"
+          }
+        }
+      }
+    },
+    "System" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لغة النظام"
+          }
+        }
+      }
+    },
+    "Tafsir" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التفسير"
+          }
+        }
+      }
+    },
+    "Tafsir — %lld:%lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التفسير — %1$lld:%2$lld"
+          }
+        }
+      }
+    },
+    "Tafsir unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التفسير غير متاح"
+          }
+        }
+      }
+    },
+    "Tajweed Guide" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دليل التجويد"
+          }
+        }
+      }
+    },
+    "Tajweed rules (أحكام التجويد)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أحكام التجويد"
+          }
+        }
+      }
+    },
+    "Tap a sound to hear it" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط على أي صوت لسماعه"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a sound to hear it"
+          }
+        }
+      }
+    },
+    "Tasbih" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السبحة"
+          }
+        }
+      }
+    },
+    "This page only" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذه الصفحة فقط"
+          }
+        }
+      }
+    },
+    "To ayah" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلى الآية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To ayah"
+          }
+        }
+      }
+    },
+    "Today" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اليوم"
+          }
+        }
+      }
+    },
+    "Tools" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدوات"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tools"
+          }
+        }
+      }
+    },
+    "Turn left" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اذهب نحو اليسار"
+          }
+        }
+      }
+    },
+    "Turn right" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اذهب نحو اليمين"
+          }
+        }
+      }
+    },
+    "Turn until the arrow points up" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "در حتى يشير السهم إلى الأعلى"
+          }
+        }
+      }
+    },
+    "Umm al-Qura (Makkah)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أم القرى (مكة)"
+          }
+        }
+      }
+    },
+    "University of Karachi" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جامعة كراتشي"
+          }
+        }
+      }
+    },
+    "Use my current location" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استخدام موقعي الحالي"
+          }
+        }
+      }
+    },
+    "Using current location" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُستخدم الموقع الحالي"
+          }
+        }
+      }
+    },
+    "Voluntary prayers and their times" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نوافل الصلاة وأوقاتها"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voluntary prayers and their times"
+          }
+        }
+      }
+    },
+    "Word by word" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلمة كلمة"
+          }
+        }
+      }
+    },
+    "Your bookmarks will gather here." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ستتجمع علاماتك هنا."
+          }
+        }
+      }
+    },
+    "Your currency" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بعملتك المحلية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your currency"
+          }
+        }
+      }
+    },
+    "Zakat Calculator" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حاسبة الزكاة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakat Calculator"
+          }
+        }
+      }
+    },
+    "Zakat due (2.5%)" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الزكاة المستحقة (٢٫٥٪)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakat due (2.5%)"
+          }
+        }
+      }
+    },
+    "Zakat is due when net zakatable wealth has remained at or above the nisab for one full hijri year. This calculator is a guide — consult a scholar for complex cases. All figures stay on your device." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تجب الزكاة إذا بلغ صافي المال النصاب وحال عليه الحول الهجري. هذه الحاسبة للاسترشاد — استشر أهل العلم في الحالات المركبة. جميع الأرقام تبقى على جهازك."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakat is due when net zakatable wealth has remained at or above the nisab for one full hijri year. This calculator is a guide — consult a scholar for complex cases. All figures stay on your device."
+          }
+        }
+      }
+    },
+    "Zakatable wealth" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأموال الزكوية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zakatable wealth"
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

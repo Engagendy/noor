@@ -131,6 +131,11 @@ struct TodayView: View {
         .task {
             if athkar.isEmpty { athkar = AthkarStore.load() }
             if hadiths.isEmpty { hadiths = HadithStore.load() }
+            // Screenshot/repro hook: simulate tapping the khatmah card.
+            if ProcessInfo.processInfo.environment["NOOR_TAP_KHATMAH"] == "1" {
+                try? await Task.sleep(for: .seconds(3))
+                openPage(KhatmahPlan.frontier())
+            }
         }
         .sheet(isPresented: $showAllEvents) {
             AllEventsView(isArabicUI: isArabicUI)
