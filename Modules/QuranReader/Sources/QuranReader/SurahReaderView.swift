@@ -607,6 +607,20 @@ public struct SurahReaderView: View {
         if frontier > 0, page == frontier {
             defaults.set(page + 1, forKey: "khatmah.page")
         }
+        // Reading streak: any reader session counts the day.
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date()).timeIntervalSince1970
+        let last = defaults.double(forKey: "streak.lastDay")
+        if last != today {
+            let yesterday = calendar.date(byAdding: .day, value: -1,
+                to: calendar.startOfDay(for: Date()))?.timeIntervalSince1970
+            let count = last == yesterday ? defaults.integer(forKey: "streak.count") + 1 : 1
+            defaults.set(count, forKey: "streak.count")
+            defaults.set(today, forKey: "streak.lastDay")
+            if count > defaults.integer(forKey: "streak.best") {
+                defaults.set(count, forKey: "streak.best")
+            }
+        }
     }
 
     private func startPlayback(from verse: Verse) {

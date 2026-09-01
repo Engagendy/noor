@@ -539,6 +539,36 @@ struct TodayView: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// Current reading streak in days (0 if the chain broke before today).
+    private func streakDays(now: Date) -> Int {
+        let defaults = UserDefaults.standard
+        let calendar = Calendar.current
+        let last = defaults.double(forKey: "streak.lastDay")
+        let today = calendar.startOfDay(for: now).timeIntervalSince1970
+        let yesterday = calendar.date(byAdding: .day, value: -1,
+            to: calendar.startOfDay(for: now))?.timeIntervalSince1970
+        guard last == today || last == yesterday else { return 0 }
+        return defaults.integer(forKey: "streak.count")
+    }
+
+    @ViewBuilder
+    private func streakBadge(now: Date) -> some View {
+        let streak = streakDays(now: now)
+        if streak > 1 {
+            HStack(spacing: 3) {
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 11))
+                Text(verbatim: isArabicUI ? streak.arabicIndic : "\(streak)")
+                    .font(.system(size: 12, weight: .bold).monospacedDigit())
+            }
+            .foregroundStyle(NoorColor.accentGold)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(NoorColor.accentGold.opacity(0.12)))
+            .accessibilityLabel("Reading streak: \(streak) days")
+        }
+    }
+
     /// Ramadan: suhoor/iftar countdown, visible only during the month.
     @ViewBuilder
     private func ramadanCard(now: Date) -> some View {
@@ -590,6 +620,7 @@ struct TodayView: View {
                             .font(.system(size: 12, weight: .semibold))
                             .tracking(0.8)
                             .foregroundStyle(NoorColor.inkSecondary)
+                        streakBadge(now: now)
                         Spacer()
                         Text(verbatim: isArabicUI
                              ? "اليوم \(plan.dayNumber(now: now).arabicIndic) من \(plan.goalDays.arabicIndic)"
@@ -658,6 +689,7 @@ struct TodayView: View {
                     Text("Start a khatmah plan")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
+                    streakBadge(now: now)
                     Spacer()
                     Image(systemName: "chevron.forward")
                         .font(.system(size: 13, weight: .semibold))
