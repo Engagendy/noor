@@ -144,6 +144,25 @@
                     }
                 },
                 {
+                    "source": "/Users/engagendy/Documents/projects/noor/.claude/worktrees/wf_2b929f08-a35-1/android/app/src/main/res/values/themes.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "6",
+                        "endColumns": "12",
+                        "endOffsets": "325"
+                    },
+                    "to": {
+                        "startLines": "224",
+                        "startColumns": "4",
+                        "startOffsets": "14360",
+                        "endLines": "228",
+                        "endColumns": "12",
+                        "endOffsets": "14630"
+                    }
+                },
+                {
                     "source": "/Users/engagendy/.gradle/caches/8.13/transforms/53668c4da53d0cc08c1deddd24f98ab2/transformed/activity-1.9.3/res/values/values.xml",
                     "from": {
                         "startLines": "2,3",
@@ -194,25 +213,6 @@
                         "startOffsets": "4581,4705",
                         "endColumns": "53,66",
                         "endOffsets": "4630,4767"
-                    }
-                },
-                {
-                    "source": "/Users/engagendy/Documents/projects/noor/android/app/src/main/res/values/themes.xml",
-                    "from": {
-                        "startLines": "2",
-                        "startColumns": "4",
-                        "startOffsets": "55",
-                        "endLines": "6",
-                        "endColumns": "12",
-                        "endOffsets": "325"
-                    },
-                    "to": {
-                        "startLines": "224",
-                        "startColumns": "4",
-                        "startOffsets": "14360",
-                        "endLines": "228",
-                        "endColumns": "12",
-                        "endOffsets": "14630"
                     }
                 }
             ]

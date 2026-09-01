@@ -55,6 +55,7 @@ drawable ic_call_answer_video_low
 drawable ic_call_decline
 drawable ic_call_decline_low
 drawable ic_clock
+drawable ic_gear
 drawable ic_launcher_bg
 drawable ic_launcher_fg
 drawable ic_sparkle
@@ -174,6 +175,7 @@ layout notification_template_icon_group
 layout notification_template_part_chronometer
 layout notification_template_part_time
 mipmap ic_launcher
+raw adhan_madinah
 string androidx_startup
 string call_notification_answer_action
 string call_notification_answer_video_action
