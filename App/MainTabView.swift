@@ -46,9 +46,23 @@ struct MainTabView: View {
     @AppStorage("app.language") private var appLanguage = "system"
     @AppStorage("prayer.customLabel") private var customLabel = ""
     @AppStorage("fasting.reminders") private var fastingReminders = false
-    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
+        mainTabs
+            .tint(NoorColor.accentPrimary)
+            .modifier(TabLifecycle(
+                player: player, tab: $tab,
+                openPendingPage: openPendingPage,
+                syncWidgets: syncWidgets,
+                reschedule: { await rescheduleNotifications() },
+                watched: [cityName, methodRaw, madhabRaw, soundRaw,
+                          String(notificationsEnabled), String(useCustomLocation),
+                          String(notifFajr), String(notifDhuhr), String(notifAsr),
+                          String(notifMaghrib), String(notifIsha),
+                          appLanguage, customLabel, String(fastingReminders)]))
+    }
+
+    private var mainTabs: some View {
         TabView(selection: $tab) {
             NavigationStack {
                 TodayView(
@@ -110,25 +124,16 @@ struct MainTabView: View {
                 .tabItem { Label("Settings", systemImage: "gearshape") }
                 .tag(Tab.settings)
         }
-        .tint(NoorColor.accentPrimary)
-        .onChange(of: scenePhase) { _, phase in
-            // Reading progress accumulates silently while the reader is
-            // open — push it to iCloud whenever the app leaves the front.
-            if phase == .background || phase == .inactive { CloudSync.pushLocal() }
-        }
-        .task {
-            CloudSync.start()
-            syncWidgets()
-            await rescheduleNotifications()
-        }
-        .onChange(of: [cityName, methodRaw, madhabRaw, soundRaw,
-                       String(notificationsEnabled), String(useCustomLocation),
-                       String(notifFajr), String(notifDhuhr), String(notifAsr),
-                       String(notifMaghrib), String(notifIsha),
-                       appLanguage, customLabel, String(fastingReminders)]) {
-            syncWidgets()
-            Task { await rescheduleNotifications() }
-        }
+    }
+
+    /// Siri "read my wird": consume the pending page request.
+    private func openPendingPage() {
+        let defaults = UserDefaults.standard
+        let page = defaults.integer(forKey: "pending.openPage")
+        guard page > 0 else { return }
+        defaults.set(0, forKey: "pending.openPage")
+        tab = .quran
+        quranOpenPage = page
     }
 
     /// Player pill shown above the tab bar while recitation runs (the
@@ -166,6 +171,40 @@ struct MainTabView: View {
             sound: AdhanSound(rawValue: soundRaw) ?? .adhanMadinah)
         await FastingReminderScheduler().reschedule(
             arabic: appLanguage == "ar", enabled: fastingReminders)
+    }
+}
+
+/// Cross-cutting app lifecycle: iCloud sync, widget mirroring,
+/// notification rescheduling, Siri pending-page handling. Extracted so
+/// MainTabView.body stays type-checkable.
+private struct TabLifecycle: ViewModifier {
+    let player: QuranAudioPlayer
+    @Binding var tab: MainTabView.Tab
+    let openPendingPage: () -> Void
+    let syncWidgets: () -> Void
+    let reschedule: () async -> Void
+    let watched: [String]
+    @Environment(\.scenePhase) private var scenePhase
+
+    func body(content: Content) -> some View {
+        content
+            .onReceive(NotificationCenter.default.publisher(for: .noorOpenPendingPage)) { _ in
+                openPendingPage()
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { openPendingPage() }
+                // Push reading progress to iCloud when leaving the front.
+                if phase == .background || phase == .inactive { CloudSync.pushLocal() }
+            }
+            .task {
+                CloudSync.start()
+                syncWidgets()
+                await reschedule()
+            }
+            .onChange(of: watched) {
+                syncWidgets()
+                Task { await reschedule() }
+            }
     }
 }
 
