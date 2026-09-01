@@ -81,18 +81,24 @@ public struct TafsirSheetView: View {
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(NoorColor.accentGold.opacity(0.6), lineWidth: 1))
 
                     packRow
-                    HStack(spacing: 8) {
-                        ForEach(TafsirEdition.all) { candidate in
-                            let isOn = candidate.slug == editionSlug
-                            Text(candidate.displayName)
-                                .font(.system(size: 13, weight: .semibold))
-                                .padding(.horizontal, 13)
-                                .padding(.vertical, 7)
-                                .background(Capsule().fill(isOn ? NoorColor.accentPrimary : NoorColor.accentPrimary.opacity(0.1)))
-                                .foregroundStyle(isOn ? NoorColor.bgPrimary : NoorColor.accentPrimary)
-                                .onTapGesture { editionSlug = candidate.slug }
-                                .accessibilityAddTraits(isOn ? .isSelected : [])
+                    // One-line chips in a horizontal scroll — names never wrap.
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(TafsirEdition.all) { candidate in
+                                let isOn = candidate.slug == editionSlug
+                                Text(candidate.displayName)
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .lineLimit(1)
+                                    .fixedSize(horizontal: true, vertical: false)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .background(Capsule().fill(isOn ? NoorColor.accentPrimary : NoorColor.accentPrimary.opacity(0.1)))
+                                    .foregroundStyle(isOn ? NoorColor.bgPrimary : NoorColor.accentPrimary)
+                                    .onTapGesture { editionSlug = candidate.slug }
+                                    .accessibilityAddTraits(isOn ? .isSelected : [])
+                            }
                         }
+                        .padding(.vertical, 2)
                     }
 
                     switch service.state {
