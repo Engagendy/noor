@@ -14,7 +14,14 @@ struct NoorApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                #if os(macOS)
+                // A comfortable reading window; the mushaf needs height.
+                .frame(minWidth: 900, minHeight: 640)
+                #endif
         }
+        #if os(macOS)
+        .defaultSize(width: 1150, height: 800)
+        #endif
 
         #if os(macOS)
         // Menu-bar prayer countdown (design 1j / plan §2 Mac strategy).
