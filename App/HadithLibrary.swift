@@ -169,9 +169,13 @@ final class HadithLibrary {
         var byBook: [Int: [LibraryHadith]] = [:]
         for item in ara.hadiths {
             guard let book = Int(item.reference.book.value) else { continue }
+            let arabic = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            // The dataset has gaps (e.g. 196 empty entries in Muslim's
+            // muqaddimah) — skip rows with no Arabic text.
+            guard !arabic.isEmpty else { continue }
             byBook[book, default: []].append(LibraryHadith(
                 number: item.hadithnumber.value,
-                arabic: item.text,
+                arabic: arabic,
                 english: engByNumber[item.hadithnumber.value] ?? "",
                 book: book))
         }

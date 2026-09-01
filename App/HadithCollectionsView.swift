@@ -164,9 +164,12 @@ struct HadithBookView: View {
                 selected = hadith
             } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text(verbatim: isArabicUI ? "" : hadith.number)
+                    Text(verbatim: isArabicUI
+                         ? (Int(hadith.number).map(\.arabicIndic) ?? hadith.number)
+                         : hadith.number)
                         .font(.system(size: 12, weight: .semibold).monospacedDigit())
                         .foregroundStyle(NoorColor.accentGold)
+                        .frame(minWidth: 30, alignment: .center)
                     Text(verbatim: hadith.arabic)
                         .font(.system(size: 15))
                         .foregroundStyle(NoorColor.inkPrimary)
