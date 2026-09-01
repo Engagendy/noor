@@ -147,6 +147,7 @@ struct SettingsView: View {
                 } label: {
                     Text("Tajweed Guide")
                 }
+                MushafDownloadRow()
             } header: {
                 Text("Quran")
             }

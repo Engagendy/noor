@@ -2237,6 +2237,54 @@
           }
         }
       }
+    },
+    "Download full mushaf": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تنزيل المصحف كاملًا"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download full mushaf"
+          }
+        }
+      }
+    },
+    "All 604 pages are offline": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جميع الصفحات الـ٦٠٤ متاحة دون إنترنت"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All 604 pages are offline"
+          }
+        }
+      }
+    },
+    "%lld of 604 pages · ~350 MB total": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld من ٦٠٤ صفحات · نحو ٣٥٠ م.ب"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld of 604 pages · ~350 MB total"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
