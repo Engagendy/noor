@@ -37,6 +37,9 @@ schemes:
     build:
       targets:
         Noor: all
+        NoorTests: [test]
+    test:
+      targets: [NoorTests]
     run:
       config: Debug
       executable: Noor
@@ -44,6 +47,18 @@ schemes:
       config: Release
 
 targets:
+  NoorTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources: [Tests/NoorTests]
+    dependencies:
+      - target: Noor
+    settings:
+      base:
+        SWIFT_VERSION: 5.10
+        GENERATE_INFOPLIST_FILE: YES
+
   NoorWidgets:
     type: app-extension
     platform: iOS
