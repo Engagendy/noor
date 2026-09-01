@@ -26,6 +26,8 @@ struct MainTabView: View {
     }
     @State private var player = QuranAudioPlayer()
     @State private var quranOpenRequest: Int?
+    /// Open the reader at an exact mushaf page (continue / khatmah).
+    @State private var quranOpenPage: Int?
     @State private var translations = TranslationStore()
     @State private var library = try? LibraryStore()
 
@@ -53,7 +55,16 @@ struct MainTabView: View {
                     database: database,
                     openReader: {
                         tab = .quran
-                        quranOpenRequest = UserDefaults.standard.integer(forKey: "reader.lastSurah")
+                        let page = UserDefaults.standard.integer(forKey: "reader.lastPage")
+                        if page > 0 {
+                            quranOpenPage = page
+                        } else {
+                            quranOpenRequest = max(1, UserDefaults.standard.integer(forKey: "reader.lastSurah"))
+                        }
+                    },
+                    openPage: { page in
+                        tab = .quran
+                        quranOpenPage = page
                     },
                     openAthkar: { tab = .athkar })
                     .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
@@ -62,7 +73,8 @@ struct MainTabView: View {
             .tag(Tab.today)
 
             QuranTab(database: database, player: player, translations: translations,
-                     library: library, openRequest: $quranOpenRequest)
+                     library: library, openRequest: $quranOpenRequest,
+                     openPageRequest: $quranOpenPage)
                 .tabItem { Label("Quran", systemImage: "book") }
                 .tag(Tab.quran)
 
@@ -172,6 +184,7 @@ struct QuranTab: View {
     let translations: TranslationStore
     let library: LibraryStore?
     @Binding var openRequest: Int?
+    @Binding var openPageRequest: Int?
 
     @State private var surahs: [Surah] = []
     @State private var structure: QuranStructure?
@@ -260,6 +273,7 @@ struct QuranTab: View {
             if let auto = autoOpenSurah { open(auto, nil) }
         }
         .onChange(of: openRequest) { _, _ in consumeOpenRequest() }
+        .onChange(of: openPageRequest) { _, _ in consumeOpenRequest() }
     }
 
     private var splitView: some View {
@@ -281,6 +295,15 @@ struct QuranTab: View {
 extension QuranTab {
     /// Today's Continue Reading card requests a direct open at the resume point.
     fileprivate func consumeOpenRequest() {
+        // Page requests resolve to the exact (surah, ayah) that page starts
+        // with, so the reader lands on that precise mushaf page.
+        if let page = openPageRequest {
+            openPageRequest = nil
+            if let start = structure?.pageStarts.first(where: { $0.idx == page }) {
+                open(start.surahId, start.ayah)
+                return
+            }
+        }
         guard let request = openRequest else { return }
         openRequest = nil
         open(request, nil)

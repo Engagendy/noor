@@ -11,6 +11,8 @@ struct TodayView: View {
     let database: QuranDatabase
     /// Switches the tab bar to the Quran tab (Continue Reading card).
     let openReader: () -> Void
+    /// Opens the reader at an exact mushaf page (khatmah frontier).
+    let openPage: (Int) -> Void
     /// Switches to the Athkar tab (Daily Dhikr card).
     let openAthkar: () -> Void
     @State private var athkar: [DhikrCategory] = []
@@ -573,10 +575,11 @@ struct TodayView: View {
     private func khatmahCard(now: Date) -> some View {
         let _ = khatmahPlanVersion
         if let plan = KhatmahPlan.load() {
-            let left = plan.pagesLeftToday(now: now, currentPage: khatmahMaxPage)
-            let behind = plan.pagesBehind(now: now, currentPage: khatmahMaxPage)
+            let lastRead = KhatmahPlan.lastRead()
+            let left = plan.pagesLeftToday(now: now, currentPage: lastRead)
+            let behind = plan.pagesBehind(now: now, currentPage: lastRead)
             let target = plan.targetPage(now: now)
-            Button { showKhatmahGoal = true } label: {
+            Button { openPage(KhatmahPlan.frontier()) } label: {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("KHATMAH PLAN")
@@ -589,8 +592,19 @@ struct TodayView: View {
                              : "Day \(plan.dayNumber(now: now)) of \(plan.goalDays)")
                             .font(NoorFont.caption)
                             .foregroundStyle(NoorColor.accentGold)
+                        Button {
+                            showKhatmahGoal = true
+                        } label: {
+                            Image(systemName: "slider.horizontal.3")
+                                .font(.system(size: 14))
+                                .foregroundStyle(NoorColor.inkSecondary)
+                                .frame(width: 34, height: 34)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel("Edit plan")
                     }
-                    if plan.isFinished(currentPage: khatmahMaxPage) {
+                    if plan.isFinished(currentPage: lastRead) {
                         Text(isArabicUI ? "ما شاء الله، أتممت الختمة 🎉" : "Masha'Allah — khatmah complete 🎉")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(NoorColor.accentPrimary)
@@ -616,10 +630,15 @@ struct TodayView: View {
                         ZStack(alignment: .leading) {
                             Capsule().fill(NoorColor.inkPrimary.opacity(0.07))
                             Capsule().fill(NoorColor.accentPrimary)
-                                .frame(width: geometry.size.width * CGFloat(min(khatmahMaxPage, 604)) / 604)
+                                .frame(width: geometry.size.width * CGFloat(min(lastRead, 604)) / 604)
                         }
                     }
                     .frame(height: 5)
+                    Text(verbatim: isArabicUI
+                         ? "تابع من صفحة \(KhatmahPlan.frontier().arabicIndic) ←"
+                         : "Continue from page \(KhatmahPlan.frontier()) →")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.accentPrimary)
                 }
                 .padding(16)
                 .contentShape(Rectangle())
@@ -845,6 +864,7 @@ struct KhatmahGoalSheet: View {
     let currentPage: Int
     var onChanged: () -> Void
     @State private var days = 30
+    @State private var reachedPage = KhatmahPlan.lastRead()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
 
@@ -879,6 +899,18 @@ struct KhatmahGoalSheet: View {
                 Stepper(value: $days, in: 3...365) {
                     Text(verbatim: isArabicUI ? "\(days.arabicIndic) يومًا" : "\(days) days")
                         .font(.system(size: 16, weight: .semibold))
+                }
+                if KhatmahPlan.load() != nil {
+                    Stepper(value: $reachedPage, in: 0...604) {
+                        Text(verbatim: isArabicUI
+                             ? "وصلت إلى صفحة \(reachedPage.arabicIndic)"
+                             : "I reached page \(reachedPage)")
+                            .font(.system(size: 15))
+                    }
+                    .onChange(of: reachedPage) { _, new in
+                        UserDefaults.standard.set(min(new + 1, 604), forKey: "khatmah.page")
+                        onChanged()
+                    }
                 }
                 Text(verbatim: isArabicUI
                      ? "وِردك اليومي: نحو \(pagesPerDay.arabicIndic) صفحات"

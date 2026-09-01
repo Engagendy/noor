@@ -169,6 +169,13 @@ public struct SurahReaderView: View {
                 defaults.set(page, forKey: "khatmah.maxPage")
             }
             defaults.set(page, forKey: "reader.lastPage")
+            // Khatmah frontier: only SEQUENTIAL reading advances the plan —
+            // viewing the next-unread page marks it read. Jumping around
+            // (search, bookmarks, browsing) never inflates progress.
+            let frontier = defaults.integer(forKey: "khatmah.page")
+            if frontier > 0, page == frontier {
+                defaults.set(page + 1, forKey: "khatmah.page")
+            }
         }
         .sheet(item: $actionVerses) { group in
             AyahActionsSheet(

@@ -6,7 +6,7 @@ import Foundation
 enum CloudSync {
     private static let keys = [
         "khatmah.maxPage", "khatmah.goalDays", "khatmah.goalStart",
-        "khatmah.goalStartPage", "reader.lastSurah", "reader.lastPage",
+        "khatmah.goalStartPage", "khatmah.page", "reader.lastSurah", "reader.lastPage",
     ]
 
     @MainActor
@@ -43,6 +43,10 @@ enum CloudSync {
         let remoteMax = Int(store.double(forKey: "khatmah.maxPage"))
         if remoteMax > defaults.integer(forKey: "khatmah.maxPage") {
             defaults.set(remoteMax, forKey: "khatmah.maxPage")
+        }
+        let remoteFrontier = Int(store.double(forKey: "khatmah.page"))
+        if remoteFrontier > defaults.integer(forKey: "khatmah.page") {
+            defaults.set(remoteFrontier, forKey: "khatmah.page")
         }
         for key in ["khatmah.goalDays", "khatmah.goalStart", "khatmah.goalStartPage"] {
             let remote = store.double(forKey: key)

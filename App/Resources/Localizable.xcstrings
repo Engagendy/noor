@@ -2333,6 +2333,22 @@
           }
         }
       }
+    },
+    "Edit plan": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعديل الخطة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit plan"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
