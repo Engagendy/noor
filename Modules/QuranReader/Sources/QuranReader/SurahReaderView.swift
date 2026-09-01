@@ -148,6 +148,16 @@ public struct SurahReaderView: View {
         .simultaneousGesture(pinch)
         .task {
             viewModel.load()
+            // Continue-listening: start recitation at the arrival ayah.
+            if UserDefaults.standard.bool(forKey: "pending.autoplay") {
+                UserDefaults.standard.set(false, forKey: "pending.autoplay")
+                let targetAyah = scrollToAyah ?? 1
+                try? await Task.sleep(for: .milliseconds(400))
+                if let verse = viewModel.verses.first(where: { $0.ayah == targetAyah })
+                    ?? viewModel.verses.first {
+                    startPlayback(from: verse)
+                }
+            }
             if !didAutoHide {
                 didAutoHide = true
                 try? await Task.sleep(for: .seconds(2.5))

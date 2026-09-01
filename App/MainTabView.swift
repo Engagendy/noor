@@ -28,6 +28,7 @@ struct MainTabView: View {
     @State private var quranOpenRequest: Int?
     /// Open the reader at an exact mushaf page (continue / khatmah).
     @State private var quranOpenPage: Int?
+    @State private var quranOpenTarget: ReaderTarget?
     @State private var translations = TranslationStore()
     @State private var library = try? LibraryStore()
 
@@ -80,6 +81,10 @@ struct MainTabView: View {
                         tab = .quran
                         quranOpenPage = page
                     },
+                    openListening: { surah, ayah in
+                        tab = .quran
+                        quranOpenTarget = ReaderTarget(surahId: surah, ayah: ayah)
+                    },
                     openAthkar: { tab = .athkar })
                     .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
             }
@@ -88,7 +93,8 @@ struct MainTabView: View {
 
             QuranTab(database: database, player: player, translations: translations,
                      library: library, openRequest: $quranOpenRequest,
-                     openPageRequest: $quranOpenPage)
+                     openPageRequest: $quranOpenPage,
+                     openTarget: $quranOpenTarget)
                 .tabItem { Label("Quran", systemImage: "book") }
                 .tag(Tab.quran)
 
@@ -239,6 +245,7 @@ struct QuranTab: View {
     let library: LibraryStore?
     @Binding var openRequest: Int?
     @Binding var openPageRequest: Int?
+    @Binding var openTarget: ReaderTarget?
 
     @State private var surahs: [Surah] = []
     @State private var structure: QuranStructure?
@@ -328,6 +335,7 @@ struct QuranTab: View {
         }
         .onChange(of: openRequest) { _, _ in consumeOpenRequest() }
         .onChange(of: openPageRequest) { _, _ in consumeOpenRequest() }
+        .onChange(of: openTarget) { _, _ in consumeOpenRequest() }
     }
 
     private var splitView: some View {
@@ -349,6 +357,11 @@ struct QuranTab: View {
 extension QuranTab {
     /// Today's Continue Reading card requests a direct open at the resume point.
     fileprivate func consumeOpenRequest() {
+        if let target = openTarget {
+            openTarget = nil
+            open(target.surahId, target.ayah)
+            return
+        }
         // Page requests resolve to the exact (surah, ayah) that page starts
         // with, so the reader lands on that precise mushaf page.
         if let page = openPageRequest {

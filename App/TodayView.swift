@@ -13,6 +13,8 @@ struct TodayView: View {
     let openReader: () -> Void
     /// Opens the reader at an exact mushaf page (khatmah frontier).
     let openPage: (Int) -> Void
+    /// Opens the reader at (surah, ayah) to resume listening.
+    let openListening: (Int, Int) -> Void
     /// Switches to the Athkar tab (Daily Dhikr card).
     let openAthkar: () -> Void
     @State private var athkar: [DhikrCategory] = []
@@ -787,6 +789,47 @@ struct TodayView: View {
                         .foregroundStyle(NoorColor.inkSecondary.opacity(0.6))
                 }
                 .padding(16)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .noorCard()
+        }
+    }
+
+    /// Resume the last recitation (surah + ayah persisted by the player).
+    @ViewBuilder
+    private var continueListeningCard: some View {
+        let surahId = UserDefaults.standard.integer(forKey: "audio.lastSurah")
+        let ayah = UserDefaults.standard.integer(forKey: "audio.lastAyah")
+        if surahId > 0, ayah > 0,
+           let surah = (try? database.allSurahs().first { $0.id == surahId }) ?? nil {
+            Button {
+                UserDefaults.standard.set(true, forKey: "pending.autoplay")
+                openListening(surahId, ayah)
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "headphones")
+                        .font(.system(size: 17))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                        .frame(width: 42, height: 42)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(NoorColor.accentPrimary.opacity(0.1)))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("CONTINUE LISTENING")
+                            .font(.system(size: 12, weight: .semibold))
+                            .tracking(0.8)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                        Text(verbatim: isArabicUI
+                             ? "\(surah.displayName(arabicUI: true)) · آية \(ayah.arabicIndic)"
+                             : "\(surah.displayName(arabicUI: false)) · Ayah \(ayah)")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                    }
+                    Spacer()
+                    Image(systemName: "play.circle.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                }
+                .padding(14)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
