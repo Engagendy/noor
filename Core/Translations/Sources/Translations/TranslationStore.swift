@@ -54,9 +54,26 @@ public final class TranslationStore {
 
     public init(edition: Edition = TranslationStore.selectedEdition()) {
         self.edition = edition
+        // NEVER parse in init: view structs re-init on every body pass and
+        // a synchronous multi-MB parse on main blew the launch watchdog.
         if FileManager.default.fileExists(atPath: localFile.path) {
-            load()
+            state = .downloading  // "loading" from disk
+            Task { await loadAsync() }
         }
+    }
+
+    private func loadAsync() async {
+        let file = localFile
+        let parsed = await Task.detached(priority: .userInitiated) { () -> [Int: String]? in
+            guard let content = try? String(contentsOf: file, encoding: .utf8) else { return nil }
+            return Self.parse(content)
+        }.value
+        guard let parsed else {
+            state = .failed("unreadable file")
+            return
+        }
+        texts = parsed
+        state = parsed.count > 6000 ? .ready : .failed("incomplete download (\(parsed.count) ayat)")
     }
 
     private var localFile: URL {
@@ -80,7 +97,7 @@ public final class TranslationStore {
                 at: localFile.deletingLastPathComponent(), withIntermediateDirectories: true)
             try? FileManager.default.removeItem(at: localFile)
             try FileManager.default.moveItem(at: temp, to: localFile)
-            load()
+            await loadAsync()
         } catch {
             state = .failed(error.localizedDescription)
         }
