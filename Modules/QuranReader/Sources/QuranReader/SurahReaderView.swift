@@ -117,7 +117,15 @@ public struct SurahReaderView: View {
         .safeAreaInset(edge: .top, spacing: 0) { topBar }
         .overlay(alignment: .top) {
             if showOptions {
-                optionsPanel
+                // Scrim first: any tap outside the panel dismisses it, in
+                // every reading mode (content taps don't reach here in the
+                // list/flow modes, so the panel needs its own catcher).
+                ZStack(alignment: .top) {
+                    Color.black.opacity(0.001)
+                        .ignoresSafeArea()
+                        .onTapGesture { backgroundTapped() }
+                    optionsPanel
+                }
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
