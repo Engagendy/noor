@@ -54,9 +54,17 @@ struct RuqyahProphetic: Identifiable {
     ]
 }
 
+private struct ShareContent: Identifiable {
+    let text: String
+    let reference: String
+    let quranFont: Bool
+    var id: String { reference + String(text.prefix(12)) }
+}
+
 struct RuqyahView: View {
     @State private var database = try? QuranDatabase()
     @State private var passages: [(passage: RuqyahPassage, verses: [Verse], surahName: String)] = []
+    @State private var sharing: ShareContent?
     @Environment(\.locale) private var locale
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
@@ -74,11 +82,30 @@ struct RuqyahView: View {
 
                 ForEach(passages, id: \.passage.id) { item in
                     VStack(alignment: .leading, spacing: 10) {
-                        Text(verbatim: item.passage.range.count == 1
-                             ? "\(item.surahName) · \(item.passage.range.lowerBound.arabicIndic)"
-                             : "\(item.surahName) · \(item.passage.range.lowerBound.arabicIndic)–\(item.passage.range.upperBound.arabicIndic)")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(NoorColor.accentGold)
+                        HStack {
+                            Text(verbatim: item.passage.range.count == 1
+                                 ? "\(item.surahName) · \(item.passage.range.lowerBound.arabicIndic)"
+                                 : "\(item.surahName) · \(item.passage.range.lowerBound.arabicIndic)–\(item.passage.range.upperBound.arabicIndic)")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(NoorColor.accentGold)
+                            Spacer()
+                            Button {
+                                sharing = ShareContent(
+                                    text: item.verses.map {
+                                        $0.text + " \u{2067}﴿\($0.ayah.arabicIndic)﴾\u{2069}"
+                                    }.joined(separator: " "),
+                                    reference: "\(item.surahName)",
+                                    quranFont: true)
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(NoorColor.accentPrimary)
+                                    .frame(width: 40, height: 40)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("Share")
+                        }
                         Text(verbatim: item.verses.map {
                             $0.text + " \u{2067}﴿\($0.ayah.arabicIndic)﴾\u{2069}"
                         }.joined(separator: " "))
@@ -98,6 +125,22 @@ struct RuqyahView: View {
                     .padding(.top, 6)
                 ForEach(RuqyahProphetic.all) { dua in
                     VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Spacer()
+                            Button {
+                                sharing = ShareContent(text: dua.text, reference: dua.source,
+                                                       quranFont: false)
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(NoorColor.accentPrimary)
+                                    .frame(width: 40, height: 40)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("Share")
+                        }
+                        .frame(height: 20)
                         Text(verbatim: dua.text)
                             .font(.system(size: 17))
                             .foregroundStyle(NoorColor.inkPrimary)
@@ -117,6 +160,15 @@ struct RuqyahView: View {
         .environment(\.layoutDirection, .rightToLeft)
         .background(NoorColor.bgPrimary)
         .navigationTitle(Text("Ruqyah"))
+        .sheet(item: $sharing) { content in
+            NoorShareSheet(
+                arabicText: content.text,
+                reference: content.reference,
+                attribution: "نور Noor",
+                useQuranFont: content.quranFont)
+                .environment(\.locale, locale)
+                .presentationDetents([.medium, .large])
+        }
         .task {
             guard passages.isEmpty, let database else { return }
             passages = RuqyahPassage.all.compactMap { passage in

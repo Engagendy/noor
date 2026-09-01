@@ -60,9 +60,17 @@ struct PropheticDua: Identifiable {
     ]
 }
 
+private struct DuaShare: Identifiable {
+    let text: String
+    let reference: String
+    let quranFont: Bool
+    var id: String { reference + String(text.prefix(12)) }
+}
+
 struct SelectedDuasView: View {
     @State private var database = try? QuranDatabase()
     @State private var quranic: [(dua: QuranicDua, text: String, reference: String)] = []
+    @State private var sharing: DuaShare?
     @Environment(\.locale) private var locale
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
@@ -75,6 +83,22 @@ struct SelectedDuasView: View {
                     .foregroundStyle(NoorColor.accentPrimary)
                 ForEach(quranic, id: \.dua.id) { item in
                     VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Spacer()
+                            Button {
+                                sharing = DuaShare(text: item.text, reference: item.reference,
+                                                   quranFont: true)
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(NoorColor.accentPrimary)
+                                    .frame(width: 40, height: 40)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("Share")
+                        }
+                        .frame(height: 20)
                         Text(verbatim: item.text)
                             .font(NoorFont.quran(size: 19))
                             .foregroundStyle(NoorColor.inkPrimary)
@@ -95,9 +119,25 @@ struct SelectedDuasView: View {
                     .padding(.top, 6)
                 ForEach(PropheticDua.all) { dua in
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(verbatim: dua.title)
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(NoorColor.accentGold)
+                        HStack {
+                            Text(verbatim: dua.title)
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(NoorColor.accentGold)
+                            Spacer()
+                            Button {
+                                sharing = DuaShare(text: dua.text,
+                                                   reference: "\(dua.title) · \(dua.source)",
+                                                   quranFont: false)
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(NoorColor.accentPrimary)
+                                    .frame(width: 40, height: 40)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("Share")
+                        }
                         Text(verbatim: dua.text)
                             .font(.system(size: 17))
                             .foregroundStyle(NoorColor.inkPrimary)
@@ -117,6 +157,15 @@ struct SelectedDuasView: View {
         .environment(\.layoutDirection, .rightToLeft)
         .background(NoorColor.bgPrimary)
         .navigationTitle(Text("Selected duas"))
+        .sheet(item: $sharing) { content in
+            NoorShareSheet(
+                arabicText: content.text,
+                reference: content.reference,
+                attribution: "نور Noor",
+                useQuranFont: content.quranFont)
+                .environment(\.locale, locale)
+                .presentationDetents([.medium, .large])
+        }
         .task {
             guard quranic.isEmpty, let database else { return }
             let surahs = (try? database.allSurahs()) ?? []
