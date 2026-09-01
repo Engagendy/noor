@@ -20,8 +20,10 @@ struct PrayerLiveActivity: Widget {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(timerInterval: Date()...context.state.time, countsDown: true)
-                        .font(.system(size: 24, weight: .bold).monospacedDigit())
+                    // Lock screen stays calm: minute-level countdown (the
+                    // Dynamic Island keeps the precise seconds timer).
+                    Text(context.state.time, style: .relative)
+                        .font(.system(size: 22, weight: .bold).monospacedDigit())
                         .multilineTextAlignment(.trailing)
                     Text(context.state.time, style: .time)
                         .font(.system(size: 12).monospacedDigit())
