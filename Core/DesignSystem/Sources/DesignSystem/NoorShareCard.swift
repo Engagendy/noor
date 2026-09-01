@@ -3,6 +3,13 @@ import SwiftUI
 
 /// Status-ready branded image card: paper background, gold frame, mihrab
 /// mark, Arabic text, optional translation, reference + attribution.
+private var shareCornerStar: some View {
+    EightPointStar()
+        .fill(Color(red: 0.73, green: 0.54, blue: 0.18).opacity(0.55))
+        .frame(width: 16, height: 16)
+        .padding(22)
+}
+
 public struct NoorShareCard: View {
     let arabicText: String
     let translation: String?
@@ -39,8 +46,17 @@ public struct NoorShareCard: View {
         }
         .padding(36)
         .frame(width: 620)
-        .background(Color(red: 0.98, green: 0.965, blue: 0.933))
+        .background(
+            ZStack {
+                Color(red: 0.98, green: 0.965, blue: 0.933)
+                IslamicLattice(tint: Color(red: 0.73, green: 0.54, blue: 0.18).opacity(0.055), tile: 74)
+            }
+        )
         .overlay(Rectangle().stroke(Color(red: 0.73, green: 0.54, blue: 0.18), lineWidth: 1.5).padding(10))
+        .overlay(alignment: .topLeading) { shareCornerStar }
+        .overlay(alignment: .topTrailing) { shareCornerStar }
+        .overlay(alignment: .bottomLeading) { shareCornerStar }
+        .overlay(alignment: .bottomTrailing) { shareCornerStar }
     }
 }
 

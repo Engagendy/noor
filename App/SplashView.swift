@@ -16,6 +16,10 @@ struct SplashView: View {
     var body: some View {
         ZStack {
             green.ignoresSafeArea()
+            // Faint star lattice — the ornament fades in with the arch.
+            IslamicLattice(tint: paper.opacity(0.05), tile: 72)
+                .ignoresSafeArea()
+                .opacity(Double(archProgress))
             VStack(spacing: 26) {
                 ZStack {
                     MihrabShape()

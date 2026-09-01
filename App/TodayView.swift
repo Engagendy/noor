@@ -534,6 +534,10 @@ struct TodayView: View {
         .background(
             RoundedRectangle(cornerRadius: 18)
                 .fill(NoorColor.accentPrimary)
+                .overlay(
+                    IslamicLattice(tint: .white.opacity(0.06), tile: 64)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                )
                 .shadow(color: NoorColor.accentPrimary.opacity(0.22), radius: 9, y: 6)
         )
         .accessibilityElement(children: .combine)

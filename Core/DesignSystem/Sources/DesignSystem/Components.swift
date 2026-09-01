@@ -168,3 +168,60 @@ public extension View {
         modifier(NoorCardStyle(cornerRadius: cornerRadius))
     }
 }
+
+// MARK: - Islamic geometric ornament (خاتم — the eight-pointed star)
+
+/// One eight-pointed star (two overlapping rotated squares), the khatam
+/// of classical Islamic geometry and mushaf illumination.
+public struct EightPointStar: Shape {
+    public init() {}
+
+    public func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let outer = min(rect.width, rect.height) / 2
+        let inner = outer * 0.6
+        for i in 0..<16 {
+            let angle = CGFloat(i) * .pi / 8 - .pi / 2
+            let radius = i.isMultiple(of: 2) ? outer : inner
+            let point = CGPoint(x: center.x + cos(angle) * radius,
+                                y: center.y + sin(angle) * radius)
+            if i == 0 { path.move(to: point) } else { path.addLine(to: point) }
+        }
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// A quiet tiled star-lattice for card/surface backgrounds. Meant to sit
+/// at very low opacity — ornament, never noise. Not for behind Quran text.
+public struct IslamicLattice: View {
+    let tint: Color
+    let tile: CGFloat
+    let lineWidth: CGFloat
+
+    public init(tint: Color, tile: CGFloat = 56, lineWidth: CGFloat = 1) {
+        self.tint = tint
+        self.tile = tile
+        self.lineWidth = lineWidth
+    }
+
+    public var body: some View {
+        Canvas { context, size in
+            let columns = Int(size.width / tile) + 2
+            let rows = Int(size.height / tile) + 2
+            for row in 0..<rows {
+                for column in 0..<columns {
+                    // Offset alternate rows for the classic star-and-cross rhythm.
+                    let offsetX = row.isMultiple(of: 2) ? 0 : tile / 2
+                    let origin = CGPoint(x: CGFloat(column) * tile - tile / 2 + offsetX,
+                                         y: CGFloat(row) * tile - tile / 2)
+                    let rect = CGRect(origin: origin, size: CGSize(width: tile * 0.82, height: tile * 0.82))
+                    let star = EightPointStar().path(in: rect)
+                    context.stroke(star, with: .color(tint), lineWidth: lineWidth)
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+}
