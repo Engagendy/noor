@@ -193,7 +193,8 @@ struct HadithBookView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .sheet(item: $selected) { hadith in
-            LibraryHadithDetail(hadith: hadith, collection: collection,
+            LibraryHadithDetail(hadiths: book.hadiths, initialId: hadith.id,
+                                collection: collection,
                                 bookTitle: isArabicUI ? book.arabicTitle : book.englishTitle,
                                 isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
@@ -202,14 +203,26 @@ struct HadithBookView: View {
     }
 }
 
-/// Full text + translation + share.
+/// Full text + translation + share; swipe for the previous/next hadith.
 struct LibraryHadithDetail: View {
-    let hadith: LibraryHadith
+    let hadiths: [LibraryHadith]
     let collection: HadithCollectionID
     let bookTitle: String
     let isArabicUI: Bool
+    @State private var index: Int
     @Environment(\.dismiss) private var dismiss
     @State private var sharing = false
+
+    init(hadiths: [LibraryHadith], initialId: String, collection: HadithCollectionID,
+         bookTitle: String, isArabicUI: Bool) {
+        self.hadiths = hadiths
+        self.collection = collection
+        self.bookTitle = bookTitle
+        self.isArabicUI = isArabicUI
+        _index = State(initialValue: hadiths.firstIndex { $0.id == initialId } ?? 0)
+    }
+
+    private var hadith: LibraryHadith { hadiths[index] }
 
     private var reference: String {
         isArabicUI
@@ -219,30 +232,40 @@ struct LibraryHadithDetail: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(verbatim: hadith.arabic)
-                        .font(.noorScaled(18))
-                        .foregroundStyle(NoorColor.inkPrimary)
-                        .lineSpacing(10)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .environment(\.layoutDirection, .rightToLeft)
-                    if !isArabicUI && !hadith.english.isEmpty {
-                        Rectangle()
-                            .fill(NoorColor.accentGold.opacity(0.3))
-                            .frame(height: 0.7)
-                        Text(verbatim: hadith.english)
-                            .font(.noorScaled(15.5))
-                            .foregroundStyle(NoorColor.inkPrimary.opacity(0.9))
-                            .lineSpacing(7)
+            TabView(selection: $index) {
+                ForEach(Array(hadiths.enumerated()), id: \.offset) { i, item in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text(verbatim: item.arabic)
+                                .font(.noorScaled(18))
+                                .foregroundStyle(NoorColor.inkPrimary)
+                                .lineSpacing(10)
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .environment(\.layoutDirection, .rightToLeft)
+                            if !isArabicUI && !item.english.isEmpty {
+                                Rectangle()
+                                    .fill(NoorColor.accentGold.opacity(0.3))
+                                    .frame(height: 0.7)
+                                Text(verbatim: item.english)
+                                    .font(.noorScaled(15.5))
+                                    .foregroundStyle(NoorColor.inkPrimary.opacity(0.9))
+                                    .lineSpacing(7)
+                            }
+                            Text(verbatim: isArabicUI
+                                 ? "\(collection.arabicName) · \(item.number) · \(bookTitle)"
+                                 : "\(collection.englishName) · \(item.number) · \(bookTitle)")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(NoorColor.accentGold)
+                        }
+                        .padding(20)
                     }
-                    Text(verbatim: "\(reference) · \(bookTitle)")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(NoorColor.accentGold)
+                    .tag(i)
                 }
-                .padding(20)
             }
+            #if os(iOS)
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            #endif
             .background(NoorColor.bgPrimary)
             .navigationTitle(Text("Hadith"))
             #if os(iOS)

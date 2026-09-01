@@ -167,7 +167,7 @@ struct FortyList: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .sheet(item: $selected) { hadith in
-            HadithDetailView(hadith: hadith, isArabicUI: isArabicUI)
+            HadithDetailView(hadith: hadith, isArabicUI: isArabicUI, items: items)
                 .environment(\.locale, locale)
                 .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
