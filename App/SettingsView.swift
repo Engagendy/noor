@@ -1,5 +1,6 @@
 import DesignSystem
 import PrayerTimes
+import Translations
 import QuranAudio
 import QuranReader
 import SwiftUI
@@ -13,6 +14,7 @@ struct SettingsView: View {
     @AppStorage("reader.fontSize") private var quranFontSize = 26.0
     @AppStorage("reader.mode") private var readerMode = "mushaf"
     @AppStorage("audio.reciter") private var reciterRaw = Reciter.alafasy.rawValue
+    @AppStorage("translation.id") private var translationId = "en.sahih"
     @State private var showReciterPicker = false
     @State private var showAdhanSounds = false
     @State private var showZakat = false
@@ -159,6 +161,13 @@ struct SettingsView: View {
                     Text("Tajweed Guide")
                 }
                 MushafDownloadRow()
+                Picker(selection: $translationId) {
+                    ForEach(TranslationStore.allEditions, id: \.id) { edition in
+                        Text(verbatim: edition.displayName).tag(edition.id)
+                    }
+                } label: {
+                    Text("Translation")
+                }
             } header: {
                 Text("Quran")
             }

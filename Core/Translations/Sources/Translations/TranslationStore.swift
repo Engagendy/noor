@@ -17,8 +17,30 @@ public final class TranslationStore {
     /// Saheeh International English, from Tanzil's translation collection.
     public nonisolated static let defaultEdition = Edition(
         id: "en.sahih",
-        displayName: "Saheeh International (English)",
+        displayName: "English — Saheeh International",
         url: URL(string: "https://tanzil.net/trans/en.sahih")!)
+
+    /// All offered translations (Tanzil ids verified live 2026-09-01).
+    public nonisolated static let allEditions: [Edition] = [
+        defaultEdition,
+        Edition(id: "ur.jalandhry", displayName: "اردو — جالندہری",
+                url: URL(string: "https://tanzil.net/trans/ur.jalandhry")!),
+        Edition(id: "fr.hamidullah", displayName: "Français — Hamidullah",
+                url: URL(string: "https://tanzil.net/trans/fr.hamidullah")!),
+        Edition(id: "id.indonesian", displayName: "Indonesia — Kemenag",
+                url: URL(string: "https://tanzil.net/trans/id.indonesian")!),
+        Edition(id: "tr.diyanet", displayName: "Türkçe — Diyanet",
+                url: URL(string: "https://tanzil.net/trans/tr.diyanet")!),
+    ]
+
+    /// The user's chosen edition (defaults to English).
+    public nonisolated static func selectedEdition() -> Edition {
+        let id = UserDefaults.standard.string(forKey: "translation.id") ?? defaultEdition.id
+        return allEditions.first { $0.id == id } ?? defaultEdition
+    }
+
+    /// RTL translations (Urdu) align right.
+    public var isRTL: Bool { edition.id.hasPrefix("ur") }
 
     public struct Edition: Sendable {
         public let id: String
@@ -30,7 +52,7 @@ public final class TranslationStore {
     private var texts: [Int: String] = [:]  // key: surah*1000 + ayah
     private let edition: Edition
 
-    public init(edition: Edition = TranslationStore.defaultEdition) {
+    public init(edition: Edition = TranslationStore.selectedEdition()) {
         self.edition = edition
         if FileManager.default.fileExists(atPath: localFile.path) {
             load()

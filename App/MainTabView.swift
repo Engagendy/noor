@@ -30,6 +30,7 @@ struct MainTabView: View {
     @State private var quranOpenPage: Int?
     @State private var quranOpenTarget: ReaderTarget?
     @State private var translations = TranslationStore()
+    @AppStorage("translation.id") private var translationId = "en.sahih"
     @State private var library = try? LibraryStore()
 
     // Prayer settings — observed so adhan notifications reschedule on change.
@@ -52,6 +53,11 @@ struct MainTabView: View {
     var body: some View {
         mainTabs
             .tint(NoorColor.accentPrimary)
+            .onChange(of: translationId) { _, _ in
+                // Swap the loaded edition and fetch it right away.
+                translations = TranslationStore()
+                Task { await translations.download() }
+            }
             .modifier(TabLifecycle(
                 player: player, tab: $tab,
                 openPendingPage: openPendingPage,
