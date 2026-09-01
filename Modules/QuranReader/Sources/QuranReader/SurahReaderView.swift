@@ -161,6 +161,14 @@ public struct SurahReaderView: View {
             else { return }
             withAnimation(.easeInOut(duration: 0.3)) { currentPage = page }
         }
+        .onChange(of: modeRaw) { _, _ in
+            // Switching reading mode mid-recitation: land directly on the
+            // page being recited so the highlight is in view immediately.
+            guard mode != .ayah, let key = recitingKey,
+                  let page = viewModel.page(surahId: key / 1000, ayah: key % 1000)
+            else { return }
+            currentPage = page
+        }
         .onChange(of: currentPage) { _, page in
             guard mode != .ayah else { return }
             persistPosition(page: page)
