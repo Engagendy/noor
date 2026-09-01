@@ -13,7 +13,10 @@ public struct TafsirEdition: Identifiable, Hashable, Sendable {
 
     public static let all: [TafsirEdition] = [
         TafsirEdition(slug: "ar-tafsir-muyassar", displayName: "الميسر", isArabic: true),
+        TafsirEdition(slug: "ar-tafseer-al-saddi", displayName: "السعدي", isArabic: true),
         TafsirEdition(slug: "ar-tafsir-ibn-kathir", displayName: "ابن كثير", isArabic: true),
+        TafsirEdition(slug: "ar-tafsir-al-tabari", displayName: "الطبري", isArabic: true),
+        TafsirEdition(slug: "ar-tafseer-al-qurtubi", displayName: "القرطبي", isArabic: true),
         TafsirEdition(slug: "en-tafisr-ibn-kathir", displayName: "Ibn Kathir (English)", isArabic: false),
     ]
 

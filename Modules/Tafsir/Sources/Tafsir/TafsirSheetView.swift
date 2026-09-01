@@ -24,13 +24,13 @@ public struct TafsirSheetView: View {
     private var packRow: some View {
         switch service.packState {
         case .downloading(let surah):
-            Label {
+            VStack(alignment: .leading, spacing: 5) {
                 Text("Downloading tafsir \(surah)/114…")
-            } icon: {
-                ProgressView().controlSize(.small)
+                    .font(NoorFont.caption)
+                    .foregroundStyle(NoorColor.inkSecondary)
+                ProgressView(value: Double(surah), total: 114)
+                    .tint(NoorColor.accentPrimary)
             }
-            .font(NoorFont.caption)
-            .foregroundStyle(NoorColor.inkSecondary)
         case .done:
             Label("Available offline", systemImage: "checkmark.circle")
                 .font(NoorFont.caption)
