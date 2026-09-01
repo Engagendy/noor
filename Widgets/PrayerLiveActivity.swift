@@ -6,7 +6,7 @@ import WidgetKit
 struct PrayerLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: NoorPrayerAttributes.self) { context in
-            // Lock screen banner
+            // Lock screen banner — follows the app language.
             HStack {
                 Image(systemName: "moon.stars.fill")
                     .font(.system(size: 22))
@@ -30,6 +30,8 @@ struct PrayerLiveActivity: Widget {
             }
             .padding(16)
             .foregroundStyle(WidgetTheme.darkInk)
+            .environment(\.locale, context.attributes.isArabic ? Locale(identifier: "ar") : .current)
+            .environment(\.layoutDirection, context.attributes.isArabic ? .rightToLeft : .leftToRight)
             .activityBackgroundTint(WidgetTheme.darkBG)
         } dynamicIsland: { context in
             DynamicIsland {
@@ -45,11 +47,13 @@ struct PrayerLiveActivity: Widget {
                     Text(timerInterval: Date()...context.state.time, countsDown: true)
                         .font(.system(size: 20, weight: .bold).monospacedDigit())
                         .frame(maxWidth: 90)
+                        .environment(\.locale, context.attributes.isArabic ? Locale(identifier: "ar") : .current)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     Text(context.state.time, style: .time)
                         .font(.system(size: 12).monospacedDigit())
                         .opacity(0.7)
+                        .environment(\.locale, context.attributes.isArabic ? Locale(identifier: "ar") : .current)
                 }
             } compactLeading: {
                 Image(systemName: "moon.stars.fill")
@@ -58,6 +62,7 @@ struct PrayerLiveActivity: Widget {
                 Text(timerInterval: Date()...context.state.time, countsDown: true)
                     .font(.system(size: 13, weight: .semibold).monospacedDigit())
                     .frame(maxWidth: 52)
+                    .environment(\.locale, context.attributes.isArabic ? Locale(identifier: "ar") : .current)
             } minimal: {
                 Image(systemName: "moon.stars.fill")
                     .foregroundStyle(WidgetTheme.gold)

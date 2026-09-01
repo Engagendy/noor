@@ -56,6 +56,12 @@ struct DailyAyahWidgetView: View {
     }
 
     var body: some View {
+        content
+            .environment(\.locale, entry.isArabicUI ? Locale(identifier: "ar") : .current)
+            .environment(\.layoutDirection, entry.isArabicUI ? .rightToLeft : .leftToRight)
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(entry.isArabicUI ? "آية اليوم" : "DAILY AYAH")
                 .font(.system(size: 10, weight: .bold))
@@ -67,8 +73,8 @@ struct DailyAyahWidgetView: View {
                 .foregroundStyle(WidgetTheme.ink)
                 .lineSpacing(6)
                 .minimumScaleFactor(0.5)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .environment(\.layoutDirection, .rightToLeft)
-                .frame(maxWidth: .infinity, alignment: .trailing)
             Spacer(minLength: 0)
             Text(entry.reference)
                 .font(.system(size: 10))

@@ -33,7 +33,7 @@ enum PrayerLiveActivityController {
             location: location, method: method, madhab: madhab, days: 2, limit: 1,
             arabic: arabic).first
         else { return }
-        let attributes = NoorPrayerAttributes(city: location.label)
+        let attributes = NoorPrayerAttributes(city: location.label, isArabic: arabic)
         let state = NoorPrayerAttributes.ContentState(
             prayerName: next.prayerName, time: next.fireDate)
         do {

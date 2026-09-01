@@ -270,6 +270,13 @@ struct NextPrayerWidgetView: View {
     let entry: PrayerEntry
 
     var body: some View {
+        content
+            // Times, digits, and timers follow the app language too.
+            .environment(\.locale, entry.isArabic ? Locale(identifier: "ar") : .current)
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch family {
         case .systemMedium:
             TodayPrayersMediumView(entry: entry)

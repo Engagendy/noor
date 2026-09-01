@@ -19,9 +19,12 @@ public struct NoorPrayerAttributes: ActivityAttributes {
 
     /// City label shown alongside.
     public var city: String
+    /// Render in Arabic (app language), regardless of device language.
+    public var isArabic: Bool
 
-    public init(city: String) {
+    public init(city: String, isArabic: Bool = false) {
         self.city = city
+        self.isArabic = isArabic
     }
 }
 #endif
