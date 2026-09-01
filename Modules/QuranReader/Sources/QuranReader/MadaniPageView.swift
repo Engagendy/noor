@@ -29,6 +29,12 @@ struct MadaniPageView: View {
             : String(localized: "Ayahs \(first.ayah) to \(last.ayah)")
     }
 
+    /// v1 fonts consume the v1 codes; v2 fonts the v2 codes.
+    private func lineGlyphs(_ line: PageLine) -> String {
+        if PageFontStore.variant == "v1" { return line.glyphs }
+        return line.glyphsV2.isEmpty ? line.glyphs : line.glyphsV2
+    }
+
     private func isHighlighted(_ line: PageLine) -> Bool {
         guard let highlightKey else { return false }
         return line.ayahRefs.contains {
@@ -78,7 +84,7 @@ struct MadaniPageView: View {
                             case .words:
                                 // RLI…PDI: hard right-to-left, immune to
                                 // bidi mis-segmentation of ligature codes.
-                                Text(verbatim: "\u{2067}" + (line.glyphsV2.isEmpty ? line.glyphs : line.glyphsV2) + "\u{2069}")
+                                Text(verbatim: "\u{2067}" + lineGlyphs(line) + "\u{2069}")
                                     .font(.custom(PageFontStore.fontName(page: page), size: fontSize))
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.5)

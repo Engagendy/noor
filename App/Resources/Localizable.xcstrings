@@ -2285,6 +2285,54 @@
           }
         }
       }
+    },
+    "Mushaf typeface": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خط المصحف"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mushaf typeface"
+          }
+        }
+      }
+    },
+    "Compact (~45 MB)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مضغوط (~٤٥ م.ب)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compact (~45 MB)"
+          }
+        }
+      }
+    },
+    "Print quality (~350 MB)": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جودة الطباعة (~٣٥٠ م.ب)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Print quality (~350 MB)"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

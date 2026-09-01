@@ -7,20 +7,34 @@ public struct MushafDownloadRow: View {
     @State private var fontStore = PageFontStore()
     @State private var cached = PageFontStore.cachedCount()
     @State private var task: Task<Void, Never>?
+    @AppStorage("mushaf.font") private var fontVariant = "v2"
 
     public init() {}
+
+    private var sizeLabel: String { fontVariant == "v1" ? "~45 MB" : "~350 MB" }
 
     private var isComplete: Bool { cached >= 604 }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 10) {
+            Picker(selection: $fontVariant) {
+                Text("Compact (~45 MB)").tag("v1")
+                Text("Print quality (~350 MB)").tag("v2")
+            } label: {
+                Text("Mushaf typeface")
+            }
+            .onChange(of: fontVariant) { _, _ in
+                task?.cancel()
+                task = nil
+                cached = PageFontStore.cachedCount()
+            }
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Download full mushaf")
                         .foregroundStyle(NoorColor.inkPrimary)
-                    Text(isComplete
-                         ? "All 604 pages are offline"
-                         : "\(cached) of 604 pages · ~350 MB total")
+                    Text(verbatim: isComplete
+                         ? String(localized: "All 604 pages are offline")
+                         : "\(cached) / 604 · \(sizeLabel)")
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }

@@ -126,3 +126,8 @@ Attributions are displayed in Settings → About.
 - **Source:** fawazahmed0/hadith-api (github.com/fawazahmed0/hadith-api), editions ara/eng-nawawi and ara/eng-qudsi
 - **License:** Unlicense (public domain dataset); the classical texts themselves are public domain
 - **Attribution:** "Hadith data courtesy of the hadith-api project."
+
+### QCF v1.5 page fonts (compact mushaf, downloaded on demand)
+- **Source:** mustafa0x/qpc-fonts, mushaf-v1.5 (KFGQPC Quran Complex fonts)
+- **License:** KFGQPC terms (free use with text integrity), same as v2
+- **Attribution:** "Madani mushaf fonts by the King Fahd Glorious Quran Printing Complex."
