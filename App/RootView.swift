@@ -14,6 +14,7 @@ struct RootView: View {
 
     @State private var state: LoadState = .loading
     @State private var showSplash = true
+    @AppStorage("onboarded") private var onboarded = false
     @AppStorage("app.language") private var storedLanguage = "system"
     /// NOOR_LANG env overrides (screenshots/UI tests — sim defaults race).
     private var language: String {
@@ -46,10 +47,17 @@ struct RootView: View {
         }
         .background(NoorColor.bgPrimary)
         .overlay {
+            if !onboarded && !showSplash {
+                OnboardingView(done: Binding(
+                    get: { onboarded },
+                    set: { onboarded = $0 }))
+                    .transition(.opacity)
+                    .zIndex(1)
+            }
             if showSplash {
                 SplashView()
                     .transition(.opacity)
-                    .zIndex(1)
+                    .zIndex(2)
             }
         }
         // Live language switch via environment only (never AppleLanguages —
