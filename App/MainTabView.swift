@@ -154,6 +154,12 @@ struct MainTabView: View {
         CloudSync.pushLocal()
     }
 
+    private var isArabicNotifications: Bool {
+        appLanguage == "ar"
+            || (appLanguage == "system"
+                && Locale.current.language.languageCode?.identifier == "ar")
+    }
+
     private func rescheduleNotifications() async {
         let scheduler = AdhanNotificationScheduler()
         guard notificationsEnabled else {
@@ -168,9 +174,10 @@ struct MainTabView: View {
             location: PrayerLocation.current(),
             method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
             madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
-            sound: AdhanSound(rawValue: soundRaw) ?? .adhanMadinah)
+            sound: AdhanSound(rawValue: soundRaw) ?? .adhanMadinah,
+            arabic: isArabicNotifications)
         await FastingReminderScheduler().reschedule(
-            arabic: appLanguage == "ar", enabled: fastingReminders)
+            arabic: isArabicNotifications, enabled: fastingReminders)
     }
 }
 

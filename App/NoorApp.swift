@@ -1,6 +1,7 @@
 import DesignSystem
 import PrayerTimes
 import SwiftUI
+import UserNotifications
 
 @main
 struct NoorApp: App {
@@ -9,6 +10,8 @@ struct NoorApp: App {
         // Migration: we briefly wrote AppleLanguages for in-app language;
         // that mirrors rendering when it disagrees with the environment.
         UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        // Adhan must sound even when the app is frontmost.
+        UNUserNotificationCenter.current().delegate = NoorNotificationDelegate.shared
     }
 
     var body: some Scene {
@@ -81,3 +84,16 @@ struct MenuBarPrayerView: View {
     }
 }
 #endif
+
+
+/// Presents adhan notifications (banner + sound) while the app is open.
+final class NoorNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    static let shared = NoorNotificationDelegate()
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .sound, .list]
+    }
+}

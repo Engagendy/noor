@@ -25,17 +25,21 @@ public struct AdhanNotificationScheduler: Sendable {
         location: PrayerLocation,
         method: CalculationMethodChoice,
         madhab: MadhabChoice,
-        sound: AdhanSound
+        sound: AdhanSound,
+        arabic: Bool = false
     ) async {
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
 
         for planned in AdhanNotificationPlanner.plan(
             location: location, method: method, madhab: madhab,
-            enabledPrayers: PrayerNotificationPrefs.enabledPrayers()) {
+            enabledPrayers: PrayerNotificationPrefs.enabledPrayers(),
+            arabic: arabic) {
             let content = UNMutableNotificationContent()
             // Calm microcopy per design §7 — no exclamation marks.
-            content.title = String(localized: "It's time for \(planned.prayerName)")
+            content.title = arabic
+                ? "حان وقت صلاة \(planned.prayerName)"
+                : String(localized: "It's time for \(planned.prayerName)")
             content.body = "\(planned.prayerName) · \(planned.timeString)"
             if let file = sound.fileName {
                 // Bundled adhan clips, all ≤30s (see LICENSES.md).

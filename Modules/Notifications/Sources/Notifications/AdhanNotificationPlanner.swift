@@ -17,6 +17,13 @@ public enum AdhanNotificationPlanner {
     public static let defaultDays = 12
     public static let defaultLimit = 60
 
+    /// Arabic prayer names for notification copy (String(localized:)
+    /// resolves with the PROCESS language, not the in-app choice).
+    static let arabicNames: [Adhan.Prayer: String] = [
+        .fajr: "الفجر", .sunrise: "الشروق", .dhuhr: "الظهر",
+        .asr: "العصر", .maghrib: "المغرب", .isha: "العشاء",
+    ]
+
     public static func plan(
         location: PrayerLocation,
         method: CalculationMethodChoice,
@@ -24,7 +31,8 @@ public enum AdhanNotificationPlanner {
         enabledPrayers: Set<Adhan.Prayer> = [.fajr, .dhuhr, .asr, .maghrib, .isha],
         from now: Date = .now,
         days: Int = defaultDays,
-        limit: Int = defaultLimit
+        limit: Int = defaultLimit,
+        arabic: Bool = false
     ) -> [PlannedNotification] {
         var result: [PlannedNotification] = []
         var formatStyle = Date.FormatStyle(date: .omitted, time: .shortened)
@@ -38,7 +46,9 @@ public enum AdhanNotificationPlanner {
                 guard result.count < limit else { return result }
                 result.append(PlannedNotification(
                     id: "adhan-\(entry.prayer)-\(Int(entry.time.timeIntervalSince1970))",
-                    prayerName: String(localized: entry.name),
+                    prayerName: arabic
+                        ? (Self.arabicNames[entry.prayer] ?? String(localized: entry.name))
+                        : String(localized: entry.name),
                     fireDate: entry.time,
                     timeString: entry.time.formatted(formatStyle)))
             }
