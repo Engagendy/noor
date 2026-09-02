@@ -60,7 +60,7 @@ private data class HadithDetail(val pages: List<HadithPage>, val initialIndex: I
 /// Forty-collection title: Arabic from the bundled data, English forms
 /// (as on iOS) in the en locale.
 private fun fortyTitle(context: android.content.Context, key: String, arabic: String): String =
-    if (isArabicUi()) arabic
+    if (isArabicLocale()) arabic
     else when (key) {
         "nawawi" -> context.getString(R.string.g2_forty_nawawi)
         "qudsi" -> context.getString(R.string.g2_forty_qudsi)
