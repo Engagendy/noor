@@ -75,3 +75,9 @@ Release builds minify with `app/proguard-rules.pro` (keep rules for the adhan
 library, org.json, and manifest entry points). If a release-only crash appears,
 check `app/build/outputs/mapping/release/mapping.txt` and upload it to Play for
 readable crash reports.
+
+## Release log
+- vc2 — first closed-test upload. BROKEN: Arabic-locale digits in download URLs (no mushaf fonts, no audio).
+- vc3 — Locale.ROOT URL fix.
+- vc4 — + dark-mode launch-crash fix (values-night theme must stay AppCompat). Uploaded to closed track 2026-09-02.
+- vc5 (pending) — back-navigation sweep, Madani per-word justification + QCF cmap patch (p76 overlap), page-font retry, audio cache/prefetch/retry + buffering spinner, onboarding language picker + auto-locate. VERIFY the Madani fix on a device first (Samsung has the Play-signed build — adb installs rejected; use the Huawei/S25 or a Play upload).

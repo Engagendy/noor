@@ -1,9 +1,14 @@
 # CLAUDE.md — standing instructions for Claude Code on this repo
 
 ## Project
-Free Quran + Sunnah + Prayer app for iOS/iPadOS/macOS. Read the full plan in
-`01-PROJECT-PLAN.md` and design tokens/screens in `02-DESIGN-GUIDELINES.md`
-before any task. Follow the module structure in plan section 4 exactly.
+Free Quran + Sunnah + Prayer app. iOS/iPadOS/macOS (Swift/SwiftUI, modules
+under `Modules/` + `Core/`) AND native Android (Kotlin + Jetpack Compose,
+single-module app in `android/`). The Android app mirrors iOS 100% in design
+and features — when changing one platform, check whether the other needs the
+same change; the iOS Swift source is the spec for Android work. Read the full
+plan in `01-PROJECT-PLAN.md` and design tokens/screens in
+`02-DESIGN-GUIDELINES.md` before any task. Follow the module structure in
+plan section 4 exactly (iOS).
 
 ## Hard rules
 1. **Quran text integrity is sacred.** Quran Arabic text lives only in the
@@ -33,6 +38,37 @@ before any task. Follow the module structure in plan section 4 exactly.
   fonts (page mode) and Amiri Quran (flow mode — the KFGQPC text fonts
   break Quranic marks like U+06DF under Apple's shaper; verified 2026-08-31).
 - Accessibility non-negotiable: labels, Dynamic Type, 44pt targets on every PR.
+
+## Android conventions (`android/`)
+- Kotlin + Compose, manual state navigation (no NavHost); tokens in
+  `Theme.kt` (`NoorColor` is a REACTIVE palette — light "Mushaf" / dark
+  "Tahajjud", switched via `NoorColor.apply`); Arabic-default resources with
+  `values-en/` for English; per-app locale via AppCompatDelegate
+  (MainActivity MUST stay an AppCompatActivity and BOTH `values/themes.xml`
+  and `values-night/themes.xml` MUST stay `Theme.AppCompat` descendants —
+  a Material parent crashes every system-dark device at launch).
+- **Locale-safe formatting:** Kotlin `"%d".format()` uses the default locale;
+  with the ar per-app locale it emits Arabic-Indic digits. ALWAYS
+  `format(Locale.ROOT, …)` for URLs, filenames, and cache keys.
+- Never write prefs from composition (bump a `version` int in click handlers);
+  heavy IO off-main; system back wired via `BackHandler(enabled = …)`.
+- Ripples must be clipped: `.clip(shape)` before `.clickable` on rounded UI.
+- RTL arrow rule: forward/disclosure points LEFT in ar, RIGHT in en — use the
+  explicit direction-aware helpers in `LocaleSupport.kt` (NoorIcons), never
+  emoji glyphs as icons.
+- `AyahActionsSheet` self-dismisses BEFORE firing its action — any state or
+  coroutine the action needs must live above the sheet (screen level / a
+  scope that outlives it).
+- Madani page mode: QCF v2 per-page fonts are downloaded then CMAP-PATCHED
+  (`PageFontStore.patchCmap` shifts U+FB50–FD79 → PUA −0x1000 with idDelta
+  compensation) because Android's shaper stacks the shadda-ligature
+  presentation forms as zero-advance marks (word-overlap bug, e.g. p76 l4);
+  render maps chars via `PageFontStore.mapGlyphs`. Lines render per-word
+  (justified edge-to-edge like the print; <55%-width closing lines centered).
+- Release signing: `android/noor-upload.keystore` + `keystore.properties`
+  (gitignored — back up!). Play requires targetSdk 36+. Devices running the
+  Play-signed closed-test build REJECT adb installs of locally-signed APKs
+  (uninstall first or use another device).
 
 ## Testing expectations
 - Unit tests for: prayer time calculations (methods, madhab, DST, high
