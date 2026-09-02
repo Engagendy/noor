@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun OnboardingScreen(onDone: () -> Unit) {
     val context = LocalContext.current
-    var step by remember { mutableIntStateOf(0) }
+    var step by androidx.compose.runtime.saveable.rememberSaveable { mutableIntStateOf(0) }
     // Explicit user actions only — writes happen in click handlers.
     val prayerPrefs = remember { PrayerPrefs(context) }
     var cityName by remember { mutableStateOf(prayerPrefs.cityName) }
@@ -125,9 +125,15 @@ fun OnboardingScreen(onDone: () -> Unit) {
     }
 }
 
-/// Step 1 — the app is Arabic-first; a calm note, not a picker.
+/// Step 1 — language picker; the choice applies IMMEDIATELY (per-app
+/// locale recreates the activity in the new language; the saved step
+/// keeps onboarding on this screen so the user sees the switch happen).
 @Composable
 private fun LanguageStep(onContinue: () -> Unit) {
+    val context = LocalContext.current
+    val current = remember {
+        KhatmahPlan.prefs(context).getString("app.language", "system") ?: "system"
+    }
     Column(Modifier.fillMaxSize().padding(24.dp)) {
         Spacer(Modifier.weight(1f))
         StepTitle(stringResource(R.string.g1_app_language))
@@ -136,19 +142,42 @@ private fun LanguageStep(onContinue: () -> Unit) {
                 .padding(top = 14.dp)
                 .fillMaxWidth()
                 .background(NoorColor.bgElevated, RoundedCornerShape(14.dp))
-                .padding(18.dp)
+                .padding(8.dp)
         ) {
-            Text(
-                stringResource(R.string.g1_arabic),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = NoorColor.inkPrimary)
-            Text(
-                stringResource(R.string.g1_arabic_first_note),
-                fontSize = 13.sp,
-                color = NoorColor.inkSecondary,
-                modifier = Modifier.padding(top = 4.dp))
+            listOf(
+                "system" to stringResource(R.string.g1_lang_system),
+                "ar" to "العربية",
+                "en" to "English",
+            ).forEach { (id, label) ->
+                val selected = current == id
+                Text(
+                    label,
+                    fontSize = 17.sp,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (selected) NoorColor.accentPrimary else NoorColor.inkPrimary,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(
+                            if (selected) NoorColor.stateReciting else Color.Transparent,
+                            RoundedCornerShape(10.dp))
+                        .clickable {
+                            KhatmahPlan.prefs(context)
+                                .edit().putString("app.language", id).apply()
+                            androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
+                                if (id == "system")
+                                    androidx.core.os.LocaleListCompat.getEmptyLocaleList()
+                                else androidx.core.os.LocaleListCompat.forLanguageTags(id))
+                        }
+                        .padding(horizontal = 14.dp, vertical = 12.dp))
+            }
         }
+        Text(
+            stringResource(R.string.g1_arabic_first_note),
+            fontSize = 13.sp,
+            color = NoorColor.inkSecondary,
+            modifier = Modifier.padding(top = 10.dp))
         Spacer(Modifier.weight(1f))
         PrimaryButton(stringResource(R.string.g1_continue), onContinue)
     }
