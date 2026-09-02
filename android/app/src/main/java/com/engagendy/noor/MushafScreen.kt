@@ -81,6 +81,8 @@ fun MushafScreen(
     var showGoToPage by remember { mutableStateOf(false) }
     // Ayah long-pressed on the page — the iOS ayah-actions sheet.
     var actionRef by remember { mutableStateOf<AyahRef?>(null) }
+    // Tafsir opened from that sheet (survives the sheet's self-dismiss).
+    var tafsirRef by remember { mutableStateOf<AyahRef?>(null) }
 
     // Follow-along page flip (iOS onChange(of: recitingKey)): while the
     // player recites, the pager tracks the playing ayah's printed page —
@@ -193,7 +195,15 @@ fun MushafScreen(
     // Long-pressed ayah → the same actions sheet as the flow reader
     // (play from here, tafsir, share, copy, bookmark). Verse text and surah
     // info resolve off-main from the verified DB.
-    actionRef?.let { ref -> MushafAyahActions(ref, onDismiss = { actionRef = null }) }
+    actionRef?.let { ref ->
+        MushafAyahActions(
+            ref,
+            // The sheet dismisses itself before firing the action, so tafsir
+            // state must outlive it — it lives here on the screen.
+            onOpenTafsir = { tafsirRef = ref },
+            onDismiss = { actionRef = null })
+    }
+    tafsirRef?.let { ref -> MushafTafsir(ref, onDismiss = { tafsirRef = null }) }
     // Go-to-page (iOS GoToPageSheet): opened from the juz/page line in the
     // top bar; animates the pager like the iOS withAnimation currentPage set.
     if (showGoToPage) {
@@ -208,7 +218,11 @@ fun MushafScreen(
 /// Ayah actions from a Madani-page long-press — resolves the verse and
 /// surah off-main, then shows the shared AyahActionsSheet + TafsirSheet.
 @Composable
-private fun MushafAyahActions(ref: AyahRef, onDismiss: () -> Unit) {
+private fun MushafAyahActions(
+    ref: AyahRef,
+    onOpenTafsir: () -> Unit,
+    onDismiss: () -> Unit,
+) {
     val context = LocalContext.current
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val loaded by produceState<Pair<Verse, Surah>?>(initialValue = null, ref) {
@@ -225,17 +239,6 @@ private fun MushafAyahActions(ref: AyahRef, onDismiss: () -> Unit) {
     var bookmarks by remember {
         mutableStateOf(prefs.getStringSet("quran.bookmarks", emptySet())!!.toSet())
     }
-    var showTafsir by remember(ref) { mutableStateOf(false) }
-
-    if (showTafsir) {
-        TafsirSheet(
-            surahId = surah.id,
-            ayah = verse.ayah,
-            ayahText = verse.text,
-            onDismiss = { showTafsir = false; onDismiss() },
-            surahName = surah.nameArabic)
-        return
-    }
     AyahActionsSheet(
         verse = verse,
         isBookmarked = "${surah.id}:${verse.ayah}" in bookmarks,
@@ -249,7 +252,7 @@ private fun MushafAyahActions(ref: AyahRef, onDismiss: () -> Unit) {
                 NoorPlayer.play(surah.id, surah.ayahCount, verse.ayah, surah.nameArabic, pageEnd)
             }
         },
-        onTafsir = { showTafsir = true },
+        onTafsir = onOpenTafsir,
         onShare = {
             scope.launch {
                 val bitmap = withContext(Dispatchers.IO) {
@@ -278,6 +281,29 @@ private fun MushafAyahActions(ref: AyahRef, onDismiss: () -> Unit) {
             prefs.edit().putStringSet("quran.bookmarks", next).apply()
         },
         onDismiss = onDismiss)
+}
+
+/// Tafsir for a page ayah — its own loader so it survives the actions
+/// sheet dismissing itself before the action fires.
+@Composable
+private fun MushafTafsir(ref: AyahRef, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val loaded by produceState<Pair<Verse, Surah>?>(initialValue = null, ref) {
+        value = withContext(Dispatchers.IO) {
+            val surah = QuranDb.get(context).surahs().firstOrNull { it.id == ref.surahId }
+                ?: return@withContext null
+            val verse = QuranDb.get(context).verses(ref.surahId)
+                .firstOrNull { it.ayah == ref.ayah } ?: return@withContext null
+            verse to surah
+        }
+    }
+    val (verse, surah) = loaded ?: return
+    TafsirSheet(
+        surahId = surah.id,
+        ayah = verse.ayah,
+        ayahText = verse.text,
+        onDismiss = onDismiss,
+        surahName = surah.nameArabic)
 }
 
 /// Fixed-height strip, iOS SurahReaderView.topBar parity: full controls
