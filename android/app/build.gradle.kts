@@ -37,6 +37,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Side-by-side with the Play-signed build on test devices
+            // (Play-signed installs reject locally-signed APKs of the same id).
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(

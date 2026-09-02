@@ -68,7 +68,7 @@ plan section 4 exactly (iOS).
 - Release signing: `android/noor-upload.keystore` + `keystore.properties`
   (gitignored — back up!). Play requires targetSdk 36+. Devices running the
   Play-signed closed-test build REJECT adb installs of locally-signed APKs
-  (uninstall first or use another device).
+  — debug builds use applicationIdSuffix `.debug` so they install side by side.
 
 ## Testing expectations
 - Unit tests for: prayer time calculations (methods, madhab, DST, high

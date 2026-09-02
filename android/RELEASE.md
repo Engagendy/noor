@@ -80,4 +80,4 @@ readable crash reports.
 - vc2 — first closed-test upload. BROKEN: Arabic-locale digits in download URLs (no mushaf fonts, no audio).
 - vc3 — Locale.ROOT URL fix.
 - vc4 — + dark-mode launch-crash fix (values-night theme must stay AppCompat). Uploaded to closed track 2026-09-02.
-- vc5 (pending) — back-navigation sweep, Madani per-word justification + QCF cmap patch (p76 overlap), page-font retry, audio cache/prefetch/retry + buffering spinner, onboarding language picker + auto-locate. VERIFY the Madani fix on a device first (Samsung has the Play-signed build — adb installs rejected; use the Huawei/S25 or a Play upload).
+- vc5 (pending) — back-navigation sweep, Madani per-word justification + QCF cmap patch (p76 overlap), page-font retry, audio cache/prefetch/retry + buffering spinner, onboarding language picker + auto-locate. Madani p76 fix VERIFIED on the Samsung (2026-09-02) via the debug build, which now installs side by side as `com.engagendy.noor.debug` (applicationIdSuffix) — no need to uninstall the Play build.
