@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -109,6 +110,7 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
                         if (useCustomLocation) NoorColor.stateReciting else NoorColor.bgElevated,
                         RoundedCornerShape(12.dp))
@@ -192,6 +194,7 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
                         color = if (selected) NoorColor.bgPrimary else NoorColor.inkPrimary,
                         modifier = Modifier
                             .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
                             .background(
                                 if (selected) NoorColor.accentPrimary else NoorColor.bgElevated,
                                 RoundedCornerShape(12.dp))
@@ -266,6 +269,7 @@ private fun SettingRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 2.dp)
+            .clip(RoundedCornerShape(12.dp))
             .background(
                 if (selected) NoorColor.stateReciting else NoorColor.bgElevated,
                 RoundedCornerShape(12.dp))
@@ -318,6 +322,7 @@ private fun StepperButton(label: String, enabled: Boolean, onClick: () -> Unit) 
         color = if (enabled) NoorColor.accentPrimary else NoorColor.inkSecondary.copy(alpha = 0.4f),
         modifier = Modifier
             .size(32.dp)
+            .clip(CircleShape)
             .background(NoorColor.bgPrimary, CircleShape)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(top = 3.dp))

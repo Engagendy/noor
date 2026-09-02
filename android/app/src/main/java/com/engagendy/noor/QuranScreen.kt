@@ -716,7 +716,7 @@ fun ReaderScreen(
                 shape = CircleShape,
                 color = NoorColor.bgElevated,
                 shadowElevation = 3.dp,
-                modifier = Modifier.size(38.dp).clickable(onClick = onBack)
+                modifier = Modifier.size(38.dp).clip(CircleShape).clickable(onClick = onBack)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     // Explicit right-pointing drawable (not auto-mirrored):
@@ -752,7 +752,7 @@ fun ReaderScreen(
                         R.drawable.ic_pause_fill else R.drawable.ic_play_fill),
                 contentDescription = "تشغيل",
                 tint = NoorColor.accentPrimary,
-                modifier = Modifier.clickable {
+                modifier = Modifier.clip(CircleShape).clickable {
                     if (NoorPlayer.currentSurah != 0) NoorPlayer.toggle()
                     else startPlayback()
                 }.padding(10.dp).size(17.dp)
@@ -763,7 +763,7 @@ fun ReaderScreen(
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = if (showOptions) NoorColor.accentGold else NoorColor.accentPrimary,
-                modifier = Modifier.clickable { showOptions = !showOptions }.padding(10.dp)
+                modifier = Modifier.clip(CircleShape).clickable { showOptions = !showOptions }.padding(10.dp)
             )
         }
         Box(Modifier.weight(1f)) {

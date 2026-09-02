@@ -3,6 +3,7 @@ package com.engagendy.noor
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -237,7 +238,7 @@ private fun MushafTopBar(
                 shape = CircleShape,
                 color = NoorColor.bgElevated,
                 shadowElevation = 3.dp,
-                modifier = Modifier.size(38.dp).clickable(enabled = chromeVisible, onClick = onBack)
+                modifier = Modifier.size(38.dp).clip(CircleShape).clickable(enabled = chromeVisible, onClick = onBack)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     // Explicit right-pointing drawable (not auto-mirrored):
@@ -265,6 +266,7 @@ private fun MushafTopBar(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(38.dp)
+                    .clip(CircleShape)
                     .clickable(enabled = chromeVisible) { playFromPage() }
             ) {
                 Icon(
@@ -285,6 +287,7 @@ private fun MushafTopBar(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .size(38.dp)
+                    .clip(CircleShape)
                     .clickable(enabled = chromeVisible, onClick = onToggleOptions)
                     .padding(top = 7.dp))
         }

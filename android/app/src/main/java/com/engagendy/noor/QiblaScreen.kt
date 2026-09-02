@@ -15,6 +15,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -177,7 +179,7 @@ fun QiblaScreen(onClose: () -> Unit) {
                  color = NoorColor.inkPrimary)
             Icon(painterResource(R.drawable.ic_close), contentDescription = "إغلاق",
                  tint = NoorColor.inkSecondary,
-                 modifier = Modifier.size(44.dp).clickable(onClick = onClose).padding(10.dp))
+                 modifier = Modifier.size(44.dp).clip(CircleShape).clickable(onClick = onClose).padding(10.dp))
         }
         Spacer(Modifier.height(8.dp))
         Text(locationLabel, fontSize = 13.sp, color = NoorColor.inkSecondary)

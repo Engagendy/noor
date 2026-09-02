@@ -2,6 +2,7 @@ package com.engagendy.noor
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -156,6 +157,7 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp, vertical = 6.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(NoorColor.bgElevated, RoundedCornerShape(14.dp))
                         .clickable(enabled = state == PackState.READY) { openSahih = collection }
                         .padding(horizontal = 18.dp, vertical = 16.dp)

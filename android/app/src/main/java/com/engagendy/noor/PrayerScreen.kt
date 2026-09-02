@@ -5,6 +5,7 @@ import android.media.MediaPlayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -122,6 +123,7 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
                      tint = NoorColor.accentPrimary,
                      modifier = Modifier
                          .size(44.dp)
+                         .clip(CircleShape)
                          .clickable { showQibla = true }
                          .padding(10.dp))
             }
@@ -219,6 +221,7 @@ private fun WeekStrip(now: Date, dayOffset: Int, onSelect: (Int) -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
                         if (selected) NoorColor.accentPrimary else NoorColor.bgPrimary,
                         RoundedCornerShape(12.dp))
@@ -242,7 +245,7 @@ private fun BellToggle(on: Boolean, onClick: () -> Unit) {
         painterResource(if (on) R.drawable.ic_bell else R.drawable.ic_bell_off),
         contentDescription = "التنبيه",
         tint = if (on) NoorColor.accentPrimary else NoorColor.inkSecondary.copy(alpha = 0.5f),
-        modifier = Modifier.size(44.dp).clickable(onClick = onClick).padding(13.dp))
+        modifier = Modifier.size(44.dp).clip(CircleShape).clickable(onClick = onClick).padding(13.dp))
 }
 
 @Composable
@@ -340,6 +343,7 @@ private fun NextPrayerCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
+                        .clip(RoundedCornerShape(50))
                         .background(
                             if (on) NoorColor.stateReciting else NoorColor.bgElevated,
                             RoundedCornerShape(50))
@@ -371,6 +375,7 @@ private fun CardRow(icon: Int, tint: androidx.compose.ui.graphics.Color,
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
             .background(NoorColor.bgElevated, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
             .padding(16.dp)
@@ -415,6 +420,7 @@ private fun AdhanSoundSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 2.dp)
+                        .clip(RoundedCornerShape(12.dp))
                         .background(
                             if (on) NoorColor.stateReciting else NoorColor.bgPrimary,
                             RoundedCornerShape(12.dp))

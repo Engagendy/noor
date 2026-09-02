@@ -3,6 +3,7 @@ package com.engagendy.noor
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -99,6 +100,7 @@ fun AthkarScreen(modifier: Modifier = Modifier) {
                             color = NoorColor.accentPrimary,
                             modifier = Modifier
                                 .weight(1f)
+                                .clip(RoundedCornerShape(14.dp))
                                 .background(NoorColor.stateReciting, RoundedCornerShape(14.dp))
                                 .clickable { extra = item }
                                 .padding(horizontal = 14.dp, vertical = 16.dp)
@@ -147,6 +149,7 @@ fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modif
                     Modifier
                         .fillMaxWidth()
                         .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(
                             if (complete) NoorColor.stateReciting else NoorColor.bgElevated,
                             RoundedCornerShape(14.dp)

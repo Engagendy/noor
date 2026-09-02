@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -183,6 +184,7 @@ fun TafsirSheet(
                         maxLines = 1,
                         color = if (on) NoorColor.bgPrimary else NoorColor.accentPrimary,
                         modifier = Modifier
+                            .clip(RoundedCornerShape(50))
                             .background(
                                 if (on) NoorColor.accentPrimary
                                 else NoorColor.accentPrimary.copy(alpha = 0.1f),

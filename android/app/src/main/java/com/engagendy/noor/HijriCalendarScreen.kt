@@ -4,6 +4,7 @@ import android.icu.util.Calendar
 import android.icu.util.ULocale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -150,7 +151,7 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(44.dp).clickable { monthOffset -= 1 }
+                    modifier = Modifier.size(44.dp).clip(CircleShape).clickable { monthOffset -= 1 }
                 ) {
                     Icon(painterResource(R.drawable.ic_chevron_right),
                          contentDescription = "الشهر السابق",
@@ -163,7 +164,7 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                      modifier = Modifier.weight(1f))
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(44.dp).clickable { monthOffset += 1 }
+                    modifier = Modifier.size(44.dp).clip(CircleShape).clickable { monthOffset += 1 }
                 ) {
                     Icon(painterResource(R.drawable.ic_chevron_left),
                          contentDescription = "الشهر التالي",
@@ -203,6 +204,7 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                                         .weight(1f)
                                         .height(44.dp)
                                         .padding(horizontal = 2.dp)
+                                        .clip(RoundedCornerShape(10.dp))
                                         .background(
                                             when {
                                                 cell.isToday -> NoorColor.accentPrimary
@@ -400,6 +402,7 @@ fun ShareIconButton(onClick: () -> Unit) {
         tint = NoorColor.accentPrimary,
         modifier = Modifier
             .size(40.dp)
+            .clip(CircleShape)
             .clickable(onClick = onClick)
             .padding(10.dp))
 }

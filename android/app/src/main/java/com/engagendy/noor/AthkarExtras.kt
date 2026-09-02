@@ -3,6 +3,7 @@ package com.engagendy.noor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
@@ -451,6 +452,7 @@ fun AsmaulHusnaScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
                         .background(NoorColor.bgElevated, RoundedCornerShape(14.dp))
                         .clickable { selected = name }
                         .padding(vertical = 14.dp)
@@ -544,6 +546,7 @@ fun TasbihScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         fontWeight = FontWeight.SemiBold,
                         color = if (on) NoorColor.bgPrimary else NoorColor.inkPrimary,
                         modifier = Modifier
+                            .clip(RoundedCornerShape(50))
                             .background(
                                 if (on) NoorColor.accentPrimary else NoorColor.bgElevated,
                                 RoundedCornerShape(50)
@@ -564,6 +567,7 @@ fun TasbihScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     .padding(top = 24.dp)
                     .size(220.dp)
                     .border(3.dp, NoorColor.accentGold, CircleShape)
+                    .clip(CircleShape)
                     .background(NoorColor.bgElevated, CircleShape)
                     .clickable {
                         count += 1

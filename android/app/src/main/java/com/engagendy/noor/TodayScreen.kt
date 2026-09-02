@@ -169,6 +169,7 @@ private fun TodayHeader(now: Date, onCalendar: () -> Unit, onSettings: () -> Uni
             modifier = Modifier
                 .padding(start = 6.dp)
                 .size(44.dp)
+                .clip(CircleShape)
                 .background(NoorColor.accentPrimary.copy(alpha = 0.12f), CircleShape)
                 .clickable(onClick = onCalendar)
                 .padding(11.dp))
@@ -179,6 +180,7 @@ private fun TodayHeader(now: Date, onCalendar: () -> Unit, onSettings: () -> Uni
             modifier = Modifier
                 .padding(start = 6.dp)
                 .size(44.dp)
+                .clip(CircleShape)
                 .background(NoorColor.inkPrimary.copy(alpha = 0.06f), CircleShape)
                 .clickable(onClick = onSettings)
                 .padding(11.dp))
@@ -347,6 +349,7 @@ private fun ContinueReadingCard(openResume: () -> Unit) {
         modifier = Modifier
             .padding(top = 12.dp)
             .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
             .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
             .clickable(onClick = openResume)
             .padding(16.dp)
@@ -405,6 +408,7 @@ private fun ContinueListeningCard() {
         modifier = Modifier
             .padding(top = 12.dp)
             .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
             .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
             .clickable {
                 NoorPlayer.play(surah.id, surah.ayahCount, saved.second, surah.nameArabic)
@@ -448,6 +452,7 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
         Modifier
             .padding(top = 12.dp)
             .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
             .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
             .clickable {
                 if (plan == null) showGoal = true
@@ -519,6 +524,7 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
                         color = NoorColor.bgPrimary,
                         modifier = Modifier
                             .padding(top = 8.dp)
+                            .clip(CircleShape)
                             .background(NoorColor.accentPrimary, CircleShape)
                             .clickable {
                                 KhatmahPlan.recordCompletion(context)
@@ -616,6 +622,7 @@ private fun KhatmahGoalDialog(
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
                             .background(
                                 if (on) NoorColor.accentPrimary else NoorColor.bgElevated,
                                 RoundedCornerShape(12.dp))
@@ -659,6 +666,7 @@ private fun KhatmahGoalDialog(
                 modifier = Modifier
                     .padding(top = 16.dp)
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
                     .background(NoorColor.accentPrimary, RoundedCornerShape(14.dp))
                     .clickable { onStart(days) }
                     .padding(vertical = 14.dp))
@@ -682,6 +690,7 @@ private fun StepperText(label: String, enabled: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .padding(start = 8.dp)
             .size(32.dp)
+            .clip(CircleShape)
             .background(NoorColor.bgElevated, CircleShape)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(top = 3.dp))
@@ -755,6 +764,7 @@ private fun CarouselCard(
     Column(
         Modifier
             .fillMaxSize()
+            .clip(RoundedCornerShape(18.dp))
             .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
             .padding(horizontal = 16.dp, vertical = 10.dp)
@@ -902,6 +912,7 @@ private fun DailyHadithCard(now: Date, openDetail: (Pair<String, String>) -> Uni
                  modifier = Modifier
                      .padding(top = 6.dp)
                      .align(Alignment.CenterHorizontally)
+                     .clip(CircleShape)
                      .background(NoorColor.accentPrimary, CircleShape)
                      .clickable { openDetail(loaded) }
                      .padding(horizontal = 14.dp, vertical = 6.dp))
@@ -976,12 +987,14 @@ private fun OnThisDayCard(
             Text("التفاصيل", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.bgPrimary,
                  modifier = Modifier
+                     .clip(CircleShape)
                      .background(NoorColor.accentPrimary, CircleShape)
                      .clickable { openEventDetail(first) }
                      .padding(horizontal = 14.dp, vertical = 6.dp))
             Text("كل الأحداث", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.accentPrimary,
                  modifier = Modifier
+                     .clip(CircleShape)
                      .background(NoorColor.accentPrimary.copy(alpha = 0.1f), CircleShape)
                      .clickable(onClick = openAllEvents)
                      .padding(horizontal = 14.dp, vertical = 6.dp))
