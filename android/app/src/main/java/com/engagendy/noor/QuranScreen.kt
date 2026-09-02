@@ -152,6 +152,10 @@ fun QuranScreen(
                     readerMode = newMode
                 },
                 onBack = { openSurah = null; openAyah = 0; onSurahClosed() },
+                onOpenReference = { surahId, ayah ->
+                    openAyah = ayah
+                    openSurah = surahs.firstOrNull { it.id == surahId }
+                },
                 modifier = modifier)
         }
         return
@@ -524,6 +528,7 @@ fun ReaderScreen(
     scrollToAyah: Int = 0,
     bookmarks: Set<String> = emptySet(),
     onToggleBookmark: (Int) -> Unit = {},
+    onOpenReference: ((surahId: Int, ayah: Int) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val db = remember { QuranDb.get(context) }
@@ -531,6 +536,7 @@ fun ReaderScreen(
     val prefs = remember { KhatmahPlan.prefs(context) }
     val scope = rememberCoroutineScope()
     var showOptions by remember { mutableStateOf(false) }
+    var showGoToPage by remember { mutableStateOf(false) }
     var fontSize by remember { mutableFloatStateOf(prefs.getFloat("reader.fontSize", 26f)) }
     // Structure metadata (juz/quarter starts, sajdah ayat) keyed s*1000+a.
     val sajdaKeys = remember { db.sajdaKeys() }
@@ -706,6 +712,21 @@ fun ReaderScreen(
         }
     }
 
+    // Go-to-page (iOS GoToPageSheet, surfaced in the flow reader too):
+    // resolve the printed page's first ayah off-main, then reopen there.
+    if (showGoToPage && onOpenReference != null) {
+        GoToPageDialog(
+            onGo = { page ->
+                scope.launch {
+                    val start = withContext(Dispatchers.IO) {
+                        PageLayoutDb.get(context).firstAyahOnPage(page)
+                    } ?: return@launch
+                    onOpenReference(start.surahId, start.ayah)
+                }
+            },
+            onDismiss = { showGoToPage = false })
+    }
+
     Column(modifier.fillMaxSize()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -729,7 +750,13 @@ fun ReaderScreen(
             }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f)
+                // iOS parity: outside آية آية mode, the juz line under the
+                // title opens go-to-page (mode != .ayah on iOS).
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(enabled = mode != "ayah" && onOpenReference != null) {
+                        showGoToPage = true
+                    }
             ) {
                 Text(
                     surah.nameArabic,

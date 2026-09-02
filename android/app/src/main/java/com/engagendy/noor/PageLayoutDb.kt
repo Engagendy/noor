@@ -57,6 +57,10 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
         fun juzForPage(page: Int): Int =
             JUZ_START_PAGES.indexOfLast { it <= page } + 1
 
+        /// First printed page of a juz (go-to-page juz grid; iOS pageForJuz).
+        fun juzStartPage(juz: Int): Int =
+            JUZ_START_PAGES[(juz - 1).coerceIn(0, JUZ_START_PAGES.lastIndex)]
+
         @Volatile private var instance: PageLayoutDb? = null
 
         fun get(context: Context): PageLayoutDb = instance ?: synchronized(this) {

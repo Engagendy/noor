@@ -76,6 +76,7 @@ fun MushafScreen(
     ) { PageLayoutDb.PAGE_COUNT }
     var chromeVisible by remember { mutableStateOf(true) }
     var showOptions by remember { mutableStateOf(false) }
+    var showGoToPage by remember { mutableStateOf(false) }
 
     // Follow-along page flip (iOS onChange(of: recitingKey)): while the
     // player recites, the pager tracks the playing ayah's printed page —
@@ -157,6 +158,7 @@ fun MushafScreen(
             optionsOpen = showOptions,
             onToggleChrome = { chromeVisible = !chromeVisible },
             onToggleOptions = { showOptions = !showOptions },
+            onGoToPage = { showGoToPage = true },
             onBack = onBack)
         Box(Modifier.weight(1f)) {
             HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = 1) { index ->
@@ -181,6 +183,15 @@ fun MushafScreen(
             }
         }
     }
+    // Go-to-page (iOS GoToPageSheet): opened from the juz/page line in the
+    // top bar; animates the pager like the iOS withAnimation currentPage set.
+    if (showGoToPage) {
+        GoToPageDialog(
+            onGo = { page ->
+                scope.launch { pager.animateScrollToPage(page - 1) }
+            },
+            onDismiss = { showGoToPage = false })
+    }
 }
 
 /// Fixed-height strip, iOS SurahReaderView.topBar parity: full controls
@@ -194,6 +205,7 @@ private fun MushafTopBar(
     optionsOpen: Boolean,
     onToggleChrome: () -> Unit,
     onToggleOptions: () -> Unit,
+    onGoToPage: () -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -249,7 +261,12 @@ private fun MushafTopBar(
                 }
             }
             Spacer(Modifier.weight(1f))
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // Center title opens go-to-page while the chrome is visible
+            // (iOS: the juz/page line under the title is the button).
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.clickable(enabled = chromeVisible, onClick = onGoToPage)
+            ) {
                 Text(
                     surah?.nameArabic ?: "",
                     fontFamily = HafsFont,
