@@ -597,32 +597,54 @@ private fun MadaniPageBody(
                                 color = NoorColor.inkPrimary
                             )
                         LineKind.Words -> {
-                            // RLO…PDF: the QCF codes are PUA (bidi class L),
-                            // so an isolate alone leaves them left-to-right —
-                            // the override forces true mushaf order, glyph
-                            // by glyph, exactly as printed. Safe because
-                            // each code is a whole-word ligature (no
-                            // cross-character shaping to disturb).
-                            val text = "\u202E" + line.glyphsV2 + "\u202C"
-                            val fitted = remember(text, baseSizePx, maxWidthPx, content.fontFamily) {
-                                val style = TextStyle(
-                                    fontFamily = content.fontFamily,
-                                    fontSize = with(density) { baseSizePx.toSp() })
-                                val width = measurer.measure(
-                                    AnnotatedString(text), style,
-                                    softWrap = false, maxLines = 1
-                                ).size.width
-                                val scale = if (width > maxWidthPx) maxWidthPx / width else 1f
-                                with(density) { (baseSizePx * scale).toSp() }
-                            }
-                            Text(
-                                text,
+                            // Each word is its own Text laid out by us:
+                            // negative glyph bearings can never overlap
+                            // neighbors, and the slack distributes evenly
+                            // like the justified Madani print. RTL: first
+                            // word starts at the right edge.
+                            val style = TextStyle(
                                 fontFamily = content.fontFamily,
-                                fontSize = fitted,
-                                maxLines = 1,
-                                softWrap = false,
-                                color = NoorColor.inkPrimary
-                            )
+                                fontSize = with(density) { baseSizePx.toSp() })
+                            // Codepoints remapped to match the patched font.
+                            val words = remember(line.glyphsV2) {
+                                line.wordsV2.map { PageFontStore.mapGlyphs(it) }
+                            }
+                            val widths = remember(line.glyphsV2, baseSizePx, content.fontFamily) {
+                                words.map { word ->
+                                    measurer.measure(
+                                        AnnotatedString(word), style,
+                                        softWrap = false, maxLines = 1
+                                    ).size.width.toFloat()
+                                }
+                            }
+                            val total = widths.sum()
+                            val target = maxWidthPx * 0.97f
+                            // Overflow shrinks; short closing lines (<55%)
+                            // stay centered like the print.
+                            val scale = if (total > target) target / total else 1f
+                            val justify = total >= maxWidthPx * 0.55f
+                            val slack = (target - total * scale).coerceAtLeast(0f)
+                            val gap = if (justify && words.size > 1)
+                                slack / (words.size - 1) else 0f
+                            androidx.compose.foundation.layout.Row(
+                                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                words.forEachIndexed { index, word ->
+                                    if (index > 0 && gap > 0f) {
+                                        Spacer(Modifier.width(with(density) { gap.toDp() }))
+                                    }
+                                    Text(
+                                        word,
+                                        fontFamily = content.fontFamily,
+                                        fontSize = with(density) { (baseSizePx * scale).toSp() },
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        color = NoorColor.inkPrimary
+                                    )
+                                }
+                            }
                         }
                     }
                 }

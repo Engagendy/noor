@@ -37,6 +37,9 @@ data class PageLine(
     val glyphs: String,
     /// QCF v2 glyphs (the exact printed Madani mushaf typeface).
     val glyphsV2: String,
+    /// Per-word v2 glyphs in reading order — rendered as separate elements
+    /// so negative glyph bearings can never overlap adjacent words.
+    val wordsV2: List<String>,
     val ayahRefs: List<AyahRef>,
 )
 
@@ -151,6 +154,7 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
                     kind = LineKind.Words,
                     glyphs = lineWords.joinToString("") { it.glyph },
                     glyphsV2 = lineWords.joinToString("") { it.glyphV2 },
+                    wordsV2 = lineWords.map { it.glyphV2 },
                     ayahRefs = refs)
             }
             .toMutableList()
@@ -165,15 +169,15 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
             if (basmalaAt >= 1 && basmalaAt !in present) {
                 val needsBasmala = surahId != 9 && surahId != 1
                 if (headerAt >= 1 && headerAt !in present) {
-                    lines.add(PageLine(headerAt, LineKind.SurahHeader(surahId), "", "", emptyList()))
+                    lines.add(PageLine(headerAt, LineKind.SurahHeader(surahId), "", "", emptyList(), emptyList()))
                     if (needsBasmala) {
-                        lines.add(PageLine(basmalaAt, LineKind.Basmala, "", "", emptyList()))
+                        lines.add(PageLine(basmalaAt, LineKind.Basmala, "", "", emptyList(), emptyList()))
                     }
                 } else {
                     // One reserved line — header and basmala share it.
                     val kind = if (needsBasmala) LineKind.SurahHeaderWithBasmala(surahId)
                                else LineKind.SurahHeader(surahId)
-                    lines.add(PageLine(basmalaAt, kind, "", "", emptyList()))
+                    lines.add(PageLine(basmalaAt, kind, "", "", emptyList(), emptyList()))
                 }
             }
         }

@@ -24,8 +24,73 @@ object PageFontStore {
     fun cachedCount(context: Context): Int =
         dir(context).listFiles { f -> f.name.endsWith(".ttf") }?.size ?: 0
 
+    // v2b: cmap-patched files (presentation-form codepoints shifted to PUA
+    // so Android's shaper can't treat the shadda-ligature glyphs as
+    // combining marks and stack them — the page-76 word-overlap bug).
     private fun localFile(context: Context, page: Int) =
-        File(context.filesDir, "pagefonts/v2_page_%03d.ttf".format(java.util.Locale.ROOT, page))
+        File(context.filesDir, "pagefonts/v2c_page_%03d.ttf".format(java.util.Locale.ROOT, page))
+
+    /// Maps a DB glyph string to the patched font's codepoints.
+    fun mapGlyphs(text: String): String = buildString(text.length) {
+        for (ch in text) {
+            append(if (ch.code in 0xFB50..0xFD79) (ch.code - 0x1000).toChar() else ch)
+        }
+    }
+
+    /// Shifts every cmap character code in FB50..FD79 down by 0x1000 into
+    /// the PUA (EB50..ED79). Segment structure is untouched, so this is a
+    /// safe in-place byte edit; glyphs and metrics are unchanged.
+    private fun patchCmap(file: File) {
+        val bytes = file.readBytes()
+        fun u16(o: Int) = ((bytes[o].toInt() and 255) shl 8) or (bytes[o + 1].toInt() and 255)
+        fun u32(o: Int) = (u16(o).toLong() shl 16) or u16(o + 2).toLong()
+        fun put16(o: Int, v: Int) { bytes[o] = (v shr 8).toByte(); bytes[o + 1] = v.toByte() }
+        fun put32(o: Int, v: Long) { put16(o, (v shr 16).toInt()); put16(o + 2, (v and 0xFFFF).toInt()) }
+        val numTables = u16(4)
+        var cmapOffset = -1
+        for (i in 0 until numTables) {
+            val rec = 12 + i * 16
+            val tag = String(bytes, rec, 4, Charsets.US_ASCII)
+            if (tag == "cmap") { cmapOffset = u32(rec + 8).toInt(); break }
+        }
+        if (cmapOffset < 0) return
+        val subCount = u16(cmapOffset + 2)
+        for (i in 0 until subCount) {
+            val subOffset = cmapOffset + u32(cmapOffset + 4 + i * 8 + 4).toInt()
+            when (u16(subOffset)) {
+                4 -> {
+                    val segCount = u16(subOffset + 6) / 2
+                    val endBase = subOffset + 14
+                    val startBase = endBase + segCount * 2 + 2
+                    val deltaBase = startBase + segCount * 2
+                    val rangeBase = deltaBase + segCount * 2
+                    for (seg in 0 until segCount) {
+                        val sv = u16(startBase + seg * 2)
+                        if (sv !in 0xFB50..0xFD79) continue
+                        put16(startBase + seg * 2, sv - 0x1000)
+                        put16(endBase + seg * 2, u16(endBase + seg * 2) - 0x1000)
+                        // glyph = charCode + idDelta (mod 2^16) when
+                        // idRangeOffset == 0 — compensate the shift.
+                        if (u16(rangeBase + seg * 2) == 0) {
+                            put16(deltaBase + seg * 2,
+                                  (u16(deltaBase + seg * 2) + 0x1000) and 0xFFFF)
+                        }
+                    }
+                }
+                12 -> {
+                    val groups = u32(subOffset + 12).toInt()
+                    for (g in 0 until groups) {
+                        val go = subOffset + 16 + g * 12
+                        for (field in 0..1) {
+                            val v = u32(go + field * 4)
+                            if (v in 0xFB50L..0xFD79L) put32(go + field * 4, v - 0x1000)
+                        }
+                    }
+                }
+            }
+        }
+        file.writeBytes(bytes)
+    }
 
     private fun remoteUrl(page: Int) =
         "https://raw.githubusercontent.com/mustafa0x/qpc-fonts/master/mushaf-v2/QCF2%03d.ttf"
@@ -62,6 +127,7 @@ object PageFontStore {
                 temp.outputStream().use { input.copyTo(it) }
             }
             connection.disconnect()
+            patchCmap(temp)
             temp.renameTo(local)
         } catch (e: Exception) {
             temp.delete()
