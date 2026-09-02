@@ -102,6 +102,19 @@ fun HadithScreen(modifier: Modifier = Modifier) {
         results = withContext(Dispatchers.IO) { HadithLibrary.search(context, query) }
     }
 
+    // System back pops one level of the drill-down, mirroring each header's
+    // back button: detail → book → collection books → collections root.
+    androidx.activity.compose.BackHandler(
+        enabled = detail != null || openBook != null || openSahih != null || openForty != null
+    ) {
+        when {
+            detail != null -> detail = null
+            openBook != null -> openBook = null
+            openSahih != null -> openSahih = null
+            else -> openForty = null
+        }
+    }
+
     val currentDetail = detail
     if (currentDetail != null) {
         HadithDetailScreen(currentDetail, onBack = { detail = null }, modifier = modifier)

@@ -79,6 +79,10 @@ fun MushafScreen(
     var chromeVisible by remember { mutableStateOf(true) }
     var showOptions by remember { mutableStateOf(false) }
     var showGoToPage by remember { mutableStateOf(false) }
+    // The options panel is a plain overlay (not a dialog): back closes it
+    // first; with it closed, the caller's handler pops the mushaf itself.
+    // (GoToPageDialog is a real Dialog and consumes back on its own.)
+    androidx.activity.compose.BackHandler(enabled = showOptions) { showOptions = false }
     // Ayah long-pressed on the page — the iOS ayah-actions sheet.
     var actionRef by remember { mutableStateOf<AyahRef?>(null) }
     // Tafsir opened from that sheet (survives the sheet's self-dismiss).

@@ -106,6 +106,16 @@ fun QuranScreen(
         openSurah = surahs.firstOrNull { it.id == surahId }
     }
 
+    // System back pops one level, same as each screen's رجوع button.
+    // Enabled only while something is open so back never gets trapped here.
+    androidx.activity.compose.BackHandler(enabled = openMushafAt > 0 || openSurah != null) {
+        if (openMushafAt > 0) {
+            openMushafAt = 0; onMushafClosed()
+        } else {
+            openSurah = null; openAyah = 0; onSurahClosed()
+        }
+    }
+
     if (openMushafAt > 0) {
         MushafScreen(
             startPage = openMushafAt,
@@ -164,6 +174,8 @@ fun QuranScreen(
 
     // ---- Surah index (iOS SurahListView): search + السور/الأجزاء/المحفوظات.
     var searchText by remember { mutableStateOf("") }
+    // On the index with active search results, back clears the search first.
+    androidx.activity.compose.BackHandler(enabled = searchText.isNotEmpty()) { searchText = "" }
     var indexTab by remember { mutableStateOf("surah") }
     var expandedJuz by remember { mutableStateOf(setOf<Int>()) }
     val juzStarts = remember { db.juzStarts() }
@@ -543,6 +555,9 @@ fun ReaderScreen(
     val scope = rememberCoroutineScope()
     var showOptions by remember { mutableStateOf(false) }
     var showGoToPage by remember { mutableStateOf(false) }
+    // Options panel is a plain overlay: back closes it before the caller's
+    // handler pops the reader (sheets/dialogs consume back themselves).
+    androidx.activity.compose.BackHandler(enabled = showOptions) { showOptions = false }
     var fontSize by remember { mutableFloatStateOf(prefs.getFloat("reader.fontSize", 26f)) }
     // Structure metadata (juz/quarter starts, sajdah ayat) keyed s*1000+a.
     val sajdaKeys = remember { db.sajdaKeys() }

@@ -67,6 +67,11 @@ fun AthkarScreen(modifier: Modifier = Modifier) {
     var open by remember { mutableStateOf<DhikrCategory?>(null) }
     var extra by remember { mutableStateOf<AthkarExtra?>(null) }
 
+    // System back closes the open tool/category, same as its back button.
+    androidx.activity.compose.BackHandler(enabled = extra != null || open != null) {
+        if (extra != null) extra = null else open = null
+    }
+
     when (extra) {
         AthkarExtra.RUQYAH -> { RuqyahScreen(onBack = { extra = null }, modifier); return }
         AthkarExtra.DUAS -> { SelectedDuasScreen(onBack = { extra = null }, modifier); return }

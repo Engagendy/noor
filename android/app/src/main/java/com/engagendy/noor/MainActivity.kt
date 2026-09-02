@@ -125,6 +125,10 @@ class MainActivity : AppCompatActivity() {
 fun NoorApp() {
     val context = androidx.compose.ui.platform.LocalContext.current
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
+    // Standard bottom-nav convention: system back on a non-Today tab returns
+    // to Today; on Today (nothing open) the default behavior exits the app.
+    // Screen-level BackHandlers compose later (LIFO) and win while open.
+    androidx.activity.compose.BackHandler(enabled = tab != Tab.TODAY) { tab = Tab.TODAY }
     // Madani page requested from Today (khatmah frontier); 0 = none.
     var mushafPage by rememberSaveable { mutableStateOf(0) }
     // Surah requested from Today (continue reading); 0 = none.

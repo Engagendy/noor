@@ -78,6 +78,11 @@ fun TodayScreen(
     var detailEvent by remember { mutableStateOf<IslamicEvent?>(null) }
     var hadithDetail by remember { mutableStateOf<Pair<String, String>?>(null) }
 
+    // System back closes settings back to Today (SettingsScreen's own
+    // handler, composed later, wins first for its sub-screens). Sheets and
+    // dialogs below consume back themselves.
+    androidx.activity.compose.BackHandler(enabled = showSettings) { showSettings = false }
+
     if (showSettings) {
         SettingsScreen(onBack = { showSettings = false }, modifier = modifier)
         return

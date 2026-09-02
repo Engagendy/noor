@@ -70,6 +70,9 @@ val TanzilEditions = listOf(
 @Composable
 fun SettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var sub by rememberSaveable { mutableStateOf("main") }
+    // System back pops sub-screens to main settings; from main, the caller's
+    // handler (TodayScreen) closes settings back to Today.
+    androidx.activity.compose.BackHandler(enabled = sub != "main") { sub = "main" }
     when (sub) {
         "storage" -> StorageScreen(onBack = { sub = "main" }, modifier = modifier)
         "tajweed" -> TajweedGuideScreen(onBack = { sub = "main" }, modifier = modifier)

@@ -82,6 +82,13 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
     }
     DisposableEffect(Unit) { onDispose { AdhanPreview.stop() } }
 
+    // System back closes the full-screen qibla/settings views like their own
+    // close buttons; the nawafil/sounds bottom sheets consume back themselves.
+    androidx.activity.compose.BackHandler(enabled = showQibla || showSettings) {
+        if (showQibla) showQibla = false
+        else { version++; showSettings = false }
+    }
+
     if (showQibla) {
         QiblaScreen(onClose = { showQibla = false })
         return

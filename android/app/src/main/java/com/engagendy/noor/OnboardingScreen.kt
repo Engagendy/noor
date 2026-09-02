@@ -48,6 +48,9 @@ import androidx.compose.ui.unit.sp
 fun OnboardingScreen(onDone: () -> Unit) {
     val context = LocalContext.current
     var step by androidx.compose.runtime.saveable.rememberSaveable { mutableIntStateOf(0) }
+    // System back returns to the previous step; on step 0 the default
+    // behavior (exit) applies — there is nothing before the first step.
+    androidx.activity.compose.BackHandler(enabled = step > 0) { step-- }
     // Explicit user actions only — writes happen in click handlers.
     val prayerPrefs = remember { PrayerPrefs(context) }
     var cityName by remember { mutableStateOf(prayerPrefs.cityName) }
