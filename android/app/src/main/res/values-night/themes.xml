@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tahajjud launch window (bgPrimary dark) so system-dark users
+         don't see a paper flash before Compose takes over. -->
+    <style name="Theme.Noor" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0F1512</item>
+        <item name="android:statusBarColor">#0F1512</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

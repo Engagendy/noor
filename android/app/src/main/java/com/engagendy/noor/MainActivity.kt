@@ -1,13 +1,16 @@
 package com.engagendy.noor
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -17,14 +20,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.core.view.WindowCompat
 
 enum class Tab(val titleArabic: String, val icon: Int) {
     TODAY("اليوم", R.drawable.ic_sun),
@@ -44,6 +51,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         NoorPlayer.init(this)
+        // Resolve the stored theme before the first frame so there is no
+        // light-mode flash for users who chose dark.
+        val systemDark = (resources.configuration.uiMode and
+            Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        NoorColor.apply(
+            KhatmahPlan.prefs(this).getString("app.theme", "system") ?: "system",
+            systemDark)
         val onboarded = KhatmahPlan.prefs(this).getBoolean("onboarding.done", false)
         if (onboarded) {
             requestNotificationPermission()
@@ -52,6 +66,26 @@ class MainActivity : ComponentActivity() {
         }
         NoorWidgets.refresh(this)
         setContent {
+            // Re-resolve the palette whenever the system appearance flips
+            // (only matters while app.theme == "system"). Prefs are read
+            // inside the effect, never observed from composition.
+            val isSystemDark = isSystemInDarkTheme()
+            LaunchedEffect(isSystemDark) {
+                NoorColor.apply(
+                    KhatmahPlan.prefs(this@MainActivity)
+                        .getString("app.theme", "system") ?: "system",
+                    isSystemDark)
+            }
+            // Status/navigation bar icon contrast follows the active palette.
+            val view = LocalView.current
+            val dark = NoorColor.isDark
+            SideEffect {
+                val window = (view.context as Activity).window
+                WindowCompat.getInsetsController(window, view).apply {
+                    isAppearanceLightStatusBars = !dark
+                    isAppearanceLightNavigationBars = !dark
+                }
+            }
             NoorTheme {
                 // Arabic-first: the whole app lays out right-to-left.
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {

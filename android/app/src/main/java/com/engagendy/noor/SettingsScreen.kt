@@ -95,6 +95,8 @@ private fun SettingsMain(
     var version by remember { mutableIntStateOf(0) }
     val language = remember(version) { prefs.getString("app.language", "system") ?: "system" }
     val theme = remember(version) { prefs.getString("app.theme", "system") ?: "system" }
+    // Captured in composition for use inside the theme click handler.
+    val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
     val notificationsEnabled = remember(version) { prefs.getBoolean("notifications.enabled", true) }
     val fastingReminders = remember(version) { prefs.getBoolean("fasting.reminders", false) }
     val sound = remember(version) { PrayerPrefs(context).sound }
@@ -148,9 +150,14 @@ private fun SettingsMain(
                 title = "المظهر",
                 options = listOf("system" to "النظام", "light" to "فاتح", "dark" to "داكن"),
                 selectedId = theme,
-                onSelect = { prefs.edit().putString("app.theme", it).apply(); version++ })
+                onSelect = {
+                    prefs.edit().putString("app.theme", it).apply()
+                    // Instant switch — every NoorColor reader recomposes.
+                    NoorColor.apply(it, systemDark)
+                    version++
+                })
         }
-        Footer("الواجهة عربية أولًا؛ تُطبَّق اللغة والمظهر بالكامل عند إعادة فتح التطبيق.")
+        Footer("الواجهة عربية أولًا؛ تُطبَّق اللغة بالكامل عند إعادة فتح التطبيق.")
 
         SectionTitle("الصلاة")
         SettingsCard {
