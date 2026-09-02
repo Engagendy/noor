@@ -2,7 +2,9 @@
 <resources>
     <!-- Tahajjud launch window (bgPrimary dark) so system-dark users
          don't see a paper flash before Compose takes over. -->
-    <style name="Theme.Noor" parent="android:Theme.Material.NoActionBar">
+    <!-- Must stay an AppCompat descendant (AppCompatActivity requirement);
+         a Material parent here crashed every system-dark device at launch. -->
+    <style name="Theme.Noor" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">#0F1512</item>
         <item name="android:statusBarColor">#0F1512</item>
         <item name="android:windowLightStatusBar">false</item>
