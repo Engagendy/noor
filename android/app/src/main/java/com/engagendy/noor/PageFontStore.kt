@@ -16,6 +16,14 @@ import java.util.concurrent.ConcurrentHashMap
 object PageFontStore {
     private val cache = ConcurrentHashMap<Int, FontFamily>()
 
+    /// Where the downloaded page fonts live — measured by the Storage screen.
+    fun dir(context: Context) = File(context.filesDir, "pagefonts")
+
+    /// How many of the 604 page fonts are already offline. Disk IO — call
+    /// on Dispatchers.IO.
+    fun cachedCount(context: Context): Int =
+        dir(context).listFiles { f -> f.name.endsWith(".ttf") }?.size ?: 0
+
     private fun localFile(context: Context, page: Int) =
         File(context.filesDir, "pagefonts/v2_page_%03d.ttf".format(page))
 

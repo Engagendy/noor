@@ -56,12 +56,18 @@ fun TodayScreen(
     // Tools reachable from Today: the zakat calculator and prayer settings.
     var showZakat by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showAppSettings by remember { mutableStateOf(false) }
     if (showZakat) {
         ZakatScreen(onBack = { showZakat = false }, modifier = modifier)
         return
     }
     if (showSettings) {
         PrayerSettingsScreen(modifier = modifier, onDone = { showSettings = false })
+        return
+    }
+    if (showAppSettings) {
+        // Entry until the Today gear button is wired to SettingsScreen.
+        SettingsScreen(onBack = { showAppSettings = false }, modifier = modifier)
         return
     }
     val city = Cities.all[0]
@@ -108,13 +114,18 @@ fun TodayScreen(
         ContinueReadingCard(openResume)
         KhatmahCard(openPage)
         DailyAyahCard()
-        ToolsCard(openZakat = { showZakat = true }, openSettings = { showSettings = true })
+        ToolsCard(openZakat = { showZakat = true }, openSettings = { showSettings = true },
+                  openAppSettings = { showAppSettings = true })
     }
 }
 
-/// Tools row: zakat calculator + prayer settings entries.
+/// Tools row: zakat calculator + prayer settings + app settings entries.
 @Composable
-private fun ToolsCard(openZakat: () -> Unit, openSettings: () -> Unit) {
+private fun ToolsCard(
+    openZakat: () -> Unit,
+    openSettings: () -> Unit,
+    openAppSettings: () -> Unit,
+) {
     Column(
         Modifier
             .padding(top = 12.dp, bottom = 24.dp)
@@ -144,6 +155,17 @@ private fun ToolsCard(openZakat: () -> Unit, openSettings: () -> Unit) {
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Text("إعدادات الصلاة", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.inkPrimary)
+            Text("←", color = NoorColor.accentPrimary)
+        }
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = openAppSettings)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Text("الإعدادات", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.inkPrimary)
             Text("←", color = NoorColor.accentPrimary)
         }

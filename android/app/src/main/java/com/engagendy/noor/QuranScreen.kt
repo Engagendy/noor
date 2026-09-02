@@ -216,11 +216,15 @@ fun ReaderScreen(surah: Surah, onBack: () -> Unit, modifier: Modifier = Modifier
                 }
             }
             item {
+                // Reader size from Settings ("reader.fontSize", 20–44pt).
+                val quranSize = remember {
+                    KhatmahPlan.prefs(context).getFloat("reader.fontSize", 26f)
+                }
                 Text(
                     flow,
                     fontFamily = QuranFont,
-                    fontSize = 26.sp,
-                    lineHeight = 58.sp,
+                    fontSize = quranSize.sp,
+                    lineHeight = (quranSize * 2.25f).sp,
                     color = NoorColor.inkPrimary,
                     textAlign = TextAlign.Justify,
                     onTextLayout = { textLayout = it },
