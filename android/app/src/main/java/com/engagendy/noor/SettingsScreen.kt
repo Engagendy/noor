@@ -2,6 +2,7 @@ package com.engagendy.noor
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -273,6 +274,7 @@ private fun SettingsCard(content: @Composable () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
             .background(NoorColor.bgElevated, RoundedCornerShape(14.dp))
     ) { content() }
 }
@@ -341,6 +343,7 @@ private fun ChoiceRow(
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     color = if (selected) NoorColor.accentPrimary else NoorColor.inkSecondary,
                     modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
                         .background(
                             if (selected) NoorColor.stateReciting else NoorColor.bgPrimary,
                             RoundedCornerShape(10.dp))
@@ -464,6 +467,7 @@ private fun AdhanSoundSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 2.dp)
+                            .clip(RoundedCornerShape(12.dp))
                             .background(
                                 if (isSelected) NoorColor.stateReciting else NoorColor.bgElevated,
                                 RoundedCornerShape(12.dp))

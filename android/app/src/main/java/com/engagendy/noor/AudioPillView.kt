@@ -98,11 +98,12 @@ fun AudioPillView() {
         ) {
             Icon(painterResource(R.drawable.ic_prev_track), contentDescription = "السابق",
                  tint = NoorColor.inkSecondary,
-                 modifier = Modifier.clickable { NoorPlayer.previous() }.padding(4.dp).size(16.dp))
+                 modifier = Modifier.clip(CircleShape).clickable { NoorPlayer.previous() }.padding(4.dp).size(16.dp))
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(40.dp)
+                    .clip(CircleShape)
                     .background(NoorColor.accentPrimary, CircleShape)
                     .clickable { NoorPlayer.toggle() }
             ) {
@@ -116,17 +117,17 @@ fun AudioPillView() {
             }
             Icon(painterResource(R.drawable.ic_next_track), contentDescription = "التالي",
                  tint = NoorColor.inkSecondary,
-                 modifier = Modifier.clickable { NoorPlayer.next() }.padding(4.dp).size(16.dp))
+                 modifier = Modifier.clip(CircleShape).clickable { NoorPlayer.next() }.padding(4.dp).size(16.dp))
             Icon(
                 painterResource(modeIcon(NoorPlayer.mode)),
                 contentDescription = "وضع التشغيل",
                 tint = if (NoorPlayer.mode == PlaybackMode.CONTINUOUS)
                     NoorColor.inkSecondary else NoorColor.accentPrimary,
-                modifier = Modifier.clickable { showModePicker = true }.padding(4.dp).size(16.dp)
+                modifier = Modifier.clip(CircleShape).clickable { showModePicker = true }.padding(4.dp).size(16.dp)
             )
             Icon(painterResource(R.drawable.ic_close), contentDescription = "إيقاف",
                  tint = NoorColor.inkSecondary,
-                 modifier = Modifier.clickable { NoorPlayer.stop() }.padding(4.dp).size(15.dp))
+                 modifier = Modifier.clip(CircleShape).clickable { NoorPlayer.stop() }.padding(4.dp).size(15.dp))
         }
     }
     }
@@ -273,7 +274,7 @@ private fun SleepCountdownChip() {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
-        modifier = Modifier.clickable { NoorPlayer.setSleepTimer(null) }.padding(4.dp)
+        modifier = Modifier.clip(RoundedCornerShape(50)).clickable { NoorPlayer.setSleepTimer(null) }.padding(4.dp)
     ) {
         Text(
             "%d:%02d".format(remaining / 60, remaining % 60),
