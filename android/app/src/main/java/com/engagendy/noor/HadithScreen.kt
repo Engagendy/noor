@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -44,8 +46,15 @@ import kotlinx.coroutines.withContext
 
 private enum class PackState { NOT_DOWNLOADED, DOWNLOADING, READY, FAILED }
 
-/// What the detail screen shows, whatever the hadith's source.
-private data class HadithDetail(val arabic: String, val reference: String)
+/// One page of the detail pager, whatever the hadith's source.
+private data class HadithPage(val arabic: String, val reference: String)
+
+/// What the detail screen shows: the tapped hadith plus its neighbours,
+/// swipeable like iOS's TabView page style (HadithDetailView.swift).
+private data class HadithDetail(val pages: List<HadithPage>, val initialIndex: Int) {
+    constructor(arabic: String, reference: String) :
+        this(listOf(HadithPage(arabic, reference)), 0)
+}
 
 @Composable
 fun HadithScreen(modifier: Modifier = Modifier) {
@@ -294,9 +303,14 @@ private fun FortyListScreen(items: List<BundledHadith>, onBack: () -> Unit,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
+                            // Whole collection is swipeable from the tapped hadith, like iOS.
                             openDetail(HadithDetail(
-                                hadith.arabic,
-                                "${hadith.collectionArabic} · الحديث ${hadith.number.arabicIndic()}"))
+                                pages = items.map {
+                                    HadithPage(
+                                        it.arabic,
+                                        "${it.collectionArabic} · الحديث ${it.number.arabicIndic()}")
+                                },
+                                initialIndex = items.indexOf(hadith).coerceAtLeast(0)))
                         }
                         .padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
@@ -377,9 +391,15 @@ private fun BookHadithsScreen(collection: HadithCollection, book: HadithBook, on
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
+                            // iOS pages over the full book list even when tapped
+                            // from a filtered search within the book.
                             openDetail(HadithDetail(
-                                hadith.arabic,
-                                "${collection.nameArabic} · ${hadith.number} · ${book.arabicTitle}"))
+                                pages = hadithList.map {
+                                    HadithPage(
+                                        it.arabic,
+                                        "${collection.nameArabic} · ${it.number} · ${book.arabicTitle}")
+                                },
+                                initialIndex = hadithList.indexOf(hadith).coerceAtLeast(0)))
                         }
                         .padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
@@ -396,11 +416,15 @@ private fun BookHadithsScreen(collection: HadithCollection, book: HadithBook, on
 }
 
 /// Full hadith text + gold reference + share-as-image.
+/// Swiping pages to the previous/next hadith in the same list, like iOS's
+/// TabView(.page) in HadithDetailView.swift / LibraryHadithDetail. Under the
+/// app's forced RTL the pager already advances in reading direction.
 @Composable
 private fun HadithDetailScreen(detail: HadithDetail, onBack: () -> Unit,
                                modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(initialPage = detail.initialIndex) { detail.pages.size }
     Column(modifier.fillMaxSize()) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -410,28 +434,33 @@ private fun HadithDetailScreen(detail: HadithDetail, onBack: () -> Unit,
             Text("مشاركة", color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
                  modifier = Modifier
                      .clickable {
+                         // Share the page currently in view, not the tapped one.
+                         val page = detail.pages[pagerState.currentPage]
                          scope.launch {
                              val bitmap = withContext(Dispatchers.IO) {
-                                 ShareCard.render(context, detail.arabic, detail.reference)
+                                 ShareCard.render(context, page.arabic, page.reference)
                              }
-                             ShareCard.share(context, bitmap, text = detail.reference)
+                             ShareCard.share(context, bitmap, text = page.reference)
                          }
                      }
                      .padding(8.dp))
             Text("رجوع", color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
                  modifier = Modifier.clickable(onClick = onBack).padding(8.dp))
         }
-        Column(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-        ) {
-            Text(detail.arabic, fontSize = 18.sp, lineHeight = 34.sp,
-                 color = NoorColor.inkPrimary)
-            Text(detail.reference, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                 color = NoorColor.accentGold,
-                 modifier = Modifier.padding(top = 16.dp, bottom = 24.dp))
+        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { i ->
+            val page = detail.pages[i]
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
+            ) {
+                Text(page.arabic, fontSize = 18.sp, lineHeight = 34.sp,
+                     color = NoorColor.inkPrimary)
+                Text(page.reference, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                     color = NoorColor.accentGold,
+                     modifier = Modifier.padding(top = 16.dp, bottom = 24.dp))
+            }
         }
     }
 }
