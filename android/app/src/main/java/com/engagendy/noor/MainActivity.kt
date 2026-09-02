@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        NoorPlayer.init(this)
         val onboarded = KhatmahPlan.prefs(this).getBoolean("onboarding.done", false)
         if (onboarded) {
             requestNotificationPermission()
