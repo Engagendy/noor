@@ -43,14 +43,30 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        requestNotificationPermission()
-        // Roll the exact-alarm window forward on every app open.
-        AdhanScheduler.reschedule(this)
+        val onboarded = KhatmahPlan.prefs(this).getBoolean("onboarding.done", false)
+        if (onboarded) {
+            requestNotificationPermission()
+            // Roll the exact-alarm window forward on every app open.
+            AdhanScheduler.reschedule(this)
+        }
+        NoorWidgets.refresh(this)
         setContent {
             NoorTheme {
                 // Arabic-first: the whole app lays out right-to-left.
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                    NoorApp()
+                    var showOnboarding by rememberSaveable { mutableStateOf(!onboarded) }
+                    if (showOnboarding) {
+                        // First run only; the flag write is a user action (finishing).
+                        OnboardingScreen(onDone = {
+                            KhatmahPlan.prefs(this)
+                                .edit().putBoolean("onboarding.done", true).apply()
+                            AdhanScheduler.reschedule(this)
+                            NoorWidgets.refresh(this)
+                            showOnboarding = false
+                        })
+                    } else {
+                        NoorApp()
+                    }
                 }
             }
         }
@@ -68,9 +84,23 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NoorApp() {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
     // Madani page requested from Today (khatmah frontier); 0 = none.
     var mushafPage by rememberSaveable { mutableStateOf(0) }
+    // Surah requested from Today (continue reading); 0 = none.
+    var quranSurah by rememberSaveable { mutableStateOf(0) }
+
+    // Continue reading: reopen the reader exactly where it was left —
+    // last Madani page or last surah, whichever was read most recently.
+    fun openResume() {
+        val prefs = KhatmahPlan.prefs(context)
+        when (prefs.getString("reader.lastMode", null)) {
+            "surah" -> quranSurah = prefs.getInt("reader.lastSurah", 1).coerceAtLeast(1)
+            "page" -> mushafPage = prefs.getInt("reader.lastPage", 1).coerceAtLeast(1)
+        }
+        tab = Tab.QURAN
+    }
     Scaffold(
         containerColor = NoorColor.bgPrimary,
         bottomBar = {
@@ -100,10 +130,12 @@ fun NoorApp() {
         when (tab) {
             Tab.TODAY -> TodayScreen(
                 modifier,
-                openQuran = { tab = Tab.QURAN },
+                openResume = ::openResume,
                 openPage = { page -> mushafPage = page; tab = Tab.QURAN })
             Tab.QURAN -> QuranScreen(modifier, mushafPage = mushafPage,
-                                     onMushafClosed = { mushafPage = 0 })
+                                     resumeSurahId = quranSurah,
+                                     onMushafClosed = { mushafPage = 0 },
+                                     onSurahClosed = { quranSurah = 0 })
             Tab.PRAYER -> PrayerScreen(modifier)
             Tab.HADITH -> HadithScreen(modifier)
             Tab.ATHKAR -> AthkarScreen(modifier)

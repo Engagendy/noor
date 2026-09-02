@@ -114,6 +114,8 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
         context.getSystemService(NotificationManager::class.java)
             .notify(nameArabic.hashCode(), notification)
         AdhanScheduler.reschedule(context)
+        // A prayer just passed — the home widgets show the next one now.
+        NoorWidgets.refresh(context)
     }
 }
 

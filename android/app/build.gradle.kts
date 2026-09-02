@@ -40,6 +40,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.core:core-ktx:1.15.0")
+    // Home-screen widgets (next prayer + daily ayah), Compose-style.
+    implementation("androidx.glance:glance-appwidget:1.1.1")
     // Prayer time calculations — same engine family as the iOS app.
     implementation("com.batoulapps.adhan:adhan:1.2.1")
     debugImplementation("androidx.compose.ui:ui-tooling")

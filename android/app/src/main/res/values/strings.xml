@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_next_prayer_desc">عدّ تنازلي حتى الصلاة القادمة</string>
+    <string name="widget_daily_ayah_desc">آية واحدة كل يوم من المصحف</string>
+</resources>
