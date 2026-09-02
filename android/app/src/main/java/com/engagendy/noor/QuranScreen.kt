@@ -533,11 +533,17 @@ fun ReaderScreen(
         }
     }
     val hasBasmala = surah.id != 9 && surah.id != 1
+    // Ayah being recited in THIS surah (iOS recitingKey) — Compose state
+    // from the player, so the highlight tracks playback automatically.
+    val recitingAyah =
+        if (NoorPlayer.currentSurah == surah.id) NoorPlayer.currentAyah else 0
+    // Recitation wins over the arrival highlight (iOS: recitingKey ?? selectedKey).
+    val highlightAyah = if (recitingAyah > 0) recitingAyah else scrollToAyah
     // Continuous mushaf-style flow: one attributed stream with gold ayah
     // markers, ۞ at hizb-quarter starts, ۩ on sajdah ayat and a small juz
     // header line where a new juz begins — all indexing marks, never text
     // edits. Each verse span is annotated so a tap resolves its ayah.
-    val flow = remember(surah.id, fontSize, scrollToAyah) {
+    val flow = remember(surah.id, fontSize, highlightAyah) {
         buildAnnotatedString {
             verses.forEach { verse ->
                 val key = surah.id * 1000 + verse.ayah
@@ -555,7 +561,7 @@ fun ReaderScreen(
                 if (key in quarterKeys) {
                     withStyle(SpanStyle(color = NoorColor.accentGold)) { append("۞ ") }
                 }
-                if (scrollToAyah == verse.ayah) {
+                if (highlightAyah == verse.ayah) {
                     withStyle(SpanStyle(background = NoorColor.stateReciting)) {
                         append(verse.text)
                     }
@@ -637,6 +643,27 @@ fun ReaderScreen(
         didScrollFlow = true
         val top = layout.getLineTop(layout.getLineForOffset(target)).toInt()
         listState.scrollToItem(if (hasBasmala) 1 else 0, top)
+    }
+    // Follow-along scroll (iOS onChange(of: recitingKey) → scrollTo):
+    // as recitation advances, keep the playing ayah in view. Driven by
+    // the player's Compose state via snapshotFlow — no polling. The span
+    // offsets are stable across highlight rebuilds (styles add no text).
+    LaunchedEffect(mode, surah.id) {
+        androidx.compose.runtime.snapshotFlow {
+            if (NoorPlayer.currentSurah == surah.id) NoorPlayer.currentAyah else 0
+        }.collect { ayah ->
+            if (ayah <= 0) return@collect
+            if (mode == "ayah") {
+                val idx = verses.indexOfFirst { it.ayah == ayah }
+                if (idx >= 0) listState.animateScrollToItem((if (hasBasmala) 1 else 0) + idx)
+            } else {
+                val layout = textLayout ?: return@collect
+                val target = flow.getStringAnnotations("ayah", 0, flow.length)
+                    .firstOrNull { it.item == ayah.toString() }?.start ?: return@collect
+                val top = layout.getLineTop(layout.getLineForOffset(target)).toInt()
+                listState.animateScrollToItem(if (hasBasmala) 1 else 0, top)
+            }
+        }
     }
 
     // The iOS ayah-actions sheet: play from here, tafsir, share, copy, bookmark.
@@ -784,7 +811,7 @@ fun ReaderScreen(
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(
-                                        if (verse.ayah == scrollToAyah) NoorColor.stateReciting
+                                        if (verse.ayah == highlightAyah) NoorColor.stateReciting
                                         else NoorColor.bgPrimary.copy(alpha = 0f))
                                     .clickable { actionAyah = verse.ayah }
                                     .padding(horizontal = 12.dp, vertical = 8.dp)

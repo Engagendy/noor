@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -63,12 +64,47 @@ fun MushafScreen(startPage: Int, onBack: () -> Unit, modifier: Modifier = Modifi
     ) { PageLayoutDb.PAGE_COUNT }
     var chromeVisible by remember { mutableStateOf(true) }
 
+    // Follow-along page flip (iOS onChange(of: recitingKey)): while the
+    // player recites, the pager tracks the playing ayah's printed page —
+    // unless the reader manually swiped away since playback started.
+    var followPlayback by remember { mutableStateOf(true) }
+    var followTargetPage by remember { mutableStateOf(0) }
+
     // Direct prefs writes off the composition (khatmah frontier, streak);
     // nothing observes these as Compose state.
     LaunchedEffect(pager) {
         snapshotFlow { pager.settledPage }.collect { index ->
+            // A settle on a page other than the recitation target means the
+            // user swiped away — stop auto-flipping until playback restarts.
+            if (NoorPlayer.currentSurah != 0 && followTargetPage > 0 &&
+                index + 1 != followTargetPage
+            ) {
+                followPlayback = false
+            }
             withContext(Dispatchers.IO) { ReadingProgress.pageViewed(context, index + 1) }
         }
+    }
+    // Recompose-driven (snapshotFlow over the player's Compose state — no
+    // polling): resolve the playing ayah's page off-main, then animate.
+    LaunchedEffect(pager) {
+        snapshotFlow { NoorPlayer.currentSurah to NoorPlayer.currentAyah }
+            .collect { (surahId, ayah) ->
+                if (surahId == 0 || ayah == 0) {
+                    // Playback stopped — the next session follows again.
+                    followTargetPage = 0
+                    followPlayback = true
+                    return@collect
+                }
+                val page = withContext(Dispatchers.IO) {
+                    runCatching { PageLayoutDb.get(context).pageFor(surahId, ayah) }
+                        .getOrDefault(0)
+                }
+                if (page !in 1..PageLayoutDb.PAGE_COUNT) return@collect
+                followTargetPage = page
+                if (followPlayback && page != pager.currentPage + 1) {
+                    pager.animateScrollToPage(page - 1)
+                }
+            }
     }
     // Auto-hide the chrome shortly after arrival, like the iOS reader.
     LaunchedEffect(Unit) {
@@ -243,6 +279,11 @@ private fun MadaniPage(page: Int, onTap: () -> Unit) {
 
 @Composable
 private fun MadaniPageBody(content: PageContent, onTap: () -> Unit) {
+    // Ayah being recited (iOS MadaniPageView highlightKey/isHighlighted):
+    // reading the player's Compose state here recomposes just this page.
+    val reciting =
+        if (NoorPlayer.currentSurah != 0) AyahRef(NoorPlayer.currentSurah, NoorPlayer.currentAyah)
+        else null
     androidx.compose.foundation.layout.BoxWithConstraints(
         Modifier
             .fillMaxSize()
@@ -262,9 +303,20 @@ private fun MadaniPageBody(content: PageContent, onTap: () -> Unit) {
         val basmalaSize = with(density) { (rowHeight.toPx() * 0.45f).toSp() }
         Column(Modifier.fillMaxSize()) {
             content.lines.forEach { line ->
+                // Soft rounded stateReciting wash behind every line that
+                // carries the playing ayah (line-level, like iOS page mode).
+                val highlighted = reciting != null && reciting in line.ayahRefs
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxWidth().weight(1f)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .then(
+                            if (highlighted)
+                                Modifier.background(
+                                    NoorColor.stateReciting, RoundedCornerShape(6.dp))
+                            else Modifier
+                        )
                 ) {
                     when (line.kind) {
                         is LineKind.SurahHeader ->
