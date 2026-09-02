@@ -123,6 +123,21 @@ enum class MadhabChoice(val nameArabic: String, val adhanMadhab: Madhab) {
     }
 }
 
+/// Adhan notification sounds — 1:1 with the iOS `AdhanSound` enum
+/// (bundled clips converted from App/Resources/adhan_*.caf).
+enum class AdhanSound(val nameArabic: String, val rawRes: Int?) {
+    MADINAH("أذان الحرم النبوي", R.raw.adhan_madinah),
+    MELODIC("أذان مجوّد", R.raw.adhan_melodic),
+    AZEEZ("أذان (عاقب عزيز)", R.raw.adhan_azeez),
+    BELL("تنبيه", null),
+    SILENT("صامت", null);
+
+    companion object {
+        fun named(name: String?): AdhanSound =
+            entries.firstOrNull { it.name == name } ?: MADINAH
+    }
+}
+
 /// SharedPreferences-backed prayer settings — mirrors the iOS @AppStorage keys.
 /// Writes happen only from explicit user actions (never from Compose observers).
 class PrayerPrefs(context: Context) {
@@ -142,6 +157,24 @@ class PrayerPrefs(context: Context) {
         set(value) = prefs.edit().putString("prayer.madhab", value.name).apply()
 
     val city: CityPreset get() = Cities.named(cityName)
+
+    /// Adhan sound choice — mirrors iOS "prayer.sound".
+    var sound: AdhanSound
+        get() = AdhanSound.named(prefs.getString("prayer.sound", null))
+        set(value) = prefs.edit().putString("prayer.sound", value.name).apply()
+
+    /// Gentle reminder N minutes before each adhan (0 = off) — iOS "prayer.prealert".
+    var preAlertMinutes: Int
+        get() = prefs.getInt("prayer.prealert", 0)
+        set(value) = prefs.edit().putInt("prayer.prealert", value).apply()
+
+    /// Per-prayer notification toggles (iOS "notif.fajr" … "notif.isha", default on).
+    fun notificationEnabled(prayerKey: String): Boolean =
+        prefs.getBoolean("notif.$prayerKey", true)
+
+    fun setNotificationEnabled(prayerKey: String, enabled: Boolean) {
+        prefs.edit().putBoolean("notif.$prayerKey", enabled).apply()
+    }
 
     /// Manual per-prayer offsets in minutes, clamped to -30..30 like iOS.
     fun adjustment(prayerKey: String): Int = prefs.getInt("prayer.adj.$prayerKey", 0)

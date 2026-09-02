@@ -44,6 +44,7 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
     val method = remember(version) { prefs.method }
     val madhab = remember(version) { prefs.madhab }
     val cityName = remember(version) { prefs.cityName }
+    val preAlert = remember(version) { prefs.preAlertMinutes }
     val adjustments = remember(version) {
         listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
             .associateWith(prefs::adjustment)
@@ -88,6 +89,36 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
                     prefs.madhab = choice
                     changed()
                 })
+        }
+
+        item { SectionHeader("تنبيه قبل الصلاة (دقائق)") }
+        item {
+            // Wired into AdhanScheduler via changed(): a gentle reminder
+            // before each adhan — time for wudu and the walk to the masjid.
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                listOf(0, 5, 10, 15, 30).forEach { minutes ->
+                    val selected = preAlert == minutes
+                    Text(
+                        if (minutes == 0) "بدون" else minutes.arabicIndic(),
+                        fontSize = 14.sp,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        textAlign = TextAlign.Center,
+                        color = if (selected) NoorColor.bgPrimary else NoorColor.inkPrimary,
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                if (selected) NoorColor.accentPrimary else NoorColor.bgElevated,
+                                RoundedCornerShape(12.dp))
+                            .clickable {
+                                prefs.preAlertMinutes = minutes
+                                changed()
+                            }
+                            .padding(vertical = 10.dp))
+                }
+            }
         }
 
         item { SectionHeader("تعديل يدوي (بالدقائق)") }
