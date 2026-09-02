@@ -257,7 +257,8 @@ fun ReaderScreen(
                 modifier = Modifier.size(38.dp).clickable(onClick = onBack)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text("‹", fontSize = 20.sp, fontWeight = FontWeight.SemiBold,
+                    // RTL: back points RIGHT (iOS mirrored chevron.backward).
+                    Text("›", fontSize = 20.sp, fontWeight = FontWeight.SemiBold,
                          color = NoorColor.accentPrimary)
                 }
             }

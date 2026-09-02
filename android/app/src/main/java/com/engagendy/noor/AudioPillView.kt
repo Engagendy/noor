@@ -43,6 +43,13 @@ fun AudioPillView() {
     if (showReciterPicker) ReciterPickerSheet(onDismiss = { showReciterPicker = false })
     if (showModePicker) PlaybackModeSheet(onDismiss = { showModePicker = false })
 
+    // The pill lays out left-to-right even in the RTL app, exactly like
+    // iOS (.environment(\.layoutDirection, .leftToRight) on AudioPillView):
+    // media controls keep the universal ⏮ ▶ ⏭ order.
+    androidx.compose.runtime.CompositionLocalProvider(
+        androidx.compose.ui.platform.LocalLayoutDirection provides
+            androidx.compose.ui.unit.LayoutDirection.Ltr
+    ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -111,6 +118,7 @@ fun AudioPillView() {
                  modifier = Modifier.clickable { NoorPlayer.stop() }.padding(4.dp))
         }
     }
+    }
 }
 
 private fun modeIcon(mode: PlaybackMode): String = when (mode) {
@@ -138,7 +146,9 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
                 modifier = Modifier.padding(bottom = 10.dp)
             )
             val options = listOf(
-                Triple(PlaybackMode.CONTINUOUS, "متواصل", "◀"),
+                // Non-directional icon: matches modeIcon() and can't point
+                // the wrong way under the app-wide RTL.
+                Triple(PlaybackMode.CONTINUOUS, "متواصل", "🔁"),
                 Triple(PlaybackMode.REPEAT_AYAH, "تكرار الآية", "🔂"),
                 Triple(PlaybackMode.PAGE_ONLY, "هذه الصفحة فقط", "📄"),
             )

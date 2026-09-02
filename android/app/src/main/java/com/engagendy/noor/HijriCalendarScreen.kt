@@ -139,12 +139,14 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                 }
             }
 
-            // Month header with previous/next arrows (RTL: ‹ goes back).
+            // Month header arrows. Forced RTL: the leading (right) arrow
+            // goes BACK and points right; the trailing (left) arrow goes
+            // FORWARD and points left — mirrored like the iOS chevrons.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
             ) {
-                Text("‹", fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
+                Text("›", fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
                      color = NoorColor.accentPrimary,
                      textAlign = TextAlign.Center,
                      modifier = Modifier
@@ -155,7 +157,7 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                      color = NoorColor.inkPrimary,
                      textAlign = TextAlign.Center,
                      modifier = Modifier.weight(1f))
-                Text("›", fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
+                Text("‹", fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
                      color = NoorColor.accentPrimary,
                      textAlign = TextAlign.Center,
                      modifier = Modifier

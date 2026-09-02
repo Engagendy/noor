@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -202,13 +203,16 @@ private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPres
     }
     val countdown = next?.let { relativeArabic(it.time.time - now.time) }
 
-    Column(
+    Box(
         Modifier
             .padding(top = 8.dp)
             .fillMaxWidth()
-            .background(NoorColor.accentPrimary, RoundedCornerShape(18.dp))
-            .padding(20.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(NoorColor.accentPrimary)
     ) {
+        // Subtle star-lattice ornament, exactly the iOS hero overlay.
+        IslamicLattice(Color.White.copy(alpha = 0.06f), 64.dp, Modifier.matchParentSize())
+        Column(Modifier.padding(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Text(
                 next?.nameArabic ?: "العشاء",
@@ -256,6 +260,7 @@ private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPres
                      modifier = Modifier.weight(1f))
             }
         }
+        }
     }
 }
 
@@ -285,15 +290,20 @@ private fun JumuahCard(now: Date, openKahf: () -> Unit) {
             .get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.FRIDAY
     }
     if (!isFriday) return
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+    Box(
+        Modifier
             .padding(top = 12.dp)
             .fillMaxWidth()
-            .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(18.dp))
+            .background(NoorColor.bgElevated)
             .clickable(onClick = openKahf)
-            .padding(14.dp)
     ) {
+        // Gold star-lattice behind the card, per the iOS jumuahCard.
+        IslamicLattice(NoorColor.accentGold.copy(alpha = 0.05f), 54.dp, Modifier.matchParentSize())
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(14.dp)
+        ) {
         Icon(painterResource(R.drawable.ic_sparkle), contentDescription = null,
              tint = NoorColor.accentGold, modifier = Modifier.size(20.dp))
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
@@ -307,6 +317,7 @@ private fun JumuahCard(now: Date, openKahf: () -> Unit) {
              modifier = Modifier
                  .background(NoorColor.accentPrimary, CircleShape)
                  .padding(horizontal = 12.dp, vertical = 6.dp))
+        }
     }
 }
 
