@@ -28,9 +28,12 @@ object AdhanScheduler {
     // 5 adhans + 5 pre-alerts per day.
     private const val REQUESTS_PER_DAY = 10
     private const val PREALERT_BASE = 1000
+    /// Request codes 200.. are the sunnah-fasting eve reminders.
+    private const val FASTING_BASE = 200
 
     fun channelId(sound: AdhanSound): String = "adhan.${sound.name}"
     const val PREALERT_CHANNEL_ID = "prealert"
+    const val REMINDER_CHANNEL_ID = "reminders"
 
     fun ensureChannels(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
@@ -63,15 +66,25 @@ object AdhanScheduler {
                 PREALERT_CHANNEL_ID, "تنبيه قبل الصلاة", NotificationManager.IMPORTANCE_DEFAULT
             ).apply { description = "تذكير لطيف قبل الأذان" })
         }
+        if (manager.getNotificationChannel(REMINDER_CHANNEL_ID) == null) {
+            manager.createNotificationChannel(NotificationChannel(
+                REMINDER_CHANNEL_ID, "تذكيرات",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply { description = "تذكير صيام السنّة" })
+        }
     }
 
     /// Schedules the next ~2 days of prayers (and optional pre-alerts) as
-    /// exact alarms, honoring the per-prayer bell toggles.
+    /// exact alarms, honoring the master toggle and per-prayer bells.
     fun reschedule(context: Context) {
         ensureChannels(context)
         val alarmManager = context.getSystemService(AlarmManager::class.java)
         val canExact = Build.VERSION.SDK_INT < 31 || alarmManager.canScheduleExactAlarms()
 
+        val noorPrefs = KhatmahPlan.prefs(context)
+        val notificationsEnabled = noorPrefs.getBoolean("notifications.enabled", true)
+        val fastingEnabled = notificationsEnabled &&
+            noorPrefs.getBoolean("fasting.reminders", false)
         val prefs = PrayerPrefs(context)
         val city = prefs.city
         val zone = TimeZone.getTimeZone(city.timeZone)
@@ -109,7 +122,7 @@ object AdhanScheduler {
                 val adhanCode = slot
                 val preCode = PREALERT_BASE + slot
                 slot++
-                val enabled = prefs.notificationEnabled(entry.key)
+                val enabled = notificationsEnabled && prefs.notificationEnabled(entry.key)
                 // Adhan itself.
                 val adhanPending = pending(adhanCode) {
                     putExtra("nameArabic", entry.nameArabic)
@@ -140,6 +153,40 @@ object AdhanScheduler {
             alarmManager.cancel(pending(PREALERT_BASE + slot))
             slot++
         }
+
+        // Sunnah-fasting eve reminders (Monday & Thursday): a nudge at 20:00
+        // the evening before, rolling forward with the same window.
+        for (dayOffset in 0..DAYS_AHEAD) {
+            val eve = Calendar.getInstance(zone).apply {
+                time = now
+                add(Calendar.DAY_OF_YEAR, dayOffset)
+                set(Calendar.HOUR_OF_DAY, 20)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val tomorrow = (eve.clone() as Calendar)
+                .apply { add(Calendar.DAY_OF_YEAR, 1) }
+                .get(Calendar.DAY_OF_WEEK)
+            val dayName = when (tomorrow) {
+                Calendar.MONDAY -> "الاثنين"
+                Calendar.THURSDAY -> "الخميس"
+                else -> null
+            }
+            val intent = Intent(context, AdhanAlarmReceiver::class.java).apply {
+                action = "com.engagendy.noor.FASTING"
+                putExtra("dayName", dayName)
+            }
+            val pending = PendingIntent.getBroadcast(
+                context, FASTING_BASE + dayOffset, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            if (fastingEnabled && dayName != null && eve.time.after(now)) {
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP, eve.timeInMillis, pending)
+            } else {
+                alarmManager.cancel(pending)
+            }
+        }
     }
 }
 
@@ -148,6 +195,23 @@ object AdhanScheduler {
 class AdhanAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         AdhanScheduler.ensureChannels(context)
+        if (intent.action == "com.engagendy.noor.FASTING") {
+            val dayName = intent.getStringExtra("dayName") ?: return
+            val notification = android.app.Notification
+                .Builder(context, AdhanScheduler.REMINDER_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_sparkle)
+                .setContentTitle("صيام السنّة غدًا")
+                .setContentText("غدًا $dayName — من أيام صيام التطوع")
+                .setContentIntent(PendingIntent.getActivity(
+                    context, 0, Intent(context, MainActivity::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+                .setAutoCancel(true)
+                .build()
+            context.getSystemService(NotificationManager::class.java)
+                .notify(dayName.hashCode(), notification)
+            AdhanScheduler.reschedule(context)
+            return
+        }
         val nameArabic = intent.getStringExtra("nameArabic") ?: return
         val timeString = intent.getStringExtra("timeString") ?: ""
         val preAlert = intent.getIntExtra("preAlertMinutes", 0)

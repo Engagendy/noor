@@ -77,7 +77,7 @@ fun TodayScreen(
     var hadithDetail by remember { mutableStateOf<Pair<String, String>?>(null) }
 
     if (showSettings) {
-        SettingsScreen(modifier = modifier, onDone = { showSettings = false })
+        SettingsScreen(onBack = { showSettings = false }, modifier = modifier)
         return
     }
 
