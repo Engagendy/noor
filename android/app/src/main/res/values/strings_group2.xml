@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Group-2 screens (Quran index/reader, Mushaf, Tafsir, Audio, Hadith,
+     Athkar, Zakat, GoToPage). Default locale = Arabic; English overrides
+     live in values-en/strings_group2.xml. -->
+<resources>
+    <!-- Quran index + reader -->
+    <string name="g2_quran_title">القرآن</string>
+    <string name="g2_mushaf">المصحف</string>
+    <string name="g2_search_quran_hint">سورة، كلمة، أو ٢:٢٥٥</string>
+    <string name="g2_clear_search">مسح البحث</string>
+    <string name="g2_tab_surahs">السور</string>
+    <string name="g2_tab_juz">الأجزاء</string>
+    <string name="g2_tab_bookmarks">المحفوظات</string>
+    <string name="g2_juz_n">الجزء %1$s</string>
+    <string name="g2_hizb_n">الحزب %1$s</string>
+    <string name="g2_hizb_start">بداية الحزب</string>
+    <string name="g2_hizb_quarter">ربع الحزب</string>
+    <string name="g2_hizb_half">نصف الحزب</string>
+    <string name="g2_hizb_three_quarters">ثلاثة أرباع الحزب</string>
+    <string name="g2_bookmarks_empty">إشاراتك المرجعية ستُجمع هنا.</string>
+    <string name="g2_remove_bookmark">حذف الإشارة</string>
+    <string name="g2_ayat">آيات</string>
+    <string name="g2_surah_meta">%1$s آية · %2$s</string>
+    <string name="g2_makki">مكية</string>
+    <string name="g2_madani">مدنية</string>
+    <string name="g2_back">رجوع</string>
+    <string name="g2_play">تشغيل</string>
+    <string name="g2_reading_mode_mushaf">مصحف</string>
+    <string name="g2_reading_mode_page">المدني</string>
+    <string name="g2_reading_mode_ayah">آية آية</string>
+    <string name="g2_quran_text_size">حجم نص القرآن</string>
+    <string name="g2_surah_prefix">سورة %1$s</string>
+    <string name="g2_ayah_clip_label">آية</string>
+
+    <!-- Mushaf chrome -->
+    <string name="g2_juz_page_line">الجزء %1$s · صفحة %2$s</string>
+    <string name="g2_page_font_unavailable">خط الصفحة غير متاح.\nاتصل بالإنترنت مرة واحدة لتنزيل هذه الصفحة.</string>
+
+    <!-- Tafsir sheet -->
+    <string name="g2_tafsir_title">التفسير · %1$s:%2$s</string>
+    <string name="g2_load_failed">تعذر التحميل</string>
+    <string name="g2_tafsir_error">تعذر تحميل التفسير — تحقق من الاتصال. (%1$s)</string>
+
+    <!-- Audio pill + sheets -->
+    <string name="g2_ayah_ref">%1$s · آية %2$s</string>
+    <string name="g2_previous">السابق</string>
+    <string name="g2_next">التالي</string>
+    <string name="g2_pause">إيقاف مؤقت</string>
+    <string name="g2_stop">إيقاف</string>
+    <string name="g2_playback_mode">وضع التشغيل</string>
+    <string name="g2_mode_continuous">متواصل</string>
+    <string name="g2_mode_repeat_ayah">تكرار الآية</string>
+    <string name="g2_mode_page_only">هذه الصفحة فقط</string>
+    <string name="g2_end_of_surah">نهاية السورة</string>
+    <string name="g2_memorize_range">حفظ مقطع</string>
+    <string name="g2_from_ayah">من آية</string>
+    <string name="g2_to_ayah">إلى آية</string>
+    <string name="g2_repeat_each_ayah">تكرار كل آية</string>
+    <string name="g2_start_memorizing">ابدأ الحفظ</string>
+    <string name="g2_cancel">إلغاء</string>
+    <string name="g2_choose_reciter">اختر القارئ</string>
+    <string name="g2_search_reciters">ابحث عن قارئ…</string>
+
+    <!-- Hadith -->
+    <string name="g2_hadith_title">الحديث</string>
+    <string name="g2_search_all_hadith">ابحث في كل الأحاديث</string>
+    <string name="g2_no_results_download">لا نتائج — نزّل الصحيحين للبحث فيهما</string>
+    <string name="g2_sahihain">الصحيحان</string>
+    <string name="g2_forty_section">الأربعينات</string>
+    <string name="g2_download">تنزيل</string>
+    <string name="g2_retry">إعادة المحاولة</string>
+    <string name="g2_hadith_count">%1$s حديثًا</string>
+    <string name="g2_hadith_n">الحديث %1$s</string>
+    <string name="g2_search_books">ابحث في الكتب</string>
+    <string name="g2_search_hadiths">ابحث في الأحاديث</string>
+    <string name="g2_share">مشاركة</string>
+    <string name="g2_size_mb">‏~%1$s م.ب</string>
+    <string name="g2_forty_nawawi">الأربعون النووية</string>
+    <string name="g2_forty_qudsi">الأحاديث القدسية</string>
+
+    <!-- Athkar + tools -->
+    <string name="g2_athkar_title">الأذكار</string>
+    <string name="g2_ruqyah">الرقية الشرعية</string>
+    <string name="g2_selected_duas">أدعية مختارة</string>
+    <string name="g2_names_of_allah">أسماء الله الحسنى</string>
+    <string name="g2_tasbih">المسبحة</string>
+    <string name="g2_done">تم</string>
+    <string name="g2_ruqyah_note">آيات الرقية تُقرأ بتدبر مع النفث، ثلاثًا أو أكثر. النصوص من المصحف المعتمد.</string>
+    <string name="g2_prophetic_duas">الأدعية النبوية</string>
+    <string name="g2_duas_quran">أدعية من القرآن</string>
+    <string name="g2_duas_sunnah">أدعية من السنة</string>
+    <string name="g2_from_names">من أسماء الله الحسنى</string>
+    <string name="g2_reset">تصفير</string>
+
+    <!-- Zakat -->
+    <string name="g2_zakat_title">حاسبة الزكاة</string>
+    <string name="g2_your_currency">عملتك المحلية</string>
+    <string name="g2_gold_price_today">سعر جرام الذهب اليوم</string>
+    <string name="g2_gold_price_note">أدخل سعر الذهب المحلي اليوم — النصاب هو قيمة ٨٥ جرامًا من الذهب.</string>
+    <string name="g2_zakatable_wealth">الأموال الزكوية</string>
+    <string name="g2_cash">النقد (في اليد والبنك)</string>
+    <string name="g2_gold_grams">الذهب (جرامات)</string>
+    <string name="g2_silver_grams">الفضة (جرامات)</string>
+    <string name="g2_investments">استثمارات / أسهم</string>
+    <string name="g2_business">عروض التجارة</string>
+    <string name="g2_money_owed">ديون لك عند الغير</string>
+    <string name="g2_debts_due">ديون حالّة عليك (تُخصم)</string>
+    <string name="g2_enter_gold_price">أدخل سعر الذهب لحساب النصاب.</string>
+    <string name="g2_nisab">النصاب</string>
+    <string name="g2_net_wealth">صافي الثروة</string>
+    <string name="g2_zakat_due" formatted="false">الزكاة المستحقة (٢٫٥٪)</string>
+    <string name="g2_below_nisab">دون النصاب — لا زكاة مستحقة.</string>
+    <string name="g2_zakat_disclaimer">تجب الزكاة إذا بلغ صافي المال النصاب وحال عليه الحول الهجري. هذه الحاسبة استئناس — استشر أهل العلم في الحالات المركّبة. جميع الأرقام تبقى على جهازك.</string>
+
+    <!-- Go to page -->
+    <string name="g2_go_to_page">الانتقال إلى صفحة</string>
+    <string name="g2_page_number_hint">رقم الصفحة (١–٦٠٤)</string>
+    <string name="g2_go">انتقال</string>
+    <string name="g2_or_jump_juz">أو انتقل إلى جزء</string>
+
+    <!-- Ayah actions -->
+    <string name="g2_listen_from_here">الاستماع من هنا</string>
+    <string name="g2_tafsir">التفسير</string>
+    <string name="g2_copy">نسخ</string>
+    <string name="g2_bookmarked">محفوظة في الإشارات</string>
+    <string name="g2_bookmark">إشارة مرجعية</string>
+</resources>

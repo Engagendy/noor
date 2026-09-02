@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -64,7 +65,7 @@ fun GoToPageDialog(
         Surface(shape = RoundedCornerShape(16.dp), color = NoorColor.bgPrimary) {
             Column(Modifier.padding(18.dp)) {
                 Text(
-                    "الانتقال إلى صفحة",
+                    stringResource(R.string.g2_go_to_page),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = NoorColor.inkPrimary)
@@ -98,7 +99,7 @@ fun GoToPageDialog(
                             ) {
                                 if (pageText.isEmpty()) {
                                     Text(
-                                        "رقم الصفحة (١–٦٠٤)",
+                                        stringResource(R.string.g2_page_number_hint),
                                         fontSize = 17.sp,
                                         color = NoorColor.inkSecondary)
                                 }
@@ -121,7 +122,7 @@ fun GoToPageDialog(
                             .padding(horizontal = 22.dp)
                     ) {
                         Text(
-                            "انتقال",
+                            stringResource(R.string.g2_go),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = NoorColor.bgPrimary)
@@ -129,7 +130,7 @@ fun GoToPageDialog(
                 }
                 Spacer(Modifier.height(18.dp))
                 Text(
-                    "أو انتقل إلى جزء",
+                    stringResource(R.string.g2_or_jump_juz),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = NoorColor.inkSecondary)
@@ -152,7 +153,7 @@ fun GoToPageDialog(
                                         }
                                 ) {
                                     Text(
-                                        juz.arabicIndic(),
+                                        juz.localizedDigits(),
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = NoorColor.inkPrimary)

@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,13 +41,13 @@ fun ReciterPickerSheet(onDismiss: () -> Unit) {
     }
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
         Column(Modifier.padding(horizontal = 16.dp)) {
-            Text("اختر القارئ", fontSize = 17.sp, fontWeight = FontWeight.Bold,
+            Text(stringResource(R.string.g2_choose_reciter), fontSize = 17.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary,
                  modifier = Modifier.padding(bottom = 10.dp))
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
-                placeholder = { Text("ابحث عن قارئ…", color = NoorColor.inkSecondary) },
+                placeholder = { Text(stringResource(R.string.g2_search_reciters), color = NoorColor.inkSecondary) },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -83,11 +84,11 @@ fun ReciterPickerSheet(onDismiss: () -> Unit) {
                             Text(reciter.flag, fontSize = 20.sp)
                         }
                         Column(Modifier.weight(1f)) {
-                            Text(reciter.nameArabic, fontSize = 15.sp,
+                            Text(reciter.localizedName, fontSize = 15.sp,
                                  fontWeight = if (selected) FontWeight.Bold
                                               else FontWeight.Normal,
                                  color = NoorColor.inkPrimary)
-                            Text(reciter.nameEnglish, fontSize = 12.sp,
+                            Text(reciter.secondaryName, fontSize = 12.sp,
                                  color = NoorColor.inkSecondary)
                         }
                         if (selected) {

@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -66,7 +67,7 @@ fun ZakatScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val isDue = gold > 0 && zakatBase >= nisab
     val zakatAmount = zakatBase * 0.025
 
-    fun format(amount: Double): String = String.format(Locale("ar"), "%,.2f", amount)
+    fun format(amount: Double): String = String.format(Locale.getDefault(), "%,.2f", amount)
 
     @Composable
     fun moneyField(title: String, text: String, onChange: (String) -> Unit) {
@@ -80,7 +81,7 @@ fun ZakatScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             OutlinedTextField(
                 value = text,
                 onValueChange = onChange,
-                placeholder = { Text("٠", color = NoorColor.inkSecondary) },
+                placeholder = { Text(0.localizedDigits(), color = NoorColor.inkSecondary) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -93,35 +94,35 @@ fun ZakatScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
 
     Column(modifier.fillMaxSize()) {
-        ExtraHeader("حاسبة الزكاة", onBack)
+        ExtraHeader(stringResource(R.string.g2_zakat_title), onBack)
         Column(
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            Text("عملتك المحلية", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g2_your_currency), fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.accentPrimary)
-            moneyField("سعر جرام الذهب اليوم", goldPrice) {
+            moneyField(stringResource(R.string.g2_gold_price_today), goldPrice) {
                 goldPrice = it
                 // User-typed value — persisted from the input handler.
                 prefs.edit().putFloat("zakat.goldPrice", value(it).toFloat()).apply()
             }
             Text(
-                "أدخل سعر الذهب المحلي اليوم — النصاب هو قيمة ٨٥ جرامًا من الذهب.",
+                stringResource(R.string.g2_gold_price_note),
                 fontSize = 12.sp, color = NoorColor.inkSecondary,
                 modifier = Modifier.padding(bottom = 14.dp)
             )
 
-            Text("الأموال الزكوية", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g2_zakatable_wealth), fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.accentPrimary)
-            moneyField("النقد (في اليد والبنك)", cash) { cash = it }
-            moneyField("الذهب (جرامات)", goldGrams) { goldGrams = it }
-            moneyField("الفضة (جرامات)", silverGrams) { silverGrams = it }
-            moneyField("استثمارات / أسهم", investments) { investments = it }
-            moneyField("عروض التجارة", businessGoods) { businessGoods = it }
-            moneyField("ديون لك عند الغير", moneyOwed) { moneyOwed = it }
-            moneyField("ديون حالّة عليك (تُخصم)", debtsDue) { debtsDue = it }
+            moneyField(stringResource(R.string.g2_cash), cash) { cash = it }
+            moneyField(stringResource(R.string.g2_gold_grams), goldGrams) { goldGrams = it }
+            moneyField(stringResource(R.string.g2_silver_grams), silverGrams) { silverGrams = it }
+            moneyField(stringResource(R.string.g2_investments), investments) { investments = it }
+            moneyField(stringResource(R.string.g2_business), businessGoods) { businessGoods = it }
+            moneyField(stringResource(R.string.g2_money_owed), moneyOwed) { moneyOwed = it }
+            moneyField(stringResource(R.string.g2_debts_due), debtsDue) { debtsDue = it }
 
             // Result card.
             Column(
@@ -132,36 +133,36 @@ fun ZakatScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     .padding(16.dp)
             ) {
                 if (gold <= 0) {
-                    Text("أدخل سعر الذهب لحساب النصاب.", fontSize = 14.sp,
+                    Text(stringResource(R.string.g2_enter_gold_price), fontSize = 14.sp,
                          color = NoorColor.inkSecondary)
                 } else {
                     Row(horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()) {
-                        Text("النصاب", fontSize = 15.sp, color = NoorColor.inkPrimary)
+                        Text(stringResource(R.string.g2_nisab), fontSize = 15.sp, color = NoorColor.inkPrimary)
                         Text(format(nisab), fontSize = 15.sp, color = NoorColor.inkSecondary)
                     }
                     Row(horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp)) {
-                        Text("صافي الثروة", fontSize = 15.sp, color = NoorColor.inkPrimary)
+                        Text(stringResource(R.string.g2_net_wealth), fontSize = 15.sp, color = NoorColor.inkPrimary)
                         Text(format(zakatBase), fontSize = 15.sp, color = NoorColor.inkSecondary)
                     }
                     if (isDue) {
                         Row(horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.fillMaxWidth().padding(top = 10.dp)) {
-                            Text("الزكاة المستحقة (٢٫٥٪)", fontSize = 16.sp,
+                            Text(stringResource(R.string.g2_zakat_due), fontSize = 16.sp,
                                  fontWeight = FontWeight.SemiBold, color = NoorColor.inkPrimary)
                             Text(format(zakatAmount), fontSize = 17.sp,
                                  fontWeight = FontWeight.Bold, color = NoorColor.accentPrimary)
                         }
                     } else {
-                        Text("دون النصاب — لا زكاة مستحقة.", fontSize = 14.sp,
+                        Text(stringResource(R.string.g2_below_nisab), fontSize = 14.sp,
                              color = NoorColor.inkSecondary,
                              modifier = Modifier.padding(top = 10.dp))
                     }
                 }
             }
             Text(
-                "تجب الزكاة إذا بلغ صافي المال النصاب وحال عليه الحول الهجري. هذه الحاسبة استئناس — استشر أهل العلم في الحالات المركّبة. جميع الأرقام تبقى على جهازك.",
+                stringResource(R.string.g2_zakat_disclaimer),
                 fontSize = 12.sp, color = NoorColor.inkSecondary,
                 modifier = Modifier.padding(bottom = 32.dp)
             )

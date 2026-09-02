@@ -38,6 +38,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -255,7 +256,8 @@ private fun MushafAyahActions(ref: AyahRef, onDismiss: () -> Unit) {
                     ShareCard.render(
                         context,
                         "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩",
-                        "سورة ${surah.nameArabic} · ${surah.id.arabicIndic()}:${verse.ayah.arabicIndic()}",
+                        context.getString(R.string.g2_surah_prefix, surah.nameArabic) +
+                            " · ${surah.id.localizedDigits()}:${verse.ayah.localizedDigits()}",
                         useQuranFont = true)
                 }
                 ShareCard.share(context, bitmap)
@@ -265,7 +267,7 @@ private fun MushafAyahActions(ref: AyahRef, onDismiss: () -> Unit) {
             val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
                 as android.content.ClipboardManager
             clipboard.setPrimaryClip(android.content.ClipData.newPlainText(
-                "آية",
+                context.getString(R.string.g2_ayah_clip_label),
                 "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩ — ${surah.id}:${verse.ayah}"))
         },
         onToggleBookmark = {
@@ -295,7 +297,8 @@ private fun MushafTopBar(
     val context = LocalContext.current
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val juz = PageLayoutDb.juzForPage(page)
-    val juzLine = "الجزء ${juz.arabicIndic()} · صفحة ${page.arabicIndic()}"
+    val juzLine = stringResource(
+        R.string.g2_juz_page_line, juz.localizedDigits(), page.localizedDigits())
     val fullAlpha by animateFloatAsState(if (chromeVisible) 1f else 0f, label = "chrome")
 
     fun playFromPage() {
@@ -339,7 +342,7 @@ private fun MushafTopBar(
                     // Explicit right-pointing drawable (not auto-mirrored):
                     // in this forced-RTL app, BACK always points RIGHT.
                     Icon(painterResource(R.drawable.ic_chevron_right),
-                         contentDescription = "رجوع",
+                         contentDescription = stringResource(R.string.g2_back),
                          tint = NoorColor.accentPrimary,
                          modifier = Modifier.size(18.dp))
                 }
@@ -373,7 +376,7 @@ private fun MushafTopBar(
                     painterResource(
                         if (NoorPlayer.currentSurah != 0 && NoorPlayer.isPlaying)
                             R.drawable.ic_pause_fill else R.drawable.ic_play_fill),
-                    contentDescription = "تشغيل",
+                    contentDescription = stringResource(R.string.g2_play),
                     tint = NoorColor.accentPrimary,
                     modifier = Modifier.size(17.dp))
             }
@@ -394,7 +397,7 @@ private fun MushafTopBar(
         // Minimal reading row: surah · time · juz/page.
         if (!chromeVisible) {
             val time = remember(page) {
-                SimpleDateFormat("h:mm", Locale("ar")).format(Date())
+                SimpleDateFormat("h:mm", Locale.getDefault()).format(Date())
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -446,7 +449,7 @@ private fun MadaniPage(
         }
         loaded.fontFamily == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
-                "خط الصفحة غير متاح.\nاتصل بالإنترنت مرة واحدة لتنزيل هذه الصفحة.",
+                stringResource(R.string.g2_page_font_unavailable),
                 fontSize = 15.sp,
                 textAlign = TextAlign.Center,
                 color = NoorColor.inkSecondary,

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English strings for the Group-2 screens. Sourced from the iOS String
+     Catalogs (App/Resources/Localizable.xcstrings) where available. -->
+<resources>
+    <!-- Quran index + reader -->
+    <string name="g2_quran_title">Quran</string>
+    <string name="g2_mushaf">Mushaf</string>
+    <string name="g2_search_quran_hint">Surah, word, or 2:255</string>
+    <string name="g2_clear_search">Clear search</string>
+    <string name="g2_tab_surahs">Surahs</string>
+    <string name="g2_tab_juz">Juz</string>
+    <string name="g2_tab_bookmarks">Bookmarks</string>
+    <string name="g2_juz_n">Juz %1$s</string>
+    <string name="g2_hizb_n">Hizb %1$s</string>
+    <string name="g2_hizb_start">Hizb start</string>
+    <string name="g2_hizb_quarter">¼ Hizb</string>
+    <string name="g2_hizb_half">½ Hizb</string>
+    <string name="g2_hizb_three_quarters">¾ Hizb</string>
+    <string name="g2_bookmarks_empty">Your bookmarks will gather here.</string>
+    <string name="g2_remove_bookmark">Remove bookmark</string>
+    <string name="g2_ayat">Ayat</string>
+    <string name="g2_surah_meta">%1$s ayahs · %2$s</string>
+    <string name="g2_makki">Makki</string>
+    <string name="g2_madani">Madani</string>
+    <string name="g2_back">Back</string>
+    <string name="g2_play">Play</string>
+    <string name="g2_reading_mode_mushaf">Mushaf</string>
+    <string name="g2_reading_mode_page">Madani</string>
+    <string name="g2_reading_mode_ayah">Ayah by ayah</string>
+    <string name="g2_quran_text_size">Quran text size</string>
+    <string name="g2_surah_prefix">Surah %1$s</string>
+    <string name="g2_ayah_clip_label">Ayah</string>
+
+    <!-- Mushaf chrome -->
+    <string name="g2_juz_page_line">Juz %1$s · Page %2$s</string>
+    <string name="g2_page_font_unavailable">Page font unavailable.\nConnect to the internet once to download this page.</string>
+
+    <!-- Tafsir sheet -->
+    <string name="g2_tafsir_title">Tafsir — %1$s:%2$s</string>
+    <string name="g2_load_failed">Load failed</string>
+    <string name="g2_tafsir_error">Couldn\'t load the tafsir — check your connection. (%1$s)</string>
+
+    <!-- Audio pill + sheets -->
+    <string name="g2_ayah_ref">%1$s · Ayah %2$s</string>
+    <string name="g2_previous">Previous</string>
+    <string name="g2_next">Next</string>
+    <string name="g2_pause">Pause</string>
+    <string name="g2_stop">Stop</string>
+    <string name="g2_playback_mode">Playback mode</string>
+    <string name="g2_mode_continuous">Continuous</string>
+    <string name="g2_mode_repeat_ayah">Repeat ayah</string>
+    <string name="g2_mode_page_only">This page only</string>
+    <string name="g2_end_of_surah">End of surah</string>
+    <string name="g2_memorize_range">Memorize a range</string>
+    <string name="g2_from_ayah">From ayah</string>
+    <string name="g2_to_ayah">To ayah</string>
+    <string name="g2_repeat_each_ayah">Repeat each ayah</string>
+    <string name="g2_start_memorizing">Start memorizing</string>
+    <string name="g2_cancel">Cancel</string>
+    <string name="g2_choose_reciter">Choose a reciter</string>
+    <string name="g2_search_reciters">Search reciters…</string>
+
+    <!-- Hadith -->
+    <string name="g2_hadith_title">Hadith</string>
+    <string name="g2_search_all_hadith">Search all hadiths</string>
+    <string name="g2_no_results_download">No results — download the two Sahihs to search them</string>
+    <string name="g2_sahihain">The Two Sahihs</string>
+    <string name="g2_forty_section">The Forty Collections</string>
+    <string name="g2_download">Download</string>
+    <string name="g2_retry">Retry</string>
+    <string name="g2_hadith_count">%1$s hadiths</string>
+    <string name="g2_hadith_n">Hadith %1$s</string>
+    <string name="g2_search_books">Search books</string>
+    <string name="g2_search_hadiths">Search hadiths</string>
+    <string name="g2_share">Share</string>
+    <string name="g2_size_mb">~%1$s MB</string>
+    <string name="g2_forty_nawawi">An-Nawawi\'s Forty</string>
+    <string name="g2_forty_qudsi">Forty Hadith Qudsi</string>
+
+    <!-- Athkar + tools -->
+    <string name="g2_athkar_title">Athkar</string>
+    <string name="g2_ruqyah">Ruqyah</string>
+    <string name="g2_selected_duas">Selected duas</string>
+    <string name="g2_names_of_allah">Names of Allah</string>
+    <string name="g2_tasbih">Tasbih</string>
+    <string name="g2_done">Done</string>
+    <string name="g2_ruqyah_note">Ruqyah verses are read with reflection and gentle blowing, three times or more. Texts come from the verified mushaf.</string>
+    <string name="g2_prophetic_duas">Prophetic supplications</string>
+    <string name="g2_duas_quran">Duas from the Quran</string>
+    <string name="g2_duas_sunnah">Duas from the Sunnah</string>
+    <string name="g2_from_names">Among the Names of Allah</string>
+    <string name="g2_reset">Reset</string>
+
+    <!-- Zakat -->
+    <string name="g2_zakat_title">Zakat Calculator</string>
+    <string name="g2_your_currency">Your currency</string>
+    <string name="g2_gold_price_today">Gold price per gram</string>
+    <string name="g2_gold_price_note">Enter today\'s local gold price — the nisab is the value of 85 grams of gold.</string>
+    <string name="g2_zakatable_wealth">Zakatable wealth</string>
+    <string name="g2_cash">Cash (in hand and bank)</string>
+    <string name="g2_gold_grams">Gold (grams)</string>
+    <string name="g2_silver_grams">Silver (grams)</string>
+    <string name="g2_investments">Investments / shares</string>
+    <string name="g2_business">Business inventory</string>
+    <string name="g2_money_owed">Money owed to you</string>
+    <string name="g2_debts_due">Debts due now (subtract)</string>
+    <string name="g2_enter_gold_price">Enter the gold price to compute the nisab.</string>
+    <string name="g2_nisab">Nisab</string>
+    <string name="g2_net_wealth">Net wealth</string>
+    <string name="g2_zakat_due" formatted="false">Zakat due (2.5%)</string>
+    <string name="g2_below_nisab">Below the nisab — no zakat is due.</string>
+    <string name="g2_zakat_disclaimer">Zakat is due when net zakatable wealth has remained at or above the nisab for one full hijri year. This calculator is a guide — consult a scholar for complex cases. All figures stay on your device.</string>
+
+    <!-- Go to page -->
+    <string name="g2_go_to_page">Go to page</string>
+    <string name="g2_page_number_hint">Page number (1–604)</string>
+    <string name="g2_go">Go</string>
+    <string name="g2_or_jump_juz">Or jump to a juz</string>
+
+    <!-- Ayah actions -->
+    <string name="g2_listen_from_here">Play from here</string>
+    <string name="g2_tafsir">Tafsir</string>
+    <string name="g2_copy">Copy</string>
+    <string name="g2_bookmarked">Saved in bookmarks</string>
+    <string name="g2_bookmark">Bookmark</string>
+</resources>

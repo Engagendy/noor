@@ -43,6 +43,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -169,7 +170,7 @@ fun QuranScreen(
     val quarterStarts = remember { db.quarterStarts() }
     fun surahName(id: Int): String = surahs.firstOrNull { it.id == id }?.nameArabic ?: "$id"
     fun referenceLabel(s: DivisionStart) =
-        "${surahName(s.surahId)} · ${s.surahId.arabicIndic()}:${s.ayah.arabicIndic()}"
+        "${surahName(s.surahId)} · ${s.surahId.localizedDigits()}:${s.ayah.localizedDigits()}"
     fun openReference(surahId: Int, ayah: Int) {
         openAyah = ayah
         openSurah = surahs.firstOrNull { it.id == surahId }
@@ -201,13 +202,13 @@ fun QuranScreen(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Text(
-                "القرآن",
+                stringResource(R.string.g2_quran_title),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = NoorColor.inkPrimary
             )
             Text(
-                "المصحف",
+                stringResource(R.string.g2_mushaf),
                 color = NoorColor.accentPrimary,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.clickable {
@@ -231,7 +232,7 @@ fun QuranScreen(
             Box(Modifier.weight(1f)) {
                 if (searchText.isEmpty()) {
                     Text(
-                        "سورة، كلمة، أو ٢:٢٥٥",
+                        stringResource(R.string.g2_search_quran_hint),
                         fontSize = 15.sp,
                         color = NoorColor.inkSecondary.copy(alpha = 0.8f)
                     )
@@ -247,7 +248,7 @@ fun QuranScreen(
             if (searchText.isNotEmpty()) {
                 Icon(
                     painterResource(R.drawable.ic_close),
-                    contentDescription = "مسح البحث",
+                    contentDescription = stringResource(R.string.g2_clear_search),
                     tint = NoorColor.inkSecondary,
                     modifier = Modifier
                         .size(28.dp)
@@ -266,11 +267,11 @@ fun QuranScreen(
                 .background(NoorColor.bgElevated)
                 .padding(3.dp)
         ) {
-            IndexSegment("السور", selected = indexTab == "surah",
+            IndexSegment(stringResource(R.string.g2_tab_surahs), selected = indexTab == "surah",
                          modifier = Modifier.weight(1f)) { indexTab = "surah" }
-            IndexSegment("الأجزاء", selected = indexTab == "juz",
+            IndexSegment(stringResource(R.string.g2_tab_juz), selected = indexTab == "juz",
                          modifier = Modifier.weight(1f)) { indexTab = "juz" }
-            IndexSegment("المحفوظات", selected = indexTab == "bookmarks",
+            IndexSegment(stringResource(R.string.g2_tab_bookmarks), selected = indexTab == "bookmarks",
                          modifier = Modifier.weight(1f)) { indexTab = "bookmarks" }
         }
 
@@ -295,12 +296,12 @@ fun QuranScreen(
                                         .size(36.dp)
                                         .border(1.dp, NoorColor.accentGold, CircleShape)
                                 ) {
-                                    Text(juz.idx.arabicIndic(), fontSize = 13.sp,
+                                    Text(juz.idx.localizedDigits(), fontSize = 13.sp,
                                          color = NoorColor.accentGold)
                                 }
                                 Column(Modifier.padding(horizontal = 14.dp)) {
                                     Text(
-                                        "الجزء ${juz.idx.arabicIndic()}",
+                                        stringResource(R.string.g2_juz_n, juz.idx.localizedDigits()),
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = NoorColor.inkPrimary
@@ -334,10 +335,10 @@ fun QuranScreen(
                         items(quarterStarts.filter { it.idx in range }, key = { "q${it.idx}" }) { q ->
                             val hizb = (q.idx - 1) / 4 + 1
                             val quarterName = when ((q.idx - 1) % 4 + 1) {
-                                2 -> "ربع الحزب"
-                                3 -> "نصف الحزب"
-                                4 -> "ثلاثة أرباع الحزب"
-                                else -> "بداية الحزب"
+                                2 -> stringResource(R.string.g2_hizb_quarter)
+                                3 -> stringResource(R.string.g2_hizb_half)
+                                4 -> stringResource(R.string.g2_hizb_three_quarters)
+                                else -> stringResource(R.string.g2_hizb_start)
                             }
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -354,7 +355,7 @@ fun QuranScreen(
                                     modifier = Modifier.padding(horizontal = 10.dp)
                                 )
                                 Text(
-                                    "الحزب ${hizb.arabicIndic()}",
+                                    stringResource(R.string.g2_hizb_n, hizb.localizedDigits()),
                                     fontSize = 12.sp,
                                     color = NoorColor.inkSecondary,
                                     modifier = Modifier.weight(1f)
@@ -379,7 +380,7 @@ fun QuranScreen(
                 if (refs.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            "إشاراتك المرجعية ستُجمع هنا.",
+                            stringResource(R.string.g2_bookmarks_empty),
                             fontSize = 15.sp,
                             color = NoorColor.inkSecondary
                         )
@@ -396,7 +397,7 @@ fun QuranScreen(
                             ) {
                                 Text("★", fontSize = 15.sp, color = NoorColor.accentGold)
                                 Text(
-                                    "${surahName(s)} · ${s.arabicIndic()}:${a.arabicIndic()}",
+                                    "${surahName(s)} · ${s.localizedDigits()}:${a.localizedDigits()}",
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = NoorColor.inkPrimary,
@@ -404,7 +405,7 @@ fun QuranScreen(
                                 )
                                 Icon(
                                     painterResource(R.drawable.ic_close),
-                                    contentDescription = "حذف الإشارة",
+                                    contentDescription = stringResource(R.string.g2_remove_bookmark),
                                     tint = NoorColor.inkSecondary,
                                     modifier = Modifier
                                         .size(28.dp)
@@ -433,7 +434,7 @@ fun QuranScreen(
                                 .size(36.dp)
                                 .border(1.dp, NoorColor.accentGold, CircleShape)
                         ) {
-                            Text(surah.id.arabicIndic(), fontSize = 13.sp, color = NoorColor.accentGold)
+                            Text(surah.id.localizedDigits(), fontSize = 13.sp, color = NoorColor.accentGold)
                         }
                         Column(Modifier.padding(horizontal = 14.dp).weight(1f)) {
                             Text(
@@ -443,7 +444,12 @@ fun QuranScreen(
                                 color = NoorColor.inkPrimary
                             )
                             Text(
-                                "${surah.ayahCount.arabicIndic()} آية · ${if (surah.revelation == "Meccan") "مكية" else "مدنية"}",
+                                stringResource(
+                                    R.string.g2_surah_meta,
+                                    surah.ayahCount.localizedDigits(),
+                                    stringResource(
+                                        if (surah.revelation == "Meccan") R.string.g2_makki
+                                        else R.string.g2_madani)),
                                 fontSize = 12.sp,
                                 color = NoorColor.inkSecondary
                             )
@@ -455,7 +461,7 @@ fun QuranScreen(
                 if (hits.isNotEmpty()) {
                     item {
                         Text(
-                            "آيات",
+                            stringResource(R.string.g2_ayat),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = NoorColor.inkSecondary,
@@ -478,7 +484,7 @@ fun QuranScreen(
                                 color = NoorColor.inkPrimary
                             )
                             Text(
-                                "‏${surahName(hit.surahId)} · ${hit.surahId.arabicIndic()}:${hit.ayah.arabicIndic()}",
+                                "‏${surahName(hit.surahId)} · ${hit.surahId.localizedDigits()}:${hit.ayah.localizedDigits()}",
                                 fontSize = 12.sp,
                                 color = NoorColor.inkSecondary,
                                 modifier = Modifier.padding(top = 4.dp)
@@ -573,7 +579,7 @@ fun ReaderScreen(
                         color = NoorColor.accentGold,
                         fontSize = (fontSize * 0.5f).sp,
                         fontWeight = FontWeight.SemiBold)) {
-                        append("— الجزء ${idx.arabicIndic()} —")
+                        append("— " + context.getString(R.string.g2_juz_n, idx.localizedDigits()) + " —")
                     }
                     append("\n")
                 }
@@ -632,7 +638,8 @@ fun ReaderScreen(
                 ShareCard.render(
                     context,
                     "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩",
-                    "سورة ${surah.nameArabic} · ${surah.id.arabicIndic()}:${verse.ayah.arabicIndic()}",
+                    context.getString(R.string.g2_surah_prefix, surah.nameArabic) +
+                        " · ${surah.id.localizedDigits()}:${verse.ayah.localizedDigits()}",
                     useQuranFont = true)
             }
             ShareCard.share(context, bitmap)
@@ -642,7 +649,7 @@ fun ReaderScreen(
     fun copyAyah(verse: Verse) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText(
-            "آية",
+            context.getString(R.string.g2_ayah_clip_label),
             "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩ — ${surah.id}:${verse.ayah}"))
     }
 
@@ -743,7 +750,7 @@ fun ReaderScreen(
                     // Explicit right-pointing drawable (not auto-mirrored):
                     // BACK points RIGHT in RTL (iOS mirrored chevron.backward).
                     Icon(painterResource(R.drawable.ic_chevron_right),
-                         contentDescription = "رجوع",
+                         contentDescription = stringResource(R.string.g2_back),
                          tint = NoorColor.accentPrimary,
                          modifier = Modifier.size(18.dp))
                 }
@@ -766,7 +773,7 @@ fun ReaderScreen(
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    "الجزء ${juz.arabicIndic()}",
+                    stringResource(R.string.g2_juz_n, juz.localizedDigits()),
                     fontSize = 11.sp,
                     color = NoorColor.inkSecondary
                 )
@@ -777,7 +784,7 @@ fun ReaderScreen(
                 painterResource(
                     if (NoorPlayer.currentSurah != 0 && NoorPlayer.isPlaying)
                         R.drawable.ic_pause_fill else R.drawable.ic_play_fill),
-                contentDescription = "تشغيل",
+                contentDescription = stringResource(R.string.g2_play),
                 tint = NoorColor.accentPrimary,
                 modifier = Modifier.clip(CircleShape).clickable {
                     if (NoorPlayer.currentSurah != 0) NoorPlayer.toggle()
@@ -822,7 +829,7 @@ fun ReaderScreen(
                                         color = NoorColor.accentGold.copy(alpha = 0.35f),
                                         modifier = Modifier.weight(1f))
                                     Text(
-                                        "الجزء ${idx.arabicIndic()}",
+                                        stringResource(R.string.g2_juz_n, idx.localizedDigits()),
                                         fontSize = 12.sp,
                                         color = NoorColor.accentGold,
                                         modifier = Modifier.padding(horizontal = 10.dp))
@@ -941,11 +948,11 @@ fun ReaderOptionsPanel(
                     .background(NoorColor.bgPrimary)
                     .padding(3.dp)
             ) {
-                ModeSegment("مصحف", selected = mode == "mushaf",
+                ModeSegment(stringResource(R.string.g2_reading_mode_mushaf), selected = mode == "mushaf",
                             modifier = Modifier.weight(1f)) { onMode("mushaf") }
-                ModeSegment("المدني", selected = mode == "page",
+                ModeSegment(stringResource(R.string.g2_reading_mode_page), selected = mode == "page",
                             modifier = Modifier.weight(1f)) { onMode("page") }
-                ModeSegment("آية آية", selected = mode == "ayah",
+                ModeSegment(stringResource(R.string.g2_reading_mode_ayah), selected = mode == "ayah",
                             modifier = Modifier.weight(1f)) { onMode("ayah") }
             }
             // The printed Madani page has fixed geometry — size buttons
@@ -956,14 +963,14 @@ fun ReaderOptionsPanel(
                     modifier = Modifier.fillMaxWidth().padding(top = 14.dp)
                 ) {
                     Text(
-                        "حجم نص القرآن",
+                        stringResource(R.string.g2_quran_text_size),
                         fontSize = 14.sp,
                         color = NoorColor.inkSecondary,
                         modifier = Modifier.weight(1f)
                     )
                     SizeButton("−") { onFontSize((fontSize - 2f).coerceAtLeast(20f)) }
                     Text(
-                        fontSize.toInt().arabicIndic(),
+                        fontSize.toInt().localizedDigits(),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = NoorColor.accentPrimary,

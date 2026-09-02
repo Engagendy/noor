@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,6 +56,16 @@ private data class HadithDetail(val pages: List<HadithPage>, val initialIndex: I
     constructor(arabic: String, reference: String) :
         this(listOf(HadithPage(arabic, reference)), 0)
 }
+
+/// Forty-collection title: Arabic from the bundled data, English forms
+/// (as on iOS) in the en locale.
+private fun fortyTitle(context: android.content.Context, key: String, arabic: String): String =
+    if (isArabicUi()) arabic
+    else when (key) {
+        "nawawi" -> context.getString(R.string.g2_forty_nawawi)
+        "qudsi" -> context.getString(R.string.g2_forty_qudsi)
+        else -> arabic
+    }
 
 @Composable
 fun HadithScreen(modifier: Modifier = Modifier) {
@@ -122,7 +133,7 @@ fun HadithScreen(modifier: Modifier = Modifier) {
 
     LazyColumn(modifier.fillMaxSize()) {
         item {
-            Text("الحديث", fontSize = 28.sp, fontWeight = FontWeight.Bold,
+            Text(stringResource(R.string.g2_hadith_title), fontSize = 28.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary,
                  modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
         }
@@ -132,7 +143,7 @@ fun HadithScreen(modifier: Modifier = Modifier) {
         if (query.isNotBlank()) {
             if (results.isEmpty()) {
                 item {
-                    Text("لا نتائج — نزّل الصحيحين للبحث فيهما", fontSize = 14.sp,
+                    Text(stringResource(R.string.g2_no_results_download), fontSize = 14.sp,
                          color = NoorColor.inkSecondary,
                          modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp))
                 }
@@ -144,20 +155,20 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                         .clickable {
                             detail = HadithDetail(
                                 hit.hadith.arabic,
-                                "${hit.collection.nameArabic} · ${hit.hadith.number} · ${hit.bookTitle}")
+                                "${hit.collection.localizedName} · ${hit.hadith.number} · ${hit.bookTitle}")
                         }
                         .padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
                     Text(hit.hadith.arabic, fontSize = 15.sp, maxLines = 2,
                          color = NoorColor.inkPrimary)
-                    Text("${hit.collection.nameArabic} · ${hit.bookTitle} · ${hit.hadith.number}",
+                    Text("${hit.collection.localizedName} · ${hit.bookTitle} · ${hit.hadith.number}",
                          fontSize = 12.sp, color = NoorColor.accentGold,
                          modifier = Modifier.padding(top = 3.dp))
                 }
                 HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             }
         } else {
-            item { HadithSectionHeader("الصحيحان") }
+            item { HadithSectionHeader(stringResource(R.string.g2_sahihain)) }
             items(HadithCollection.entries) { collection ->
                 val state = packStates[collection] ?: PackState.NOT_DOWNLOADED
                 Row(
@@ -172,10 +183,11 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                         .padding(horizontal = 18.dp, vertical = 16.dp)
                 ) {
                     Column {
-                        Text(collection.nameArabic, fontSize = 16.sp,
+                        Text(collection.localizedName, fontSize = 16.sp,
                              fontWeight = FontWeight.SemiBold, color = NoorColor.inkPrimary)
                         if (state != PackState.READY) {
-                            Text(collection.sizeLabel, fontSize = 12.sp,
+                            Text(stringResource(R.string.g2_size_mb, collection.sizeMb.localizedDigits()),
+                                 fontSize = 12.sp,
                                  color = NoorColor.inkSecondary,
                                  modifier = Modifier.padding(top = 2.dp))
                         }
@@ -191,7 +203,9 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                             color = NoorColor.accentPrimary, strokeWidth = 2.dp,
                             modifier = Modifier.size(22.dp))
                         PackState.NOT_DOWNLOADED, PackState.FAILED -> Text(
-                            if (state == PackState.FAILED) "إعادة المحاولة" else "تنزيل",
+                            stringResource(
+                                if (state == PackState.FAILED) R.string.g2_retry
+                                else R.string.g2_download),
                             fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                             color = NoorColor.accentPrimary,
                             modifier = Modifier
@@ -209,7 +223,7 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                     }
                 }
             }
-            item { HadithSectionHeader("الأربعينات") }
+            item { HadithSectionHeader(stringResource(R.string.g2_forty_section)) }
             items(fortyGroups) { group ->
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -219,9 +233,11 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                         .padding(horizontal = 20.dp, vertical = 14.dp)
                 ) {
                     Column {
-                        Text(group.value[0].collectionArabic, fontSize = 16.sp,
+                        Text(fortyTitle(context, group.key, group.value[0].collectionArabic),
+                             fontSize = 16.sp,
                              fontWeight = FontWeight.SemiBold, color = NoorColor.inkPrimary)
-                        Text("${group.value.size.arabicIndic()} حديثًا", fontSize = 12.sp,
+                        Text(stringResource(R.string.g2_hadith_count, group.value.size.localizedDigits()),
+                             fontSize = 12.sp,
                              color = NoorColor.inkSecondary,
                              modifier = Modifier.padding(top = 2.dp))
                     }
@@ -246,7 +262,7 @@ private fun HadithSectionHeader(title: String) {
 
 @Composable
 private fun HadithSearchField(query: String, onChange: (String) -> Unit,
-                              placeholder: String = "ابحث في كل الأحاديث") {
+                              placeholder: String = stringResource(R.string.g2_search_all_hadith)) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -270,7 +286,7 @@ private fun HadithSearchField(query: String, onChange: (String) -> Unit,
             }
         )
         if (query.isNotEmpty()) {
-            Icon(painterResource(R.drawable.ic_close), contentDescription = "مسح",
+            Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.g2_clear_search),
                  tint = NoorColor.inkSecondary,
                  modifier = Modifier.clickable { onChange("") }.padding(4.dp).size(15.dp))
         }
@@ -286,7 +302,7 @@ private fun HadithHeaderBar(title: String, onBack: () -> Unit) {
     ) {
         Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold,
              color = NoorColor.inkPrimary, modifier = Modifier.fillMaxWidth(0.8f))
-        Text("رجوع", color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
+        Text(stringResource(R.string.g2_back), color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
              modifier = Modifier.clickable(onClick = onBack).padding(8.dp))
     }
 }
@@ -295,8 +311,11 @@ private fun HadithHeaderBar(title: String, onBack: () -> Unit) {
 @Composable
 private fun FortyListScreen(items: List<BundledHadith>, onBack: () -> Unit,
                             openDetail: (HadithDetail) -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val title = items.firstOrNull()
+        ?.let { fortyTitle(context, it.collection, it.collectionArabic) } ?: ""
     Column(modifier.fillMaxSize()) {
-        HadithHeaderBar(items.firstOrNull()?.collectionArabic ?: "", onBack)
+        HadithHeaderBar(title, onBack)
         LazyColumn(Modifier.fillMaxSize()) {
             items(items) { hadith ->
                 Row(
@@ -308,13 +327,15 @@ private fun FortyListScreen(items: List<BundledHadith>, onBack: () -> Unit,
                                 pages = items.map {
                                     HadithPage(
                                         it.arabic,
-                                        "${it.collectionArabic} · الحديث ${it.number.arabicIndic()}")
+                                        fortyTitle(context, it.collection, it.collectionArabic) +
+                                            " · " + context.getString(
+                                                R.string.g2_hadith_n, it.number.localizedDigits()))
                                 },
                                 initialIndex = items.indexOf(hadith).coerceAtLeast(0)))
                         }
                         .padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
-                    Text(hadith.number.arabicIndic(), fontSize = 13.sp,
+                    Text(hadith.number.localizedDigits(), fontSize = 13.sp,
                          fontWeight = FontWeight.SemiBold, color = NoorColor.accentGold,
                          modifier = Modifier.padding(end = 12.dp))
                     Text(hadith.arabic, fontSize = 15.sp, maxLines = 2,
@@ -340,8 +361,8 @@ private fun SahihBooksScreen(collection: HadithCollection, onBack: () -> Unit,
         else books.filter { it.arabicTitle.contains(query.trim()) }
 
     Column(modifier.fillMaxSize()) {
-        HadithHeaderBar(collection.nameArabic, onBack)
-        HadithSearchField(query, onChange = { query = it }, placeholder = "ابحث في الكتب")
+        HadithHeaderBar(collection.localizedName, onBack)
+        HadithSearchField(query, onChange = { query = it }, placeholder = stringResource(R.string.g2_search_books))
         LazyColumn(Modifier.fillMaxSize()) {
             items(filtered) { book ->
                 Row(
@@ -350,13 +371,14 @@ private fun SahihBooksScreen(collection: HadithCollection, onBack: () -> Unit,
                         .clickable { openBook(book) }
                         .padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
-                    Text(book.index.arabicIndic(), fontSize = 13.sp,
+                    Text(book.index.localizedDigits(), fontSize = 13.sp,
                          fontWeight = FontWeight.Bold, color = NoorColor.accentGold,
                          modifier = Modifier.padding(end = 12.dp))
                     Column {
                         Text(book.arabicTitle, fontSize = 15.sp,
                              fontWeight = FontWeight.SemiBold, color = NoorColor.inkPrimary)
-                        Text("${book.count.arabicIndic()} حديثًا", fontSize = 12.sp,
+                        Text(stringResource(R.string.g2_hadith_count, book.count.localizedDigits()),
+                             fontSize = 12.sp,
                              color = NoorColor.inkSecondary)
                     }
                 }
@@ -384,7 +406,7 @@ private fun BookHadithsScreen(collection: HadithCollection, book: HadithBook, on
 
     Column(modifier.fillMaxSize()) {
         HadithHeaderBar(book.arabicTitle, onBack)
-        HadithSearchField(query, onChange = { query = it }, placeholder = "ابحث في الأحاديث")
+        HadithSearchField(query, onChange = { query = it }, placeholder = stringResource(R.string.g2_search_hadiths))
         LazyColumn(Modifier.fillMaxSize()) {
             items(filtered) { hadith ->
                 Row(
@@ -397,7 +419,7 @@ private fun BookHadithsScreen(collection: HadithCollection, book: HadithBook, on
                                 pages = hadithList.map {
                                     HadithPage(
                                         it.arabic,
-                                        "${collection.nameArabic} · ${it.number} · ${book.arabicTitle}")
+                                        "${collection.localizedName} · ${it.number} · ${book.arabicTitle}")
                                 },
                                 initialIndex = hadithList.indexOf(hadith).coerceAtLeast(0)))
                         }
@@ -431,7 +453,7 @@ private fun HadithDetailScreen(detail: HadithDetail, onBack: () -> Unit,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
         ) {
-            Text("مشاركة", color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g2_share), color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
                  modifier = Modifier
                      .clickable {
                          // Share the page currently in view, not the tapped one.
@@ -444,7 +466,7 @@ private fun HadithDetailScreen(detail: HadithDetail, onBack: () -> Unit,
                          }
                      }
                      .padding(8.dp))
-            Text("رجوع", color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g2_back), color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
                  modifier = Modifier.clickable(onClick = onBack).padding(8.dp))
         }
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { i ->

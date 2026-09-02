@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -64,14 +65,15 @@ fun AyahActionsSheet(
                     .border(1.dp, NoorColor.accentGold.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
                     .padding(14.dp)
             )
-            ActionRow("الاستماع من هنا", icon = R.drawable.ic_play, prominent = true) {
+            ActionRow(stringResource(R.string.g2_listen_from_here), icon = R.drawable.ic_play, prominent = true) {
                 onDismiss(); onPlay()
             }
-            ActionRow("التفسير", icon = R.drawable.ic_book) { onDismiss(); onTafsir() }
-            ActionRow("مشاركة", icon = R.drawable.ic_share) { onDismiss(); onShare() }
-            ActionRow("نسخ", glyph = "⧉") { onDismiss(); onCopy() }
+            ActionRow(stringResource(R.string.g2_tafsir), icon = R.drawable.ic_book) { onDismiss(); onTafsir() }
+            ActionRow(stringResource(R.string.g2_share), icon = R.drawable.ic_share) { onDismiss(); onShare() }
+            ActionRow(stringResource(R.string.g2_copy), glyph = "⧉") { onDismiss(); onCopy() }
             ActionRow(
-                if (isBookmarked) "محفوظة في الإشارات" else "إشارة مرجعية",
+                stringResource(
+                    if (isBookmarked) R.string.g2_bookmarked else R.string.g2_bookmark),
                 glyph = if (isBookmarked) "★" else "☆",
                 gold = isBookmarked,
                 onClick = onToggleBookmark)
