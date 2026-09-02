@@ -416,7 +416,7 @@ private fun ContinueListeningCard() {
             .padding(14.dp)
     ) {
         Icon(
-            painterResource(R.drawable.ic_play),
+            painterResource(R.drawable.ic_headphones),
             contentDescription = null,
             tint = NoorColor.accentPrimary,
             modifier = Modifier
@@ -431,7 +431,7 @@ private fun ContinueListeningCard() {
                  color = NoorColor.inkPrimary,
                  modifier = Modifier.padding(top = 2.dp))
         }
-        Icon(painterResource(R.drawable.ic_play), contentDescription = "تشغيل",
+        Icon(painterResource(R.drawable.ic_play_circle_fill), contentDescription = "تشغيل",
              tint = NoorColor.accentPrimary, modifier = Modifier.size(26.dp))
     }
 }

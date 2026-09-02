@@ -78,6 +78,8 @@ fun MushafScreen(
     var chromeVisible by remember { mutableStateOf(true) }
     var showOptions by remember { mutableStateOf(false) }
     var showGoToPage by remember { mutableStateOf(false) }
+    // Ayah long-pressed on the page — the iOS ayah-actions sheet.
+    var actionRef by remember { mutableStateOf<AyahRef?>(null) }
 
     // Follow-along page flip (iOS onChange(of: recitingKey)): while the
     // player recites, the pager tracks the playing ayah's printed page —
@@ -163,7 +165,10 @@ fun MushafScreen(
             onBack = onBack)
         Box(Modifier.weight(1f)) {
             HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = 1) { index ->
-                MadaniPage(page = index + 1, onTap = { chromeVisible = !chromeVisible })
+                MadaniPage(
+                    page = index + 1,
+                    onTap = { chromeVisible = !chromeVisible },
+                    onAyahLongPress = { ref -> actionRef = ref })
             }
             if (showOptions) {
                 // Scrim: any tap outside the panel dismisses it (flow-reader parity).
@@ -184,6 +189,10 @@ fun MushafScreen(
             }
         }
     }
+    // Long-pressed ayah → the same actions sheet as the flow reader
+    // (play from here, tafsir, share, copy, bookmark). Verse text and surah
+    // info resolve off-main from the verified DB.
+    actionRef?.let { ref -> MushafAyahActions(ref, onDismiss = { actionRef = null }) }
     // Go-to-page (iOS GoToPageSheet): opened from the juz/page line in the
     // top bar; animates the pager like the iOS withAnimation currentPage set.
     if (showGoToPage) {
@@ -193,6 +202,80 @@ fun MushafScreen(
             },
             onDismiss = { showGoToPage = false })
     }
+}
+
+/// Ayah actions from a Madani-page long-press — resolves the verse and
+/// surah off-main, then shows the shared AyahActionsSheet + TafsirSheet.
+@Composable
+private fun MushafAyahActions(ref: AyahRef, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val loaded by produceState<Pair<Verse, Surah>?>(initialValue = null, ref) {
+        value = withContext(Dispatchers.IO) {
+            val surah = QuranDb.get(context).surahs().firstOrNull { it.id == ref.surahId }
+                ?: return@withContext null
+            val verse = QuranDb.get(context).verses(ref.surahId)
+                .firstOrNull { it.ayah == ref.ayah } ?: return@withContext null
+            verse to surah
+        }
+    }
+    val (verse, surah) = loaded ?: return
+    val prefs = remember { KhatmahPlan.prefs(context) }
+    var bookmarks by remember {
+        mutableStateOf(prefs.getStringSet("quran.bookmarks", emptySet())!!.toSet())
+    }
+    var showTafsir by remember(ref) { mutableStateOf(false) }
+
+    if (showTafsir) {
+        TafsirSheet(
+            surahId = surah.id,
+            ayah = verse.ayah,
+            ayahText = verse.text,
+            onDismiss = { showTafsir = false; onDismiss() },
+            surahName = surah.nameArabic)
+        return
+    }
+    AyahActionsSheet(
+        verse = verse,
+        isBookmarked = "${surah.id}:${verse.ayah}" in bookmarks,
+        onPlay = {
+            scope.launch {
+                val pageEnd = withContext(Dispatchers.IO) {
+                    runCatching {
+                        PageLayoutDb.get(context).pageEndAyah(surah.id, verse.ayah)
+                    }.getOrDefault(0)
+                }
+                NoorPlayer.play(surah.id, surah.ayahCount, verse.ayah, surah.nameArabic, pageEnd)
+            }
+        },
+        onTafsir = { showTafsir = true },
+        onShare = {
+            scope.launch {
+                val bitmap = withContext(Dispatchers.IO) {
+                    ShareCard.render(
+                        context,
+                        "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩",
+                        "سورة ${surah.nameArabic} · ${surah.id.arabicIndic()}:${verse.ayah.arabicIndic()}",
+                        useQuranFont = true)
+                }
+                ShareCard.share(context, bitmap)
+            }
+        },
+        onCopy = {
+            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                as android.content.ClipboardManager
+            clipboard.setPrimaryClip(android.content.ClipData.newPlainText(
+                "آية",
+                "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩ — ${surah.id}:${verse.ayah}"))
+        },
+        onToggleBookmark = {
+            val key = "${surah.id}:${verse.ayah}"
+            val next = bookmarks.toMutableSet()
+            if (!next.remove(key)) next.add(key)
+            bookmarks = next
+            prefs.edit().putStringSet("quran.bookmarks", next).apply()
+        },
+        onDismiss = onDismiss)
 }
 
 /// Fixed-height strip, iOS SurahReaderView.topBar parity: full controls
@@ -335,7 +418,11 @@ private class PageContent(
 )
 
 @Composable
-private fun MadaniPage(page: Int, onTap: () -> Unit) {
+private fun MadaniPage(
+    page: Int,
+    onTap: () -> Unit,
+    onAyahLongPress: (AyahRef) -> Unit = {},
+) {
     val context = LocalContext.current
     // Layout rows + the ~600 KB page font parse off the main thread.
     val content by produceState<PageContent?>(initialValue = null, page) {
@@ -366,12 +453,16 @@ private fun MadaniPage(page: Int, onTap: () -> Unit) {
                 modifier = Modifier.padding(30.dp)
             )
         }
-        else -> MadaniPageBody(loaded, onTap)
+        else -> MadaniPageBody(loaded, onTap, onAyahLongPress)
     }
 }
 
 @Composable
-private fun MadaniPageBody(content: PageContent, onTap: () -> Unit) {
+private fun MadaniPageBody(
+    content: PageContent,
+    onTap: () -> Unit,
+    onAyahLongPress: (AyahRef) -> Unit = {},
+) {
     // Ayah being recited (iOS MadaniPageView highlightKey/isHighlighted):
     // reading the player's Compose state here recomposes just this page.
     val reciting =
@@ -380,7 +471,20 @@ private fun MadaniPageBody(content: PageContent, onTap: () -> Unit) {
     androidx.compose.foundation.layout.BoxWithConstraints(
         Modifier
             .fillMaxSize()
-            .pointerInput(Unit) { detectTapGestures { onTap() } }
+            .pointerInput(content.lines) {
+                detectTapGestures(
+                    onTap = { onTap() },
+                    onLongPress = { pos ->
+                        // The 15 rows are equal-weight: the pressed row is
+                        // pure geometry; its first ayah drives the sheet.
+                        if (content.lines.isNotEmpty()) {
+                            val row = (pos.y / (size.height / content.lines.size))
+                                .toInt().coerceIn(0, content.lines.lastIndex)
+                            content.lines[row].ayahRefs.firstOrNull()
+                                ?.let(onAyahLongPress)
+                        }
+                    })
+            }
             .padding(horizontal = 6.dp)
     ) {
         // Every printed line must fit: 15 fixed rows bound the base size by
