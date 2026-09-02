@@ -384,7 +384,9 @@ private fun CardRow(icon: Int, tint: androidx.compose.ui.graphics.Color,
             Spacer(Modifier.height(2.dp))
             Text(subtitle, fontSize = 13.sp, color = NoorColor.inkSecondary)
         }
-        Icon(painterResource(R.drawable.ic_chevron_forward), contentDescription = null,
+        // Disclosure points LEFT in the forced-RTL app — explicit-direction
+        // drawable (no autoMirrored double-mirroring surprises).
+        Icon(painterResource(R.drawable.ic_chevron_left), contentDescription = null,
              tint = NoorColor.inkSecondary.copy(alpha = 0.6f),
              modifier = Modifier.size(16.dp))
     }
@@ -434,8 +436,8 @@ private fun AdhanSoundSheet(
                          fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
                          color = NoorColor.inkPrimary, modifier = Modifier.weight(1f))
                     if (on) {
-                        Text("✓", fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                             color = NoorColor.accentPrimary)
+                        Icon(painterResource(R.drawable.ic_check), contentDescription = null,
+                             tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
                     }
                 }
             }

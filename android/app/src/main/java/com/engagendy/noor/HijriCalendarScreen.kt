@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -139,31 +140,36 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                 }
             }
 
-            // Month header arrows. Forced RTL: the leading (right) arrow
-            // goes BACK and points right; the trailing (left) arrow goes
-            // FORWARD and points left — mirrored like the iOS chevrons.
+            // Month header arrows, explicit-direction drawables (no
+            // auto-mirroring). Forced RTL, matching iOS HijriCalendarView:
+            // PREV month sits on the RIGHT and points RIGHT; NEXT month
+            // sits on the LEFT and points LEFT.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
             ) {
-                Text("›", fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
-                     color = NoorColor.accentPrimary,
-                     textAlign = TextAlign.Center,
-                     modifier = Modifier
-                         .size(44.dp)
-                         .clickable { monthOffset -= 1 }
-                         .padding(top = 4.dp))
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(44.dp).clickable { monthOffset -= 1 }
+                ) {
+                    Icon(painterResource(R.drawable.ic_chevron_right),
+                         contentDescription = "الشهر السابق",
+                         tint = NoorColor.accentPrimary,
+                         modifier = Modifier.size(20.dp))
+                }
                 Text(month.title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
                      color = NoorColor.inkPrimary,
                      textAlign = TextAlign.Center,
                      modifier = Modifier.weight(1f))
-                Text("‹", fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
-                     color = NoorColor.accentPrimary,
-                     textAlign = TextAlign.Center,
-                     modifier = Modifier
-                         .size(44.dp)
-                         .clickable { monthOffset += 1 }
-                         .padding(top = 4.dp))
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(44.dp).clickable { monthOffset += 1 }
+                ) {
+                    Icon(painterResource(R.drawable.ic_chevron_left),
+                         contentDescription = "الشهر التالي",
+                         tint = NoorColor.accentPrimary,
+                         modifier = Modifier.size(20.dp))
+                }
             }
 
             // The grid card.

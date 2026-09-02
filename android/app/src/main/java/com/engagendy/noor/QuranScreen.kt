@@ -692,9 +692,12 @@ fun ReaderScreen(
                 modifier = Modifier.size(38.dp).clickable(onClick = onBack)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    // RTL: back points RIGHT (iOS mirrored chevron.backward).
-                    Text("›", fontSize = 20.sp, fontWeight = FontWeight.SemiBold,
-                         color = NoorColor.accentPrimary)
+                    // Explicit right-pointing drawable (not auto-mirrored):
+                    // BACK points RIGHT in RTL (iOS mirrored chevron.backward).
+                    Icon(painterResource(R.drawable.ic_chevron_right),
+                         contentDescription = "رجوع",
+                         tint = NoorColor.accentPrimary,
+                         modifier = Modifier.size(18.dp))
                 }
             }
             Column(
@@ -714,15 +717,18 @@ fun ReaderScreen(
                     color = NoorColor.inkSecondary
                 )
             }
-            // Play/pause reflecting the live player state (pause while playing).
-            Text(
-                if (NoorPlayer.currentSurah != 0 && NoorPlayer.isPlaying) "⏸" else "▶",
-                fontSize = 17.sp,
-                color = NoorColor.accentPrimary,
+            // Play/pause reflecting the live player state — tinted vectors
+            // (SF play.fill / pause.fill), never emoji glyphs.
+            Icon(
+                painterResource(
+                    if (NoorPlayer.currentSurah != 0 && NoorPlayer.isPlaying)
+                        R.drawable.ic_pause_fill else R.drawable.ic_play_fill),
+                contentDescription = "تشغيل",
+                tint = NoorColor.accentPrimary,
                 modifier = Modifier.clickable {
                     if (NoorPlayer.currentSurah != 0) NoorPlayer.toggle()
                     else startPlayback()
-                }.padding(10.dp)
+                }.padding(10.dp).size(17.dp)
             )
             // "Aa" opens the reader-options floating panel.
             Text(

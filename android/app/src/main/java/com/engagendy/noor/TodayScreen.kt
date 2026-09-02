@@ -374,8 +374,10 @@ private fun ContinueReadingCard(openResume: () -> Unit) {
                      modifier = Modifier.padding(top = 3.dp))
             }
         }
-        Text("‹", fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
-             color = NoorColor.inkSecondary)
+        // Disclosure ("go deeper") points LEFT in this forced-RTL app —
+        // explicit drawable, no auto-mirroring.
+        Icon(painterResource(R.drawable.ic_chevron_left), contentDescription = null,
+             tint = NoorColor.inkSecondary, modifier = Modifier.size(16.dp))
     }
 }
 
@@ -490,8 +492,17 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
             }
         }
         if (plan == null) {
-            Text("ابدأ خطة ختمة ←", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-                 color = NoorColor.inkPrimary, modifier = Modifier.padding(top = 8.dp))
+            // Forward action: arrow points LEFT in the forced-RTL app.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Text("ابدأ خطة ختمة", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                     color = NoorColor.inkPrimary)
+                Icon(painterResource(R.drawable.ic_arrow_left), contentDescription = null,
+                     tint = NoorColor.inkPrimary,
+                     modifier = Modifier.padding(start = 6.dp).size(15.dp))
+            }
         } else {
             val now = LocalDate.now()
             val lastRead = KhatmahPlan.lastRead(context)
@@ -536,9 +547,17 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
             }
             ProgressBar(minOf(lastRead, 604) / 604f, NoorColor.accentPrimary,
                         Modifier.padding(top = 10.dp))
-            Text("تابع من صفحة ${KhatmahPlan.frontier(context).arabicIndic()} ←",
-                 fontSize = 12.sp, color = NoorColor.accentPrimary,
-                 modifier = Modifier.padding(top = 6.dp))
+            // Forward action: arrow points LEFT in the forced-RTL app.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 6.dp)
+            ) {
+                Text("تابع من صفحة ${KhatmahPlan.frontier(context).arabicIndic()}",
+                     fontSize = 12.sp, color = NoorColor.accentPrimary)
+                Icon(painterResource(R.drawable.ic_arrow_left), contentDescription = null,
+                     tint = NoorColor.accentPrimary,
+                     modifier = Modifier.padding(start = 4.dp).size(12.dp))
+            }
         }
     }
 

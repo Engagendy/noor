@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -17,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -36,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -209,8 +212,8 @@ private fun SettingsMain(
                          fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                          color = if (selected) NoorColor.accentPrimary else NoorColor.inkPrimary)
                     if (selected) {
-                        Text("✓", fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                             color = NoorColor.accentPrimary)
+                        Icon(painterResource(R.drawable.ic_check), contentDescription = null,
+                             tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
                     }
                 }
             }
@@ -307,7 +310,9 @@ private fun NavRow(title: String, value: String? = null, onClick: () -> Unit) {
             if (value != null) {
                 Text(value, fontSize = 14.sp, color = NoorColor.inkSecondary)
             }
-            Text("←", color = NoorColor.accentPrimary)
+            // Disclosure points LEFT in the forced-RTL app (explicit drawable).
+            Icon(painterResource(R.drawable.ic_chevron_left), contentDescription = null,
+                 tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
         }
     }
 }
@@ -409,8 +414,8 @@ private fun MushafDownloadRow() {
                 fontSize = 12.sp, color = NoorColor.inkSecondary)
         }
         when {
-            complete -> Text("✓", fontSize = 16.sp, fontWeight = FontWeight.Bold,
-                             color = NoorColor.accentPrimary)
+            complete -> Icon(painterResource(R.drawable.ic_check), contentDescription = null,
+                             tint = NoorColor.accentPrimary, modifier = Modifier.size(17.dp))
             running -> Text("إيقاف", fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                             color = NoorColor.accentGold,
                             modifier = Modifier
@@ -471,8 +476,10 @@ private fun AdhanSoundSheet(
                              color = if (isSelected) NoorColor.accentPrimary
                                      else NoorColor.inkPrimary)
                         if (isSelected) {
-                            Text("✓", fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                                 color = NoorColor.accentPrimary)
+                            Icon(painterResource(R.drawable.ic_check),
+                                 contentDescription = null,
+                                 tint = NoorColor.accentPrimary,
+                                 modifier = Modifier.size(16.dp))
                         }
                     }
                 }

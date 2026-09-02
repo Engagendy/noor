@@ -201,7 +201,8 @@ private fun CityStep(
                         color = NoorColor.inkPrimary)
                     Spacer(Modifier.weight(1f))
                     if (selected) {
-                        Text("✓", fontWeight = FontWeight.SemiBold, color = NoorColor.accentPrimary)
+                        Icon(painterResource(R.drawable.ic_check), contentDescription = null,
+                             tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
                     }
                 }
             }
