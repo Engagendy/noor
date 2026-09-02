@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -52,7 +53,7 @@ fun ExtraHeader(title: String, onBack: () -> Unit) {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = NoorColor.inkPrimary)
-        Text("رجوع", color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
+        Text(stringResource(R.string.g2_back), color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
              modifier = Modifier.clickable(onClick = onBack).padding(8.dp))
     }
 }
@@ -124,20 +125,20 @@ fun RuqyahScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 if (slice.isEmpty()) return@mapNotNull null
                 val name = surahs.firstOrNull { it.id == passage.surahId }?.nameArabic ?: ""
                 val reference = if (passage.first == passage.last)
-                    "$name · ${passage.first.arabicIndic()}"
+                    "$name · ${passage.first.localizedDigits()}"
                 else
-                    "$name · ${passage.first.arabicIndic()}–${passage.last.arabicIndic()}"
+                    "$name · ${passage.first.localizedDigits()}–${passage.last.localizedDigits()}"
                 LoadedPassage(reference, joinVerses(slice))
             }
         }
     }
 
     Column(modifier.fillMaxSize()) {
-        ExtraHeader("الرقية الشرعية", onBack)
+        ExtraHeader(stringResource(R.string.g2_ruqyah), onBack)
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
             item {
                 Text(
-                    "آيات الرقية تُقرأ بتدبر مع النفث، ثلاثًا أو أكثر. النصوص من المصحف المعتمد.",
+                    stringResource(R.string.g2_ruqyah_note),
                     fontSize = 13.sp,
                     color = NoorColor.inkSecondary,
                     modifier = Modifier.padding(bottom = 10.dp)
@@ -164,7 +165,7 @@ fun RuqyahScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
             item {
-                Text("الأدعية النبوية", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                Text(stringResource(R.string.g2_prophetic_duas), fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                      color = NoorColor.accentPrimary,
                      modifier = Modifier.padding(top = 10.dp, bottom = 4.dp))
             }
@@ -254,16 +255,16 @@ fun SelectedDuasScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 val slice = db.verses(dua.surahId).filter { it.ayah in dua.first..dua.last }
                 if (slice.isEmpty()) return@mapNotNull null
                 val name = surahs.firstOrNull { it.id == dua.surahId }?.nameArabic ?: ""
-                LoadedPassage("$name · ${dua.first.arabicIndic()}", joinVerses(slice))
+                LoadedPassage("$name · ${dua.first.localizedDigits()}", joinVerses(slice))
             }
         }
     }
 
     Column(modifier.fillMaxSize()) {
-        ExtraHeader("أدعية مختارة", onBack)
+        ExtraHeader(stringResource(R.string.g2_selected_duas), onBack)
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
             item {
-                Text("أدعية من القرآن", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                Text(stringResource(R.string.g2_duas_quran), fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                      color = NoorColor.accentPrimary, modifier = Modifier.padding(bottom = 4.dp))
             }
             items(quranic) { item ->
@@ -288,7 +289,7 @@ fun SelectedDuasScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
             item {
-                Text("أدعية من السنة", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                Text(stringResource(R.string.g2_duas_sunnah), fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                      color = NoorColor.accentPrimary,
                      modifier = Modifier.padding(top = 10.dp, bottom = 4.dp))
             }
@@ -441,7 +442,7 @@ fun AsmaulHusnaScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var selected by remember { mutableStateOf<DivineName?>(null) }
 
     Column(modifier.fillMaxSize()) {
-        ExtraHeader("أسماء الله الحسنى", onBack)
+        ExtraHeader(stringResource(R.string.g2_names_of_allah), onBack)
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -460,7 +461,7 @@ fun AsmaulHusnaScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 ) {
                     Text(name.arabic, fontFamily = QuranFont, fontSize = 21.sp, maxLines = 1,
                          color = NoorColor.inkPrimary)
-                    Text(name.number.arabicIndic(), fontSize = 12.sp,
+                    Text(name.number.localizedDigits(), fontSize = 12.sp,
                          color = NoorColor.inkSecondary, modifier = Modifier.padding(top = 4.dp))
                 }
             }
@@ -484,7 +485,8 @@ fun AsmaulHusnaScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                      modifier = Modifier.padding(top = 12.dp, bottom = 12.dp))
                 // Branded card share, like the iOS AsmaulHusnaView sheet.
                 ShareIconButton {
-                    shareRendered(context, name.arabic, "من أسماء الله الحسنى",
+                    shareRendered(context, name.arabic,
+                                  context.getString(R.string.g2_from_names),
                                   translation = name.meaningArabic)
                 }
                 Spacer(Modifier.padding(bottom = 8.dp))
@@ -524,7 +526,7 @@ fun TasbihScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
 
     Column(modifier.fillMaxSize()) {
-        ExtraHeader("المسبحة", onBack)
+        ExtraHeader(stringResource(R.string.g2_tasbih), onBack)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp)
@@ -574,11 +576,11 @@ fun TasbihScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         prefs.edit().putInt("tasbih.count.$phraseIndex", count).apply()
                     }
             ) {
-                Text(count.arabicIndic(), fontSize = 64.sp, fontWeight = FontWeight.Bold,
+                Text(count.localizedDigits(), fontSize = 64.sp, fontWeight = FontWeight.Bold,
                      color = NoorColor.accentPrimary)
             }
             Text(
-                "تصفير",
+                stringResource(R.string.g2_reset),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = NoorColor.inkSecondary,

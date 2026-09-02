@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,11 +53,11 @@ object AthkarStore {
 }
 
 /// Extra athkar tools — parity with the iOS Athkar module screens.
-enum class AthkarExtra(val title: String) {
-    RUQYAH("الرقية الشرعية"),
-    DUAS("أدعية مختارة"),
-    NAMES("أسماء الله الحسنى"),
-    TASBIH("المسبحة"),
+enum class AthkarExtra(val titleRes: Int) {
+    RUQYAH(R.string.g2_ruqyah),
+    DUAS(R.string.g2_selected_duas),
+    NAMES(R.string.g2_names_of_allah),
+    TASBIH(R.string.g2_tasbih),
 }
 
 @Composable
@@ -81,7 +82,7 @@ fun AthkarScreen(modifier: Modifier = Modifier) {
     }
     LazyColumn(modifier.fillMaxSize()) {
         item {
-            Text("الأذكار", fontSize = 28.sp, fontWeight = FontWeight.Bold,
+            Text(stringResource(R.string.g2_athkar_title), fontSize = 28.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary,
                  modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
         }
@@ -94,7 +95,7 @@ fun AthkarScreen(modifier: Modifier = Modifier) {
                 ) {
                     pair.forEach { item ->
                         Text(
-                            item.title,
+                            stringResource(item.titleRes),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = NoorColor.accentPrimary,
@@ -118,7 +119,7 @@ fun AthkarScreen(modifier: Modifier = Modifier) {
                     .padding(horizontal = 20.dp, vertical = 14.dp)
             ) {
                 Text(category.title, fontSize = 16.sp, color = NoorColor.inkPrimary)
-                Text(category.items.size.arabicIndic(), fontSize = 13.sp,
+                Text(category.items.size.localizedDigits(), fontSize = 13.sp,
                      color = NoorColor.inkSecondary)
             }
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
@@ -137,7 +138,7 @@ fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modif
         ) {
             Text(category.title, fontSize = 18.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary)
-            Text("رجوع", color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g2_back), color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
                  modifier = Modifier.clickable(onClick = onBack).padding(8.dp))
         }
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
@@ -166,7 +167,8 @@ fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modif
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                     ) {
                         Text(
-                            if (complete) "تم" else "${done.arabicIndic()} / ${dhikr.count.arabicIndic()}",
+                            if (complete) stringResource(R.string.g2_done)
+                            else "${done.localizedDigits()} / ${dhikr.count.localizedDigits()}",
                             fontSize = 13.sp,
                             color = if (complete) NoorColor.accentPrimary else NoorColor.inkSecondary,
                         )

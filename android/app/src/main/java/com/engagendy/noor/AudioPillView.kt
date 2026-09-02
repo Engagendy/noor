@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,14 +79,16 @@ fun AudioPillView() {
             }
             Column {
                 Text(
-                    NoorPlayer.reciter.nameArabic,
+                    NoorPlayer.reciter.localizedName,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = NoorColor.inkPrimary,
                     maxLines = 1
                 )
                 Text(
-                    "${NoorPlayer.surahName} · آية ${NoorPlayer.currentAyah.arabicIndic()}",
+                    stringResource(
+                        R.string.g2_ayah_ref,
+                        NoorPlayer.surahName, NoorPlayer.currentAyah.localizedDigits()),
                     fontSize = 11.sp,
                     color = NoorColor.inkSecondary,
                     maxLines = 1
@@ -96,7 +99,7 @@ fun AudioPillView() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Icon(painterResource(R.drawable.ic_prev_track), contentDescription = "السابق",
+            Icon(painterResource(R.drawable.ic_prev_track), contentDescription = stringResource(R.string.g2_previous),
                  tint = NoorColor.inkSecondary,
                  modifier = Modifier.clip(CircleShape).clickable { NoorPlayer.previous() }.padding(4.dp).size(16.dp))
             Box(
@@ -111,21 +114,22 @@ fun AudioPillView() {
                 Icon(
                     painterResource(if (NoorPlayer.isPlaying) R.drawable.ic_pause_fill
                                     else R.drawable.ic_play_fill),
-                    contentDescription = if (NoorPlayer.isPlaying) "إيقاف مؤقت" else "تشغيل",
+                    contentDescription = stringResource(
+                        if (NoorPlayer.isPlaying) R.string.g2_pause else R.string.g2_play),
                     tint = NoorColor.bgPrimary,
                     modifier = Modifier.size(18.dp))
             }
-            Icon(painterResource(R.drawable.ic_next_track), contentDescription = "التالي",
+            Icon(painterResource(R.drawable.ic_next_track), contentDescription = stringResource(R.string.g2_next),
                  tint = NoorColor.inkSecondary,
                  modifier = Modifier.clip(CircleShape).clickable { NoorPlayer.next() }.padding(4.dp).size(16.dp))
             Icon(
                 painterResource(modeIcon(NoorPlayer.mode)),
-                contentDescription = "وضع التشغيل",
+                contentDescription = stringResource(R.string.g2_playback_mode),
                 tint = if (NoorPlayer.mode == PlaybackMode.CONTINUOUS)
                     NoorColor.inkSecondary else NoorColor.accentPrimary,
                 modifier = Modifier.clip(CircleShape).clickable { showModePicker = true }.padding(4.dp).size(16.dp)
             )
-            Icon(painterResource(R.drawable.ic_close), contentDescription = "إيقاف",
+            Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.g2_stop),
                  tint = NoorColor.inkSecondary,
                  modifier = Modifier.clip(CircleShape).clickable { NoorPlayer.stop() }.padding(4.dp).size(15.dp))
         }
@@ -153,7 +157,7 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
             Text(
-                "وضع التشغيل",
+                stringResource(R.string.g2_playback_mode),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
                 color = NoorColor.inkPrimary,
@@ -162,9 +166,12 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
             val options = listOf(
                 // Symmetric vector icons: match modeIcon() and can't point
                 // the wrong way under the app-wide RTL.
-                Triple(PlaybackMode.CONTINUOUS, "متواصل", R.drawable.ic_repeat),
-                Triple(PlaybackMode.REPEAT_AYAH, "تكرار الآية", R.drawable.ic_repeat_one),
-                Triple(PlaybackMode.PAGE_ONLY, "هذه الصفحة فقط", R.drawable.ic_page),
+                Triple(PlaybackMode.CONTINUOUS,
+                       stringResource(R.string.g2_mode_continuous), R.drawable.ic_repeat),
+                Triple(PlaybackMode.REPEAT_AYAH,
+                       stringResource(R.string.g2_mode_repeat_ayah), R.drawable.ic_repeat_one),
+                Triple(PlaybackMode.PAGE_ONLY,
+                       stringResource(R.string.g2_mode_page_only), R.drawable.ic_page),
             )
             options.forEach { (mode, label, icon) ->
                 Row(
@@ -220,12 +227,12 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
                      tint = NoorColor.inkSecondary, modifier = Modifier.size(16.dp))
                 listOf(15, 30, 60).forEach { minutes ->
                     SheetChip(
-                        label = minutes.arabicIndic(),
+                        label = minutes.localizedDigits(),
                         selected = false,
                         onClick = { NoorPlayer.setSleepTimer(minutes) })
                 }
                 SheetChip(
-                    label = "نهاية السورة",
+                    label = stringResource(R.string.g2_end_of_surah),
                     selected = NoorPlayer.stopAfterSurah,
                     onClick = { NoorPlayer.stopAfterSurah = !NoorPlayer.stopAfterSurah })
                 if (NoorPlayer.sleepDeadline != 0L) {
@@ -248,7 +255,7 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
                 Icon(painterResource(R.drawable.ic_book), contentDescription = null,
                      tint = NoorColor.accentPrimary, modifier = Modifier.size(18.dp))
                 Text(
-                    "حفظ مقطع",
+                    stringResource(R.string.g2_memorize_range),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = NoorColor.accentPrimary,
@@ -282,7 +289,7 @@ private fun SleepCountdownChip() {
             fontWeight = FontWeight.SemiBold,
             color = NoorColor.accentGold
         )
-        Icon(painterResource(R.drawable.ic_close), contentDescription = "إلغاء",
+        Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.g2_cancel),
              tint = NoorColor.accentGold, modifier = Modifier.size(13.dp))
     }
 }
@@ -308,19 +315,19 @@ fun MemorizeRangeSheet(onDismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
             Text(
-                "حفظ مقطع",
+                stringResource(R.string.g2_memorize_range),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
                 color = NoorColor.inkPrimary,
                 modifier = Modifier.padding(bottom = 6.dp)
             )
-            StepperRow("من آية", start.arabicIndic(),
+            StepperRow(stringResource(R.string.g2_from_ayah), start.localizedDigits(),
                        onMinus = { if (start > 1) { start -= 1; if (end < start) end = start } },
                        onPlus = { if (start < ayahCount) { start += 1; if (end < start) end = start } })
-            StepperRow("إلى آية", end.arabicIndic(),
+            StepperRow(stringResource(R.string.g2_to_ayah), end.localizedDigits(),
                        onMinus = { if (end > start) end -= 1 },
                        onPlus = { if (end < ayahCount) end += 1 })
-            StepperRow("تكرار كل آية", "×${perAyah.arabicIndic()}",
+            StepperRow(stringResource(R.string.g2_repeat_each_ayah), "×${perAyah.localizedDigits()}",
                        onMinus = { if (perAyah > 1) perAyah -= 1 },
                        onPlus = { if (perAyah < 20) perAyah += 1 })
             Box(
@@ -337,7 +344,7 @@ fun MemorizeRangeSheet(onDismiss: () -> Unit) {
                     .padding(vertical = 14.dp)
             ) {
                 Text(
-                    "ابدأ الحفظ",
+                    stringResource(R.string.g2_start_memorizing),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = NoorColor.bgPrimary

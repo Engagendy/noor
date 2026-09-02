@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
@@ -126,7 +127,7 @@ fun TafsirSheet(
         error = null
         Tafsir.load(context, edition.slug, surahId, ayah)
             .onSuccess { text = it }
-            .onFailure { error = it.message ?: "تعذر التحميل" }
+            .onFailure { error = it.message ?: context.getString(R.string.g2_load_failed) }
     }
 
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
@@ -139,7 +140,9 @@ fun TafsirSheet(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "التفسير · ${surahId.arabicIndic()}:${ayah.arabicIndic()}",
+                    stringResource(
+                        R.string.g2_tafsir_title,
+                        surahId.localizedDigits(), ayah.localizedDigits()),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = NoorColor.inkPrimary,
@@ -147,10 +150,12 @@ fun TafsirSheet(
                 )
                 // Ayah image-card share, like the iOS reader ShareAyahSheet.
                 ShareIconButton {
-                    val name = surahName.ifBlank { "سورة ${surahId.arabicIndic()}" }
+                    val name = surahName.ifBlank {
+                        context.getString(R.string.g2_surah_prefix, surahId.localizedDigits())
+                    }
                     shareRendered(
                         context, ayahText,
-                        "$name · ${surahId.arabicIndic()}:${ayah.arabicIndic()}",
+                        "$name · ${surahId.localizedDigits()}:${ayah.localizedDigits()}",
                         useQuranFont = true,
                         attribution = "نور Noor · Quran text: Tanzil.net")
                 }
@@ -225,7 +230,7 @@ fun TafsirSheet(
                     }
                 }
                 error != null -> Text(
-                    "تعذر تحميل التفسير — تحقق من الاتصال. ($error)",
+                    stringResource(R.string.g2_tafsir_error, error ?: ""),
                     fontSize = 14.sp,
                     color = NoorColor.inkSecondary,
                     modifier = Modifier.padding(top = 32.dp)
