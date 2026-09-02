@@ -93,10 +93,23 @@ fun QuranScreen(
         prefs.edit().putStringSet("quran.bookmarks", next).apply()
     }
 
+    // From inside the Madani view's options panel: مصحف / آية آية chosen —
+    // persist the mode and reopen the flow/ayah reader at the location of
+    // the page the user was on (its first surah/ayah).
+    fun leaveMushaf(newMode: String, surahId: Int, ayah: Int) {
+        prefs.edit().putString("reader.mode", newMode).apply()
+        readerMode = newMode
+        openMushafAt = 0
+        onMushafClosed()
+        openAyah = ayah
+        openSurah = surahs.firstOrNull { it.id == surahId }
+    }
+
     if (openMushafAt > 0) {
         MushafScreen(
             startPage = openMushafAt,
             onBack = { openMushafAt = 0; onMushafClosed() },
+            onSwitchMode = ::leaveMushaf,
             modifier = modifier)
         return
     }
@@ -119,6 +132,7 @@ fun QuranScreen(
                 MushafScreen(
                     startPage = firstPage,
                     onBack = { openSurah = null; openAyah = 0; onSurahClosed() },
+                    onSwitchMode = ::leaveMushaf,
                     modifier = modifier)
             } else {
                 Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -838,9 +852,11 @@ fun ReaderScreen(
 }
 
 /// Floating elevated card under the top bar — the iOS reader options panel:
-/// segmented مصحف / المدني / آية آية picker + Quran text-size stepper.
+/// segmented مصحف / المدني / آية آية picker + Quran text-size stepper
+/// (hidden in Madani page mode, whose printed geometry is fixed).
+/// Shared by the flow reader and MushafScreen.
 @Composable
-private fun ReaderOptionsPanel(
+fun ReaderOptionsPanel(
     mode: String,
     fontSize: Float,
     onMode: (String) -> Unit,

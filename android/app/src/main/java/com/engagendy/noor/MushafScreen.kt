@@ -53,15 +53,26 @@ import kotlinx.coroutines.withContext
 
 /// Pixel-faithful Madani mushaf: HorizontalPager over all 604 printed
 /// pages, with the iOS reader chrome — a fixed-height top strip that
-/// cross-fades between full controls (back · surah + juz/page · play) and
-/// the minimal reading line; a tap on the page toggles it.
+/// cross-fades between full controls (back · surah + juz/page · play · Aa)
+/// and the minimal reading line; a tap on the page toggles it.
+///
+/// `onSwitchMode(mode, surahId, ayah)`: مصحف or آية آية picked in the "Aa"
+/// options panel — the caller persists `reader.mode` and reopens the
+/// flow/ayah reader at the current page's first surah/ayah.
 @Composable
-fun MushafScreen(startPage: Int, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun MushafScreen(
+    startPage: Int,
+    onBack: () -> Unit,
+    onSwitchMode: (mode: String, surahId: Int, ayah: Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     val pager = rememberPagerState(
         initialPage = (startPage - 1).coerceIn(0, PageLayoutDb.PAGE_COUNT - 1)
     ) { PageLayoutDb.PAGE_COUNT }
     var chromeVisible by remember { mutableStateOf(true) }
+    var showOptions by remember { mutableStateOf(false) }
 
     // Direct prefs writes off the composition (khatmah frontier, streak);
     // nothing observes these as Compose state.
@@ -85,28 +96,66 @@ fun MushafScreen(startPage: Int, onBack: () -> Unit, modifier: Modifier = Modifi
         }
     }
 
+    // مصحف / آية آية picked from the panel: resolve the current page's first
+    // surah/ayah off-main, then hand off — the caller persists `reader.mode`
+    // and swaps this screen for the flow/ayah reader.
+    fun pickMode(newMode: String) {
+        showOptions = false
+        if (newMode == "page") return  // Already here — just close the panel.
+        val page = pager.currentPage + 1
+        scope.launch {
+            val start = withContext(Dispatchers.IO) {
+                PageLayoutDb.get(context).firstAyahOnPage(page)
+            } ?: return@launch
+            onSwitchMode(newMode, start.surahId, start.ayah)
+        }
+    }
+
     Column(modifier.fillMaxSize()) {
         MushafTopBar(
             page = currentPage,
             surah = titleSurah,
             chromeVisible = chromeVisible,
+            optionsOpen = showOptions,
             onToggleChrome = { chromeVisible = !chromeVisible },
+            onToggleOptions = { showOptions = !showOptions },
             onBack = onBack)
-        HorizontalPager(state = pager, modifier = Modifier.weight(1f), beyondViewportPageCount = 1) { index ->
-            MadaniPage(page = index + 1, onTap = { chromeVisible = !chromeVisible })
+        Box(Modifier.weight(1f)) {
+            HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = 1) { index ->
+                MadaniPage(page = index + 1, onTap = { chromeVisible = !chromeVisible })
+            }
+            if (showOptions) {
+                // Scrim: any tap outside the panel dismisses it (flow-reader parity).
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) { detectTapGestures { showOptions = false } }
+                )
+                // Shared panel; mode "page" hides the text-size row — the
+                // printed Madani page has fixed QCF geometry.
+                ReaderOptionsPanel(
+                    mode = "page",
+                    fontSize = 26f,
+                    onMode = ::pickMode,
+                    onFontSize = {},
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
         }
     }
 }
 
 /// Fixed-height strip, iOS SurahReaderView.topBar parity: full controls
-/// (circular elevated back, surah name over «الجزء · صفحة», play/pause)
+/// (circular elevated back, surah name over «الجزء · صفحة», play/pause, Aa)
 /// cross-faded with the minimal line (surah · time · juz/page).
 @Composable
 private fun MushafTopBar(
     page: Int,
     surah: Surah?,
     chromeVisible: Boolean,
+    optionsOpen: Boolean,
     onToggleChrome: () -> Unit,
+    onToggleOptions: () -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -177,6 +226,18 @@ private fun MushafTopBar(
                 modifier = Modifier
                     .size(38.dp)
                     .clickable(enabled = chromeVisible) { playFromPage() }
+                    .padding(top = 7.dp))
+            // "Aa" toggles the shared reader-options panel (iOS readerMenu):
+            // gold tint while open, accent otherwise.
+            Text(
+                "Aa",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (optionsOpen) NoorColor.accentGold else NoorColor.accentPrimary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .size(38.dp)
+                    .clickable(enabled = chromeVisible, onClick = onToggleOptions)
                     .padding(top = 7.dp))
         }
         // Minimal reading row: surah · time · juz/page.
