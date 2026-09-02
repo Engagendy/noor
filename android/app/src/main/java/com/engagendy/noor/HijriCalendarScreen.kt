@@ -402,11 +402,15 @@ fun shareRendered(
     arabicText: String,
     reference: String,
     useQuranFont: Boolean = false,
+    attribution: String = "نور Noor",
+    translation: String? = null,
 ) {
     kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-        val bitmap = ShareCard.render(context, arabicText, reference, useQuranFont = useQuranFont)
+        val bitmap = ShareCard.render(
+            context, arabicText, reference,
+            attribution = attribution, useQuranFont = useQuranFont, translation = translation)
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-            ShareCard.share(context, bitmap)
+            ShareCard.share(context, bitmap, text = reference)
         }
     }
 }

@@ -109,6 +109,7 @@ fun TafsirSheet(
     ayah: Int,
     ayahText: String,
     onDismiss: () -> Unit,
+    surahName: String = "",
 ) {
     val context = LocalContext.current
     val prefs = remember { KhatmahPlan.prefs(context) }
@@ -135,12 +136,24 @@ fun TafsirSheet(
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 32.dp)
         ) {
-            Text(
-                "التفسير · ${surahId.arabicIndic()}:${ayah.arabicIndic()}",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = NoorColor.inkPrimary,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "التفسير · ${surahId.arabicIndic()}:${ayah.arabicIndic()}",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = NoorColor.inkPrimary,
+                    modifier = Modifier.weight(1f),
+                )
+                // Ayah image-card share, like the iOS reader ShareAyahSheet.
+                ShareIconButton {
+                    val name = surahName.ifBlank { "سورة ${surahId.arabicIndic()}" }
+                    shareRendered(
+                        context, ayahText,
+                        "$name · ${surahId.arabicIndic()}:${ayah.arabicIndic()}",
+                        useQuranFont = true,
+                        attribution = "نور Noor · Quran text: Tanzil.net")
+                }
+            }
             // The ayah, framed in gold — text straight from the verified DB.
             Text(
                 ayahText,

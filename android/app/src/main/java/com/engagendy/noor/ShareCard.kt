@@ -1,5 +1,6 @@
 package com.engagendy.noor
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -46,6 +47,7 @@ object ShareCard {
         reference: String,
         attribution: String = "نور Noor",
         useQuranFont: Boolean = false,
+        translation: String? = null,
     ): Bitmap {
         val textWidth = (WIDTH - 2 * PADDING).toInt()
 
@@ -55,6 +57,11 @@ object ShareCard {
             typeface = if (useQuranFont)
                 ResourcesCompat.getFont(context, R.font.amiri_quran) ?: Typeface.DEFAULT
             else Typeface.DEFAULT
+        }
+        val translationPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = gray
+            textSize = 34f
+            typeface = Typeface.create(Typeface.SERIF, Typeface.NORMAL)
         }
         val referencePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = green
@@ -66,11 +73,14 @@ object ShareCard {
             textSize = 24f
         }
         val arabicLayout = layout(arabicText, arabicPaint, textWidth)
+        val translationLayout = translation?.takeIf { it.isNotBlank() }
+            ?.let { layout(it, translationPaint, textWidth) }
         val referenceLayout = layout(reference, referencePaint, textWidth)
         val attributionLayout = layout(attribution, attributionPaint, textWidth)
 
         val lampGap = 130f
-        val height = (PADDING + lampGap + arabicLayout.height + 36f +
+        val translationBlock = translationLayout?.let { it.height + 28f } ?: 0f
+        val height = (PADDING + lampGap + arabicLayout.height + translationBlock + 36f +
             referenceLayout.height + 8f + attributionLayout.height + PADDING).toInt()
 
         val bitmap = Bitmap.createBitmap(WIDTH, height, Bitmap.Config.ARGB_8888)
@@ -117,7 +127,13 @@ object ShareCard {
 
         var y = PADDING + lampGap
         canvas.withTranslation(PADDING, y) { arabicLayout.draw(this) }
-        y += arabicLayout.height + 36f
+        y += arabicLayout.height
+        if (translationLayout != null) {
+            y += 28f
+            canvas.withTranslation(PADDING, y) { translationLayout.draw(this) }
+            y += translationLayout.height
+        }
+        y += 36f
         canvas.withTranslation(PADDING, y) { referenceLayout.draw(this) }
         y += referenceLayout.height + 8f
         canvas.withTranslation(PADDING, y) { attributionLayout.draw(this) }
@@ -143,16 +159,26 @@ object ShareCard {
 
     /// Saves the bitmap into the shared cache and opens the system share
     /// sheet. Call from the main thread with a pre-rendered bitmap.
-    fun share(context: Context, bitmap: Bitmap) {
+    fun share(context: Context, bitmap: Bitmap, text: String? = null) {
         val dir = File(context.cacheDir, "shared").apply { mkdirs() }
-        val file = File(dir, "noor-share.png")
+        // Fresh file name each time — some targets cache by URI and would
+        // otherwise show a stale card.
+        dir.listFiles()?.forEach { it.delete() }
+        val file = File(dir, "noor-share-${System.currentTimeMillis()}.png")
         file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
+            if (!text.isNullOrBlank()) putExtra(Intent.EXTRA_TEXT, text)
+            // ClipData + the read grant are what actually let the receiving
+            // app open the image; without them many targets show text only.
+            clipData = ClipData.newRawUri("noor", uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(intent, null))
+        val chooser = Intent.createChooser(intent, null).apply {
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(chooser)
     }
 }
