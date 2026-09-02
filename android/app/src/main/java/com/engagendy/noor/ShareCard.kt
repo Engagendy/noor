@@ -87,6 +87,28 @@ object ShareCard {
         val canvas = Canvas(bitmap)
         canvas.drawColor(paper)
 
+        // Quiet star-lattice ornament across the paper, per the iOS
+        // NoorShareCard IslamicLattice background (2× render scale).
+        val lattice = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = gold
+            alpha = 14
+            style = Paint.Style.STROKE
+            strokeWidth = 2f
+        }
+        val tile = 148f
+        var row = 0
+        while (row * tile - tile / 2f < height + tile) {
+            var column = 0
+            while (column * tile - tile / 2f < WIDTH + tile) {
+                val offsetX = if (row % 2 == 0) 0f else tile / 2f
+                val x = column * tile - tile / 2f + offsetX + tile * 0.41f
+                val y = row * tile - tile / 2f + tile * 0.41f
+                canvas.drawPath(eightPointStar(x, y, tile * 0.41f), lattice)
+                column += 1
+            }
+            row += 1
+        }
+
         // Gold frame, inset like the iOS card.
         val frame = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = gold

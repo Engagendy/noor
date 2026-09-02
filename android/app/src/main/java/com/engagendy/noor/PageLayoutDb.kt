@@ -47,6 +47,16 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
     companion object {
         const val PAGE_COUNT = 604
 
+        /// First printed page of each juz in the standard 604-page Madani
+        /// mushaf (layout metadata, mirrors the iOS ContentDB juz table).
+        private val JUZ_START_PAGES = intArrayOf(
+            1, 22, 42, 62, 82, 102, 122, 142, 162, 182,
+            202, 222, 242, 262, 282, 302, 322, 342, 362, 382,
+            402, 422, 442, 462, 482, 502, 522, 542, 562, 582)
+
+        fun juzForPage(page: Int): Int =
+            JUZ_START_PAGES.indexOfLast { it <= page } + 1
+
         @Volatile private var instance: PageLayoutDb? = null
 
         fun get(context: Context): PageLayoutDb = instance ?: synchronized(this) {
@@ -79,6 +89,21 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
             "SELECT page FROM page_word WHERE surah_id = ? AND ayah = ? LIMIT 1",
             arrayOf(surahId.toString(), ayah.toString())
         ).use { c -> if (c.moveToFirst()) c.getInt(0).coerceAtLeast(1) else firstPage(surahId) }
+
+    /// Topmost surah printed on a page (drives the reader top-bar title,
+    /// like the iOS viewModel.surah(forPage:)).
+    fun firstSurahOnPage(page: Int): Int =
+        db.rawQuery(
+            "SELECT surah_id FROM page_word WHERE page = ? ORDER BY line, position LIMIT 1",
+            arrayOf(page.toString())
+        ).use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }
+
+    /// First ayah printed on a page — the play-from-here entry point.
+    fun firstAyahOnPage(page: Int): AyahRef? =
+        db.rawQuery(
+            "SELECT surah_id, ayah FROM page_word WHERE page = ? ORDER BY line, position LIMIT 1",
+            arrayOf(page.toString())
+        ).use { c -> if (c.moveToFirst()) AyahRef(c.getInt(0), c.getInt(1)) else null }
 
     /// Last ayah of a surah printed on the same page as the given ayah —
     /// drives the "this page only" playback mode, like iOS pageEndAyah.

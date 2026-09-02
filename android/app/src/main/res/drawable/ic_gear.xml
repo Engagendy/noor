@@ -1,3 +1,5 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-  <path android:pathData="M12,9a3,3 0 1,0 0,6a3,3 0 1,0 0,-6M12,2.5l1.2,2.4a7.2,7.2 0 0,1 2.4,1l2.6,-0.7l1.6,2.8l-1.8,2a7.2,7.2 0 0,1 0,2l1.8,2l-1.6,2.8l-2.6,-0.7a7.2,7.2 0 0,1 -2.4,1L12,21.5l-1.2,-2.4a7.2,7.2 0 0,1 -2.4,-1l-2.6,0.7l-1.6,-2.8l1.8,-2a7.2,7.2 0 0,1 0,-2l-1.8,-2l1.6,-2.8l2.6,0.7a7.2,7.2 0 0,1 2.4,-1z" android:strokeWidth="1.6" android:strokeColor="#FF000000" android:fillColor="#00000000"/>
+  <!-- SF gearshape look-alike: 8 rounded teeth + open hub. -->
+  <path android:pathData="M10.46,4.76L10.71,2.18L13.29,2.18L13.54,4.76L16.03,5.79L18.03,4.15L19.85,5.97L18.21,7.97L19.24,10.46L21.82,10.71L21.82,13.29L19.24,13.54L18.21,16.03L19.85,18.03L18.03,19.85L16.03,18.21L13.54,19.24L13.29,21.82L10.71,21.82L10.46,19.24L7.97,18.21L5.97,19.85L4.15,18.03L5.79,16.03L4.76,13.54L2.18,13.29L2.18,10.71L4.76,10.46L5.79,7.97L4.15,5.97L5.97,4.15L7.97,5.79Z" android:strokeWidth="1.6" android:strokeColor="#FF000000" android:fillColor="#00000000" android:strokeLineJoin="round"/>
+  <path android:pathData="M12,8.7a3.3,3.3 0 1,0 0,6.6a3.3,3.3 0 1,0 0,-6.6" android:strokeWidth="1.6" android:strokeColor="#FF000000" android:fillColor="#00000000"/>
 </vector>
