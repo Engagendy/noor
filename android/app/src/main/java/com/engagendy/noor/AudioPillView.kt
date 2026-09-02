@@ -284,7 +284,7 @@ private fun SleepCountdownChip() {
         modifier = Modifier.clip(RoundedCornerShape(50)).clickable { NoorPlayer.setSleepTimer(null) }.padding(4.dp)
     ) {
         Text(
-            "%d:%02d".format(remaining / 60, remaining % 60),
+            "%d:%02d".format(java.util.Locale.ROOT, remaining / 60, remaining % 60),
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
             color = NoorColor.accentGold

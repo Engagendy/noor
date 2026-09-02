@@ -155,7 +155,7 @@ object NoorPlayer {
     }
 
     private fun url(host: String, surah: Int, ayah: Int) =
-        "%s/%s/%03d%03d.mp3".format(host, reciter.folder, surah, ayah)
+        "%s/%s/%03d%03d.mp3".format(java.util.Locale.ROOT, host, reciter.folder, surah, ayah)
 
     fun play(surah: Int, ayahCount: Int, fromAyah: Int, name: String, pageEnd: Int = 0) {
         this.ayahCount = ayahCount

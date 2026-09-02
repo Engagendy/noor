@@ -25,11 +25,11 @@ object PageFontStore {
         dir(context).listFiles { f -> f.name.endsWith(".ttf") }?.size ?: 0
 
     private fun localFile(context: Context, page: Int) =
-        File(context.filesDir, "pagefonts/v2_page_%03d.ttf".format(page))
+        File(context.filesDir, "pagefonts/v2_page_%03d.ttf".format(java.util.Locale.ROOT, page))
 
     private fun remoteUrl(page: Int) =
         "https://raw.githubusercontent.com/mustafa0x/qpc-fonts/master/mushaf-v2/QCF2%03d.ttf"
-            .format(page)
+            .format(java.util.Locale.ROOT, page)
 
     /// Ensures the font for `page` is on disk and loaded. Blocking network
     /// and file I/O — call on Dispatchers.IO only. Returns null offline.

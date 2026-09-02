@@ -95,7 +95,7 @@ private fun computeNextPrayer(context: Context): NextPrayerData {
     }
     val remainingMinutes = ((next.time.time - now.time) / 60_000L).coerceAtLeast(0)
     val clock = "${(remainingMinutes / 60).toInt().localizedDigits()}:" +
-        String.format("%02d", remainingMinutes % 60).map {
+        String.format(java.util.Locale.ROOT, "%02d", remainingMinutes % 60).map {
             if (it.isDigit() && isArabicLocale()) '٠' + (it - '0') else it
         }.joinToString("")
     return NextPrayerData(
