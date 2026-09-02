@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -65,7 +66,8 @@ private data class HijriDayCell(
 )
 
 private data class HijriMonth(
-    val title: String,
+    val monthName: String,
+    val year: Int,
     val leading: Int,
     val days: List<HijriDayCell>,
 )
@@ -78,9 +80,7 @@ private fun buildMonth(monthOffset: Int): HijriMonth {
     cal.add(Calendar.MONTH, monthOffset)
     val hijriMonth = cal.get(Calendar.MONTH) + 1
     val hijriYear = cal.get(Calendar.YEAR)
-    val monthName = if (hijriMonth in 1..12)
-        IslamicEvent.hijriMonthsArabic[hijriMonth - 1] else ""
-    val title = "$monthName ${hijriYear.arabicIndic()} هـ"
+    val monthName = hijriMonthName(hijriMonth)
     val dayCount = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
 
     // Leading blanks so day 1 lands under its weekday column.
@@ -103,11 +103,14 @@ private fun buildMonth(monthOffset: Int): HijriMonth {
             isFastingSunnah = isMonThu || day in 13..15,
             events = IslamicEvent.events(day, hijriMonth))
     }
-    return HijriMonth(title, leading, days)
+    return HijriMonth(monthName, hijriYear, leading, days)
 }
 
-/// Sunday-first Arabic weekday initials (Umm al-Qura week).
-private val weekdaySymbols = listOf("ح", "ن", "ث", "ر", "خ", "ج", "س")
+/// Sunday-first weekday initials (Umm al-Qura week), per UI language.
+private val weekdaySymbolsArabic = listOf("ح", "ن", "ث", "ر", "خ", "ج", "س")
+private val weekdaySymbolsEnglish = listOf("S", "M", "T", "W", "T", "F", "S")
+private fun weekdaySymbols() =
+    if (isArabicLocale()) weekdaySymbolsArabic else weekdaySymbolsEnglish
 
 /// Hijri month grid sheet — 1:1 with the iOS HijriCalendarView.
 @OptIn(ExperimentalMaterial3Api::class)
@@ -129,11 +132,11 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("التقويم الهجري", fontSize = 17.sp, fontWeight = FontWeight.Bold,
+                Text(stringResource(R.string.g1_hijri_calendar), fontSize = 17.sp, fontWeight = FontWeight.Bold,
                      color = NoorColor.inkPrimary)
                 Spacer(Modifier.weight(1f))
                 if (monthOffset != 0) {
-                    Text("اليوم", fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                    Text(stringResource(R.string.g1_today), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                          color = NoorColor.accentPrimary,
                          modifier = Modifier
                              .clickable { monthOffset = 0 }
@@ -141,10 +144,9 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                 }
             }
 
-            // Month header arrows, explicit-direction drawables (no
-            // auto-mirroring). Forced RTL, matching iOS HijriCalendarView:
-            // PREV month sits on the RIGHT and points RIGHT; NEXT month
-            // sits on the LEFT and points LEFT.
+            // Month header arrows, direction-aware: PREV sits at the start
+            // edge and points outward (right in RTL, left in LTR); NEXT is
+            // the mirror — matching iOS HijriCalendarView.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
@@ -153,12 +155,14 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.size(44.dp).clip(CircleShape).clickable { monthOffset -= 1 }
                 ) {
-                    Icon(painterResource(R.drawable.ic_chevron_right),
-                         contentDescription = "الشهر السابق",
+                    Icon(painterResource(NoorIcons.chevronBackward()),
+                         contentDescription = stringResource(R.string.g1_prev_month),
                          tint = NoorColor.accentPrimary,
                          modifier = Modifier.size(20.dp))
                 }
-                Text(month.title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+                Text(stringResource(R.string.g1_hijri_month_year,
+                                    month.monthName, month.year.localizedDigits()),
+                     fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
                      color = NoorColor.inkPrimary,
                      textAlign = TextAlign.Center,
                      modifier = Modifier.weight(1f))
@@ -166,8 +170,8 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.size(44.dp).clip(CircleShape).clickable { monthOffset += 1 }
                 ) {
-                    Icon(painterResource(R.drawable.ic_chevron_left),
-                         contentDescription = "الشهر التالي",
+                    Icon(painterResource(NoorIcons.chevronForward()),
+                         contentDescription = stringResource(R.string.g1_next_month),
                          tint = NoorColor.accentPrimary,
                          modifier = Modifier.size(20.dp))
                 }
@@ -182,7 +186,7 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                     .padding(12.dp)
             ) {
                 Row(Modifier.fillMaxWidth()) {
-                    weekdaySymbols.forEach { symbol ->
+                    weekdaySymbols().forEach { symbol ->
                         Text(symbol, fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
                              color = NoorColor.inkSecondary,
                              textAlign = TextAlign.Center,
@@ -218,7 +222,7 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                                         }
                                 ) {
                                     Text(
-                                        cell.day.arabicIndic(),
+                                        cell.day.localizedDigits(),
                                         fontSize = 15.sp,
                                         fontWeight = if (cell.isToday) FontWeight.Bold
                                                      else FontWeight.Normal,
@@ -253,7 +257,7 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                     Box(Modifier.size(16.dp).background(
                         NoorColor.accentPrimary.copy(alpha = 0.2f), RoundedCornerShape(4.dp)))
                     Text(
-                        "أيام يُسن صيامها (الاثنين والخميس والأيام البيض ١٣–١٥)",
+                        stringResource(R.string.g1_fasting_legend),
                         fontSize = 13.sp, color = NoorColor.inkSecondary,
                         modifier = Modifier.padding(start = 8.dp))
                 }
@@ -263,7 +267,7 @@ fun HijriCalendarSheet(onDismiss: () -> Unit) {
                 ) {
                     Box(Modifier.size(7.dp).background(NoorColor.accentGold, CircleShape))
                     Text(
-                        "يوم فيه حدث من التاريخ الإسلامي — اضغط عليه",
+                        stringResource(R.string.g1_event_legend),
                         fontSize = 13.sp, color = NoorColor.inkSecondary,
                         modifier = Modifier.padding(start = 8.dp))
                 }
@@ -299,7 +303,7 @@ private fun EventRow(event: IslamicEvent, onClick: () -> Unit) {
         verticalAlignment = Alignment.Top,
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
     ) {
-        Text(event.day.arabicIndic(), fontSize = 14.sp, fontWeight = FontWeight.Bold,
+        Text(event.day.localizedDigits(), fontSize = 14.sp, fontWeight = FontWeight.Bold,
              color = NoorColor.accentGold,
              textAlign = TextAlign.Center,
              modifier = Modifier.size(width = 28.dp, height = 22.dp))
@@ -316,8 +320,11 @@ private fun EventRow(event: IslamicEvent, onClick: () -> Unit) {
 fun EventDetailSheet(event: IslamicEvent, onDismiss: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val dateLine = buildString {
-        append("${event.day.arabicIndic()} ${event.monthName()}")
-        event.yearHijri?.let { append(" سنة ${it.arabicIndic()} هـ") }
+        append("${event.day.localizedDigits()} ${hijriMonthName(event.month)}")
+        event.yearHijri?.let {
+            append(" ")
+            append(stringResource(R.string.g1_year_h, it.localizedDigits()))
+        }
     }
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
         Column(
@@ -328,7 +335,7 @@ fun EventDetailSheet(event: IslamicEvent, onDismiss: () -> Unit) {
                 .padding(bottom = 32.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("في مثل هذا اليوم", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                Text(stringResource(R.string.g1_on_this_day), fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                      color = NoorColor.inkSecondary)
                 Spacer(Modifier.weight(1f))
                 ShareIconButton {
@@ -346,7 +353,7 @@ fun EventDetailSheet(event: IslamicEvent, onDismiss: () -> Unit) {
                 modifier = Modifier.padding(vertical = 14.dp))
             Text(event.detailArabic, fontSize = 16.5.sp, lineHeight = 32.sp,
                  color = NoorColor.inkPrimary)
-            Text("المصدر: ${event.sourceArabic}", fontSize = 13.sp,
+            Text(stringResource(R.string.g1_source, event.sourceArabic), fontSize = 13.sp,
                  color = NoorColor.inkSecondary,
                  modifier = Modifier.padding(top = 14.dp))
         }
@@ -372,11 +379,11 @@ fun AllEventsSheet(onDismiss: () -> Unit) {
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 32.dp)
         ) {
-            Text("كل الأحداث", fontSize = 17.sp, fontWeight = FontWeight.Bold,
+            Text(stringResource(R.string.g1_all_events), fontSize = 17.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary)
             byMonth.forEach { (month, events) ->
                 Text(
-                    if (month in 1..12) IslamicEvent.hijriMonthsArabic[month - 1] else "",
+                    hijriMonthName(month),
                     fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                     color = NoorColor.accentPrimary,
                     modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
@@ -398,7 +405,7 @@ fun AllEventsSheet(onDismiss: () -> Unit) {
 fun ShareIconButton(onClick: () -> Unit) {
     androidx.compose.material3.Icon(
         painterResource(R.drawable.ic_share),
-        contentDescription = "مشاركة",
+        contentDescription = stringResource(R.string.g1_share),
         tint = NoorColor.accentPrimary,
         modifier = Modifier
             .size(40.dp)

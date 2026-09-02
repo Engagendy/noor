@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,9 +59,9 @@ fun StorageScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
         ) {
-            Text("التخزين", fontSize = 22.sp, fontWeight = FontWeight.Bold,
+            Text(stringResource(R.string.g1_storage), fontSize = 22.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary)
-            Text("رجوع", fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g1_back), fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.accentPrimary,
                  modifier = Modifier
                      .clickable(onClick = onBack)
@@ -74,7 +75,7 @@ fun StorageScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         ) {
             val list = items
             if (list == null) {
-                Text("جارٍ الحساب…", fontSize = 14.sp, color = NoorColor.inkSecondary,
+                Text(stringResource(R.string.g1_calculating), fontSize = 14.sp, color = NoorColor.inkSecondary,
                      modifier = Modifier.padding(16.dp))
             } else {
                 list.forEachIndexed { index, item ->
@@ -89,14 +90,14 @@ fun StorageScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
                         Column(Modifier.weight(1f)) {
-                            Text(item.title, fontSize = 15.sp, color = NoorColor.inkPrimary)
-                            Text(item.subtitle, fontSize = 12.sp, color = NoorColor.inkSecondary)
+                            Text(stringResource(item.title), fontSize = 15.sp, color = NoorColor.inkPrimary)
+                            Text(stringResource(item.subtitle), fontSize = 12.sp, color = NoorColor.inkSecondary)
                         }
                         Text(
                             Formatter.formatFileSize(context, item.bytes),
                             fontSize = 13.sp, color = NoorColor.inkSecondary)
                         if (item.bytes > 0) {
-                            Text("حذف", fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                            Text(stringResource(R.string.g1_delete), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                                  color = Color(0xFFB3402E),
                                  modifier = Modifier
                                      .clickable {
@@ -113,8 +114,7 @@ fun StorageScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             }
         }
         Text(
-            "الحذف يزيل النسخ المنزّلة فقط — يعود كل شيء للتنزيل عند استخدامه " +
-            "مجددًا. نص القرآن نفسه جزء من التطبيق ولا يمكن حذفه.",
+            stringResource(R.string.g1_storage_footer),
             fontSize = 12.sp, lineHeight = 18.sp, color = NoorColor.inkSecondary,
             modifier = Modifier.padding(top = 10.dp, start = 4.dp, end = 4.dp))
         Spacer(Modifier.padding(bottom = 24.dp))
@@ -122,8 +122,8 @@ fun StorageScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 data class StorageItem(
-    val title: String,
-    val subtitle: String,
+    val title: Int,       // string resource
+    val subtitle: Int,    // string resource
     val bytes: Long,
     val dirs: List<File>,
 )
@@ -133,13 +133,13 @@ private fun scanStorage(context: Context): List<StorageItem> {
     fun size(dir: File): Long =
         dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
     val candidates = listOf(
-        Triple("خطوط صفحات المصحف", "خط المصحف المطبوع (مجمع الملك فهد)",
+        Triple(R.string.g1_storage_page_fonts, R.string.g1_storage_page_fonts_sub,
                listOf(PageFontStore.dir(context))),
-        Triple("التفسير", "نصوص التفسير المحفوظة للقراءة دون اتصال",
+        Triple(R.string.g1_storage_tafsir, R.string.g1_storage_tafsir_sub,
                listOf(File(context.filesDir, "tafsir"))),
-        Triple("كتب الحديث", "صحيح البخاري وصحيح مسلم",
+        Triple(R.string.g1_storage_hadith, R.string.g1_storage_hadith_sub,
                listOf(File(context.filesDir, "hadith"))),
-        Triple("الملفات المؤقتة", "بقايا التنزيلات والصور المؤقتة",
+        Triple(R.string.g1_storage_temp, R.string.g1_storage_temp_sub,
                listOf(context.cacheDir)),
     )
     return candidates.map { (title, subtitle, dirs) ->

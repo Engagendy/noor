@@ -73,6 +73,7 @@ private fun Color.provider() = ColorProvider(this)
 private data class WidgetPrayer(val name: String, val time: String, val isNext: Boolean)
 
 private data class NextPrayerData(
+    val todayLabel: String,
     val city: String,
     val nextName: String,
     val nextTime: String,
@@ -89,22 +90,23 @@ private fun computeNextPrayer(context: Context): NextPrayerData {
     val entries = PrayerEngine.today(prefs, now)
     val next = PrayerEngine.next(entries, now)
         ?: PrayerEngine.today(prefs, Date(now.time + 86_400_000L)).first()
-    val formatter = SimpleDateFormat("h:mm", Locale("ar")).apply {
+    val formatter = SimpleDateFormat("h:mm", Locale.getDefault()).apply {
         timeZone = TimeZone.getTimeZone(city.timeZone)
     }
     val remainingMinutes = ((next.time.time - now.time) / 60_000L).coerceAtLeast(0)
-    val remaining = "بعد ${(remainingMinutes / 60).toInt().arabicIndic()}:" +
+    val clock = "${(remainingMinutes / 60).toInt().localizedDigits()}:" +
         String.format("%02d", remainingMinutes % 60).map {
-            if (it.isDigit()) '٠' + (it - '0') else it
+            if (it.isDigit() && isArabicLocale()) '٠' + (it - '0') else it
         }.joinToString("")
     return NextPrayerData(
-        city = city.nameArabic,
-        nextName = next.nameArabic,
+        todayLabel = context.getString(R.string.g1_today),
+        city = city.displayName(),
+        nextName = next.displayName(),
         nextTime = formatter.format(next.time),
-        remaining = remaining,
+        remaining = context.getString(R.string.g1_widget_in, clock),
         passedCount = entries.count { !it.time.after(now) },
         times = entries.map {
-            WidgetPrayer(it.nameArabic, formatter.format(it.time), it.key == next.key)
+            WidgetPrayer(it.displayName(), formatter.format(it.time), it.key == next.key)
         })
 }
 
@@ -185,7 +187,7 @@ private fun DarkRowWidget(data: NextPrayerData) {
     ) {
         Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "اليوم",
+                data.todayLabel,
                 style = TextStyle(
                     color = WTheme.teal.provider(), fontSize = 12.sp, fontWeight = FontWeight.Bold))
             Spacer(GlanceModifier.width(8.dp))
@@ -243,9 +245,11 @@ private fun computeDailyAyah(context: Context, widthPx: Int): DailyAyahData {
     val today = LocalDate.now()
     val index = (today.dayOfYear * 271 + today.year) % maxOf(db.verseCount(), 1)
     val (verse, surahName) = db.verseAt(index) ?: return DailyAyahData(null, "")
+    val name = if (isArabicLocale()) surahName
+        else db.surahs().firstOrNull { it.id == verse.surahId }?.nameTransliterated ?: surahName
     return DailyAyahData(
         bitmap = renderQuranBitmap(context, verse.text, widthPx),
-        reference = "$surahName ${verse.surahId.arabicIndic()}:${verse.ayah.arabicIndic()}")
+        reference = "$name ${verse.surahId.localizedDigits()}:${verse.ayah.localizedDigits()}")
 }
 
 /// Glance can't use custom fonts, so the ayah renders to a bitmap with the
@@ -290,7 +294,7 @@ class DailyAyahWidget : GlanceAppWidget() {
                         .padding(14.dp)
                 ) {
                     Text(
-                        "آية اليوم",
+                        context.getString(R.string.g1_daily_ayah),
                         style = TextStyle(
                             color = WTheme.gold.provider(),
                             fontSize = 10.sp,

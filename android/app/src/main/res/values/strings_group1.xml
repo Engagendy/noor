@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Group 1 UI chrome strings. Arabic is the DEFAULT locale (primary
+     audience); English lives in values-en/strings_group1.xml with the
+     iOS String Catalog wording. Quran/hadith/athkar CONTENT is never
+     localized here — only interface chrome. -->
+<resources>
+    <!-- Resolved-locale marker: "ar" here, "en" in values-en. The app reads
+         it to pick layout direction and digit style for the active UI
+         language (device may be any locale; we only ship ar + en). -->
+    <string name="g1_locale">ar</string>
+
+    <string name="app_name">نور</string>
+
+    <!-- Tabs -->
+    <string name="g1_tab_today">اليوم</string>
+    <string name="g1_tab_quran">القرآن</string>
+    <string name="g1_tab_prayer">الصلاة</string>
+    <string name="g1_tab_hadith">الحديث</string>
+    <string name="g1_tab_athkar">الأذكار</string>
+
+    <!-- Today -->
+    <string name="g1_hijri_calendar">التقويم الهجري</string>
+    <string name="g1_settings">الإعدادات</string>
+    <string name="g1_salam">السلام عليكم</string>
+    <string name="g1_all_prayers_done">انقضت صلوات اليوم</string>
+    <string name="g1_isha">العشاء</string>
+    <string name="g1_jumuah_title">جمعة مباركة</string>
+    <string name="g1_jumuah_subtitle">سورة الكهف وكثرة الصلاة على النبي ﷺ</string>
+    <string name="g1_read_kahf">اقرأ الكهف</string>
+    <string name="g1_continue_reading">متابعة القراءة</string>
+    <string name="g1_surah_prefix">سورة %1$s</string>
+    <string name="g1_page_n">صفحة %1$s</string>
+    <string name="g1_khatmah_page_of">الختمة · صفحة %1$s من %2$s</string>
+    <string name="g1_continue_listening">متابعة الاستماع</string>
+    <string name="g1_listening_line">سورة %1$s · آية %2$s</string>
+    <string name="g1_play">تشغيل</string>
+    <string name="g1_khatmah_plan">خطة الختمة</string>
+    <string name="g1_khatmah_day_of">اليوم %1$s من %2$s</string>
+    <string name="g1_khatmah_count">ختمة %1$s</string>
+    <string name="g1_edit_plan">تعديل الخطة</string>
+    <string name="g1_start_khatmah">ابدأ خطة ختمة</string>
+    <string name="g1_khatmah_finished">ما شاء الله، أتممت الختمة 🎉</string>
+    <string name="g1_start_new_khatmah">ابدأ ختمة جديدة</string>
+    <string name="g1_daily_portion_done">أنجزت وِرد اليوم، تقبّل الله</string>
+    <string name="g1_read_to_page">اقرأ إلى صفحة %1$s · بقيت %2$s صفحات اليوم</string>
+    <string name="g1_behind_plan">متأخر بـ %1$s صفحات عن الخطة</string>
+    <string name="g1_continue_from_page">تابع من صفحة %1$s</string>
+    <string name="g1_finish_quran_in">أتمّ القرآن خلال</string>
+    <string name="g1_reached_page">وصلت إلى صفحة %1$s</string>
+    <string name="g1_daily_portion">وِردك اليومي: نحو %1$s صفحات</string>
+    <string name="g1_save_plan">حفظ الخطة</string>
+    <string name="g1_start_plan">ابدأ الخطة</string>
+    <string name="g1_stop_plan">إيقاف الخطة</string>
+    <string name="g1_daily_ayah">آية اليوم</string>
+    <string name="g1_morning_athkar">أذكار الصباح</string>
+    <string name="g1_evening_athkar">أذكار المساء</string>
+    <string name="g1_sleep_athkar">أذكار النوم</string>
+    <string name="g1_repeat_times">يُكرر %1$s مرات</string>
+    <string name="g1_daily_hadith">حديث اليوم</string>
+    <string name="g1_hadith_n">الحديث %1$s</string>
+    <string name="g1_read_full_hadith">اقرأ الحديث كاملًا</string>
+    <string name="g1_on_this_day">في مثل هذا اليوم</string>
+    <string name="g1_coming_up">قريبًا في التاريخ الإسلامي</string>
+    <string name="g1_year_h">سنة %1$s هـ</string>
+    <string name="g1_in_days_approx">بعد %1$s يومًا تقريبًا</string>
+    <string name="g1_details">التفاصيل</string>
+    <string name="g1_all_events">كل الأحداث</string>
+    <string name="g1_hisn_reference">حصن المسلم</string>
+
+    <!-- Settings -->
+    <string name="g1_done">تم</string>
+    <string name="g1_back">رجوع</string>
+    <string name="g1_language">اللغة</string>
+    <string name="g1_lang_system">النظام</string>
+    <string name="g1_appearance">المظهر</string>
+    <string name="g1_theme_light">فاتح</string>
+    <string name="g1_theme_dark">داكن</string>
+    <string name="g1_general_footer">تُطبَّق اللغة فورًا. الواجهة عربية أولًا؛ يُطبَّق المظهر بالكامل عند إعادة فتح التطبيق.</string>
+    <string name="g1_section_prayer">الصلاة</string>
+    <string name="g1_adhan_notifications">إشعارات الأذان</string>
+    <string name="g1_fasting_reminders">تذكير صيام السنّة</string>
+    <string name="g1_notification_sound">صوت التنبيه</string>
+    <string name="g1_prayer_footer">تُجدول الإشعارات على جهازك للأيام القادمة وتتجدد تلقائيًا. تذكير صيام الاثنين والخميس يصل مساء اليوم السابق.</string>
+    <string name="g1_section_tools">الأدوات</string>
+    <string name="g1_storage">التخزين</string>
+    <string name="g1_zakat_calculator">حاسبة الزكاة</string>
+    <string name="g1_section_quran">القرآن</string>
+    <string name="g1_quran_font_size">حجم خط القرآن</string>
+    <string name="g1_reciter">القارئ</string>
+    <string name="g1_tajweed_guide">دليل التجويد</string>
+    <string name="g1_download_full_mushaf">تنزيل المصحف كاملًا</string>
+    <string name="g1_all_pages_offline">كل الصفحات (%1$s) متاحة دون اتصال</string>
+    <string name="g1_mushaf_progress">%1$s / %2$s · ‏~٣٥٠ م.ب</string>
+    <string name="g1_stop">إيقاف</string>
+    <string name="g1_download">تنزيل</string>
+    <string name="g1_section_translation">الترجمة</string>
+    <string name="g1_section_about">حول التطبيق</string>
+    <string name="g1_noor_version">نور — الإصدار %1$s</string>
+    <string name="g1_attr_quran">نص القرآن: Tanzil.net (الرسم العثماني)</string>
+    <string name="g1_attr_fonts">الخطوط: KFGQPC حفص العثماني و Amiri Quran</string>
+    <string name="g1_attr_page_fonts">خطوط صفحات المصحف: مجمع الملك فهد (QCF v2)</string>
+    <string name="g1_attr_translation">الترجمة: Saheeh International وترجمات Tanzil</string>
+    <string name="g1_attr_tafsir">التفسير: ابن كثير والميسّر (spa5k/tafsir_api)</string>
+    <string name="g1_attr_recitations">التلاوات: EveryAyah.com</string>
+    <string name="g1_attr_hadith">الحديث: fawazahmed0/hadith-api</string>
+    <string name="g1_attr_prayer">مواقيت الصلاة: خوارزمية Adhan (Batoul Apps)</string>
+    <string name="g1_attr_adhan_sounds">أصوات الأذان: Wikimedia Commons (CC BY 3.0 / CC BY-SA)</string>
+    <string name="g1_free_forever">مجانًا للأبد — في سبيل الله. بلا إعلانات، وبلا تتبّع.</string>
+
+    <!-- Storage -->
+    <string name="g1_calculating">جارٍ الحساب…</string>
+    <string name="g1_delete">حذف</string>
+    <string name="g1_storage_footer">الحذف يزيل النسخ المنزّلة فقط — يعود كل شيء للتنزيل عند استخدامه مجددًا. نص القرآن نفسه جزء من التطبيق ولا يمكن حذفه.</string>
+    <string name="g1_storage_page_fonts">خطوط صفحات المصحف</string>
+    <string name="g1_storage_page_fonts_sub">خط المصحف المطبوع (مجمع الملك فهد)</string>
+    <string name="g1_storage_tafsir">التفسير</string>
+    <string name="g1_storage_tafsir_sub">نصوص التفسير المحفوظة للقراءة دون اتصال</string>
+    <string name="g1_storage_hadith">كتب الحديث</string>
+    <string name="g1_storage_hadith_sub">صحيح البخاري وصحيح مسلم</string>
+    <string name="g1_storage_temp">الملفات المؤقتة</string>
+    <string name="g1_storage_temp_sub">بقايا التنزيلات والصور المؤقتة</string>
+
+    <!-- Tajweed guide -->
+    <string name="g1_pause_marks">علامات الوقف</string>
+    <string name="g1_mushaf_symbols">رموز المصحف</string>
+    <string name="g1_tajweed_rules">أحكام التجويد</string>
+
+    <!-- Prayer -->
+    <string name="g1_prayer_times">مواقيت الصلاة</string>
+    <string name="g1_qibla">القبلة</string>
+    <string name="g1_near_city">قرب %1$s</string>
+    <string name="g1_adhan_sound">صوت الأذان</string>
+    <string name="g1_tap_to_hear">اضغط على أي صوت لسماعه</string>
+    <string name="g1_nawafil">النوافل</string>
+    <string name="g1_nawafil_subtitle">نوافل الصلاة وأوقاتها</string>
+    <string name="g1_prayer_settings">إعدادات الصلاة</string>
+    <string name="g1_next_countdown">التالية · %1$s</string>
+    <string name="g1_now">الآن</string>
+    <string name="g1_bell">التنبيه</string>
+
+    <!-- Adhan sounds -->
+    <string name="g1_adhan_madinah">أذان الحرم النبوي</string>
+    <string name="g1_adhan_melodic">أذان مجوّد</string>
+    <string name="g1_adhan_azeez">أذان (عاقب عزيز)</string>
+    <string name="g1_adhan_bell">تنبيه</string>
+    <string name="g1_adhan_silent">صامت</string>
+
+    <!-- Prayer settings -->
+    <string name="g1_section_location">الموقع</string>
+    <string name="g1_use_my_location">تحديد موقعي تلقائيًا</string>
+    <string name="g1_using_current_location">يُستخدم الموقع الحالي</string>
+    <string name="g1_location_failed">تعذر تحديد موقعك — اسمح بالوصول إلى الموقع من الإعدادات، أو اختر مدينة يدويًا.</string>
+    <string name="g1_calc_method">طريقة الحساب</string>
+    <string name="g1_asr_madhab">مذهب العصر</string>
+    <string name="g1_prealert_minutes">تنبيه قبل الصلاة (دقائق)</string>
+    <string name="g1_off">بدون</string>
+    <string name="g1_manual_adjust">تعديل يدوي (بالدقائق)</string>
+    <string name="g1_city">المدينة</string>
+    <string name="g1_fajr">الفجر</string>
+    <string name="g1_dhuhr">الظهر</string>
+    <string name="g1_asr">العصر</string>
+    <string name="g1_maghrib">المغرب</string>
+
+    <!-- Qibla -->
+    <string name="g1_close">إغلاق</string>
+    <string name="g1_facing_qibla">أنت باتجاه القبلة</string>
+    <string name="g1_turn_right">اذهب نحو اليمين</string>
+    <string name="g1_turn_left">اذهب نحو اليسار</string>
+    <string name="g1_bearing_true_north">الاتجاه من الشمال الحقيقي</string>
+
+    <!-- Hijri calendar -->
+    <string name="g1_today">اليوم</string>
+    <string name="g1_prev_month">الشهر السابق</string>
+    <string name="g1_next_month">الشهر التالي</string>
+    <string name="g1_fasting_legend">أيام يُسن صيامها (الاثنين والخميس والأيام البيض ١٣–١٥)</string>
+    <string name="g1_event_legend">يوم فيه حدث من التاريخ الإسلامي — اضغط عليه</string>
+    <string name="g1_source">المصدر: %1$s</string>
+    <string name="g1_share">مشاركة</string>
+    <string name="g1_hijri_month_year">%1$s %2$s هـ</string>
+    <string name="g1_event_date_year">%1$s %2$s سنة %3$s هـ</string>
+
+    <!-- Widgets -->
+    <string name="g1_widget_in">بعد %1$s</string>
+    <string name="widget_next_prayer_label">الصلاة القادمة</string>
+    <string name="widget_daily_ayah_label">آية اليوم</string>
+
+    <!-- Adhan scheduler / notifications -->
+    <string name="g1_channel_adhan">الأذان — %1$s</string>
+    <string name="g1_channel_adhan_desc">تنبيهات مواقيت الصلاة</string>
+    <string name="g1_channel_prealert">تنبيه قبل الصلاة</string>
+    <string name="g1_channel_prealert_desc">تذكير لطيف قبل الأذان</string>
+    <string name="g1_channel_reminders">تذكيرات</string>
+    <string name="g1_channel_reminders_desc">تذكير صيام السنّة</string>
+    <string name="g1_fasting_title">صيام السنّة غدًا</string>
+    <string name="g1_fasting_text">غدًا %1$s — من أيام صيام التطوع</string>
+    <string name="g1_monday">الاثنين</string>
+    <string name="g1_thursday">الخميس</string>
+    <string name="g1_adhan_title">حان وقت صلاة %1$s</string>
+    <string name="g1_prealert_title">اقتربت صلاة %1$s</string>
+    <string name="g1_prealert_text">بعد %1$s دقائق · %2$s</string>
+
+    <!-- Onboarding -->
+    <string name="g1_welcome">أهلًا بك في نور</string>
+    <string name="g1_welcome_promise">القرآن ومواقيت الصلاة والأذكار — خاص ومجاني للأبد</string>
+    <string name="g1_app_language">لغة التطبيق</string>
+    <string name="g1_arabic">العربية</string>
+    <string name="g1_arabic_first_note">نور تطبيق عربي أولًا، ويمكنك تغيير اللغة في أي وقت من الإعدادات</string>
+    <string name="g1_your_city">مدينتك لمواقيت الصلاة</string>
+    <string name="g1_search_city">ابحث عن مدينتك</string>
+    <string name="g1_continue">متابعة</string>
+    <string name="g1_onboarding_adhan_body">أذان جميل عند كل صلاة. يمكنك تغيير الصوت أو إيقافه لاحقًا.</string>
+    <string name="g1_enable_adhan">تفعيل الأذان</string>
+    <string name="g1_later">لاحقًا</string>
+</resources>

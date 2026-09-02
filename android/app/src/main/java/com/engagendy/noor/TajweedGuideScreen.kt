@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -83,28 +84,28 @@ fun TajweedGuideScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
             ) {
-                Text("دليل التجويد", fontSize = 22.sp, fontWeight = FontWeight.Bold,
+                Text(stringResource(R.string.g1_tajweed_guide), fontSize = 22.sp, fontWeight = FontWeight.Bold,
                      color = NoorColor.inkPrimary)
-                Text("رجوع", fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
+                Text(stringResource(R.string.g1_back), fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                      color = NoorColor.accentPrimary,
                      modifier = Modifier
                          .clickable(onClick = onBack)
                          .padding(horizontal = 10.dp, vertical = 6.dp))
             }
         }
-        tajweedSection("علامات الوقف", pauseMarks)
-        tajweedSection("رموز المصحف", otherMarks)
-        tajweedSection("أحكام التجويد", tajweedRules)
+        tajweedSection(R.string.g1_pause_marks, pauseMarks)
+        tajweedSection(R.string.g1_mushaf_symbols, otherMarks)
+        tajweedSection(R.string.g1_tajweed_rules, tajweedRules)
         item { Spacer(Modifier.padding(bottom = 24.dp)) }
     }
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.tajweedSection(
-    title: String,
+    title: Int,
     marks: List<TajweedMark>,
 ) {
     item {
-        Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+        Text(stringResource(title), fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
              color = NoorColor.inkSecondary,
              modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
     }

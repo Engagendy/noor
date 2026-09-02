@@ -4,10 +4,10 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -24,17 +24,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.res.stringResource
 
-enum class Tab(val titleArabic: String, val icon: Int) {
-    TODAY("اليوم", R.drawable.ic_sun),
-    QURAN("القرآن", R.drawable.ic_book),
-    PRAYER("الصلاة", R.drawable.ic_clock),
-    HADITH("الحديث", R.drawable.ic_hadith),
-    ATHKAR("الأذكار", R.drawable.ic_sparkle),
+enum class Tab(val titleRes: Int, val icon: Int) {
+    TODAY(R.string.g1_tab_today, R.drawable.ic_sun),
+    QURAN(R.string.g1_tab_quran, R.drawable.ic_book),
+    PRAYER(R.string.g1_tab_prayer, R.drawable.ic_clock),
+    HADITH(R.string.g1_tab_hadith, R.drawable.ic_hadith),
+    ATHKAR(R.string.g1_tab_athkar, R.drawable.ic_sparkle),
 }
 
-class MainActivity : ComponentActivity() {
+/// AppCompatActivity (not ComponentActivity) so the per-app locale picked
+/// in Settings (AppCompatDelegate.setApplicationLocales) applies and the
+/// activity recreates in the new language. Compose setup is unchanged.
+class MainActivity : AppCompatActivity() {
     private val notificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) AdhanScheduler.reschedule(this)
@@ -53,8 +56,8 @@ class MainActivity : ComponentActivity() {
         NoorWidgets.refresh(this)
         setContent {
             NoorTheme {
-                // Arabic-first: the whole app lays out right-to-left.
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                // Direction follows the CURRENT UI language: ar → RTL, en → LTR.
+                CompositionLocalProvider(LocalLayoutDirection provides noorLayoutDirection()) {
                     var showOnboarding by rememberSaveable { mutableStateOf(!onboarded) }
                     if (showOnboarding) {
                         // First run only; the flag write is a user action (finishing).
@@ -109,13 +112,14 @@ fun NoorApp() {
             AudioPillView()
             NavigationBar(containerColor = NoorColor.bgElevated) {
                 Tab.entries.forEach { item ->
+                    val title = stringResource(item.titleRes)
                     NavigationBarItem(
                         selected = tab == item,
                         onClick = { tab = item },
                         icon = {
-                            Icon(painterResource(item.icon), contentDescription = item.titleArabic)
+                            Icon(painterResource(item.icon), contentDescription = title)
                         },
-                        label = { Text(item.titleArabic) },
+                        label = { Text(title) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = NoorColor.accentPrimary,
                             selectedTextColor = NoorColor.accentPrimary,

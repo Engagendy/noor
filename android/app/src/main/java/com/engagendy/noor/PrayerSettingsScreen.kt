@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -92,9 +93,9 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
             ) {
-                Text("إعدادات الصلاة", fontSize = 22.sp, fontWeight = FontWeight.Bold,
+                Text(stringResource(R.string.g1_prayer_settings), fontSize = 22.sp, fontWeight = FontWeight.Bold,
                      color = NoorColor.inkPrimary)
-                Text("تم", fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
+                Text(stringResource(R.string.g1_done), fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                      color = NoorColor.accentPrimary,
                      modifier = Modifier
                          .clickable(onClick = onDone)
@@ -102,7 +103,7 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
             }
         }
 
-        item { SectionHeader("الموقع") }
+        item { SectionHeader(stringResource(R.string.g1_section_location)) }
         item {
             // "تحديد موقعي تلقائيًا" — like the iOS settings-sheet button.
             Row(
@@ -122,15 +123,16 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
             ) {
                 Column {
                     Text(
-                        if (useCustomLocation) "يُستخدم الموقع الحالي"
-                        else "تحديد موقعي تلقائيًا",
+                        if (useCustomLocation) stringResource(R.string.g1_using_current_location)
+                        else stringResource(R.string.g1_use_my_location),
                         fontSize = 15.sp,
                         fontWeight = if (useCustomLocation) FontWeight.SemiBold
                                      else FontWeight.Normal,
                         color = if (useCustomLocation) NoorColor.accentPrimary
                                 else NoorColor.inkPrimary)
                     if (useCustomLocation) {
-                        Text("قرب ${Cities.named(cityName).nameArabic}",
+                        Text(stringResource(R.string.g1_near_city,
+                                            Cities.named(cityName).displayName()),
                              fontSize = 12.sp, color = NoorColor.inkSecondary)
                     }
                 }
@@ -146,17 +148,17 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
             }
             if (locationFailed) {
                 Text(
-                    "تعذر تحديد موقعك — اسمح بالوصول إلى الموقع من الإعدادات، أو اختر مدينة يدويًا.",
+                    stringResource(R.string.g1_location_failed),
                     fontSize = 12.sp, color = NoorColor.inkSecondary,
                     modifier = Modifier.padding(top = 6.dp))
             }
         }
 
-        item { SectionHeader("طريقة الحساب") }
+        item { SectionHeader(stringResource(R.string.g1_calc_method)) }
         items(CalculationMethodChoice.entries) { choice ->
             val selected = method == choice
             SettingRow(
-                title = choice.nameArabic,
+                title = choice.displayName(),
                 selected = selected,
                 onClick = {
                     prefs.method = choice
@@ -164,11 +166,11 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
                 })
         }
 
-        item { SectionHeader("مذهب العصر") }
+        item { SectionHeader(stringResource(R.string.g1_asr_madhab)) }
         items(MadhabChoice.entries) { choice ->
             val selected = madhab == choice
             SettingRow(
-                title = choice.nameArabic,
+                title = choice.displayName(),
                 selected = selected,
                 onClick = {
                     prefs.madhab = choice
@@ -176,7 +178,7 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
                 })
         }
 
-        item { SectionHeader("تنبيه قبل الصلاة (دقائق)") }
+        item { SectionHeader(stringResource(R.string.g1_prealert_minutes)) }
         item {
             // Wired into AdhanScheduler via changed(): a gentle reminder
             // before each adhan — time for wudu and the walk to the masjid.
@@ -187,7 +189,8 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
                 listOf(0, 5, 10, 15, 30).forEach { minutes ->
                     val selected = preAlert == minutes
                     Text(
-                        if (minutes == 0) "بدون" else minutes.arabicIndic(),
+                        if (minutes == 0) stringResource(R.string.g1_off)
+                        else minutes.localizedDigits(),
                         fontSize = 14.sp,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                         textAlign = TextAlign.Center,
@@ -207,7 +210,7 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
             }
         }
 
-        item { SectionHeader("تعديل يدوي (بالدقائق)") }
+        item { SectionHeader(stringResource(R.string.g1_manual_adjust)) }
         item {
             Column(
                 Modifier
@@ -216,12 +219,13 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
                     .padding(horizontal = 16.dp, vertical = 6.dp)
             ) {
                 val prayers = listOf(
-                    "fajr" to "الفجر", "dhuhr" to "الظهر", "asr" to "العصر",
-                    "maghrib" to "المغرب", "isha" to "العشاء")
-                prayers.forEach { (prayerKey, nameArabic) ->
+                    "fajr" to R.string.g1_fajr, "dhuhr" to R.string.g1_dhuhr,
+                    "asr" to R.string.g1_asr, "maghrib" to R.string.g1_maghrib,
+                    "isha" to R.string.g1_isha)
+                prayers.forEach { (prayerKey, nameRes) ->
                     val value = adjustments[prayerKey] ?: 0
                     AdjustmentRow(
-                        title = nameArabic,
+                        title = stringResource(nameRes),
                         value = value,
                         onChange = { minutes ->
                             prefs.setAdjustment(prayerKey, minutes)
@@ -231,12 +235,12 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
             }
         }
 
-        item { SectionHeader("المدينة") }
+        item { SectionHeader(stringResource(R.string.g1_city)) }
         items(Cities.all) { city ->
             val selected = !useCustomLocation && cityName == city.name
             SettingRow(
-                title = city.nameArabic,
-                subtitle = city.name,
+                title = city.displayName(),
+                subtitle = if (isArabicUi()) city.name else city.nameArabic,
                 selected = selected,
                 onClick = {
                     // A manual pick turns off the device-location override.

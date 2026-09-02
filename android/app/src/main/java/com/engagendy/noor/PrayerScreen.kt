@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -106,7 +107,7 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
     val next = if (isToday) PrayerEngine.next(entries, now) else null
     val zone = remember(version) { TimeZone.getTimeZone(city.timeZone) }
     val timeFormatter = remember(version) {
-        SimpleDateFormat("h:mm a", Locale("ar")).apply { timeZone = zone }
+        SimpleDateFormat("h:mm a", Locale.getDefault()).apply { timeZone = zone }
     }
 
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -117,9 +118,9 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("مواقيت الصلاة", fontSize = 28.sp, fontWeight = FontWeight.Bold,
+                Text(stringResource(R.string.g1_prayer_times), fontSize = 28.sp, fontWeight = FontWeight.Bold,
                      color = NoorColor.inkPrimary)
-                Icon(painterResource(R.drawable.ic_compass), contentDescription = "القبلة",
+                Icon(painterResource(R.drawable.ic_compass), contentDescription = stringResource(R.string.g1_qibla),
                      tint = NoorColor.accentPrimary,
                      modifier = Modifier
                          .size(44.dp)
@@ -135,7 +136,8 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
                      tint = NoorColor.inkSecondary, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    if (useCustomLocation) "قرب ${city.nameArabic}" else city.nameArabic,
+                    if (useCustomLocation) stringResource(R.string.g1_near_city, city.displayName())
+                    else city.displayName(),
                     fontSize = 13.sp, color = NoorColor.inkSecondary)
             }
             Spacer(Modifier.height(14.dp))
@@ -174,19 +176,21 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
             // Adhan sound row — always-visible entry to the sound picker.
             CardRow(
                 icon = R.drawable.ic_speaker, tint = NoorColor.accentPrimary,
-                title = "صوت الأذان", subtitle = sound.nameArabic,
+                title = stringResource(R.string.g1_adhan_sound),
+                subtitle = stringResource(sound.nameRes),
                 onClick = { showSounds = true })
             Spacer(Modifier.height(10.dp))
             // Nawafil — voluntary prayers reference.
             CardRow(
                 icon = R.drawable.ic_moon, tint = NoorColor.accentGold,
-                title = "النوافل", subtitle = "نوافل الصلاة وأوقاتها",
+                title = stringResource(R.string.g1_nawafil),
+                subtitle = stringResource(R.string.g1_nawafil_subtitle),
                 onClick = { showNawafil = true })
             Spacer(Modifier.height(10.dp))
             CardRow(
                 icon = R.drawable.ic_gear, tint = NoorColor.accentPrimary,
-                title = "إعدادات الصلاة",
-                subtitle = "${method.nameArabic} · ${madhab.nameArabic}",
+                title = stringResource(R.string.g1_prayer_settings),
+                subtitle = "${method.displayName()} · ${madhab.displayName()}",
                 onClick = { showSettings = true })
             Spacer(Modifier.height(24.dp))
         }
@@ -209,7 +213,7 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
 
 @Composable
 private fun WeekStrip(now: Date, dayOffset: Int, onSelect: (Int) -> Unit) {
-    val weekdayFormat = remember { SimpleDateFormat("EEE", Locale("ar")) }
+    val weekdayFormat = remember { SimpleDateFormat("EEE", Locale.getDefault()) }
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.fillMaxWidth()) {
         for (offset in 0..6) {
@@ -231,7 +235,7 @@ private fun WeekStrip(now: Date, dayOffset: Int, onSelect: (Int) -> Unit) {
                 Text(weekdayFormat.format(date.time), fontSize = 12.sp,
                      color = if (selected) NoorColor.bgPrimary else NoorColor.inkSecondary)
                 Spacer(Modifier.height(2.dp))
-                Text(date.get(Calendar.DAY_OF_MONTH).arabicIndic(), fontSize = 14.sp,
+                Text(date.get(Calendar.DAY_OF_MONTH).localizedDigits(), fontSize = 14.sp,
                      fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
                      color = if (selected) NoorColor.bgPrimary else NoorColor.inkSecondary)
             }
@@ -243,7 +247,7 @@ private fun WeekStrip(now: Date, dayOffset: Int, onSelect: (Int) -> Unit) {
 private fun BellToggle(on: Boolean, onClick: () -> Unit) {
     Icon(
         painterResource(if (on) R.drawable.ic_bell else R.drawable.ic_bell_off),
-        contentDescription = "التنبيه",
+        contentDescription = stringResource(R.string.g1_bell),
         tint = if (on) NoorColor.accentPrimary else NoorColor.inkSecondary.copy(alpha = 0.5f),
         modifier = Modifier.size(44.dp).clip(CircleShape).clickable(onClick = onClick).padding(13.dp))
 }
@@ -269,7 +273,7 @@ private fun TimelineRow(
                             if (passed) NoorColor.accentPrimary
                             else NoorColor.inkSecondary.copy(alpha = 0.4f), CircleShape))
             Spacer(Modifier.width(14.dp))
-            Text(entry.nameArabic, fontSize = 16.sp,
+            Text(entry.displayName(), fontSize = 16.sp,
                  color = NoorColor.inkPrimary.copy(alpha = if (passed) 0.6f else 1f),
                  modifier = Modifier.weight(1f))
             Text(timeString, fontSize = 15.sp,
@@ -279,11 +283,18 @@ private fun TimelineRow(
     }
 }
 
-/// Arabic countdown to the next prayer: "بعد ساعتين و٥ دقائق".
-private fun countdownArabic(from: Date, to: Date): String {
+/// Countdown to the next prayer: "بعد ساعتين و٥ دقائق" / "in 2 hr 5 min".
+private fun countdownText(context: android.content.Context, from: Date, to: Date): String {
     val totalMinutes = ((to.time - from.time) / 60_000L).coerceAtLeast(0)
     val hours = totalMinutes / 60
     val minutes = totalMinutes % 60
+    if (!isArabicLocale()) {
+        val parts = listOfNotNull(
+            if (hours > 0) "$hours hr" else null,
+            if (minutes > 0) "$minutes min" else null)
+        return if (parts.isEmpty()) context.getString(R.string.g1_now)
+               else "in " + parts.joinToString(" ")
+    }
     val hourPart = when (hours) {
         0L -> null
         1L -> "ساعة"
@@ -298,7 +309,8 @@ private fun countdownArabic(from: Date, to: Date): String {
         else -> "${minutes.toInt().arabicIndic()} دقيقة"
     }
     val parts = listOfNotNull(hourPart, minutePart)
-    return if (parts.isEmpty()) "الآن" else "بعد " + parts.joinToString(" و")
+    return if (parts.isEmpty()) context.getString(R.string.g1_now)
+           else "بعد " + parts.joinToString(" و")
 }
 
 @Composable
@@ -322,10 +334,11 @@ private fun NextPrayerCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(10.dp).background(NoorColor.accentPrimary, CircleShape))
             Spacer(Modifier.width(10.dp))
-            Text(entry.nameArabic, fontSize = 19.sp, fontWeight = FontWeight.SemiBold,
+            Text(entry.displayName(), fontSize = 19.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.inkPrimary)
             Spacer(Modifier.width(10.dp))
-            Text("التالية · ${countdownArabic(now, entry.time)}",
+            val context = androidx.compose.ui.platform.LocalContext.current
+            Text(stringResource(R.string.g1_next_countdown, countdownText(context, now, entry.time)),
                  fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.accentPrimary, modifier = Modifier.weight(1f))
             Text(timeString, fontSize = 19.sp, fontWeight = FontWeight.SemiBold,
@@ -360,7 +373,7 @@ private fun NextPrayerCard(
                              modifier = Modifier.size(12.dp))
                         Spacer(Modifier.width(5.dp))
                     }
-                    Text(choice.nameArabic, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                    Text(stringResource(choice.nameRes), fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                          color = if (on) NoorColor.accentPrimary else NoorColor.inkSecondary)
                 }
             }
@@ -389,9 +402,8 @@ private fun CardRow(icon: Int, tint: androidx.compose.ui.graphics.Color,
             Spacer(Modifier.height(2.dp))
             Text(subtitle, fontSize = 13.sp, color = NoorColor.inkSecondary)
         }
-        // Disclosure points LEFT in the forced-RTL app — explicit-direction
-        // drawable (no autoMirrored double-mirroring surprises).
-        Icon(painterResource(R.drawable.ic_chevron_left), contentDescription = null,
+        // Disclosure points forward: LEFT in RTL, RIGHT in LTR.
+        Icon(painterResource(NoorIcons.chevronForward()), contentDescription = null,
              tint = NoorColor.inkSecondary.copy(alpha = 0.6f),
              modifier = Modifier.size(16.dp))
     }
@@ -408,10 +420,10 @@ private fun AdhanSoundSheet(
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
-            Text("صوت الأذان", fontSize = 18.sp, fontWeight = FontWeight.Bold,
+            Text(stringResource(R.string.g1_adhan_sound), fontSize = 18.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary)
             Spacer(Modifier.height(4.dp))
-            Text("اضغط على أي صوت لسماعه", fontSize = 13.sp, color = NoorColor.inkSecondary)
+            Text(stringResource(R.string.g1_tap_to_hear), fontSize = 13.sp, color = NoorColor.inkSecondary)
             Spacer(Modifier.height(10.dp))
             AdhanSound.entries.forEach { choice ->
                 val on = choice == selected
@@ -438,7 +450,7 @@ private fun AdhanSoundSheet(
                                else NoorColor.inkSecondary,
                         modifier = Modifier.size(22.dp))
                     Spacer(Modifier.width(12.dp))
-                    Text(choice.nameArabic, fontSize = 16.sp,
+                    Text(stringResource(choice.nameRes), fontSize = 16.sp,
                          fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
                          color = NoorColor.inkPrimary, modifier = Modifier.weight(1f))
                     if (on) {
