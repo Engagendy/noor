@@ -32,12 +32,17 @@ import androidx.compose.ui.unit.sp
 fun QuranScreen(
     modifier: Modifier = Modifier,
     mushafPage: Int = 0,
+    resumeSurahId: Int = 0,
     onMushafClosed: () -> Unit = {},
+    onSurahClosed: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val db = remember { QuranDb.get(context) }
     val surahs = remember { db.surahs() }
-    var openSurah by remember { mutableStateOf<Surah?>(null) }
+    // Flow reader: opened from the list or from Today (continue reading).
+    var openSurah by remember(resumeSurahId) {
+        mutableStateOf(surahs.firstOrNull { it.id == resumeSurahId })
+    }
     // Madani page mode: opened from Today (frontier) or the mushaf button.
     var openMushafAt by remember(mushafPage) { mutableStateOf(mushafPage) }
 
@@ -51,7 +56,10 @@ fun QuranScreen(
 
     val current = openSurah
     if (current != null) {
-        ReaderScreen(surah = current, onBack = { openSurah = null }, modifier = modifier)
+        ReaderScreen(
+            surah = current,
+            onBack = { openSurah = null; onSurahClosed() },
+            modifier = modifier)
         return
     }
 
@@ -119,6 +127,13 @@ fun ReaderScreen(surah: Surah, onBack: () -> Unit, modifier: Modifier = Modifier
     val context = LocalContext.current
     val db = remember { QuranDb.get(context) }
     val verses = remember(surah.id) { db.verses(surah.id) }
+    // Resume position: one direct prefs write per surah open, off-main —
+    // never observed as Compose state (same rule as the Madani pager).
+    androidx.compose.runtime.LaunchedEffect(surah.id) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            ReadingProgress.surahViewed(context, surah.id)
+        }
+    }
     // Continuous mushaf-style flow: one attributed stream with ayah markers.
     val flow = remember(surah.id) {
         buildString {

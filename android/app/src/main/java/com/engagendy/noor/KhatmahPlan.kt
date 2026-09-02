@@ -109,6 +109,7 @@ object ReadingProgress {
         val edit = p.edit()
         if (page > p.getInt("khatmah.maxPage", 0)) edit.putInt("khatmah.maxPage", page)
         edit.putInt("reader.lastPage", page)
+        edit.putString("reader.lastMode", "page")
         // Khatmah frontier: only SEQUENTIAL reading advances the plan —
         // viewing the next-unread page marks it read. Jumping around
         // (search, bookmarks, browsing) never inflates progress.
@@ -124,6 +125,16 @@ object ReadingProgress {
             if (count > p.getInt("streak.best", 0)) edit.putInt("streak.best", count)
         }
         edit.apply()
+    }
+
+    /// Flow-reader position: the last opened surah becomes the resume
+    /// target for the Today "continue reading" card.
+    fun surahViewed(context: Context, surahId: Int) {
+        if (surahId < 1) return
+        KhatmahPlan.prefs(context).edit()
+            .putInt("reader.lastSurah", surahId)
+            .putString("reader.lastMode", "surah")
+            .apply()
     }
 
     /// Current reading streak in days (0 if the chain broke before today).

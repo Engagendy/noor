@@ -49,7 +49,7 @@ import kotlin.math.ceil
 @Composable
 fun TodayScreen(
     modifier: Modifier = Modifier,
-    openQuran: () -> Unit,
+    openResume: () -> Unit,
     openPage: (Int) -> Unit,
 ) {
     val context = LocalContext.current
@@ -94,28 +94,48 @@ fun TodayScreen(
             )
         }
 
-        ContinueReadingCard(openQuran)
+        ContinueReadingCard(openResume)
         KhatmahCard(openPage)
         DailyAyahCard()
     }
 }
 
 @Composable
-private fun ContinueReadingCard(openQuran: () -> Unit) {
+private fun ContinueReadingCard(openResume: () -> Unit) {
     val context = LocalContext.current
     val maxPage = remember { KhatmahPlan.prefs(context).getInt("khatmah.maxPage", 0) }
+    // Where "continue" resumes: last surah name or last Madani page —
+    // surah name needs the DB, so it loads off-main.
+    val resumeLabel by produceState<String?>(initialValue = null) {
+        value = withContext(Dispatchers.IO) {
+            val p = KhatmahPlan.prefs(context)
+            when (p.getString("reader.lastMode", null)) {
+                "surah" -> {
+                    val id = p.getInt("reader.lastSurah", 0)
+                    QuranDb.get(context).surahs().firstOrNull { it.id == id }
+                        ?.let { "آخر قراءة: سورة ${it.nameArabic}" }
+                }
+                "page" -> "آخر قراءة: صفحة ${p.getInt("reader.lastPage", 1).arabicIndic()}"
+                else -> null
+            }
+        }
+    }
     Column(
         Modifier
             .padding(top = 12.dp)
             .fillMaxWidth()
             .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
-            .clickable(onClick = openQuran)
+            .clickable(onClick = openResume)
             .padding(18.dp)
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Text("متابعة القراءة", fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.inkPrimary)
             Text("←", color = NoorColor.accentPrimary)
+        }
+        resumeLabel?.let {
+            Text(it, fontSize = 13.sp, color = NoorColor.inkSecondary,
+                 modifier = Modifier.padding(top = 4.dp))
         }
         if (maxPage > 0) {
             ProgressBar(maxPage / 604f, NoorColor.accentGold, Modifier.padding(top = 10.dp))
