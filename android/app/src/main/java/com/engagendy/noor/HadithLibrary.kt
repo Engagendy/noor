@@ -256,6 +256,24 @@ object HadithLibrary {
             LibraryHadith(c.getString(0), c.getString(1), c.getString(2), book)
         }
 
+    /// Deterministic daily pick from the downloaded collections — same
+    /// algorithm as the iOS dailySahih (day mod collections, day·37 mod count).
+    fun daily(context: Context, dayOfYear: Int): Pair<LibraryHadith, HadithCollection>? {
+        val ready = HadithCollection.entries.filter { isDownloaded(context, it) }
+        if (ready.isEmpty()) return null
+        val collection = ready[dayOfYear % ready.size]
+        val total = query(context, collection, "SELECT COUNT(*) FROM hadith") { it.getInt(0) }
+            .firstOrNull() ?: return null
+        if (total <= 0) return null
+        val offset = (dayOfYear * 37) % total
+        return query(
+            context, collection,
+            "SELECT num, ar, en, book FROM hadith LIMIT 1 OFFSET $offset"
+        ) { c ->
+            LibraryHadith(c.getString(0), c.getString(1), c.getString(2), c.getInt(3))
+        }.firstOrNull()?.let { it to collection }
+    }
+
     /// Global search across every downloaded collection.
     fun search(context: Context, rawQuery: String, limit: Int = 80): List<HadithSearchHit> {
         val trimmed = rawQuery.trim()

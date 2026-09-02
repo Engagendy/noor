@@ -125,6 +125,10 @@ object NoorPlayer {
 
     private fun playAyah(surah: Int, ayah: Int, mirror: Boolean = false) {
         currentSurah = surah; currentAyah = ayah
+        // Resume point for the Today "continue listening" card — written
+        // from user-driven playback only, never from a compose observer.
+        appContext?.getSharedPreferences("audio", Context.MODE_PRIVATE)?.edit()
+            ?.putInt("audio.lastSurah", surah)?.putInt("audio.lastAyah", ayah)?.apply()
         media?.release()
         val host = if (mirror) "https://mirrors.quranicaudio.com/everyayah"
                    else "https://everyayah.com/data"
