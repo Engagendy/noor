@@ -1,5 +1,8 @@
 package com.engagendy.noor
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +19,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,7 +49,34 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
     val method = remember(version) { prefs.method }
     val madhab = remember(version) { prefs.madhab }
     val cityName = remember(version) { prefs.cityName }
+    val useCustomLocation = remember(version) { prefs.useCustomLocation }
     val preAlert = remember(version) { prefs.preAlertMinutes }
+
+    // Auto location — mirrors the iOS "Use my current location" button:
+    // fetch one coarse fix, store the exact coordinate, label it with the
+    // nearest preset. Nothing leaves the device.
+    var fetchingLocation by remember { mutableStateOf(false) }
+    var locationFailed by remember { mutableStateOf(false) }
+    fun applyFix(latitude: Double, longitude: Double) {
+        val nearest = Cities.nearest(latitude, longitude)
+        prefs.saveCustomLocation(latitude, longitude, nearest.name)
+        prefs.cityName = nearest.name
+        changed()
+    }
+    fun startLocationFetch() {
+        fetchingLocation = true
+        locationFailed = false
+        LocationFetcher.fetch(context) { fix ->
+            fetchingLocation = false
+            if (fix != null) applyFix(fix.latitude, fix.longitude)
+            else locationFailed = true
+        }
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) startLocationFetch() else locationFailed = true
+    }
     val adjustments = remember(version) {
         listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
             .associateWith(prefs::adjustment)
@@ -64,6 +96,55 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
                      modifier = Modifier
                          .clickable(onClick = onDone)
                          .padding(horizontal = 10.dp, vertical = 6.dp))
+            }
+        }
+
+        item { SectionHeader("الموقع") }
+        item {
+            // "تحديد موقعي تلقائيًا" — like the iOS settings-sheet button.
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        if (useCustomLocation) NoorColor.stateReciting else NoorColor.bgElevated,
+                        RoundedCornerShape(12.dp))
+                    .clickable(enabled = !fetchingLocation) {
+                        if (LocationFetcher.hasPermission(context)) startLocationFetch()
+                        else permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+                    }
+                    .padding(horizontal = 16.dp, vertical = 13.dp)
+            ) {
+                Column {
+                    Text(
+                        if (useCustomLocation) "يُستخدم الموقع الحالي"
+                        else "تحديد موقعي تلقائيًا",
+                        fontSize = 15.sp,
+                        fontWeight = if (useCustomLocation) FontWeight.SemiBold
+                                     else FontWeight.Normal,
+                        color = if (useCustomLocation) NoorColor.accentPrimary
+                                else NoorColor.inkPrimary)
+                    if (useCustomLocation) {
+                        Text("قرب ${Cities.named(cityName).nameArabic}",
+                             fontSize = 12.sp, color = NoorColor.inkSecondary)
+                    }
+                }
+                if (fetchingLocation) {
+                    CircularProgressIndicator(
+                        color = NoorColor.accentPrimary,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(18.dp))
+                } else if (useCustomLocation) {
+                    Text("✓", fontSize = 15.sp, fontWeight = FontWeight.Bold,
+                         color = NoorColor.accentPrimary)
+                }
+            }
+            if (locationFailed) {
+                Text(
+                    "تعذر تحديد موقعك — اسمح بالوصول إلى الموقع من الإعدادات، أو اختر مدينة يدويًا.",
+                    fontSize = 12.sp, color = NoorColor.inkSecondary,
+                    modifier = Modifier.padding(top = 6.dp))
             }
         }
 
@@ -147,12 +228,14 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
 
         item { SectionHeader("المدينة") }
         items(Cities.all) { city ->
-            val selected = cityName == city.name
+            val selected = !useCustomLocation && cityName == city.name
             SettingRow(
                 title = city.nameArabic,
                 subtitle = city.name,
                 selected = selected,
                 onClick = {
+                    // A manual pick turns off the device-location override.
+                    prefs.useCustomLocation = false
                     prefs.cityName = city.name
                     changed()
                 })

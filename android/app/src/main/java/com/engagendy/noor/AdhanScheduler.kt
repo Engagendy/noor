@@ -86,7 +86,7 @@ object AdhanScheduler {
         val fastingEnabled = notificationsEnabled &&
             noorPrefs.getBoolean("fasting.reminders", false)
         val prefs = PrayerPrefs(context)
-        val city = prefs.city
+        val city = prefs.location
         val zone = TimeZone.getTimeZone(city.timeZone)
         val now = Date()
         val preAlert = prefs.preAlertMinutes

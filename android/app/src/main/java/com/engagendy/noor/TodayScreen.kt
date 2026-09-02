@@ -90,7 +90,7 @@ fun TodayScreen(
     }
 
     val prayerPrefs = remember { PrayerPrefs(context) }
-    val entries = remember(now.time / 60_000, prayerPrefs.cityName) {
+    val entries = remember(now.time / 60_000, prayerPrefs.cityName, prayerPrefs.useCustomLocation) {
         PrayerEngine.today(prayerPrefs, now)
     }
 
@@ -99,7 +99,7 @@ fun TodayScreen(
             now = now,
             onCalendar = { showHijriCalendar = true },
             onSettings = { showSettings = true })
-        NextPrayerHero(entries = entries, now = now, city = prayerPrefs.city)
+        NextPrayerHero(entries = entries, now = now, city = prayerPrefs.location)
         JumuahCard(now = now, openKahf = { openSurah(18) })
         ContinueReadingCard(openResume)
         ContinueListeningCard()

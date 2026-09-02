@@ -89,7 +89,8 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
         return
     }
 
-    val city = remember(version) { prefs.city }
+    val city = remember(version) { prefs.location }
+    val useCustomLocation = remember(version) { prefs.useCustomLocation }
     val sound = remember(version) { prefs.sound }
     val method = remember(version) { prefs.method }
     val madhab = remember(version) { prefs.madhab }
@@ -131,7 +132,9 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
                 Icon(painterResource(R.drawable.ic_pin), contentDescription = null,
                      tint = NoorColor.inkSecondary, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(6.dp))
-                Text(city.nameArabic, fontSize = 13.sp, color = NoorColor.inkSecondary)
+                Text(
+                    if (useCustomLocation) "قرب ${city.nameArabic}" else city.nameArabic,
+                    fontSize = 13.sp, color = NoorColor.inkSecondary)
             }
             Spacer(Modifier.height(14.dp))
 

@@ -84,7 +84,7 @@ private data class NextPrayerData(
 /// Same engine + prefs the app uses (PrayerPrefs city/method/madhab).
 private fun computeNextPrayer(context: Context): NextPrayerData {
     val prefs = PrayerPrefs(context)
-    val city = prefs.city
+    val city = prefs.location
     val now = Date()
     val entries = PrayerEngine.today(prefs, now)
     val next = PrayerEngine.next(entries, now)

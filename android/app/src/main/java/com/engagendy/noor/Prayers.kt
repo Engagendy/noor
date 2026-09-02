@@ -91,6 +91,17 @@ object Cities {
     )
 
     fun named(name: String): CityPreset = all.firstOrNull { it.name == name } ?: all[0]
+
+    /// Closest preset to a coordinate — 1:1 with iOS `CityPreset.nearest`.
+    fun nearest(latitude: Double, longitude: Double): CityPreset =
+        all.minByOrNull { distanceSq(it, latitude, longitude) } ?: all[0]
+
+    private fun distanceSq(city: CityPreset, lat: Double, lon: Double): Double {
+        val dLat = city.latitude - lat
+        // Rough longitude scaling by latitude — plenty for a nearest label.
+        val dLon = (city.longitude - lon) * kotlin.math.cos(Math.toRadians(lat))
+        return dLat * dLat + dLon * dLon
+    }
 }
 
 /// Calculation methods exposed in Settings — 1:1 with iOS CalculationMethodChoice.
@@ -158,6 +169,46 @@ class PrayerPrefs(context: Context) {
 
     val city: CityPreset get() = Cities.named(cityName)
 
+    /// One-shot device location — mirrors the iOS "prayer.useCustom",
+    /// "prayer.customLat/Lon/Label" keys. Exact coordinates are stored and
+    /// reused offline; nothing ever leaves the device (CLAUDE.md rule 3).
+    var useCustomLocation: Boolean
+        get() = prefs.getBoolean("prayer.useCustom", false)
+        set(value) = prefs.edit().putBoolean("prayer.useCustom", value).apply()
+
+    val customLat: Double
+        get() = Double.fromBits(prefs.getLong("prayer.customLat", 0L))
+
+    val customLon: Double
+        get() = Double.fromBits(prefs.getLong("prayer.customLon", 0L))
+
+    val customLabel: String
+        get() = prefs.getString("prayer.customLabel", null) ?: "موقعي"
+
+    fun saveCustomLocation(latitude: Double, longitude: Double, label: String) {
+        prefs.edit()
+            .putLong("prayer.customLat", latitude.toRawBits())
+            .putLong("prayer.customLon", longitude.toRawBits())
+            .putString("prayer.customLabel", label)
+            .putBoolean("prayer.useCustom", true)
+            .apply()
+    }
+
+    /// The active location: the saved device fix (device time zone, labelled
+    /// with the nearest preset like iOS) or the selected city preset.
+    val location: CityPreset
+        get() = if (useCustomLocation) {
+            val label = customLabel
+            CityPreset(
+                name = label,
+                nameArabic = Cities.all.firstOrNull { it.name == label }?.nameArabic ?: label,
+                latitude = customLat,
+                longitude = customLon,
+                timeZone = TimeZone.getDefault().id)
+        } else {
+            city
+        }
+
     /// Adhan sound choice — mirrors iOS "prayer.sound".
     var sound: AdhanSound
         get() = AdhanSound.named(prefs.getString("prayer.sound", null))
@@ -221,7 +272,7 @@ object PrayerEngine {
     }
 
     fun today(prefs: PrayerPrefs, date: Date = Date()): List<PrayerEntry> =
-        today(prefs.city, date, prefs.method, prefs.madhab, prefs::adjustment)
+        today(prefs.location, date, prefs.method, prefs.madhab, prefs::adjustment)
 
     fun next(entries: List<PrayerEntry>, now: Date = Date()): PrayerEntry? =
         entries.firstOrNull { it.time.after(now) }

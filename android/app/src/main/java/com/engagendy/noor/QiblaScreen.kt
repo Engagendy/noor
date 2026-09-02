@@ -1,6 +1,7 @@
 package com.engagendy.noor
 
 import android.content.Context
+import android.hardware.GeomagneticField
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -16,12 +17,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -38,11 +41,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -80,8 +85,18 @@ object QiblaMath {
 fun QiblaScreen(onClose: () -> Unit) {
     val context = LocalContext.current
     val prefs = remember { PrayerPrefs(context) }
-    val city = remember { prefs.city }
-    val bearing = remember { QiblaMath.bearing(city.latitude, city.longitude) }
+    val location = remember { prefs.location }
+    val locationLabel = remember {
+        if (prefs.useCustomLocation) "قرب ${location.nameArabic}" else location.nameArabic
+    }
+    val bearing = remember { QiblaMath.bearing(location.latitude, location.longitude) }
+    // Magnetic → true north, like iOS `trueHeading` (rotation vector is
+    // magnetic-referenced on most devices).
+    val declination = remember {
+        GeomagneticField(
+            location.latitude.toFloat(), location.longitude.toFloat(),
+            0f, System.currentTimeMillis()).declination.toDouble()
+    }
 
     var heading by remember { mutableStateOf<Double?>(null) }
     DisposableEffect(Unit) {
@@ -90,15 +105,29 @@ fun QiblaScreen(onClose: () -> Unit) {
         val listener = object : SensorEventListener {
             private val rotation = FloatArray(9)
             private val orientation = FloatArray(3)
+            // Circular low-pass (EMA on sin/cos): kills sensor jitter
+            // without the ±180° wrap glitch of a plain angle filter.
+            private var filteredSin = 0.0
+            private var filteredCos = 0.0
+            private var primed = false
             override fun onSensorChanged(event: SensorEvent) {
                 SensorManager.getRotationMatrixFromVector(rotation, event.values)
                 SensorManager.getOrientation(rotation, orientation)
-                heading = (Math.toDegrees(orientation[0].toDouble()) + 360) % 360
+                val azimuth = orientation[0].toDouble() + Math.toRadians(declination)
+                val s = sin(azimuth)
+                val c = cos(azimuth)
+                if (!primed) {
+                    filteredSin = s; filteredCos = c; primed = true
+                } else {
+                    filteredSin += SMOOTHING * (s - filteredSin)
+                    filteredCos += SMOOTHING * (c - filteredCos)
+                }
+                heading = (Math.toDegrees(atan2(filteredSin, filteredCos)) + 360) % 360
             }
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
         }
         if (sensor != null) {
-            manager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_UI)
+            manager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_GAME)
         }
         onDispose { manager?.unregisterListener(listener) }
     }
@@ -125,8 +154,12 @@ fun QiblaScreen(onClose: () -> Unit) {
     }
     val pulseScale by animateFloatAsState(if (pulse) 1.06f else 1f,
         animationSpec = tween(350), label = "pulse")
-    val smoothTurn by animateFloatAsState((turn ?: 0.0).toFloat(),
-        animationSpec = tween(250), label = "turn")
+    val kaabaScale by animateFloatAsState(if (pulse) 1.15f else 1f,
+        animationSpec = tween(350), label = "kaaba")
+    // Heading is already low-pass filtered at the sensor — no tween on top
+    // (a tween would spin the long way around at the ±180° wrap).
+    val smoothTurn = (turn ?: 0.0).toFloat()
+    val headingFloat = (heading ?: 0.0).toFloat()
 
     val green = NoorColor.accentPrimary
     val gold = NoorColor.accentGold
@@ -147,15 +180,31 @@ fun QiblaScreen(onClose: () -> Unit) {
                  modifier = Modifier.size(44.dp).clickable(onClick = onClose).padding(10.dp))
         }
         Spacer(Modifier.height(8.dp))
-        Text(city.nameArabic, fontSize = 13.sp, color = NoorColor.inkSecondary)
+        Text(locationLabel, fontSize = 13.sp, color = NoorColor.inkSecondary)
         Spacer(Modifier.height(22.dp))
 
         // Compass never mirrors, even in RTL.
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Box(Modifier.size(330.dp), contentAlignment = Alignment.Center) {
-                // The Kaaba — the target, fixed at the top.
-                Text("🕋", fontSize = if (pulse) 50.sp else 44.sp,
-                     modifier = Modifier.align(Alignment.TopCenter).padding(top = 6.dp))
+                // The Kaaba — the target, fixed at the top, centered on the
+                // dial axis exactly like iOS (offset -150 from center).
+                Text("🕋", fontSize = 44.sp,
+                     modifier = Modifier
+                         .offset(y = (-150).dp)
+                         .graphicsLayer { scaleX = kaabaScale; scaleY = kaabaScale })
+                // Cardinal dial: ش/ق/ج/غ rotate with true north. Drawn in
+                // the LTR-forced box so CenterEnd is always geographic east
+                // (graphics coordinates, never RTL-mirrored).
+                Box(
+                    Modifier
+                        .size(280.dp)
+                        .graphicsLayer { rotationZ = if (hasCompass) -headingFloat else 0f }
+                ) {
+                    CardinalLabel("ش", Alignment.TopCenter, NoorColor.accentGold)
+                    CardinalLabel("ق", Alignment.CenterEnd, NoorColor.inkSecondary)
+                    CardinalLabel("ج", Alignment.BottomCenter, NoorColor.inkSecondary)
+                    CardinalLabel("غ", Alignment.CenterStart, NoorColor.inkSecondary)
+                }
                 Canvas(Modifier.size(280.dp)) {
                     val center = Offset(size.width / 2, size.height / 2)
                     // Turn arc: sweeps from the top by the remaining angle.
@@ -225,6 +274,16 @@ fun QiblaScreen(onClose: () -> Unit) {
             }
         }
     }
+}
+
+/// EMA factor for the compass low-pass (SENSOR_DELAY_GAME ≈ 50 Hz →
+/// ~0.9 s settle: steady needle, still responsive).
+private const val SMOOTHING = 0.12
+
+@Composable
+private fun BoxScope.CardinalLabel(letter: String, alignment: Alignment, color: Color) {
+    Text(letter, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = color,
+         modifier = Modifier.align(alignment).padding(22.dp))
 }
 
 private fun vibrate(context: Context) {
