@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        NoorPlayer.init(this)
         requestNotificationPermission()
         // Roll the exact-alarm window forward on every app open.
         AdhanScheduler.reschedule(this)
