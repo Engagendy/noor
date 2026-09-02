@@ -1,16 +1,13 @@
-<!-- Noor icon foreground — design 2a "Mihrab of light": paper mihrab arch with
-     the gold lamp (Ayat an-Nur motif). Geometry is 1:1 with the iOS icon
-     (Tools/generate_app_icon.swift, 64x64 design grid), scaled 0.9 and
-     centered in the 108dp adaptive canvas so it survives circular masks. -->
+<!-- Monochrome (themed icon) layer: same mihrab-and-lamp geometry, alpha only. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
   <group android:scaleX="0.9" android:scaleY="0.9" android:translateX="25.2" android:translateY="25.2">
     <path android:pathData="M32,6 C20,13 11,25 11,42 L11,58 L53,58 L53,42 C53,25 44,13 32,6 Z"
-          android:strokeWidth="4.4" android:strokeColor="#FAF6EE"
+          android:strokeWidth="4.4" android:strokeColor="#FFFFFFFF"
           android:fillColor="#00000000" android:strokeLineJoin="round"/>
-    <path android:fillColor="#D8B25E"
+    <path android:fillColor="#FFFFFFFF"
           android:pathData="M32,23a7,7 0 1,0 0,14a7,7 0 1,0 0,-14"/>
     <path android:pathData="M32,15L32,11M21,19L18.2,16.2M43,19L45.8,16.2"
-          android:strokeWidth="3" android:strokeColor="#D8B25E"
+          android:strokeWidth="3" android:strokeColor="#FFFFFFFF"
           android:fillColor="#00000000" android:strokeLineCap="round"/>
   </group>
 </vector>
