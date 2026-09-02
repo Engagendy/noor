@@ -106,7 +106,7 @@ fun NoorApp() {
         containerColor = NoorColor.bgPrimary,
         bottomBar = {
           androidx.compose.foundation.layout.Column {
-            PlayerBar()
+            AudioPillView()
             NavigationBar(containerColor = NoorColor.bgElevated) {
                 Tab.entries.forEach { item ->
                     NavigationBarItem(

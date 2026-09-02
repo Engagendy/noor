@@ -59,7 +59,8 @@ object Reciters {
     fun byId(id: String): ReciterA = all.firstOrNull { it.id == id } ?: all[0]
 }
 
-enum class PlaybackMode { CONTINUOUS, REPEAT_AYAH }
+/// Same four modes as the iOS QuranAudioPlayer.PlaybackMode.
+enum class PlaybackMode { CONTINUOUS, REPEAT_AYAH, PAGE_ONLY, MEMORIZE }
 
 /// Available speeds, like the iOS speed chips.
 val PlaybackSpeeds = listOf(0.75f, 1f, 1.25f, 1.5f, 2f)
@@ -79,9 +80,30 @@ object NoorPlayer {
     var speed by mutableFloatStateOf(1f)
         private set
 
+    /// Sleep timer deadline (epoch millis, 0 = off) — like iOS sleepDeadline.
+    var sleepDeadline by androidx.compose.runtime.mutableLongStateOf(0L)
+        private set
+    /// Stop when the surah ends (iOS "End of surah" sleep chip).
+    var stopAfterSurah by mutableStateOf(false)
+
+    /// Memorize loop (iOS MemorizeRangeSheet): ayah range + repeats per ayah.
+    var memorizeStart by mutableStateOf(1)
+        private set
+    var memorizeEnd by mutableStateOf(5)
+        private set
+    var memorizePerAyah by mutableStateOf(3)
+        private set
+    private var memorizeDone = 0
+
+    /// Last ayah of the page playback started on ("this page only" mode).
+    private var pageEndAyah = 0
+
     private var ayahCount = 0
+    val currentAyahCount: Int get() = ayahCount
     private var media: MediaPlayer? = null
     private var appContext: Context? = null
+    private val handler by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
+    private val sleepStop = Runnable { stop() }
 
     /// Called once from MainActivity — restores persisted choices.
     fun init(context: Context) {
@@ -108,17 +130,38 @@ object NoorPlayer {
         applySpeed()
     }
 
-    fun toggleMode() {
-        mode = if (mode == PlaybackMode.CONTINUOUS) PlaybackMode.REPEAT_AYAH
-               else PlaybackMode.CONTINUOUS
+    fun selectMode(value: PlaybackMode) {
+        mode = value
+        if (value != PlaybackMode.MEMORIZE) memorizeDone = 0
+    }
+
+    /// iOS setSleepTimer(minutes:) — null cancels.
+    fun setSleepTimer(minutes: Int?) {
+        handler.removeCallbacks(sleepStop)
+        if (minutes == null) { sleepDeadline = 0L; return }
+        sleepDeadline = System.currentTimeMillis() + minutes * 60_000L
+        handler.postDelayed(sleepStop, minutes * 60_000L)
+    }
+
+    /// iOS startMemorize(start:end:perAyah:) — loops the range, repeating
+    /// each ayah perAyah times.
+    fun startMemorize(start: Int, end: Int, perAyah: Int) {
+        memorizeStart = start.coerceAtLeast(1)
+        memorizeEnd = end.coerceAtLeast(memorizeStart)
+        memorizePerAyah = perAyah.coerceAtLeast(1)
+        memorizeDone = 0
+        mode = PlaybackMode.MEMORIZE
+        if (currentSurah != 0) playAyah(currentSurah, memorizeStart)
     }
 
     private fun url(host: String, surah: Int, ayah: Int) =
         "%s/%s/%03d%03d.mp3".format(host, reciter.folder, surah, ayah)
 
-    fun play(surah: Int, ayahCount: Int, fromAyah: Int, name: String) {
+    fun play(surah: Int, ayahCount: Int, fromAyah: Int, name: String, pageEnd: Int = 0) {
         this.ayahCount = ayahCount
         surahName = name
+        pageEndAyah = pageEnd
+        memorizeDone = 0
         playAyah(surah, fromAyah)
         startService()
     }
@@ -140,10 +183,33 @@ object NoorPlayer {
                 NoorAudioService.refresh(appContext)
             }
             setOnCompletionListener {
-                when {
-                    mode == PlaybackMode.REPEAT_AYAH -> playAyah(surah, ayah)
-                    currentAyah < ayahCount -> playAyah(surah, currentAyah + 1)
-                    else -> stop()
+                if (sleepDeadline != 0L && System.currentTimeMillis() >= sleepDeadline) {
+                    stop(); return@setOnCompletionListener
+                }
+                when (mode) {
+                    PlaybackMode.REPEAT_AYAH -> playAyah(surah, ayah)
+                    PlaybackMode.MEMORIZE -> {
+                        memorizeDone += 1
+                        when {
+                            memorizeDone < memorizePerAyah -> playAyah(surah, ayah)
+                            ayah < minOf(memorizeEnd, ayahCount) -> {
+                                memorizeDone = 0
+                                playAyah(surah, ayah + 1)
+                            }
+                            else -> {
+                                // Loop the range again from the start.
+                                memorizeDone = 0
+                                playAyah(surah, memorizeStart)
+                            }
+                        }
+                    }
+                    PlaybackMode.PAGE_ONLY -> {
+                        val last = if (pageEndAyah in 1..ayahCount) pageEndAyah else ayahCount
+                        if (currentAyah < last) playAyah(surah, currentAyah + 1) else stop()
+                    }
+                    PlaybackMode.CONTINUOUS ->
+                        if (currentAyah < ayahCount) playAyah(surah, currentAyah + 1)
+                        else stop()  // stopAfterSurah: surah end always stops here
                 }
             }
             setOnErrorListener { _, _, _ ->
@@ -178,6 +244,8 @@ object NoorPlayer {
     fun stop() {
         media?.release(); media = null
         isPlaying = false; currentSurah = 0; currentAyah = 0
+        handler.removeCallbacks(sleepStop)
+        sleepDeadline = 0L
         appContext?.let { it.stopService(Intent(it, NoorAudioService::class.java)) }
     }
 

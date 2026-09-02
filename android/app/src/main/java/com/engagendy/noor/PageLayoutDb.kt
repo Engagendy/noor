@@ -66,6 +66,26 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
         }
     }
 
+    /// First printed page of a surah (Madani mode entry from the surah list).
+    fun firstPage(surahId: Int): Int =
+        db.rawQuery(
+            "SELECT MIN(page) FROM page_word WHERE surah_id = ?",
+            arrayOf(surahId.toString())
+        ).use { c -> if (c.moveToFirst()) c.getInt(0).coerceAtLeast(1) else 1 }
+
+    /// Last ayah of a surah printed on the same page as the given ayah —
+    /// drives the "this page only" playback mode, like iOS pageEndAyah.
+    fun pageEndAyah(surahId: Int, ayah: Int): Int {
+        val page = db.rawQuery(
+            "SELECT page FROM page_word WHERE surah_id = ? AND ayah = ? LIMIT 1",
+            arrayOf(surahId.toString(), ayah.toString())
+        ).use { c -> if (c.moveToFirst()) c.getInt(0) else return 0 }
+        return db.rawQuery(
+            "SELECT MAX(ayah) FROM page_word WHERE page = ? AND surah_id = ?",
+            arrayOf(page.toString(), surahId.toString())
+        ).use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }
+    }
+
     /// The QCF glyph lines of one page, with the reserved surah-header and
     /// basmala lines injected (At-Tawbah opens without the basmala;
     /// Al-Fatiha's basmala is its first ayah).
