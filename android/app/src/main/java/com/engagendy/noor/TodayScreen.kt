@@ -1,7 +1,9 @@
 package com.engagendy.noor
 
 import android.icu.text.DateFormat
+import android.icu.text.RelativeDateTimeFormatter
 import android.icu.util.ULocale
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,13 +15,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,9 +37,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -39,123 +51,272 @@ import java.time.LocalDate
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlin.math.ceil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
-/// Home / Today — parity with the iOS App/TodayView.swift core cards:
-/// hijri header, next-prayer hero, continue reading, khatmah plan with
-/// the reading-streak flame, and the daily ayah.
+/// Home / Today — 1:1 with the iOS App/TodayView.swift structure and
+/// order: header (dates + calendar + settings), السلام عليكم, next-prayer
+/// hero, jumu'ah card on Fridays, continue reading, continue listening,
+/// khatmah plan, then the swipeable daily carousel with page dots.
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayScreen(
     modifier: Modifier = Modifier,
     openResume: () -> Unit,
     openPage: (Int) -> Unit,
+    openSurah: (Int) -> Unit,
+    openAthkar: () -> Unit,
 ) {
     val context = LocalContext.current
-    // Tools reachable from Today: the zakat calculator and prayer settings.
-    var showZakat by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
-    if (showZakat) {
-        ZakatScreen(onBack = { showZakat = false }, modifier = modifier)
-        return
-    }
+    var showHijriCalendar by remember { mutableStateOf(false) }
+    var showAllEvents by remember { mutableStateOf(false) }
+    var detailEvent by remember { mutableStateOf<IslamicEvent?>(null) }
+    var hadithDetail by remember { mutableStateOf<Pair<String, String>?>(null) }
+
     if (showSettings) {
-        PrayerSettingsScreen(modifier = modifier, onDone = { showSettings = false })
+        SettingsScreen(modifier = modifier, onDone = { showSettings = false })
         return
     }
-    val city = Cities.all[0]
-    val entries = remember { PrayerEngine.today(city) }
-    val next = PrayerEngine.next(entries)
-    val formatter = remember {
+
+    // A minute pulse, like the iOS TimelineView(.everyMinute).
+    val now by produceState(initialValue = Date()) {
+        while (true) {
+            delay(60_000)
+            value = Date()
+        }
+    }
+
+    val prayerPrefs = remember { PrayerPrefs(context) }
+    val entries = remember(now.time / 60_000, prayerPrefs.cityName) {
+        PrayerEngine.today(prayerPrefs, now)
+    }
+
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
+        TodayHeader(
+            now = now,
+            onCalendar = { showHijriCalendar = true },
+            onSettings = { showSettings = true })
+        NextPrayerHero(entries = entries, now = now, city = prayerPrefs.city)
+        JumuahCard(now = now, openKahf = { openSurah(18) })
+        ContinueReadingCard(openResume)
+        ContinueListeningCard()
+        KhatmahCard(openPage)
+        DailyCarousel(
+            now = now,
+            entries = entries,
+            openAthkar = openAthkar,
+            openEventDetail = { detailEvent = it },
+            openAllEvents = { showAllEvents = true },
+            openHadithDetail = { hadithDetail = it })
+        Spacer(Modifier.height(16.dp))
+    }
+
+    if (showHijriCalendar) HijriCalendarSheet(onDismiss = { showHijriCalendar = false })
+    if (showAllEvents) AllEventsSheet(onDismiss = { showAllEvents = false })
+    detailEvent?.let { EventDetailSheet(it, onDismiss = { detailEvent = null }) }
+    hadithDetail?.let { (arabic, reference) ->
+        ModalBottomSheet(
+            onDismissRequest = { hadithDetail = null },
+            containerColor = NoorColor.bgPrimary
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(reference, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                         color = NoorColor.accentGold, modifier = Modifier.weight(1f))
+                    ShareIconButton { shareRendered(context, arabic, reference) }
+                }
+                Text(arabic, fontSize = 17.sp, lineHeight = 34.sp,
+                     color = NoorColor.inkPrimary,
+                     modifier = Modifier.padding(top = 8.dp))
+            }
+        }
+    }
+}
+
+// MARK: - Header
+
+@Composable
+private fun TodayHeader(now: Date, onCalendar: () -> Unit, onSettings: () -> Unit) {
+    // Umm al-Qura hijri + gregorian date line, like the iOS header.
+    val dateLine = remember(now.time / 60_000) {
+        val hijri = DateFormat.getDateInstance(
+            DateFormat.LONG, ULocale("ar-SA@calendar=islamic-umalqura"))
+        val greg = SimpleDateFormat("EEEE d MMM", Locale("ar"))
+        "${hijri.format(now)} · ${greg.format(now)}"
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+    ) {
+        Text(dateLine, fontSize = 13.sp, color = NoorColor.inkSecondary,
+             maxLines = 1, overflow = TextOverflow.Ellipsis,
+             modifier = Modifier.weight(1f))
+        // 44dp tinted circle — the hijri calendar entry.
+        Icon(
+            painterResource(R.drawable.ic_calendar),
+            contentDescription = "التقويم الهجري",
+            tint = NoorColor.accentPrimary,
+            modifier = Modifier
+                .padding(start = 6.dp)
+                .size(44.dp)
+                .background(NoorColor.accentPrimary.copy(alpha = 0.12f), CircleShape)
+                .clickable(onClick = onCalendar)
+                .padding(11.dp))
+        Icon(
+            painterResource(R.drawable.ic_gear),
+            contentDescription = "الإعدادات",
+            tint = NoorColor.inkSecondary,
+            modifier = Modifier
+                .padding(start = 6.dp)
+                .size(44.dp)
+                .background(NoorColor.inkPrimary.copy(alpha = 0.06f), CircleShape)
+                .clickable(onClick = onSettings)
+                .padding(11.dp))
+    }
+    Text("السلام عليكم", fontSize = 28.sp, fontWeight = FontWeight.Bold,
+         color = NoorColor.inkPrimary,
+         modifier = Modifier.padding(top = 2.dp, bottom = 4.dp))
+}
+
+// MARK: - Next-prayer hero
+
+/// Green hero: next prayer name + time, big countdown, five progress
+/// capsules with the prayer names under them — per the iOS hero.
+@Composable
+private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPreset) {
+    val next = PrayerEngine.next(entries, now)
+    val passed = entries.count { !it.time.after(now) }
+    val formatter = remember(city.timeZone) {
         SimpleDateFormat("h:mm a", Locale("ar")).apply {
             timeZone = TimeZone.getTimeZone(city.timeZone)
         }
     }
-    // Umm al-Qura hijri date, like the iOS islamicUmmAlQura header.
-    val hijriLine = remember {
-        val hijri = DateFormat.getDateInstance(
-            DateFormat.LONG, ULocale("ar-SA@calendar=islamic-umalqura"))
-        val greg = SimpleDateFormat("EEEE d MMM", Locale("ar"))
-        "${hijri.format(Date())} · ${greg.format(Date())}"
-    }
+    val countdown = next?.let { relativeArabic(it.time.time - now.time) }
 
-    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
-        Text(hijriLine, fontSize = 13.sp, color = NoorColor.inkSecondary)
-        Text("السلام عليكم", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = NoorColor.inkPrimary)
-
-        // Next-prayer hero.
-        Column(
-            Modifier
-                .padding(top = 14.dp)
-                .fillMaxWidth()
-                .background(NoorColor.accentPrimary, RoundedCornerShape(18.dp))
-                .padding(20.dp)
-        ) {
-            Text(
-                next?.nameArabic ?: "انقضت صلوات اليوم",
-                fontSize = 14.sp,
-                color = NoorColor.bgPrimary.copy(alpha = 0.85f)
-            )
-            Text(
-                next?.let { formatter.format(it.time) } ?: "",
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold,
-                color = NoorColor.bgPrimary
-            )
-        }
-
-        ContinueReadingCard(openResume)
-        KhatmahCard(openPage)
-        DailyAyahCard()
-        ToolsCard(openZakat = { showZakat = true }, openSettings = { showSettings = true })
-    }
-}
-
-/// Tools row: zakat calculator + prayer settings entries.
-@Composable
-private fun ToolsCard(openZakat: () -> Unit, openSettings: () -> Unit) {
     Column(
         Modifier
-            .padding(top = 12.dp, bottom = 24.dp)
+            .padding(top = 8.dp)
             .fillMaxWidth()
-            .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
-            .padding(vertical = 6.dp)
+            .background(NoorColor.accentPrimary, RoundedCornerShape(18.dp))
+            .padding(20.dp)
     ) {
-        Text("الأدوات", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-             color = NoorColor.inkSecondary,
-             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = openZakat)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            Text("حاسبة الزكاة", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-                 color = NoorColor.inkPrimary)
-            Text("←", color = NoorColor.accentPrimary)
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Text(
+                next?.nameArabic ?: "العشاء",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 1.5.sp,
+                color = Color.White.copy(alpha = 0.85f))
+            Spacer(Modifier.weight(1f))
+            if (next != null) {
+                Text(formatter.format(next.time), fontSize = 13.sp,
+                     color = Color.White.copy(alpha = 0.85f))
+            }
         }
+        Text(
+            countdown ?: "انقضت صلوات اليوم",
+            fontSize = if (countdown != null) 32.sp else 22.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White,
+            modifier = Modifier.padding(top = 4.dp))
+        // Five progress capsules.
         Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = openSettings)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 14.dp)
         ) {
-            Text("إعدادات الصلاة", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-                 color = NoorColor.inkPrimary)
-            Text("←", color = NoorColor.accentPrimary)
+            repeat(5) { index ->
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .height(3.dp)
+                        .background(
+                            Color.White.copy(alpha = if (index < passed) 0.9f else 0.35f),
+                            CircleShape))
+            }
+        }
+        // Prayer names under their capsules.
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        ) {
+            entries.forEach { entry ->
+                Text(entry.nameArabic, fontSize = 10.5.sp,
+                     color = Color.White.copy(alpha = 0.8f),
+                     textAlign = TextAlign.Center,
+                     maxLines = 1,
+                     modifier = Modifier.weight(1f))
+            }
         }
     }
 }
+
+/// "بعد ٢٥ دقيقة" / "بعد ساعتين" — ICU handles the Arabic plurals, like
+/// the iOS .relative numeric format.
+private fun relativeArabic(millis: Long): String {
+    val totalMinutes = (millis / 60_000).toInt().coerceAtLeast(0)
+    val formatter = RelativeDateTimeFormatter.getInstance(ULocale("ar"))
+    return if (totalMinutes >= 60) {
+        formatter.format((totalMinutes / 60).toDouble(),
+            RelativeDateTimeFormatter.Direction.NEXT,
+            RelativeDateTimeFormatter.RelativeUnit.HOURS)
+    } else {
+        formatter.format(totalMinutes.coerceAtLeast(1).toDouble(),
+            RelativeDateTimeFormatter.Direction.NEXT,
+            RelativeDateTimeFormatter.RelativeUnit.MINUTES)
+    }
+}
+
+// MARK: - Jumu'ah
+
+/// Friday: Surat al-Kahf + salawat reminder (sunnah of the day).
+@Composable
+private fun JumuahCard(now: Date, openKahf: () -> Unit) {
+    val isFriday = remember(now.time / 60_000) {
+        java.util.Calendar.getInstance().apply { time = now }
+            .get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.FRIDAY
+    }
+    if (!isFriday) return
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth()
+            .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
+            .clickable(onClick = openKahf)
+            .padding(14.dp)
+    ) {
+        Icon(painterResource(R.drawable.ic_sparkle), contentDescription = null,
+             tint = NoorColor.accentGold, modifier = Modifier.size(20.dp))
+        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+            Text("جمعة مباركة", fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                 color = NoorColor.accentGold)
+            Text("سورة الكهف وكثرة الصلاة على النبي ﷺ",
+                 fontSize = 13.5.sp, color = NoorColor.inkPrimary)
+        }
+        Text("اقرأ الكهف", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+             color = NoorColor.bgPrimary,
+             modifier = Modifier
+                 .background(NoorColor.accentPrimary, CircleShape)
+                 .padding(horizontal = 12.dp, vertical = 6.dp))
+    }
+}
+
+// MARK: - Continue reading
 
 @Composable
 private fun ContinueReadingCard(openResume: () -> Unit) {
     val context = LocalContext.current
     val maxPage = remember { KhatmahPlan.prefs(context).getInt("khatmah.maxPage", 0) }
-    // Where "continue" resumes: last surah name or last Madani page —
-    // surah name needs the DB, so it loads off-main.
+    // Surah name needs the DB — loads off-main.
     val resumeLabel by produceState<String?>(initialValue = null) {
         value = withContext(Dispatchers.IO) {
             val p = KhatmahPlan.prefs(context)
@@ -163,44 +324,105 @@ private fun ContinueReadingCard(openResume: () -> Unit) {
                 "surah" -> {
                     val id = p.getInt("reader.lastSurah", 0)
                     QuranDb.get(context).surahs().firstOrNull { it.id == id }
-                        ?.let { "آخر قراءة: سورة ${it.nameArabic}" }
+                        ?.let { "سورة ${it.nameArabic}" }
                 }
-                "page" -> "آخر قراءة: صفحة ${p.getInt("reader.lastPage", 1).arabicIndic()}"
-                else -> null
+                "page" -> "صفحة ${p.getInt("reader.lastPage", 1).arabicIndic()}"
+                else -> "سورة الفاتحة"
             }
         }
     }
-    Column(
-        Modifier
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
             .padding(top = 12.dp)
             .fillMaxWidth()
             .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
             .clickable(onClick = openResume)
-            .padding(18.dp)
+            .padding(16.dp)
     ) {
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text("متابعة القراءة", fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
-                 color = NoorColor.inkPrimary)
-            Text("←", color = NoorColor.accentPrimary)
+        // Gold book badge, like the iOS card.
+        Icon(
+            painterResource(R.drawable.ic_book),
+            contentDescription = null,
+            tint = NoorColor.accentGold,
+            modifier = Modifier
+                .size(42.dp)
+                .background(NoorColor.accentGold.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+                .padding(10.dp))
+        Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
+            Text("متابعة القراءة", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.inkSecondary)
+            Text(resumeLabel ?: "", fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.inkPrimary,
+                 modifier = Modifier.padding(top = 2.dp))
+            if (maxPage > 0) {
+                ProgressBar(maxPage / 604f, NoorColor.accentGold,
+                            Modifier.padding(top = 8.dp), height = 3.dp)
+                Text("الختمة · صفحة ${maxPage.arabicIndic()} من ٦٠٤",
+                     fontSize = 11.sp, color = NoorColor.inkSecondary,
+                     modifier = Modifier.padding(top = 3.dp))
+            }
         }
-        resumeLabel?.let {
-            Text(it, fontSize = 13.sp, color = NoorColor.inkSecondary,
-                 modifier = Modifier.padding(top = 4.dp))
-        }
-        if (maxPage > 0) {
-            ProgressBar(maxPage / 604f, NoorColor.accentGold, Modifier.padding(top = 10.dp))
-            Text(
-                "الختمة · صفحة ${maxPage.arabicIndic()} من ٦٠٤",
-                fontSize = 11.sp,
-                color = NoorColor.inkSecondary,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
+        Text("‹", fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
+             color = NoorColor.inkSecondary)
     }
 }
 
-/// Khatmah plan card: daily portion, behind/ahead, streak flame, and the
-/// goal dialog with the 15/30/60/90-day presets — per the iOS card.
+// MARK: - Continue listening
+
+/// Resume the last recitation (surah + ayah persisted by the player) —
+/// shown only when a position was saved, per the iOS card.
+@Composable
+private fun ContinueListeningCard() {
+    val context = LocalContext.current
+    val saved = remember {
+        val p = context.getSharedPreferences("audio", android.content.Context.MODE_PRIVATE)
+        val surah = p.getInt("audio.lastSurah", 0)
+        val ayah = p.getInt("audio.lastAyah", 0)
+        if (surah > 0 && ayah > 0) surah to ayah else null
+    } ?: return
+    val surahInfo by produceState<Surah?>(initialValue = null) {
+        value = withContext(Dispatchers.IO) {
+            QuranDb.get(context).surahs().firstOrNull { it.id == saved.first }
+        }
+    }
+    val surah = surahInfo ?: return
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth()
+            .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
+            .clickable {
+                NoorPlayer.play(surah.id, surah.ayahCount, saved.second, surah.nameArabic)
+            }
+            .padding(14.dp)
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_play),
+            contentDescription = null,
+            tint = NoorColor.accentPrimary,
+            modifier = Modifier
+                .size(42.dp)
+                .background(NoorColor.accentPrimary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                .padding(11.dp))
+        Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
+            Text("متابعة الاستماع", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.inkSecondary)
+            Text("سورة ${surah.nameArabic} · آية ${saved.second.arabicIndic()}",
+                 fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.inkPrimary,
+                 modifier = Modifier.padding(top = 2.dp))
+        }
+        Icon(painterResource(R.drawable.ic_play), contentDescription = "تشغيل",
+             tint = NoorColor.accentPrimary, modifier = Modifier.size(26.dp))
+    }
+}
+
+// MARK: - Khatmah plan
+
+/// Khatmah plan card: daily portion, behind-schedule note, streak flame,
+/// frontier link, and the goal sheet (15/30/60/90 + reached-page stepper).
 @Composable
 private fun KhatmahCard(openPage: (Int) -> Unit) {
     val context = LocalContext.current
@@ -232,32 +454,33 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .background(NoorColor.accentGold.copy(alpha = 0.12f), CircleShape)
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
-                )
+                        .padding(horizontal = 8.dp, vertical = 3.dp))
             }
             Spacer(Modifier.weight(1f))
             if (plan != null) {
+                val completions = KhatmahPlan.completions(context)
                 Text(
-                    "اليوم ${plan.dayNumber().arabicIndic()} من ${plan.goalDays.arabicIndic()}",
+                    buildString {
+                        append("اليوم ${plan.dayNumber().arabicIndic()} من ${plan.goalDays.arabicIndic()}")
+                        if (completions > 0) append(" · ختمة ${(completions + 1).arabicIndic()}")
+                    },
                     fontSize = 12.sp,
-                    color = NoorColor.accentGold
-                )
-                Text(
-                    "تعديل",
-                    fontSize = 12.sp,
-                    color = NoorColor.inkSecondary,
-                    modifier = Modifier.clickable { showGoal = true }.padding(start = 10.dp, top = 2.dp, bottom = 2.dp)
-                )
+                    color = NoorColor.accentGold)
+                // Edit (slider) icon opens the goal sheet.
+                Icon(
+                    painterResource(R.drawable.ic_sliders),
+                    contentDescription = "تعديل الخطة",
+                    tint = NoorColor.inkSecondary,
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                        .size(34.dp)
+                        .clickable { showGoal = true }
+                        .padding(8.dp))
             }
         }
         if (plan == null) {
-            Text(
-                "ابدأ خطة ختمة ←",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = NoorColor.inkPrimary,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+            Text("ابدأ خطة ختمة ←", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.inkPrimary, modifier = Modifier.padding(top = 8.dp))
         } else {
             val now = LocalDate.now()
             val lastRead = KhatmahPlan.lastRead(context)
@@ -265,17 +488,12 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
             val behind = plan.pagesBehind(now, lastRead)
             when {
                 plan.isFinished(lastRead) -> {
-                    Text(
-                        "ما شاء الله، أتممت الختمة 🎉",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = NoorColor.accentPrimary,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+                    Text("ما شاء الله، أتممت الختمة 🎉", fontSize = 16.sp,
+                         fontWeight = FontWeight.SemiBold, color = NoorColor.accentPrimary,
+                         modifier = Modifier.padding(top = 8.dp))
                     Text(
                         "ابدأ ختمة جديدة",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                         color = NoorColor.bgPrimary,
                         modifier = Modifier
                             .padding(top = 8.dp)
@@ -285,42 +503,31 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
                                 KhatmahPlan.start(context, plan.goalDays)
                                 version += 1
                             }
-                            .padding(horizontal = 14.dp, vertical = 7.dp)
-                    )
+                            .padding(horizontal = 14.dp, vertical = 7.dp))
                 }
                 left == 0 -> Text(
                     "أنجزت وِرد اليوم، تقبّل الله",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                     color = NoorColor.accentPrimary,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+                    modifier = Modifier.padding(top = 8.dp))
                 else -> {
                     Text(
                         "اقرأ إلى صفحة ${plan.targetPage(now).arabicIndic()} · بقيت ${left.arabicIndic()} صفحات اليوم",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                         color = NoorColor.inkPrimary,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+                        modifier = Modifier.padding(top = 8.dp))
                     if (behind > 0) {
-                        Text(
-                            "متأخر بـ ${behind.arabicIndic()} صفحات عن الخطة",
-                            fontSize = 12.sp,
-                            color = NoorColor.accentGold,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
+                        Text("متأخر بـ ${behind.arabicIndic()} صفحات عن الخطة",
+                             fontSize = 12.sp, color = NoorColor.accentGold,
+                             modifier = Modifier.padding(top = 2.dp))
                     }
                 }
             }
             ProgressBar(minOf(lastRead, 604) / 604f, NoorColor.accentPrimary,
                         Modifier.padding(top = 10.dp))
-            Text(
-                "تابع من صفحة ${KhatmahPlan.frontier(context).arabicIndic()} ←",
-                fontSize = 12.sp,
-                color = NoorColor.accentPrimary,
-                modifier = Modifier.padding(top = 6.dp)
-            )
+            Text("تابع من صفحة ${KhatmahPlan.frontier(context).arabicIndic()} ←",
+                 fontSize = 12.sp, color = NoorColor.accentPrimary,
+                 modifier = Modifier.padding(top = 6.dp))
         }
     }
 
@@ -338,20 +545,25 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
                 version += 1
                 showGoal = false
             },
+            onPageChanged = { version += 1 },
             onDismiss = { showGoal = false })
     }
 }
 
-/// Choose the khatmah duration; shows the resulting daily portion live.
+/// Choose the khatmah duration; shows the daily portion live. With an
+/// active plan it also offers the "I reached page N" stepper, like iOS.
 @Composable
 private fun KhatmahGoalDialog(
     hasPlan: Boolean,
     initialDays: Int,
     onStart: (Int) -> Unit,
     onStop: () -> Unit,
+    onPageChanged: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val context = LocalContext.current
     var days by remember { mutableIntStateOf(initialDays) }
+    var reachedPage by remember { mutableIntStateOf(KhatmahPlan.lastRead(context)) }
     Dialog(onDismissRequest = onDismiss) {
         Column(
             Modifier
@@ -376,20 +588,40 @@ private fun KhatmahGoalDialog(
                             .weight(1f)
                             .background(
                                 if (on) NoorColor.accentPrimary else NoorColor.bgElevated,
-                                RoundedCornerShape(12.dp)
-                            )
+                                RoundedCornerShape(12.dp))
                             .clickable { days = preset }
-                            .padding(vertical = 12.dp)
-                    )
+                            .padding(vertical = 12.dp))
+                }
+            }
+            if (hasPlan) {
+                // "I reached page N" — corrects the frontier by hand.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                ) {
+                    Text("وصلت إلى صفحة ${reachedPage.arabicIndic()}",
+                         fontSize = 15.sp, color = NoorColor.inkPrimary,
+                         modifier = Modifier.weight(1f))
+                    StepperText("−", enabled = reachedPage > 0) {
+                        reachedPage -= 1
+                        KhatmahPlan.prefs(context).edit()
+                            .putInt("khatmah.page", minOf(reachedPage + 1, 604)).apply()
+                        onPageChanged()
+                    }
+                    StepperText("+", enabled = reachedPage < 604) {
+                        reachedPage += 1
+                        KhatmahPlan.prefs(context).edit()
+                            .putInt("khatmah.page", minOf(reachedPage + 1, 604)).apply()
+                        onPageChanged()
+                    }
                 }
             }
             Text(
                 "وِردك اليومي: نحو ${ceil(604.0 / days).toInt().arabicIndic()} صفحات",
                 fontSize = 14.sp,
-                color = NoorColor.accentGold
-            )
+                color = NoorColor.accentGold)
             Text(
-                "ابدأ الخطة",
+                if (hasPlan) "حفظ الخطة" else "ابدأ الخطة",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = NoorColor.bgPrimary,
@@ -399,8 +631,7 @@ private fun KhatmahGoalDialog(
                     .fillMaxWidth()
                     .background(NoorColor.accentPrimary, RoundedCornerShape(14.dp))
                     .clickable { onStart(days) }
-                    .padding(vertical = 14.dp)
-            )
+                    .padding(vertical = 14.dp))
             if (hasPlan) {
                 TextButton(onClick = onStop, modifier = Modifier.fillMaxWidth()) {
                     Text("إيقاف الخطة", color = NoorColor.inkSecondary)
@@ -410,62 +641,339 @@ private fun KhatmahGoalDialog(
     }
 }
 
-/// Daily ayah: same deterministic pick as iOS (dayOfYear·271 + year mod
-/// verse count) — text straight from the verified DB, in Amiri.
 @Composable
-private fun DailyAyahCard() {
+private fun StepperText(label: String, enabled: Boolean, onClick: () -> Unit) {
+    Text(
+        label,
+        fontSize = 18.sp,
+        textAlign = TextAlign.Center,
+        color = if (enabled) NoorColor.accentPrimary
+                else NoorColor.inkSecondary.copy(alpha = 0.4f),
+        modifier = Modifier
+            .padding(start = 8.dp)
+            .size(32.dp)
+            .background(NoorColor.bgElevated, CircleShape)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(top = 3.dp))
+}
+
+// MARK: - Daily carousel
+
+/// Fixed-height swipeable slot for the four daily cards, with clearly
+/// visible green page dots and a slow 12-second auto-advance — per the
+/// iOS TabView + carouselDots.
+@Composable
+private fun DailyCarousel(
+    now: Date,
+    entries: List<PrayerEntry>,
+    openAthkar: () -> Unit,
+    openEventDetail: (IslamicEvent) -> Unit,
+    openAllEvents: () -> Unit,
+    openHadithDetail: (Pair<String, String>) -> Unit,
+) {
+    val pagerState = rememberPagerState(pageCount = { 4 })
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(12_000)
+            pagerState.animateScrollToPage((pagerState.currentPage + 1) % 4)
+        }
+    }
+    HorizontalPager(
+        state = pagerState,
+        pageSpacing = 12.dp,
+        modifier = Modifier.padding(top = 12.dp).fillMaxWidth().height(250.dp)
+    ) { page ->
+        Box(Modifier.fillMaxSize()) {
+            when (page) {
+                0 -> DailyAyahCard(now)
+                1 -> DailyDhikrCard(now, entries, openAthkar)
+                2 -> DailyHadithCard(now, openHadithDetail)
+                3 -> OnThisDayCard(now, openEventDetail, openAllEvents)
+            }
+        }
+    }
+    // Custom page dots in the app colors.
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+    ) {
+        repeat(4) { index ->
+            val active = pagerState.currentPage == index
+            val dotSize by animateDpAsState(if (active) 8.dp else 6.dp, label = "dot")
+            Box(
+                Modifier
+                    .size(dotSize)
+                    .background(
+                        if (active) NoorColor.accentPrimary
+                        else NoorColor.inkSecondary.copy(alpha = 0.3f),
+                        CircleShape))
+        }
+    }
+}
+
+/// Shared chrome for a carousel page: elevated card, small caption title,
+/// share button — uniform height across the four cards.
+@Composable
+private fun CarouselCard(
+    title: String,
+    trailing: String? = null,
+    onShare: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
+) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
+            .let { if (onClick != null) it.clickable(onClick = onClick) else it }
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Text(title, fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.inkSecondary)
+            Spacer(Modifier.weight(1f))
+            if (trailing != null) {
+                Text(trailing, fontSize = 12.sp, color = NoorColor.accentGold,
+                     modifier = Modifier.padding(end = 4.dp))
+            }
+            if (onShare != null) ShareIconButton(onShare)
+        }
+        content()
+    }
+}
+
+/// Daily ayah — same deterministic pick as iOS (dayOfYear·271 + year mod
+/// verse count); text straight from the verified DB, in Amiri.
+@Composable
+private fun DailyAyahCard(now: Date) {
     val context = LocalContext.current
-    val daily by produceState<Pair<Verse, Surah>?>(initialValue = null) {
+    val daily by produceState<Pair<Verse, String>?>(initialValue = null) {
         value = withContext(Dispatchers.IO) {
             val db = QuranDb.get(context)
             val today = LocalDate.now()
             val index = (today.dayOfYear * 271 + today.year) % maxOf(db.verseCount(), 1)
-            db.verseAt(index)?.let { pair ->
-                pair.first to db.surahs().first { it.id == pair.first.surahId }
-            }
+            db.verseAt(index)
         }
     }
-    val loaded = daily ?: return
-
-    Column(
-        Modifier
-            .padding(top = 12.dp)
-            .fillMaxWidth()
-            .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
-            .padding(16.dp)
+    val loaded = daily
+    val reference = loaded?.let {
+        "${it.second} ${it.first.surahId.arabicIndic()}:${it.first.ayah.arabicIndic()}"
+    }
+    CarouselCard(
+        title = "آية اليوم",
+        onShare = loaded?.let {
+            { shareRendered(context, it.first.text, reference ?: "", useQuranFont = true) }
+        }
     ) {
-        Text("آية اليوم", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-             color = NoorColor.inkSecondary)
-        Text(
-            loaded.first.text,
-            fontFamily = QuranFont,
-            fontSize = 21.sp,
-            lineHeight = 44.sp,
-            color = NoorColor.inkPrimary,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        Text(
-            "${loaded.second.nameArabic} ${loaded.first.surahId.arabicIndic()}:${loaded.first.ayah.arabicIndic()}",
-            fontSize = 12.sp,
-            color = NoorColor.inkSecondary,
-            modifier = Modifier.padding(top = 6.dp)
-        )
+        if (loaded != null) {
+            Text(
+                loaded.first.text,
+                fontFamily = QuranFont,
+                fontSize = 20.sp,
+                lineHeight = 40.sp,
+                color = NoorColor.inkPrimary,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 2.dp))
+            Spacer(Modifier.weight(1f))
+            Text(reference ?: "", fontSize = 12.sp, color = NoorColor.inkSecondary,
+                 modifier = Modifier.padding(top = 6.dp))
+        }
     }
 }
 
+/// Time-aware dhikr: morning after Fajr, evening from Dhuhr, sleep after
+/// Isha — keyed to the user's actual prayer times, like iOS dhikrSlot.
 @Composable
-private fun ProgressBar(fraction: Float, tint: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier) {
+private fun DailyDhikrCard(now: Date, entries: List<PrayerEntry>, openAthkar: () -> Unit) {
+    val context = LocalContext.current
+    val athkar by produceState<List<DhikrCategory>>(initialValue = emptyList()) {
+        value = withContext(Dispatchers.IO) { AthkarStore.load(context) }
+    }
+    val slot = remember(athkar, now.time / 60_000, entries) {
+        val morningEvening = athkar.firstOrNull { it.title.contains("الصباح") }?.items.orEmpty()
+        val sleep = athkar.firstOrNull { it.title == "أذكار النوم" }?.items.orEmpty()
+        val times = entries.associate { it.key to it.time }
+        val isha = times["isha"]
+        val dhuhr = times["dhuhr"]
+        val fajr = times["fajr"]
+        when {
+            isha != null && !now.before(isha) -> "أذكار النوم" to sleep
+            dhuhr != null && !now.before(dhuhr) -> "أذكار المساء" to morningEvening
+            fajr != null && now.before(fajr) -> "أذكار النوم" to sleep
+            else -> "أذكار الصباح" to morningEvening
+        }
+    }
+    val dhikr = remember(slot) {
+        val pool = slot.second
+        if (pool.isEmpty()) null
+        else pool[(LocalDate.now().dayOfYear * 31) % pool.size]
+    }
+    CarouselCard(
+        title = slot.first,
+        onShare = dhikr?.let { { shareRendered(context, it.text, "حصن المسلم") } },
+        onClick = openAthkar
+    ) {
+        if (dhikr != null) {
+            Text(dhikr.text, fontSize = 16.sp, lineHeight = 30.sp,
+                 color = NoorColor.inkPrimary,
+                 maxLines = 5, overflow = TextOverflow.Ellipsis,
+                 modifier = Modifier.padding(top = 2.dp))
+            Spacer(Modifier.weight(1f))
+            if (dhikr.count > 1) {
+                Text("يُكرر ${dhikr.count.arabicIndic()} مرات",
+                     fontSize = 12.sp, color = NoorColor.accentGold,
+                     modifier = Modifier.padding(top = 6.dp))
+            }
+        }
+    }
+}
+
+/// Daily hadith: from a downloaded Sahih when available, else the bundled
+/// Forty collections — same deterministic picks as iOS.
+@Composable
+private fun DailyHadithCard(now: Date, openDetail: (Pair<String, String>) -> Unit) {
+    val context = LocalContext.current
+    val daily by produceState<Pair<String, String>?>(initialValue = null) {
+        value = withContext(Dispatchers.IO) {
+            val day = LocalDate.now().dayOfYear
+            HadithLibrary.daily(context, day)?.let { (hadith, collection) ->
+                hadith.arabic to "${collection.nameArabic} · ${hadith.number}"
+            } ?: run {
+                val items = HadithStore.load(context)
+                if (items.isEmpty()) null
+                else {
+                    val item = items[(day * 13) % items.size]
+                    item.arabic to "${item.collectionArabic} · الحديث ${item.number.arabicIndic()}"
+                }
+            }
+        }
+    }
+    val loaded = daily
+    CarouselCard(
+        title = "حديث اليوم",
+        trailing = loaded?.second?.substringBefore(" ·"),
+        onShare = loaded?.let { { shareRendered(context, it.first, it.second) } },
+        onClick = loaded?.let { { openDetail(it) } }
+    ) {
+        if (loaded != null) {
+            Text(loaded.first, fontSize = 16.sp, lineHeight = 30.sp,
+                 color = NoorColor.inkPrimary,
+                 maxLines = 4, overflow = TextOverflow.Ellipsis,
+                 modifier = Modifier.padding(top = 2.dp))
+            Spacer(Modifier.weight(1f))
+            Text("اقرأ الحديث كاملًا", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.bgPrimary,
+                 modifier = Modifier
+                     .padding(top = 6.dp)
+                     .align(Alignment.CenterHorizontally)
+                     .background(NoorColor.accentPrimary, CircleShape)
+                     .clickable { openDetail(loaded) }
+                     .padding(horizontal = 14.dp, vertical = 6.dp))
+        }
+    }
+}
+
+/// "On this day" in Islamic history by the Hijri date; falls back to the
+/// next upcoming event so the card always has something to show.
+@Composable
+private fun OnThisDayCard(
+    now: Date,
+    openEventDetail: (IslamicEvent) -> Unit,
+    openAllEvents: () -> Unit,
+) {
+    val context = LocalContext.current
+    val state = remember(now.time / 60_000) {
+        val (day, month, _) = Hijri.components(now)
+        val todays = IslamicEvent.events(day, month)
+        if (todays.isNotEmpty()) Triple(todays, null as Int?, true)
+        else {
+            // Next event in the Hijri year (approximate 30-day months).
+            val today = month * 30 + day
+            val upcoming = IslamicEvent.all
+                .map { event ->
+                    val target = event.month * 30 + event.day
+                    val delta = if (target >= today) target - today else target + 360 - today
+                    event to delta
+                }
+                .minByOrNull { it.second }
+            Triple(listOfNotNull(upcoming?.first), upcoming?.second, false)
+        }
+    }
+    val (events, inDays, isToday) = state
+    val first = events.firstOrNull() ?: return
+    CarouselCard(
+        title = if (isToday) "في مثل هذا اليوم" else "قريبًا في التاريخ الإسلامي",
+        onShare = {
+            val reference = buildString {
+                append("${first.day.arabicIndic()} ${first.monthName()}")
+                first.yearHijri?.let { append(" · سنة ${it.arabicIndic()} هـ") }
+            }
+            shareRendered(context, first.arabic, reference)
+        }
+    ) {
+        Column(
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .clickable { openEventDetail(first) }
+                .padding(top = 2.dp)
+        ) {
+            Text(first.arabic, fontSize = 15.sp, lineHeight = 26.sp,
+                 color = NoorColor.inkPrimary,
+                 maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Row(modifier = Modifier.padding(top = 4.dp)) {
+                first.yearHijri?.let {
+                    Text("سنة ${it.arabicIndic()} هـ", fontSize = 12.sp,
+                         color = NoorColor.accentGold,
+                         modifier = Modifier.padding(end = 8.dp))
+                }
+                inDays?.let {
+                    Text("بعد ${it.arabicIndic()} يومًا تقريبًا", fontSize = 12.sp,
+                         color = NoorColor.accentGold)
+                }
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
+            modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
+        ) {
+            Text("التفاصيل", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.bgPrimary,
+                 modifier = Modifier
+                     .background(NoorColor.accentPrimary, CircleShape)
+                     .clickable { openEventDetail(first) }
+                     .padding(horizontal = 14.dp, vertical = 6.dp))
+            Text("كل الأحداث", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.accentPrimary,
+                 modifier = Modifier
+                     .background(NoorColor.accentPrimary.copy(alpha = 0.1f), CircleShape)
+                     .clickable(onClick = openAllEvents)
+                     .padding(horizontal = 14.dp, vertical = 6.dp))
+        }
+    }
+}
+
+// MARK: - Shared bits
+
+@Composable
+private fun ProgressBar(
+    fraction: Float,
+    tint: Color,
+    modifier: Modifier = Modifier,
+    height: androidx.compose.ui.unit.Dp = 5.dp,
+) {
     Box(
         modifier
             .fillMaxWidth()
-            .height(5.dp)
+            .height(height)
             .background(NoorColor.inkPrimary.copy(alpha = 0.07f), CircleShape)
     ) {
         Box(
             Modifier
                 .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                .height(5.dp)
-                .background(tint, CircleShape)
-        )
+                .height(height)
+                .background(tint, CircleShape))
     }
 }

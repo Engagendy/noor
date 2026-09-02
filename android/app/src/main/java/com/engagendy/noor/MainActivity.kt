@@ -132,7 +132,9 @@ fun NoorApp() {
             Tab.TODAY -> TodayScreen(
                 modifier,
                 openResume = ::openResume,
-                openPage = { page -> mushafPage = page; tab = Tab.QURAN })
+                openPage = { page -> mushafPage = page; tab = Tab.QURAN },
+                openSurah = { id -> quranSurah = id; tab = Tab.QURAN },
+                openAthkar = { tab = Tab.ATHKAR })
             Tab.QURAN -> QuranScreen(modifier, mushafPage = mushafPage,
                                      resumeSurahId = quranSurah,
                                      onMushafClosed = { mushafPage = 0 },
