@@ -150,8 +150,14 @@ fun RuqyahScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         .background(NoorColor.bgElevated, RoundedCornerShape(14.dp))
                         .padding(16.dp)
                 ) {
-                    Text(item.reference, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                         color = NoorColor.accentGold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(item.reference, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                             color = NoorColor.accentGold, modifier = Modifier.weight(1f))
+                        ShareIconButton {
+                            shareRendered(context, item.text, item.reference, useQuranFont = true,
+                                          attribution = "نور Noor · Quran text: Tanzil.net")
+                        }
+                    }
                     Text(item.text, fontFamily = QuranFont, fontSize = 20.sp, lineHeight = 44.sp,
                          color = NoorColor.inkPrimary, modifier = Modifier.padding(top = 8.dp))
                 }
@@ -171,8 +177,12 @@ fun RuqyahScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 ) {
                     Text(dua.text, fontSize = 17.sp, lineHeight = 30.sp,
                          color = NoorColor.inkPrimary)
-                    Text(dua.source, fontSize = 12.sp, color = NoorColor.accentGold,
-                         modifier = Modifier.padding(top = 8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                        Text(dua.source, fontSize = 12.sp, color = NoorColor.accentGold,
+                             modifier = Modifier.weight(1f))
+                        ShareIconButton { shareRendered(context, dua.text, dua.source) }
+                    }
                 }
             }
             item { Spacer(Modifier.padding(bottom = 24.dp)) }
@@ -265,8 +275,15 @@ fun SelectedDuasScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 ) {
                     Text(item.text, fontFamily = QuranFont, fontSize = 19.sp, lineHeight = 40.sp,
                          color = NoorColor.inkPrimary)
-                    Text(item.reference, fontSize = 12.sp, color = NoorColor.accentGold,
-                         modifier = Modifier.padding(top = 8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                        Text(item.reference, fontSize = 12.sp, color = NoorColor.accentGold,
+                             modifier = Modifier.weight(1f))
+                        ShareIconButton {
+                            shareRendered(context, item.text, item.reference, useQuranFont = true,
+                                          attribution = "نور Noor · Quran text: Tanzil.net")
+                        }
+                    }
                 }
             }
             item {
@@ -282,8 +299,13 @@ fun SelectedDuasScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         .background(NoorColor.bgElevated, RoundedCornerShape(14.dp))
                         .padding(16.dp)
                 ) {
-                    Text(dua.title, fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                         color = NoorColor.accentGold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(dua.title, fontSize = 15.sp, fontWeight = FontWeight.Bold,
+                             color = NoorColor.accentGold, modifier = Modifier.weight(1f))
+                        ShareIconButton {
+                            shareRendered(context, dua.text, "${dua.title} · ${dua.source}")
+                        }
+                    }
                     Text(dua.text, fontSize = 17.sp, lineHeight = 30.sp,
                          color = NoorColor.inkPrimary, modifier = Modifier.padding(top = 6.dp))
                     Text(dua.source, fontSize = 12.sp, color = NoorColor.inkSecondary,
@@ -414,6 +436,7 @@ val divineNames: List<DivineName> = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AsmaulHusnaScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     var selected by remember { mutableStateOf<DivineName?>(null) }
 
     Column(modifier.fillMaxSize()) {
@@ -456,7 +479,13 @@ fun AsmaulHusnaScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                      color = NoorColor.accentGold, modifier = Modifier.padding(top = 8.dp))
                 Text(name.meaningArabic, fontSize = 17.sp, lineHeight = 28.sp,
                      textAlign = TextAlign.Center, color = NoorColor.inkPrimary,
-                     modifier = Modifier.padding(top = 12.dp, bottom = 20.dp))
+                     modifier = Modifier.padding(top = 12.dp, bottom = 12.dp))
+                // Branded card share, like the iOS AsmaulHusnaView sheet.
+                ShareIconButton {
+                    shareRendered(context, name.arabic, "من أسماء الله الحسنى",
+                                  translation = name.meaningArabic)
+                }
+                Spacer(Modifier.padding(bottom = 8.dp))
             }
         }
     }

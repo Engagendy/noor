@@ -240,7 +240,8 @@ fun ReaderScreen(
                 surahId = surah.id,
                 ayah = verse.ayah,
                 ayahText = verse.text,
-                onDismiss = { tafsirAyah = 0 })
+                onDismiss = { tafsirAyah = 0 },
+                surahName = surah.nameArabic)
         }
     }
 

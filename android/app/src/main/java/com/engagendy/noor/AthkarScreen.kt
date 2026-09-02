@@ -126,6 +126,7 @@ fun AthkarScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val progress = remember { mutableStateMapOf<Int, Int>() }
     Column(modifier.fillMaxSize()) {
         Row(
@@ -157,12 +158,21 @@ fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modif
                 ) {
                     Text(dhikr.text, fontSize = 18.sp, lineHeight = 32.sp,
                          color = NoorColor.inkPrimary)
-                    Text(
-                        if (complete) "تم ✓" else "${done.arabicIndic()} / ${dhikr.count.arabicIndic()}",
-                        fontSize = 13.sp,
-                        color = if (complete) NoorColor.accentPrimary else NoorColor.inkSecondary,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                    ) {
+                        Text(
+                            if (complete) "تم ✓" else "${done.arabicIndic()} / ${dhikr.count.arabicIndic()}",
+                            fontSize = 13.sp,
+                            color = if (complete) NoorColor.accentPrimary else NoorColor.inkSecondary,
+                        )
+                        // Branded image card, like the iOS AthkarView share.
+                        ShareIconButton {
+                            shareRendered(context, dhikr.text, category.title,
+                                          attribution = "نور Noor · حصن المسلم")
+                        }
+                    }
                 }
             }
         }

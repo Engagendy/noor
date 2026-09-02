@@ -400,7 +400,7 @@ private fun HadithDetailScreen(detail: HadithDetail, onBack: () -> Unit,
                              val bitmap = withContext(Dispatchers.IO) {
                                  ShareCard.render(context, detail.arabic, detail.reference)
                              }
-                             ShareCard.share(context, bitmap)
+                             ShareCard.share(context, bitmap, text = detail.reference)
                          }
                      }
                      .padding(8.dp))

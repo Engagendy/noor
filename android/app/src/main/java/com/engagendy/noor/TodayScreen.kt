@@ -763,7 +763,8 @@ private fun DailyAyahCard(now: Date) {
     CarouselCard(
         title = "آية اليوم",
         onShare = loaded?.let {
-            { shareRendered(context, it.first.text, reference ?: "", useQuranFont = true) }
+            { shareRendered(context, it.first.text, reference ?: "", useQuranFont = true,
+                            attribution = "نور Noor · Quran text: Tanzil.net") }
         }
     ) {
         if (loaded != null) {
@@ -812,7 +813,10 @@ private fun DailyDhikrCard(now: Date, entries: List<PrayerEntry>, openAthkar: ()
     }
     CarouselCard(
         title = slot.first,
-        onShare = dhikr?.let { { shareRendered(context, it.text, "حصن المسلم") } },
+        onShare = dhikr?.let {
+            { shareRendered(context, it.text, "حصن المسلم",
+                            attribution = "نور Noor · Hisn al-Muslim") }
+        },
         onClick = openAthkar
     ) {
         if (dhikr != null) {
