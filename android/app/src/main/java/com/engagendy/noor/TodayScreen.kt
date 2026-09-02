@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -149,9 +150,12 @@ fun TodayScreen(
 private fun TodayHeader(now: Date, onCalendar: () -> Unit, onSettings: () -> Unit) {
     // Umm al-Qura hijri + gregorian date line, like the iOS header.
     val dateLine = remember(now.time / 60_000) {
+        // Locale-aware like iOS: ar → ar-SA umm-al-qura, en → islamic-umalqura
+        // with the English locale.
+        val lang = if (isArabicLocale()) "ar-SA" else "en"
         val hijri = DateFormat.getDateInstance(
-            DateFormat.LONG, ULocale("ar-SA@calendar=islamic-umalqura"))
-        val greg = SimpleDateFormat("EEEE d MMM", Locale("ar"))
+            DateFormat.LONG, ULocale("$lang@calendar=islamic-umalqura"))
+        val greg = SimpleDateFormat("EEEE d MMM", Locale.getDefault())
         "${hijri.format(now)} · ${greg.format(now)}"
     }
     Row(
@@ -164,7 +168,7 @@ private fun TodayHeader(now: Date, onCalendar: () -> Unit, onSettings: () -> Uni
         // 44dp tinted circle — the hijri calendar entry.
         Icon(
             painterResource(R.drawable.ic_calendar),
-            contentDescription = "التقويم الهجري",
+            contentDescription = stringResource(R.string.g1_hijri_calendar),
             tint = NoorColor.accentPrimary,
             modifier = Modifier
                 .padding(start = 6.dp)
@@ -175,7 +179,7 @@ private fun TodayHeader(now: Date, onCalendar: () -> Unit, onSettings: () -> Uni
                 .padding(11.dp))
         Icon(
             painterResource(R.drawable.ic_gear),
-            contentDescription = "الإعدادات",
+            contentDescription = stringResource(R.string.g1_settings),
             tint = NoorColor.inkSecondary,
             modifier = Modifier
                 .padding(start = 6.dp)
@@ -185,7 +189,7 @@ private fun TodayHeader(now: Date, onCalendar: () -> Unit, onSettings: () -> Uni
                 .clickable(onClick = onSettings)
                 .padding(11.dp))
     }
-    Text("السلام عليكم", fontSize = 28.sp, fontWeight = FontWeight.Bold,
+    Text(stringResource(R.string.g1_salam), fontSize = 28.sp, fontWeight = FontWeight.Bold,
          color = NoorColor.inkPrimary,
          modifier = Modifier.padding(top = 2.dp, bottom = 4.dp))
 }
@@ -199,11 +203,11 @@ private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPres
     val next = PrayerEngine.next(entries, now)
     val passed = entries.count { !it.time.after(now) }
     val formatter = remember(city.timeZone) {
-        SimpleDateFormat("h:mm a", Locale("ar")).apply {
+        SimpleDateFormat("h:mm a", Locale.getDefault()).apply {
             timeZone = TimeZone.getTimeZone(city.timeZone)
         }
     }
-    val countdown = next?.let { relativeArabic(it.time.time - now.time) }
+    val countdown = next?.let { relativeCountdown(it.time.time - now.time) }
 
     Box(
         Modifier
@@ -217,7 +221,7 @@ private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPres
         Column(Modifier.padding(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Text(
-                next?.nameArabic ?: "العشاء",
+                next?.displayName() ?: stringResource(R.string.g1_isha),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 1.5.sp,
@@ -229,7 +233,7 @@ private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPres
             }
         }
         Text(
-            countdown ?: "انقضت صلوات اليوم",
+            countdown ?: stringResource(R.string.g1_all_prayers_done),
             fontSize = if (countdown != null) 32.sp else 22.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color.White,
@@ -255,7 +259,7 @@ private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPres
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
         ) {
             entries.forEach { entry ->
-                Text(entry.nameArabic, fontSize = 10.5.sp,
+                Text(entry.displayName(), fontSize = 10.5.sp,
                      color = Color.White.copy(alpha = 0.8f),
                      textAlign = TextAlign.Center,
                      maxLines = 1,
@@ -266,11 +270,11 @@ private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPres
     }
 }
 
-/// "بعد ٢٥ دقيقة" / "بعد ساعتين" — ICU handles the Arabic plurals, like
-/// the iOS .relative numeric format.
-private fun relativeArabic(millis: Long): String {
+/// "بعد ٢٥ دقيقة" / "in 25 minutes" — ICU handles the plurals in the
+/// current UI locale, like the iOS .relative numeric format.
+private fun relativeCountdown(millis: Long): String {
     val totalMinutes = (millis / 60_000).toInt().coerceAtLeast(0)
-    val formatter = RelativeDateTimeFormatter.getInstance(ULocale("ar"))
+    val formatter = RelativeDateTimeFormatter.getInstance(ULocale.getDefault())
     return if (totalMinutes >= 60) {
         formatter.format((totalMinutes / 60).toDouble(),
             RelativeDateTimeFormatter.Direction.NEXT,
@@ -309,12 +313,12 @@ private fun JumuahCard(now: Date, openKahf: () -> Unit) {
         Icon(painterResource(R.drawable.ic_sparkle), contentDescription = null,
              tint = NoorColor.accentGold, modifier = Modifier.size(20.dp))
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text("جمعة مباركة", fontSize = 14.sp, fontWeight = FontWeight.Bold,
+            Text(stringResource(R.string.g1_jumuah_title), fontSize = 14.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.accentGold)
-            Text("سورة الكهف وكثرة الصلاة على النبي ﷺ",
+            Text(stringResource(R.string.g1_jumuah_subtitle),
                  fontSize = 13.5.sp, color = NoorColor.inkPrimary)
         }
-        Text("اقرأ الكهف", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+        Text(stringResource(R.string.g1_read_kahf), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
              color = NoorColor.bgPrimary,
              modifier = Modifier
                  .background(NoorColor.accentPrimary, CircleShape)
@@ -337,10 +341,13 @@ private fun ContinueReadingCard(openResume: () -> Unit) {
                 "surah" -> {
                     val id = p.getInt("reader.lastSurah", 0)
                     QuranDb.get(context).surahs().firstOrNull { it.id == id }
-                        ?.let { "سورة ${it.nameArabic}" }
+                        ?.let { context.getString(R.string.g1_surah_prefix, it.displayName()) }
                 }
-                "page" -> "صفحة ${p.getInt("reader.lastPage", 1).arabicIndic()}"
-                else -> "سورة الفاتحة"
+                "page" -> context.getString(
+                    R.string.g1_page_n,
+                    p.getInt("reader.lastPage", 1).localizedDigits())
+                else -> QuranDb.get(context).surahs().firstOrNull { it.id == 1 }
+                    ?.let { context.getString(R.string.g1_surah_prefix, it.displayName()) }
             }
         }
     }
@@ -364,7 +371,7 @@ private fun ContinueReadingCard(openResume: () -> Unit) {
                 .background(NoorColor.accentGold.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
                 .padding(10.dp))
         Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-            Text("متابعة القراءة", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g1_continue_reading), fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.inkSecondary)
             Text(resumeLabel ?: "", fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.inkPrimary,
@@ -372,14 +379,14 @@ private fun ContinueReadingCard(openResume: () -> Unit) {
             if (maxPage > 0) {
                 ProgressBar(maxPage / 604f, NoorColor.accentGold,
                             Modifier.padding(top = 8.dp), height = 3.dp)
-                Text("الختمة · صفحة ${maxPage.arabicIndic()} من ٦٠٤",
+                Text(stringResource(R.string.g1_khatmah_page_of,
+                                    maxPage.localizedDigits(), 604.localizedDigits()),
                      fontSize = 11.sp, color = NoorColor.inkSecondary,
                      modifier = Modifier.padding(top = 3.dp))
             }
         }
-        // Disclosure ("go deeper") points LEFT in this forced-RTL app —
-        // explicit drawable, no auto-mirroring.
-        Icon(painterResource(R.drawable.ic_chevron_left), contentDescription = null,
+        // Disclosure ("go deeper") points forward: LEFT in RTL, RIGHT in LTR.
+        Icon(painterResource(NoorIcons.chevronForward()), contentDescription = null,
              tint = NoorColor.inkSecondary, modifier = Modifier.size(16.dp))
     }
 }
@@ -411,7 +418,7 @@ private fun ContinueListeningCard() {
             .clip(RoundedCornerShape(18.dp))
             .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
             .clickable {
-                NoorPlayer.play(surah.id, surah.ayahCount, saved.second, surah.nameArabic)
+                NoorPlayer.play(surah.id, surah.ayahCount, saved.second, surah.displayName())
             }
             .padding(14.dp)
     ) {
@@ -424,14 +431,15 @@ private fun ContinueListeningCard() {
                 .background(NoorColor.accentPrimary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
                 .padding(11.dp))
         Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
-            Text("متابعة الاستماع", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g1_continue_listening), fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.inkSecondary)
-            Text("سورة ${surah.nameArabic} · آية ${saved.second.arabicIndic()}",
+            Text(stringResource(R.string.g1_listening_line,
+                                surah.displayName(), saved.second.localizedDigits()),
                  fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.inkPrimary,
                  modifier = Modifier.padding(top = 2.dp))
         }
-        Icon(painterResource(R.drawable.ic_play_circle_fill), contentDescription = "تشغيل",
+        Icon(painterResource(R.drawable.ic_play_circle_fill), contentDescription = stringResource(R.string.g1_play),
              tint = NoorColor.accentPrimary, modifier = Modifier.size(26.dp))
     }
 }
@@ -461,11 +469,11 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Text("خطة الختمة", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g1_khatmah_plan), fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.inkSecondary)
             if (streak > 1) {
                 Text(
-                    "🔥 ${streak.arabicIndic()}",
+                    "🔥 ${streak.localizedDigits()}",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = NoorColor.accentGold,
@@ -479,15 +487,20 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
                 val completions = KhatmahPlan.completions(context)
                 Text(
                     buildString {
-                        append("اليوم ${plan.dayNumber().arabicIndic()} من ${plan.goalDays.arabicIndic()}")
-                        if (completions > 0) append(" · ختمة ${(completions + 1).arabicIndic()}")
+                        append(stringResource(R.string.g1_khatmah_day_of,
+                            plan.dayNumber().localizedDigits(), plan.goalDays.localizedDigits()))
+                        if (completions > 0) {
+                            append(" · ")
+                            append(stringResource(R.string.g1_khatmah_count,
+                                                  (completions + 1).localizedDigits()))
+                        }
                     },
                     fontSize = 12.sp,
                     color = NoorColor.accentGold)
                 // Edit (slider) icon opens the goal sheet.
                 Icon(
                     painterResource(R.drawable.ic_sliders),
-                    contentDescription = "تعديل الخطة",
+                    contentDescription = stringResource(R.string.g1_edit_plan),
                     tint = NoorColor.inkSecondary,
                     modifier = Modifier
                         .padding(start = 4.dp)
@@ -497,14 +510,15 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
             }
         }
         if (plan == null) {
-            // Forward action: arrow points LEFT in the forced-RTL app.
+            // Forward action: arrow points LEFT in RTL, RIGHT in LTR.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(top = 8.dp)
             ) {
-                Text("ابدأ خطة ختمة", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                Text(stringResource(R.string.g1_start_khatmah), fontSize = 15.sp,
+                     fontWeight = FontWeight.SemiBold,
                      color = NoorColor.inkPrimary)
-                Icon(painterResource(R.drawable.ic_arrow_left), contentDescription = null,
+                Icon(painterResource(NoorIcons.forward()), contentDescription = null,
                      tint = NoorColor.inkPrimary,
                      modifier = Modifier.padding(start = 6.dp).size(15.dp))
             }
@@ -515,11 +529,11 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
             val behind = plan.pagesBehind(now, lastRead)
             when {
                 plan.isFinished(lastRead) -> {
-                    Text("ما شاء الله، أتممت الختمة 🎉", fontSize = 16.sp,
+                    Text(stringResource(R.string.g1_khatmah_finished), fontSize = 16.sp,
                          fontWeight = FontWeight.SemiBold, color = NoorColor.accentPrimary,
                          modifier = Modifier.padding(top = 8.dp))
                     Text(
-                        "ابدأ ختمة جديدة",
+                        stringResource(R.string.g1_start_new_khatmah),
                         fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                         color = NoorColor.bgPrimary,
                         modifier = Modifier
@@ -534,18 +548,19 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
                             .padding(horizontal = 14.dp, vertical = 7.dp))
                 }
                 left == 0 -> Text(
-                    "أنجزت وِرد اليوم، تقبّل الله",
+                    stringResource(R.string.g1_daily_portion_done),
                     fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                     color = NoorColor.accentPrimary,
                     modifier = Modifier.padding(top = 8.dp))
                 else -> {
                     Text(
-                        "اقرأ إلى صفحة ${plan.targetPage(now).arabicIndic()} · بقيت ${left.arabicIndic()} صفحات اليوم",
+                        stringResource(R.string.g1_read_to_page,
+                            plan.targetPage(now).localizedDigits(), left.localizedDigits()),
                         fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                         color = NoorColor.inkPrimary,
                         modifier = Modifier.padding(top = 8.dp))
                     if (behind > 0) {
-                        Text("متأخر بـ ${behind.arabicIndic()} صفحات عن الخطة",
+                        Text(stringResource(R.string.g1_behind_plan, behind.localizedDigits()),
                              fontSize = 12.sp, color = NoorColor.accentGold,
                              modifier = Modifier.padding(top = 2.dp))
                     }
@@ -553,14 +568,15 @@ private fun KhatmahCard(openPage: (Int) -> Unit) {
             }
             ProgressBar(minOf(lastRead, 604) / 604f, NoorColor.accentPrimary,
                         Modifier.padding(top = 10.dp))
-            // Forward action: arrow points LEFT in the forced-RTL app.
+            // Forward action: arrow points LEFT in RTL, RIGHT in LTR.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(top = 6.dp)
             ) {
-                Text("تابع من صفحة ${KhatmahPlan.frontier(context).arabicIndic()}",
+                Text(stringResource(R.string.g1_continue_from_page,
+                                    KhatmahPlan.frontier(context).localizedDigits()),
                      fontSize = 12.sp, color = NoorColor.accentPrimary)
-                Icon(painterResource(R.drawable.ic_arrow_left), contentDescription = null,
+                Icon(painterResource(NoorIcons.forward()), contentDescription = null,
                      tint = NoorColor.accentPrimary,
                      modifier = Modifier.padding(start = 4.dp).size(12.dp))
             }
@@ -606,7 +622,7 @@ private fun KhatmahGoalDialog(
                 .background(NoorColor.bgPrimary, RoundedCornerShape(18.dp))
                 .padding(20.dp)
         ) {
-            Text("أتمّ القرآن خلال", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g1_finish_quran_in), fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.inkSecondary)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -615,7 +631,7 @@ private fun KhatmahGoalDialog(
                 listOf(15, 30, 60, 90).forEach { preset ->
                     val on = days == preset
                     Text(
-                        preset.arabicIndic(),
+                        preset.localizedDigits(),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = if (on) NoorColor.bgPrimary else NoorColor.inkPrimary,
@@ -636,7 +652,7 @@ private fun KhatmahGoalDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
                 ) {
-                    Text("وصلت إلى صفحة ${reachedPage.arabicIndic()}",
+                    Text(stringResource(R.string.g1_reached_page, reachedPage.localizedDigits()),
                          fontSize = 15.sp, color = NoorColor.inkPrimary,
                          modifier = Modifier.weight(1f))
                     StepperText("−", enabled = reachedPage > 0) {
@@ -654,11 +670,13 @@ private fun KhatmahGoalDialog(
                 }
             }
             Text(
-                "وِردك اليومي: نحو ${ceil(604.0 / days).toInt().arabicIndic()} صفحات",
+                stringResource(R.string.g1_daily_portion,
+                               ceil(604.0 / days).toInt().localizedDigits()),
                 fontSize = 14.sp,
                 color = NoorColor.accentGold)
             Text(
-                if (hasPlan) "حفظ الخطة" else "ابدأ الخطة",
+                if (hasPlan) stringResource(R.string.g1_save_plan)
+                else stringResource(R.string.g1_start_plan),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = NoorColor.bgPrimary,
@@ -672,7 +690,7 @@ private fun KhatmahGoalDialog(
                     .padding(vertical = 14.dp))
             if (hasPlan) {
                 TextButton(onClick = onStop, modifier = Modifier.fillMaxWidth()) {
-                    Text("إيقاف الخطة", color = NoorColor.inkSecondary)
+                    Text(stringResource(R.string.g1_stop_plan), color = NoorColor.inkSecondary)
                 }
             }
         }
@@ -793,15 +811,21 @@ private fun DailyAyahCard(now: Date) {
             val db = QuranDb.get(context)
             val today = LocalDate.now()
             val index = (today.dayOfYear * 271 + today.year) % maxOf(db.verseCount(), 1)
-            db.verseAt(index)
+            db.verseAt(index)?.let { (verse, arabicName) ->
+                // English UI shows the transliterated surah name, like iOS.
+                val name = if (isArabicLocale()) arabicName
+                    else db.surahs().firstOrNull { it.id == verse.surahId }
+                        ?.nameTransliterated ?: arabicName
+                verse to name
+            }
         }
     }
     val loaded = daily
     val reference = loaded?.let {
-        "${it.second} ${it.first.surahId.arabicIndic()}:${it.first.ayah.arabicIndic()}"
+        "${it.second} ${it.first.surahId.localizedDigits()}:${it.first.ayah.localizedDigits()}"
     }
     CarouselCard(
-        title = "آية اليوم",
+        title = stringResource(R.string.g1_daily_ayah),
         onShare = loaded?.let {
             { shareRendered(context, it.first.text, reference ?: "", useQuranFont = true,
                             attribution = "نور Noor · Quran text: Tanzil.net") }
@@ -840,10 +864,10 @@ private fun DailyDhikrCard(now: Date, entries: List<PrayerEntry>, openAthkar: ()
         val dhuhr = times["dhuhr"]
         val fajr = times["fajr"]
         when {
-            isha != null && !now.before(isha) -> "أذكار النوم" to sleep
-            dhuhr != null && !now.before(dhuhr) -> "أذكار المساء" to morningEvening
-            fajr != null && now.before(fajr) -> "أذكار النوم" to sleep
-            else -> "أذكار الصباح" to morningEvening
+            isha != null && !now.before(isha) -> R.string.g1_sleep_athkar to sleep
+            dhuhr != null && !now.before(dhuhr) -> R.string.g1_evening_athkar to morningEvening
+            fajr != null && now.before(fajr) -> R.string.g1_sleep_athkar to sleep
+            else -> R.string.g1_morning_athkar to morningEvening
         }
     }
     val dhikr = remember(slot) {
@@ -852,7 +876,7 @@ private fun DailyDhikrCard(now: Date, entries: List<PrayerEntry>, openAthkar: ()
         else pool[(LocalDate.now().dayOfYear * 31) % pool.size]
     }
     CarouselCard(
-        title = slot.first,
+        title = stringResource(slot.first),
         onShare = dhikr?.let {
             { shareRendered(context, it.text, "حصن المسلم",
                             attribution = "نور Noor · Hisn al-Muslim") }
@@ -866,7 +890,7 @@ private fun DailyDhikrCard(now: Date, entries: List<PrayerEntry>, openAthkar: ()
                  modifier = Modifier.padding(top = 2.dp))
             Spacer(Modifier.weight(1f))
             if (dhikr.count > 1) {
-                Text("يُكرر ${dhikr.count.arabicIndic()} مرات",
+                Text(stringResource(R.string.g1_repeat_times, dhikr.count.localizedDigits()),
                      fontSize = 12.sp, color = NoorColor.accentGold,
                      modifier = Modifier.padding(top = 6.dp))
             }
@@ -889,14 +913,15 @@ private fun DailyHadithCard(now: Date, openDetail: (Pair<String, String>) -> Uni
                 if (items.isEmpty()) null
                 else {
                     val item = items[(day * 13) % items.size]
-                    item.arabic to "${item.collectionArabic} · الحديث ${item.number.arabicIndic()}"
+                    item.arabic to "${item.collectionArabic} · " + context.getString(
+                        R.string.g1_hadith_n, item.number.localizedDigits())
                 }
             }
         }
     }
     val loaded = daily
     CarouselCard(
-        title = "حديث اليوم",
+        title = stringResource(R.string.g1_daily_hadith),
         trailing = loaded?.second?.substringBefore(" ·"),
         onShare = loaded?.let { { shareRendered(context, it.first, it.second) } },
         onClick = loaded?.let { { openDetail(it) } }
@@ -907,7 +932,7 @@ private fun DailyHadithCard(now: Date, openDetail: (Pair<String, String>) -> Uni
                  maxLines = 4, overflow = TextOverflow.Ellipsis,
                  modifier = Modifier.padding(top = 2.dp))
             Spacer(Modifier.weight(1f))
-            Text("اقرأ الحديث كاملًا", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g1_read_full_hadith), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.bgPrimary,
                  modifier = Modifier
                      .padding(top = 6.dp)
@@ -949,11 +974,15 @@ private fun OnThisDayCard(
     val (events, inDays, isToday) = state
     val first = events.firstOrNull() ?: return
     CarouselCard(
-        title = if (isToday) "في مثل هذا اليوم" else "قريبًا في التاريخ الإسلامي",
+        title = if (isToday) stringResource(R.string.g1_on_this_day)
+                else stringResource(R.string.g1_coming_up),
         onShare = {
             val reference = buildString {
-                append("${first.day.arabicIndic()} ${first.monthName()}")
-                first.yearHijri?.let { append(" · سنة ${it.arabicIndic()} هـ") }
+                append("${first.day.localizedDigits()} ${hijriMonthName(first.month)}")
+                first.yearHijri?.let {
+                    append(" · ")
+                    append(context.getString(R.string.g1_year_h, it.localizedDigits()))
+                }
             }
             shareRendered(context, first.arabic, reference)
         }
@@ -970,12 +999,12 @@ private fun OnThisDayCard(
                  maxLines = 3, overflow = TextOverflow.Ellipsis)
             Row(modifier = Modifier.padding(top = 4.dp)) {
                 first.yearHijri?.let {
-                    Text("سنة ${it.arabicIndic()} هـ", fontSize = 12.sp,
+                    Text(stringResource(R.string.g1_year_h, it.localizedDigits()), fontSize = 12.sp,
                          color = NoorColor.accentGold,
                          modifier = Modifier.padding(end = 8.dp))
                 }
                 inDays?.let {
-                    Text("بعد ${it.arabicIndic()} يومًا تقريبًا", fontSize = 12.sp,
+                    Text(stringResource(R.string.g1_in_days_approx, it.localizedDigits()), fontSize = 12.sp,
                          color = NoorColor.accentGold)
                 }
             }
@@ -984,14 +1013,14 @@ private fun OnThisDayCard(
             horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
             modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
         ) {
-            Text("التفاصيل", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g1_details), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.bgPrimary,
                  modifier = Modifier
                      .clip(CircleShape)
                      .background(NoorColor.accentPrimary, CircleShape)
                      .clickable { openEventDetail(first) }
                      .padding(horizontal = 14.dp, vertical = 6.dp))
-            Text("كل الأحداث", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g1_all_events), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.accentPrimary,
                  modifier = Modifier
                      .clip(CircleShape)

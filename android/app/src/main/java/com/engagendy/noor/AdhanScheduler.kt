@@ -45,9 +45,11 @@ object AdhanScheduler {
             val importance = if (sound == AdhanSound.SILENT)
                 NotificationManager.IMPORTANCE_LOW else NotificationManager.IMPORTANCE_HIGH
             val channel = NotificationChannel(
-                id, "الأذان — ${sound.nameArabic}", importance
+                id,
+                context.getString(R.string.g1_channel_adhan, context.getString(sound.nameRes)),
+                importance
             ).apply {
-                description = "تنبيهات مواقيت الصلاة"
+                description = context.getString(R.string.g1_channel_adhan_desc)
                 when {
                     sound.rawRes != null -> setSound(
                         Uri.parse("android.resource://${context.packageName}/${sound.rawRes}"),
@@ -63,14 +65,15 @@ object AdhanScheduler {
         }
         if (manager.getNotificationChannel(PREALERT_CHANNEL_ID) == null) {
             manager.createNotificationChannel(NotificationChannel(
-                PREALERT_CHANNEL_ID, "تنبيه قبل الصلاة", NotificationManager.IMPORTANCE_DEFAULT
-            ).apply { description = "تذكير لطيف قبل الأذان" })
+                PREALERT_CHANNEL_ID, context.getString(R.string.g1_channel_prealert),
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply { description = context.getString(R.string.g1_channel_prealert_desc) })
         }
         if (manager.getNotificationChannel(REMINDER_CHANNEL_ID) == null) {
             manager.createNotificationChannel(NotificationChannel(
-                REMINDER_CHANNEL_ID, "تذكيرات",
+                REMINDER_CHANNEL_ID, context.getString(R.string.g1_channel_reminders),
                 NotificationManager.IMPORTANCE_DEFAULT
-            ).apply { description = "تذكير صيام السنّة" })
+            ).apply { description = context.getString(R.string.g1_channel_reminders_desc) })
         }
     }
 
@@ -90,7 +93,7 @@ object AdhanScheduler {
         val zone = TimeZone.getTimeZone(city.timeZone)
         val now = Date()
         val preAlert = prefs.preAlertMinutes
-        val formatter = SimpleDateFormat("h:mm a", Locale("ar")).apply { timeZone = zone }
+        val formatter = SimpleDateFormat("h:mm a", Locale.getDefault()).apply { timeZone = zone }
 
         fun pending(requestCode: Int, build: (Intent.() -> Unit)? = null): PendingIntent {
             val intent = Intent(context, AdhanAlarmReceiver::class.java).apply {
@@ -125,7 +128,7 @@ object AdhanScheduler {
                 val enabled = notificationsEnabled && prefs.notificationEnabled(entry.key)
                 // Adhan itself.
                 val adhanPending = pending(adhanCode) {
-                    putExtra("nameArabic", entry.nameArabic)
+                    putExtra("nameArabic", entry.displayName())
                     putExtra("timeString", formatter.format(entry.time))
                 }
                 if (enabled && entry.time.after(now)) {
@@ -136,7 +139,7 @@ object AdhanScheduler {
                 // Gentle pre-adhan reminder.
                 val preTime = Date(entry.time.time - preAlert * 60_000L)
                 val prePending = pending(preCode) {
-                    putExtra("nameArabic", entry.nameArabic)
+                    putExtra("nameArabic", entry.displayName())
                     putExtra("timeString", formatter.format(entry.time))
                     putExtra("preAlertMinutes", preAlert)
                 }
@@ -169,8 +172,8 @@ object AdhanScheduler {
                 .apply { add(Calendar.DAY_OF_YEAR, 1) }
                 .get(Calendar.DAY_OF_WEEK)
             val dayName = when (tomorrow) {
-                Calendar.MONDAY -> "الاثنين"
-                Calendar.THURSDAY -> "الخميس"
+                Calendar.MONDAY -> context.getString(R.string.g1_monday)
+                Calendar.THURSDAY -> context.getString(R.string.g1_thursday)
                 else -> null
             }
             val intent = Intent(context, AdhanAlarmReceiver::class.java).apply {
@@ -200,8 +203,8 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
             val notification = android.app.Notification
                 .Builder(context, AdhanScheduler.REMINDER_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_sparkle)
-                .setContentTitle("صيام السنّة غدًا")
-                .setContentText("غدًا $dayName — من أيام صيام التطوع")
+                .setContentTitle(context.getString(R.string.g1_fasting_title))
+                .setContentText(context.getString(R.string.g1_fasting_text, dayName))
                 .setContentIntent(PendingIntent.getActivity(
                     context, 0, Intent(context, MainActivity::class.java),
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
@@ -219,9 +222,11 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
         val channel = if (isPreAlert) AdhanScheduler.PREALERT_CHANNEL_ID
             else AdhanScheduler.channelId(PrayerPrefs(context).sound)
         // Calm microcopy like iOS — no exclamation marks.
-        val title = if (isPreAlert) "اقتربت صلاة $nameArabic"
-            else "حان وقت صلاة $nameArabic"
-        val text = if (isPreAlert) "بعد ${preAlert.arabicIndic()} دقائق · $timeString"
+        val title = if (isPreAlert) context.getString(R.string.g1_prealert_title, nameArabic)
+            else context.getString(R.string.g1_adhan_title, nameArabic)
+        val text = if (isPreAlert)
+            context.getString(R.string.g1_prealert_text,
+                              preAlert.localizedDigits(), timeString)
             else "$nameArabic · $timeString"
         val notification = android.app.Notification.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_clock)

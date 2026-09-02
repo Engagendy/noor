@@ -124,9 +124,13 @@ enum class CalculationMethodChoice(
     }
 }
 
-enum class MadhabChoice(val nameArabic: String, val adhanMadhab: Madhab) {
-    SHAFI("الشافعي والمالكي والحنبلي", Madhab.SHAFI),
-    HANAFI("الحنفي", Madhab.HANAFI);
+enum class MadhabChoice(
+    val nameArabic: String,
+    val nameEnglish: String,
+    val adhanMadhab: Madhab,
+) {
+    SHAFI("الشافعي والمالكي والحنبلي", "Shafi'i, Maliki, Hanbali", Madhab.SHAFI),
+    HANAFI("الحنفي", "Hanafi", Madhab.HANAFI);
 
     companion object {
         fun named(name: String?): MadhabChoice =
@@ -136,12 +140,12 @@ enum class MadhabChoice(val nameArabic: String, val adhanMadhab: Madhab) {
 
 /// Adhan notification sounds — 1:1 with the iOS `AdhanSound` enum
 /// (bundled clips converted from App/Resources/adhan_*.caf).
-enum class AdhanSound(val nameArabic: String, val rawRes: Int?) {
-    MADINAH("أذان الحرم النبوي", R.raw.adhan_madinah),
-    MELODIC("أذان مجوّد", R.raw.adhan_melodic),
-    AZEEZ("أذان (عاقب عزيز)", R.raw.adhan_azeez),
-    BELL("تنبيه", null),
-    SILENT("صامت", null);
+enum class AdhanSound(val nameRes: Int, val rawRes: Int?) {
+    MADINAH(R.string.g1_adhan_madinah, R.raw.adhan_madinah),
+    MELODIC(R.string.g1_adhan_melodic, R.raw.adhan_melodic),
+    AZEEZ(R.string.g1_adhan_azeez, R.raw.adhan_azeez),
+    BELL(R.string.g1_adhan_bell, null),
+    SILENT(R.string.g1_adhan_silent, null);
 
     companion object {
         fun named(name: String?): AdhanSound =

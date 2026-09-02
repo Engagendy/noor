@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -88,9 +89,9 @@ fun QiblaScreen(onClose: () -> Unit) {
     val context = LocalContext.current
     val prefs = remember { PrayerPrefs(context) }
     val location = remember { prefs.location }
-    val locationLabel = remember {
-        if (prefs.useCustomLocation) "قرب ${location.nameArabic}" else location.nameArabic
-    }
+    val locationLabel = if (prefs.useCustomLocation)
+        stringResource(R.string.g1_near_city, location.displayName())
+    else location.displayName()
     val bearing = remember { QiblaMath.bearing(location.latitude, location.longitude) }
     // Magnetic → true north, like iOS `trueHeading` (rotation vector is
     // magnetic-referenced on most devices).
@@ -175,9 +176,9 @@ fun QiblaScreen(onClose: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp)
         ) {
-            Text("القبلة", fontSize = 22.sp, fontWeight = FontWeight.Bold,
+            Text(stringResource(R.string.g1_qibla), fontSize = 22.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary)
-            Icon(painterResource(R.drawable.ic_close), contentDescription = "إغلاق",
+            Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.g1_close),
                  tint = NoorColor.inkSecondary,
                  modifier = Modifier.size(44.dp).clip(CircleShape).clickable(onClick = onClose).padding(10.dp))
         }
@@ -202,10 +203,12 @@ fun QiblaScreen(onClose: () -> Unit) {
                         .size(280.dp)
                         .graphicsLayer { rotationZ = if (hasCompass) -headingFloat else 0f }
                 ) {
-                    CardinalLabel("ش", Alignment.TopCenter, NoorColor.accentGold)
-                    CardinalLabel("ق", Alignment.CenterEnd, NoorColor.inkSecondary)
-                    CardinalLabel("ج", Alignment.BottomCenter, NoorColor.inkSecondary)
-                    CardinalLabel("غ", Alignment.CenterStart, NoorColor.inkSecondary)
+                    val cardinals = if (isArabicLocale()) listOf("ش", "ق", "ج", "غ")
+                                    else listOf("N", "E", "S", "W")
+                    CardinalLabel(cardinals[0], Alignment.TopCenter, NoorColor.accentGold)
+                    CardinalLabel(cardinals[1], Alignment.CenterEnd, NoorColor.inkSecondary)
+                    CardinalLabel(cardinals[2], Alignment.BottomCenter, NoorColor.inkSecondary)
+                    CardinalLabel(cardinals[3], Alignment.CenterStart, NoorColor.inkSecondary)
                 }
                 Canvas(Modifier.size(280.dp)) {
                     val center = Offset(size.width / 2, size.height / 2)
@@ -257,21 +260,22 @@ fun QiblaScreen(onClose: () -> Unit) {
 
         Spacer(Modifier.height(10.dp))
         when {
-            isAligned -> Text("أنت باتجاه القبلة", fontSize = 24.sp,
+            isAligned -> Text(stringResource(R.string.g1_facing_qibla), fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold, color = green)
             hasCompass -> {
-                Text(if (smoothTurn >= 0) "اذهب نحو اليمين" else "اذهب نحو اليسار",
+                Text(if (smoothTurn >= 0) stringResource(R.string.g1_turn_right)
+                     else stringResource(R.string.g1_turn_left),
                      fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
                      color = NoorColor.inkPrimary)
                 Spacer(Modifier.height(5.dp))
-                Text("°${abs(smoothTurn).roundToInt().arabicIndic()}",
+                Text("°${abs(smoothTurn).roundToInt().localizedDigits()}",
                      fontSize = 16.sp, color = NoorColor.inkSecondary)
             }
             else -> {
-                Text("°${bearing.roundToInt().arabicIndic()}", fontSize = 34.sp,
+                Text("°${bearing.roundToInt().localizedDigits()}", fontSize = 34.sp,
                      fontWeight = FontWeight.SemiBold, color = NoorColor.inkPrimary)
                 Spacer(Modifier.height(5.dp))
-                Text("الاتجاه من الشمال الحقيقي", fontSize = 13.sp,
+                Text(stringResource(R.string.g1_bearing_true_north), fontSize = 13.sp,
                      color = NoorColor.inkSecondary)
             }
         }

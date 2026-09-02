@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,7 +74,7 @@ fun NawafilSheet(onDismiss: () -> Unit) {
                 .padding(horizontal = 16.dp)
         ) {
             item {
-                Text("النوافل", fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                Text(stringResource(R.string.g1_nawafil), fontSize = 18.sp, fontWeight = FontWeight.Bold,
                      color = NoorColor.inkPrimary,
                      modifier = Modifier.padding(bottom = 2.dp))
             }

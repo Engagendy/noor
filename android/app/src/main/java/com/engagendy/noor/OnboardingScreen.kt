@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -67,13 +68,13 @@ fun OnboardingScreen(onDone: () -> Unit) {
                 tint = Color.Unspecified,
                 modifier = Modifier.size(72.dp))
             Text(
-                "أهلًا بك في نور",
+                stringResource(R.string.g1_welcome),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = NoorColor.inkPrimary,
                 modifier = Modifier.padding(top = 10.dp))
             Text(
-                "القرآن ومواقيت الصلاة والأذكار — خاص ومجاني للأبد",
+                stringResource(R.string.g1_welcome_promise),
                 fontSize = 14.sp,
                 color = NoorColor.inkSecondary,
                 textAlign = TextAlign.Center,
@@ -129,7 +130,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
 private fun LanguageStep(onContinue: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(24.dp)) {
         Spacer(Modifier.weight(1f))
-        StepTitle("لغة التطبيق")
+        StepTitle(stringResource(R.string.g1_app_language))
         Column(
             Modifier
                 .padding(top = 14.dp)
@@ -138,18 +139,18 @@ private fun LanguageStep(onContinue: () -> Unit) {
                 .padding(18.dp)
         ) {
             Text(
-                "العربية",
+                stringResource(R.string.g1_arabic),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = NoorColor.inkPrimary)
             Text(
-                "نور تطبيق عربي أولًا: واجهته واتجاهه من اليمين إلى اليسار",
+                stringResource(R.string.g1_arabic_first_note),
                 fontSize = 13.sp,
                 color = NoorColor.inkSecondary,
                 modifier = Modifier.padding(top = 4.dp))
         }
         Spacer(Modifier.weight(1f))
-        PrimaryButton("متابعة", onContinue)
+        PrimaryButton(stringResource(R.string.g1_continue), onContinue)
     }
 }
 
@@ -170,12 +171,12 @@ private fun CityStep(
         }
     }
     Column(Modifier.fillMaxSize().padding(24.dp)) {
-        StepTitle("مدينتك لمواقيت الصلاة")
+        StepTitle(stringResource(R.string.g1_your_city))
         TextField(
             value = citySearch,
             onValueChange = onSearch,
             placeholder = {
-                Text("ابحث عن مدينتك", color = NoorColor.inkSecondary.copy(alpha = 0.7f))
+                Text(stringResource(R.string.g1_search_city), color = NoorColor.inkSecondary.copy(alpha = 0.7f))
             },
             singleLine = true,
             shape = RoundedCornerShape(10.dp),
@@ -196,7 +197,7 @@ private fun CityStep(
                         .padding(horizontal = 12.dp, vertical = 11.dp)
                 ) {
                     Text(
-                        city.nameArabic,
+                        city.displayName(),
                         fontSize = 15.sp,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                         color = NoorColor.inkPrimary)
@@ -208,7 +209,7 @@ private fun CityStep(
                 }
             }
         }
-        PrimaryButton("متابعة", onContinue)
+        PrimaryButton(stringResource(R.string.g1_continue), onContinue)
     }
 }
 
@@ -218,18 +219,18 @@ private fun NotificationsStep(onEnable: () -> Unit, onLater: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(24.dp)) {
         Spacer(Modifier.weight(1f))
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            StepTitle("تنبيهات الأذان")
+            StepTitle(stringResource(R.string.g1_adhan_notifications))
             Text(
-                "أذان جميل عند كل صلاة. يمكنك تغيير الصوت أو إيقافه لاحقًا.",
+                stringResource(R.string.g1_onboarding_adhan_body),
                 fontSize = 14.sp,
                 color = NoorColor.inkSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 10.dp, start = 12.dp, end = 12.dp))
         }
         Spacer(Modifier.weight(1f))
-        PrimaryButton("تفعيل الأذان", onEnable)
+        PrimaryButton(stringResource(R.string.g1_enable_adhan), onEnable)
         Text(
-            "لاحقًا",
+            stringResource(R.string.g1_later),
             fontSize = 15.sp,
             color = NoorColor.inkSecondary,
             textAlign = TextAlign.Center,

@@ -40,6 +40,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -129,9 +132,9 @@ private fun SettingsMain(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
         ) {
-            Text("الإعدادات", fontSize = 22.sp, fontWeight = FontWeight.Bold,
+            Text(stringResource(R.string.g1_settings), fontSize = 22.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary)
-            Text("تم", fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
+            Text(stringResource(R.string.g1_done), fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.accentPrimary,
                  modifier = Modifier
                      .clickable(onClick = onBack)
@@ -141,14 +144,27 @@ private fun SettingsMain(
         // General — language & appearance, like the top iOS section.
         SettingsCard {
             ChoiceRow(
-                title = "اللغة",
-                options = listOf("system" to "النظام", "ar" to "العربية", "en" to "English"),
+                title = stringResource(R.string.g1_language),
+                options = listOf(
+                    "system" to stringResource(R.string.g1_lang_system),
+                    "ar" to "العربية", "en" to "English"),
                 selectedId = language,
-                onSelect = { prefs.edit().putString("app.language", it).apply(); version++ })
+                onSelect = { choice ->
+                    prefs.edit().putString("app.language", choice).apply()
+                    version++
+                    // Applies immediately: AppCompat recreates the activity in
+                    // the chosen per-app locale. "system" clears the override.
+                    AppCompatDelegate.setApplicationLocales(
+                        if (choice == "system") LocaleListCompat.getEmptyLocaleList()
+                        else LocaleListCompat.forLanguageTags(choice))
+                })
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             ChoiceRow(
-                title = "المظهر",
-                options = listOf("system" to "النظام", "light" to "فاتح", "dark" to "داكن"),
+                title = stringResource(R.string.g1_appearance),
+                options = listOf(
+                    "system" to stringResource(R.string.g1_lang_system),
+                    "light" to stringResource(R.string.g1_theme_light),
+                    "dark" to stringResource(R.string.g1_theme_dark)),
                 selectedId = theme,
                 onSelect = {
                     prefs.edit().putString("app.theme", it).apply()
@@ -157,48 +173,48 @@ private fun SettingsMain(
                     version++
                 })
         }
-        Footer("الواجهة عربية أولًا؛ تُطبَّق اللغة بالكامل عند إعادة فتح التطبيق.")
+        Footer(stringResource(R.string.g1_general_footer))
 
-        SectionTitle("الصلاة")
+        SectionTitle(stringResource(R.string.g1_section_prayer))
         SettingsCard {
-            ToggleRow("إشعارات الأذان", notificationsEnabled) { on ->
+            ToggleRow(stringResource(R.string.g1_adhan_notifications), notificationsEnabled) { on ->
                 prefs.edit().putBoolean("notifications.enabled", on).apply()
                 version++
                 AdhanScheduler.reschedule(context)
             }
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
-            ToggleRow("تذكير صيام السنّة", fastingReminders) { on ->
+            ToggleRow(stringResource(R.string.g1_fasting_reminders), fastingReminders) { on ->
                 prefs.edit().putBoolean("fasting.reminders", on).apply()
                 version++
                 AdhanScheduler.reschedule(context)
             }
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
-            NavRow(title = "صوت التنبيه", value = sound.nameArabic,
+            NavRow(title = stringResource(R.string.g1_notification_sound),
+                   value = stringResource(sound.nameRes),
                    onClick = { showAdhanSounds = true })
         }
-        Footer("تُجدول الإشعارات على جهازك للأيام القادمة وتتجدد تلقائيًا. " +
-               "تذكير صيام الاثنين والخميس يصل مساء اليوم السابق.")
+        Footer(stringResource(R.string.g1_prayer_footer))
 
-        SectionTitle("الأدوات")
+        SectionTitle(stringResource(R.string.g1_section_tools))
         SettingsCard {
-            NavRow(title = "التخزين", onClick = openStorage)
+            NavRow(title = stringResource(R.string.g1_storage), onClick = openStorage)
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
-            NavRow(title = "حاسبة الزكاة", onClick = openZakat)
+            NavRow(title = stringResource(R.string.g1_zakat_calculator), onClick = openZakat)
         }
 
-        SectionTitle("القرآن")
+        SectionTitle(stringResource(R.string.g1_section_quran))
         SettingsCard {
             FontSizeRow(prefs = prefs)
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
-            NavRow(title = "القارئ", value = NoorPlayer.reciter.nameArabic,
+            NavRow(title = stringResource(R.string.g1_reciter), value = NoorPlayer.reciter.nameArabic,
                    onClick = { showReciterPicker = true })
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
-            NavRow(title = "دليل التجويد", onClick = openTajweed)
+            NavRow(title = stringResource(R.string.g1_tajweed_guide), onClick = openTajweed)
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             MushafDownloadRow()
         }
 
-        SectionTitle("الترجمة")
+        SectionTitle(stringResource(R.string.g1_section_translation))
         SettingsCard {
             TanzilEditions.forEachIndexed { index, edition ->
                 if (index > 0) {
@@ -227,7 +243,7 @@ private fun SettingsMain(
             }
         }
 
-        SectionTitle("حول التطبيق")
+        SectionTitle(stringResource(R.string.g1_section_about))
         SettingsCard {
             Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -237,25 +253,25 @@ private fun SettingsMain(
                             .getPackageInfo(context.packageName, 0).versionName ?: ""
                     } catch (e: Exception) { "" }
                 }
-                Text("نور — الإصدار $versionName", fontSize = 14.sp,
+                Text(stringResource(R.string.g1_noor_version, versionName), fontSize = 14.sp,
                      fontWeight = FontWeight.SemiBold, color = NoorColor.inkPrimary)
                 // Attribution lines — same sources recorded in LICENSES.md.
                 listOf(
-                    "نص القرآن: Tanzil.net (الرسم العثماني)",
-                    "الخطوط: KFGQPC حفص العثماني و Amiri Quran",
-                    "خطوط صفحات المصحف: مجمع الملك فهد (QCF v2)",
-                    "الترجمة: Saheeh International وترجمات Tanzil",
-                    "التفسير: ابن كثير والميسّر (spa5k/tafsir_api)",
-                    "التلاوات: EveryAyah.com",
-                    "الحديث: fawazahmed0/hadith-api",
-                    "مواقيت الصلاة: خوارزمية Adhan (Batoul Apps)",
-                    "أصوات الأذان: Wikimedia Commons (CC BY 3.0 / CC BY-SA)",
+                    R.string.g1_attr_quran,
+                    R.string.g1_attr_fonts,
+                    R.string.g1_attr_page_fonts,
+                    R.string.g1_attr_translation,
+                    R.string.g1_attr_tafsir,
+                    R.string.g1_attr_recitations,
+                    R.string.g1_attr_hadith,
+                    R.string.g1_attr_prayer,
+                    R.string.g1_attr_adhan_sounds,
                 ).forEach { line ->
-                    Text(line, fontSize = 12.5.sp, color = NoorColor.inkSecondary)
+                    Text(stringResource(line), fontSize = 12.5.sp, color = NoorColor.inkSecondary)
                 }
             }
         }
-        Footer("مجانًا للأبد — في سبيل الله. بلا إعلانات، وبلا تتبّع.")
+        Footer(stringResource(R.string.g1_free_forever))
         Spacer(Modifier.padding(bottom = 24.dp))
     }
 }
@@ -319,8 +335,8 @@ private fun NavRow(title: String, value: String? = null, onClick: () -> Unit) {
             if (value != null) {
                 Text(value, fontSize = 14.sp, color = NoorColor.inkSecondary)
             }
-            // Disclosure points LEFT in the forced-RTL app (explicit drawable).
-            Icon(painterResource(R.drawable.ic_chevron_left), contentDescription = null,
+            // Disclosure points forward: LEFT in RTL, RIGHT in LTR.
+            Icon(painterResource(NoorIcons.chevronForward()), contentDescription = null,
                  tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
         }
     }
@@ -372,8 +388,8 @@ private fun FontSizeRow(prefs: android.content.SharedPreferences) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("حجم خط القرآن", fontSize = 15.sp, color = NoorColor.inkPrimary)
-            Text(size.toInt().arabicIndic(), fontSize = 13.sp, color = NoorColor.inkSecondary)
+            Text(stringResource(R.string.g1_quran_font_size), fontSize = 15.sp, color = NoorColor.inkPrimary)
+            Text(size.toInt().localizedDigits(), fontSize = 13.sp, color = NoorColor.inkSecondary)
         }
         Slider(
             value = size,
@@ -414,24 +430,26 @@ private fun MushafDownloadRow() {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp)
     ) {
         Column {
-            Text("تنزيل المصحف كاملًا", fontSize = 15.sp, color = NoorColor.inkPrimary)
+            Text(stringResource(R.string.g1_download_full_mushaf), fontSize = 15.sp, color = NoorColor.inkPrimary)
             Text(
                 when {
                     cached < 0 -> "…"
-                    complete -> "كل الصفحات (${total.arabicIndic()}) متاحة دون اتصال"
-                    else -> "${cached.arabicIndic()} / ${total.arabicIndic()} · ‏~٣٥٠ م.ب"
+                    complete -> stringResource(R.string.g1_all_pages_offline,
+                                               total.localizedDigits())
+                    else -> stringResource(R.string.g1_mushaf_progress,
+                                           cached.localizedDigits(), total.localizedDigits())
                 },
                 fontSize = 12.sp, color = NoorColor.inkSecondary)
         }
         when {
             complete -> Icon(painterResource(R.drawable.ic_check), contentDescription = null,
                              tint = NoorColor.accentPrimary, modifier = Modifier.size(17.dp))
-            running -> Text("إيقاف", fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+            running -> Text(stringResource(R.string.g1_stop), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                             color = NoorColor.accentGold,
                             modifier = Modifier
                                 .clickable { job?.cancel(); running = false }
                                 .padding(6.dp))
-            else -> Text("تنزيل", fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+            else -> Text(stringResource(R.string.g1_download), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                          color = NoorColor.accentPrimary,
                          modifier = Modifier
                              .clickable {
@@ -462,7 +480,7 @@ private fun AdhanSoundSheet(
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
         Column(Modifier.padding(horizontal = 16.dp)) {
-            Text("صوت التنبيه", fontSize = 17.sp, fontWeight = FontWeight.Bold,
+            Text(stringResource(R.string.g1_notification_sound), fontSize = 17.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary,
                  modifier = Modifier.padding(bottom = 10.dp))
             LazyColumn(Modifier.heightIn(max = 420.dp)) {
@@ -481,7 +499,7 @@ private fun AdhanSoundSheet(
                             .clickable { onSelect(choice) }
                             .padding(horizontal = 16.dp, vertical = 13.dp)
                     ) {
-                        Text(choice.nameArabic, fontSize = 15.sp,
+                        Text(stringResource(choice.nameRes), fontSize = 15.sp,
                              fontWeight = if (isSelected) FontWeight.SemiBold
                                           else FontWeight.Normal,
                              color = if (isSelected) NoorColor.accentPrimary
