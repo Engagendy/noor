@@ -20,9 +20,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -119,13 +124,38 @@ fun ReaderScreen(surah: Surah, onBack: () -> Unit, modifier: Modifier = Modifier
     val context = LocalContext.current
     val db = remember { QuranDb.get(context) }
     val verses = remember(surah.id) { db.verses(surah.id) }
-    // Continuous mushaf-style flow: one attributed stream with ayah markers.
+    // Continuous mushaf-style flow: one attributed stream with ayah markers,
+    // each verse span annotated so a tap/long-press can resolve its ayah.
     val flow = remember(surah.id) {
-        buildString {
+        buildAnnotatedString {
             verses.forEach { verse ->
+                pushStringAnnotation(tag = "ayah", annotation = verse.ayah.toString())
                 append(verse.text)
                 append(" ⁧﴿${verse.ayah.arabicIndic()}﴾⁩ ")
+                pop()
             }
+        }
+    }
+    // Ayah picked for tafsir (0 = none).
+    var tafsirAyah by remember(surah.id) { mutableStateOf(0) }
+    var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
+
+    fun ayahAt(position: Offset) {
+        val layout = textLayout ?: return
+        val offset = layout.getOffsetForPosition(position)
+        flow.getStringAnnotations("ayah", offset, offset).firstOrNull()?.let {
+            tafsirAyah = it.item.toIntOrNull() ?: 0
+        }
+    }
+
+    if (tafsirAyah > 0) {
+        val verse = verses.firstOrNull { it.ayah == tafsirAyah }
+        if (verse != null) {
+            TafsirSheet(
+                surahId = surah.id,
+                ayah = verse.ayah,
+                ayahText = verse.text,
+                onDismiss = { tafsirAyah = 0 })
         }
     }
 
@@ -178,7 +208,14 @@ fun ReaderScreen(surah: Surah, onBack: () -> Unit, modifier: Modifier = Modifier
                     lineHeight = 58.sp,
                     color = NoorColor.inkPrimary,
                     textAlign = TextAlign.Justify,
-                    modifier = Modifier.padding(bottom = 40.dp)
+                    onTextLayout = { textLayout = it },
+                    modifier = Modifier
+                        .padding(bottom = 40.dp)
+                        .pointerInput(surah.id) {
+                            detectTapGestures(
+                                onTap = { ayahAt(it) },
+                                onLongPress = { ayahAt(it) })
+                        }
                 )
             }
         }

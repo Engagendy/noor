@@ -50,11 +50,28 @@ object AthkarStore {
     }
 }
 
+/// Extra athkar tools — parity with the iOS Athkar module screens.
+enum class AthkarExtra(val title: String) {
+    RUQYAH("الرقية الشرعية"),
+    DUAS("أدعية مختارة"),
+    NAMES("أسماء الله الحسنى"),
+    TASBIH("المسبحة"),
+}
+
 @Composable
 fun AthkarScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val categories = remember { AthkarStore.load(context) }
     var open by remember { mutableStateOf<DhikrCategory?>(null) }
+    var extra by remember { mutableStateOf<AthkarExtra?>(null) }
+
+    when (extra) {
+        AthkarExtra.RUQYAH -> { RuqyahScreen(onBack = { extra = null }, modifier); return }
+        AthkarExtra.DUAS -> { SelectedDuasScreen(onBack = { extra = null }, modifier); return }
+        AthkarExtra.NAMES -> { AsmaulHusnaScreen(onBack = { extra = null }, modifier); return }
+        AthkarExtra.TASBIH -> { TasbihScreen(onBack = { extra = null }, modifier); return }
+        null -> Unit
+    }
 
     val current = open
     if (current != null) {
@@ -66,6 +83,29 @@ fun AthkarScreen(modifier: Modifier = Modifier) {
             Text("الأذكار", fontSize = 28.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary,
                  modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
+        }
+        item {
+            // Two-per-row cards for the extra tools.
+            AthkarExtra.entries.chunked(2).forEach { pair ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 5.dp)
+                ) {
+                    pair.forEach { item ->
+                        Text(
+                            item.title,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = NoorColor.accentPrimary,
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(NoorColor.stateReciting, RoundedCornerShape(14.dp))
+                                .clickable { extra = item }
+                                .padding(horizontal = 14.dp, vertical = 16.dp)
+                        )
+                    }
+                }
+            }
         }
         items(categories) { category ->
             Row(

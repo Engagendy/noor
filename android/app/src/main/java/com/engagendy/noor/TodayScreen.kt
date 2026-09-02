@@ -53,6 +53,17 @@ fun TodayScreen(
     openPage: (Int) -> Unit,
 ) {
     val context = LocalContext.current
+    // Tools reachable from Today: the zakat calculator and prayer settings.
+    var showZakat by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
+    if (showZakat) {
+        ZakatScreen(onBack = { showZakat = false }, modifier = modifier)
+        return
+    }
+    if (showSettings) {
+        PrayerSettingsScreen(modifier = modifier, onDone = { showSettings = false })
+        return
+    }
     val city = Cities.all[0]
     val entries = remember { PrayerEngine.today(city) }
     val next = PrayerEngine.next(entries)
@@ -97,6 +108,45 @@ fun TodayScreen(
         ContinueReadingCard(openQuran)
         KhatmahCard(openPage)
         DailyAyahCard()
+        ToolsCard(openZakat = { showZakat = true }, openSettings = { showSettings = true })
+    }
+}
+
+/// Tools row: zakat calculator + prayer settings entries.
+@Composable
+private fun ToolsCard(openZakat: () -> Unit, openSettings: () -> Unit) {
+    Column(
+        Modifier
+            .padding(top = 12.dp, bottom = 24.dp)
+            .fillMaxWidth()
+            .background(NoorColor.bgElevated, RoundedCornerShape(18.dp))
+            .padding(vertical = 6.dp)
+    ) {
+        Text("الأدوات", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+             color = NoorColor.inkSecondary,
+             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = openZakat)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Text("حاسبة الزكاة", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.inkPrimary)
+            Text("←", color = NoorColor.accentPrimary)
+        }
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = openSettings)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Text("إعدادات الصلاة", fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                 color = NoorColor.inkPrimary)
+            Text("←", color = NoorColor.accentPrimary)
+        }
     }
 }
 
