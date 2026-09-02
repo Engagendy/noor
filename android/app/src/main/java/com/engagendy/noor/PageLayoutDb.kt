@@ -73,6 +73,13 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
             arrayOf(surahId.toString())
         ).use { c -> if (c.moveToFirst()) c.getInt(0).coerceAtLeast(1) else 1 }
 
+    /// Printed page of an exact ayah (open-at-ayah from search/juz/bookmarks).
+    fun pageFor(surahId: Int, ayah: Int): Int =
+        db.rawQuery(
+            "SELECT page FROM page_word WHERE surah_id = ? AND ayah = ? LIMIT 1",
+            arrayOf(surahId.toString(), ayah.toString())
+        ).use { c -> if (c.moveToFirst()) c.getInt(0).coerceAtLeast(1) else firstPage(surahId) }
+
     /// Last ayah of a surah printed on the same page as the given ayah —
     /// drives the "this page only" playback mode, like iOS pageEndAyah.
     fun pageEndAyah(surahId: Int, ayah: Int): Int {
