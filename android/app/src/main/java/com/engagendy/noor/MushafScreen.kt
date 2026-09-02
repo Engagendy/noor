@@ -462,18 +462,29 @@ private fun MadaniPage(
     onAyahLongPress: (AyahRef) -> Unit = {},
 ) {
     val context = LocalContext.current
+    // Bumped to refetch after a failed font download (tap or auto retry).
+    var attempt by remember(page) { mutableStateOf(0) }
     // Layout rows + the ~600 KB page font parse off the main thread.
-    val content by produceState<PageContent?>(initialValue = null, page) {
+    val content by produceState<PageContent?>(initialValue = null, page, attempt) {
         value = withContext(Dispatchers.IO) {
             PageContent(
                 lines = PageLayoutDb.get(context).lines(page),
                 fontFamily = PageFontStore.ensure(context, page),
                 basmala = QuranDb.get(context).basmala())
         }
-        // Prefetch neighbors for smooth swiping.
+        // Prefetch ahead for smooth swiping and follow-along page flips.
         launch(Dispatchers.IO) {
             PageFontStore.ensure(context, page + 1)
+            PageFontStore.ensure(context, page + 2)
             PageFontStore.ensure(context, page - 1)
+        }
+    }
+    // A transient network hiccup must not strand the page on the offline
+    // placeholder: keep retrying quietly every few seconds while visible.
+    LaunchedEffect(page, content?.fontFamily == null) {
+        if (content != null && content?.fontFamily == null) {
+            delay(4000)
+            attempt++
         }
     }
 
@@ -483,13 +494,27 @@ private fun MadaniPage(
             CircularProgressIndicator(color = NoorColor.accentPrimary)
         }
         loaded.fontFamily == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                stringResource(R.string.g2_page_font_unavailable),
-                fontSize = 15.sp,
-                textAlign = TextAlign.Center,
-                color = NoorColor.inkSecondary,
-                modifier = Modifier.padding(30.dp)
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    stringResource(R.string.g2_page_font_unavailable),
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Center,
+                    color = NoorColor.inkSecondary,
+                    modifier = Modifier.padding(horizontal = 30.dp)
+                )
+                Text(
+                    stringResource(R.string.g2_retry),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = NoorColor.accentPrimary,
+                    modifier = Modifier
+                        .padding(top = 14.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(NoorColor.stateReciting, RoundedCornerShape(10.dp))
+                        .clickable { attempt++ }
+                        .padding(horizontal = 18.dp, vertical = 10.dp)
+                )
+            }
         }
         else -> MadaniPageBody(loaded, onTap, onAyahLongPress)
     }

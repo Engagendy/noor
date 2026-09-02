@@ -104,6 +104,8 @@ object NoorPlayer {
     private var ayahCount = 0
     val currentAyahCount: Int get() = ayahCount
     private var media: MediaPlayer? = null
+    /// Last surah:ayah given a second chance after both hosts failed.
+    private var retriedAyah: Pair<Int, Int>? = null
     private var appContext: Context? = null
     private val handler by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
     private val sleepStop = Runnable { stop() }
@@ -270,7 +272,20 @@ object NoorPlayer {
                 }
             }
             setOnErrorListener { _, _, _ ->
-                if (!mirror) playAyah(surah, ayah, mirror = true) else stop()
+                // Host → mirror → one delayed retry (transient network),
+                // then stop. Never strand playback on a hiccup.
+                when {
+                    !mirror -> playAyah(surah, ayah, mirror = true)
+                    retriedAyah != surah to ayah -> {
+                        retriedAyah = surah to ayah
+                        handler.postDelayed({
+                            if (currentSurah == surah && currentAyah == ayah) {
+                                playAyah(surah, ayah)
+                            }
+                        }, 2500)
+                    }
+                    else -> stop()
+                }
                 true
             }
             // Cached copy plays instantly (and offline); otherwise stream
