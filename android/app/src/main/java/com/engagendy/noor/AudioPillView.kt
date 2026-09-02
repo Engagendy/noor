@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -71,7 +73,8 @@ fun AudioPillView() {
                     .size(38.dp)
                     .background(NoorColor.accentPrimary.copy(alpha = 0.15f), CircleShape)
             ) {
-                Text("🎙", fontSize = 15.sp)
+                Icon(painterResource(R.drawable.ic_mic), contentDescription = null,
+                     tint = NoorColor.accentPrimary, modifier = Modifier.size(18.dp))
             }
             Column {
                 Text(
@@ -93,8 +96,9 @@ fun AudioPillView() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text("⏮", fontSize = 14.sp, color = NoorColor.inkSecondary,
-                 modifier = Modifier.clickable { NoorPlayer.previous() }.padding(4.dp))
+            Icon(painterResource(R.drawable.ic_prev_track), contentDescription = "السابق",
+                 tint = NoorColor.inkSecondary,
+                 modifier = Modifier.clickable { NoorPlayer.previous() }.padding(4.dp).size(16.dp))
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -102,30 +106,39 @@ fun AudioPillView() {
                     .background(NoorColor.accentPrimary, CircleShape)
                     .clickable { NoorPlayer.toggle() }
             ) {
-                Text(if (NoorPlayer.isPlaying) "⏸" else "▶",
-                     color = NoorColor.bgPrimary, fontSize = 16.sp)
+                // White vector on the green circle — never an emoji glyph.
+                Icon(
+                    painterResource(if (NoorPlayer.isPlaying) R.drawable.ic_pause_fill
+                                    else R.drawable.ic_play_fill),
+                    contentDescription = if (NoorPlayer.isPlaying) "إيقاف مؤقت" else "تشغيل",
+                    tint = NoorColor.bgPrimary,
+                    modifier = Modifier.size(18.dp))
             }
-            Text("⏭", fontSize = 14.sp, color = NoorColor.inkSecondary,
-                 modifier = Modifier.clickable { NoorPlayer.next() }.padding(4.dp))
-            Text(
-                modeIcon(NoorPlayer.mode),
-                fontSize = 14.sp,
-                color = if (NoorPlayer.mode == PlaybackMode.CONTINUOUS)
+            Icon(painterResource(R.drawable.ic_next_track), contentDescription = "التالي",
+                 tint = NoorColor.inkSecondary,
+                 modifier = Modifier.clickable { NoorPlayer.next() }.padding(4.dp).size(16.dp))
+            Icon(
+                painterResource(modeIcon(NoorPlayer.mode)),
+                contentDescription = "وضع التشغيل",
+                tint = if (NoorPlayer.mode == PlaybackMode.CONTINUOUS)
                     NoorColor.inkSecondary else NoorColor.accentPrimary,
-                modifier = Modifier.clickable { showModePicker = true }.padding(4.dp)
+                modifier = Modifier.clickable { showModePicker = true }.padding(4.dp).size(16.dp)
             )
-            Text("✕", fontSize = 13.sp, color = NoorColor.inkSecondary,
-                 modifier = Modifier.clickable { NoorPlayer.stop() }.padding(4.dp))
+            Icon(painterResource(R.drawable.ic_close), contentDescription = "إيقاف",
+                 tint = NoorColor.inkSecondary,
+                 modifier = Modifier.clickable { NoorPlayer.stop() }.padding(4.dp).size(15.dp))
         }
     }
     }
 }
 
-private fun modeIcon(mode: PlaybackMode): String = when (mode) {
-    PlaybackMode.CONTINUOUS -> "🔁"
-    PlaybackMode.REPEAT_AYAH -> "🔂"
-    PlaybackMode.PAGE_ONLY -> "📄"
-    PlaybackMode.MEMORIZE -> "🧠"
+/// Drawable per playback mode — tinted vectors matching the iOS SF symbols
+/// (repeat, repeat.1, doc.plaintext, brain ≈ book), never emoji.
+private fun modeIcon(mode: PlaybackMode): Int = when (mode) {
+    PlaybackMode.CONTINUOUS -> R.drawable.ic_repeat
+    PlaybackMode.REPEAT_AYAH -> R.drawable.ic_repeat_one
+    PlaybackMode.PAGE_ONLY -> R.drawable.ic_page
+    PlaybackMode.MEMORIZE -> R.drawable.ic_book
 }
 
 /// Compact playback-mode sheet — 1:1 with the iOS PlaybackModeSheet:
@@ -146,11 +159,11 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
                 modifier = Modifier.padding(bottom = 10.dp)
             )
             val options = listOf(
-                // Non-directional icon: matches modeIcon() and can't point
+                // Symmetric vector icons: match modeIcon() and can't point
                 // the wrong way under the app-wide RTL.
-                Triple(PlaybackMode.CONTINUOUS, "متواصل", "🔁"),
-                Triple(PlaybackMode.REPEAT_AYAH, "تكرار الآية", "🔂"),
-                Triple(PlaybackMode.PAGE_ONLY, "هذه الصفحة فقط", "📄"),
+                Triple(PlaybackMode.CONTINUOUS, "متواصل", R.drawable.ic_repeat),
+                Triple(PlaybackMode.REPEAT_AYAH, "تكرار الآية", R.drawable.ic_repeat_one),
+                Triple(PlaybackMode.PAGE_ONLY, "هذه الصفحة فقط", R.drawable.ic_page),
             )
             options.forEach { (mode, label, icon) ->
                 Row(
@@ -161,7 +174,8 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
                         .clickable { NoorPlayer.selectMode(mode); onDismiss() }
                         .padding(vertical = 12.dp)
                 ) {
-                    Text(icon, fontSize = 15.sp, color = NoorColor.accentPrimary)
+                    Icon(painterResource(icon), contentDescription = null,
+                         tint = NoorColor.accentPrimary, modifier = Modifier.size(18.dp))
                     Text(
                         label,
                         fontSize = 16.sp,
@@ -171,8 +185,8 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
                         modifier = Modifier.weight(1f)
                     )
                     if (NoorPlayer.mode == mode) {
-                        Text("✓", fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                             color = NoorColor.accentPrimary)
+                        Icon(painterResource(R.drawable.ic_check), contentDescription = null,
+                             tint = NoorColor.accentPrimary, modifier = Modifier.size(15.dp))
                     }
                 }
                 HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
@@ -184,7 +198,8 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(top = 14.dp).horizontalScroll(rememberScrollState())
             ) {
-                Text("⏱", fontSize = 14.sp, color = NoorColor.inkSecondary)
+                Icon(painterResource(R.drawable.ic_clock), contentDescription = null,
+                     tint = NoorColor.inkSecondary, modifier = Modifier.size(16.dp))
                 PlaybackSpeeds.forEach { value ->
                     SheetChip(
                         label = if (value == value.toLong().toFloat()) "${value.toInt()}×"
@@ -200,7 +215,8 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(top = 12.dp).horizontalScroll(rememberScrollState())
             ) {
-                Text("🌙", fontSize = 14.sp, color = NoorColor.inkSecondary)
+                Icon(painterResource(R.drawable.ic_moon), contentDescription = null,
+                     tint = NoorColor.inkSecondary, modifier = Modifier.size(16.dp))
                 listOf(15, 30, 60).forEach { minutes ->
                     SheetChip(
                         label = minutes.arabicIndic(),
@@ -228,7 +244,8 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
                     .clickable { showMemorize = true }
                     .padding(14.dp)
             ) {
-                Text("🧠", fontSize = 16.sp)
+                Icon(painterResource(R.drawable.ic_book), contentDescription = null,
+                     tint = NoorColor.accentPrimary, modifier = Modifier.size(18.dp))
                 Text(
                     "حفظ مقطع",
                     fontSize = 15.sp,
@@ -237,8 +254,8 @@ fun PlaybackModeSheet(onDismiss: () -> Unit) {
                     modifier = Modifier.weight(1f)
                 )
                 if (NoorPlayer.mode == PlaybackMode.MEMORIZE) {
-                    Text("✓", fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                         color = NoorColor.accentPrimary)
+                    Icon(painterResource(R.drawable.ic_check), contentDescription = null,
+                         tint = NoorColor.accentPrimary, modifier = Modifier.size(15.dp))
                 }
             }
         }
@@ -264,7 +281,8 @@ private fun SleepCountdownChip() {
             fontWeight = FontWeight.SemiBold,
             color = NoorColor.accentGold
         )
-        Text("✕", fontSize = 12.sp, color = NoorColor.accentGold)
+        Icon(painterResource(R.drawable.ic_close), contentDescription = "إلغاء",
+             tint = NoorColor.accentGold, modifier = Modifier.size(13.dp))
     }
 }
 

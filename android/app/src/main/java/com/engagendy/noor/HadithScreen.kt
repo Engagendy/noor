@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -168,7 +170,12 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                         }
                     }
                     when (state) {
-                        PackState.READY -> Text("←", color = NoorColor.accentPrimary)
+                        // Disclosure points LEFT in the forced-RTL app.
+                        PackState.READY -> Icon(
+                            painterResource(R.drawable.ic_chevron_left),
+                            contentDescription = null,
+                            tint = NoorColor.accentPrimary,
+                            modifier = Modifier.size(16.dp))
                         PackState.DOWNLOADING -> CircularProgressIndicator(
                             color = NoorColor.accentPrimary, strokeWidth = 2.dp,
                             modifier = Modifier.size(22.dp))
@@ -207,7 +214,11 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                              color = NoorColor.inkSecondary,
                              modifier = Modifier.padding(top = 2.dp))
                     }
-                    Text("←", color = NoorColor.accentPrimary)
+                    // Disclosure points LEFT in the forced-RTL app.
+                    Icon(painterResource(R.drawable.ic_chevron_left),
+                         contentDescription = null,
+                         tint = NoorColor.accentPrimary,
+                         modifier = Modifier.size(16.dp))
                 }
                 HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             }
@@ -248,8 +259,9 @@ private fun HadithSearchField(query: String, onChange: (String) -> Unit,
             }
         )
         if (query.isNotEmpty()) {
-            Text("✕", color = NoorColor.inkSecondary,
-                 modifier = Modifier.clickable { onChange("") }.padding(4.dp))
+            Icon(painterResource(R.drawable.ic_close), contentDescription = "مسح",
+                 tint = NoorColor.inkSecondary,
+                 modifier = Modifier.clickable { onChange("") }.padding(4.dp).size(15.dp))
         }
     }
 }

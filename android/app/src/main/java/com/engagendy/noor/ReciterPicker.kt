@@ -72,7 +72,16 @@ fun ReciterPickerSheet(onDismiss: () -> Unit) {
                                 RoundedCornerShape(12.dp))
                             .padding(horizontal = 12.dp, vertical = 12.dp)
                     ) {
-                        Text(reciter.flag.ifEmpty { "🎙" }, fontSize = 20.sp)
+                        if (reciter.flag.isEmpty()) {
+                            // Vector fallback — never an emoji glyph as icon.
+                            androidx.compose.material3.Icon(
+                                androidx.compose.ui.res.painterResource(R.drawable.ic_mic),
+                                contentDescription = null,
+                                tint = NoorColor.accentPrimary,
+                                modifier = Modifier.size(20.dp))
+                        } else {
+                            Text(reciter.flag, fontSize = 20.sp)
+                        }
                         Column(Modifier.weight(1f)) {
                             Text(reciter.nameArabic, fontSize = 15.sp,
                                  fontWeight = if (selected) FontWeight.Bold

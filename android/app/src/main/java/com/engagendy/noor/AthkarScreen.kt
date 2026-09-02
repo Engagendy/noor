@@ -163,7 +163,7 @@ fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modif
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                     ) {
                         Text(
-                            if (complete) "تم ✓" else "${done.arabicIndic()} / ${dhikr.count.arabicIndic()}",
+                            if (complete) "تم" else "${done.arabicIndic()} / ${dhikr.count.arabicIndic()}",
                             fontSize = 13.sp,
                             color = if (complete) NoorColor.accentPrimary else NoorColor.inkSecondary,
                         )

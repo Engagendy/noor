@@ -18,6 +18,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +35,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -153,8 +155,12 @@ private fun MushafTopBar(
                 modifier = Modifier.size(38.dp).clickable(enabled = chromeVisible, onClick = onBack)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text("›", fontSize = 20.sp, fontWeight = FontWeight.SemiBold,
-                         color = NoorColor.accentPrimary)
+                    // Explicit right-pointing drawable (not auto-mirrored):
+                    // in this forced-RTL app, BACK always points RIGHT.
+                    Icon(painterResource(R.drawable.ic_chevron_right),
+                         contentDescription = "رجوع",
+                         tint = NoorColor.accentPrimary,
+                         modifier = Modifier.size(18.dp))
                 }
             }
             Spacer(Modifier.weight(1f))
@@ -168,16 +174,22 @@ private fun MushafTopBar(
                 Text(juzLine, fontSize = 11.sp, color = NoorColor.inkSecondary)
             }
             Spacer(Modifier.weight(1f))
-            // Play/pause reflecting the live player state.
-            Text(
-                if (NoorPlayer.currentSurah != 0 && NoorPlayer.isPlaying) "⏸" else "▶",
-                fontSize = 17.sp,
-                color = NoorColor.accentPrimary,
-                textAlign = TextAlign.Center,
+            // Play/pause reflecting the live player state — tinted vectors
+            // (SF play.fill / pause.fill), never emoji glyphs.
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(38.dp)
                     .clickable(enabled = chromeVisible) { playFromPage() }
-                    .padding(top = 7.dp))
+            ) {
+                Icon(
+                    painterResource(
+                        if (NoorPlayer.currentSurah != 0 && NoorPlayer.isPlaying)
+                            R.drawable.ic_pause_fill else R.drawable.ic_play_fill),
+                    contentDescription = "تشغيل",
+                    tint = NoorColor.accentPrimary,
+                    modifier = Modifier.size(17.dp))
+            }
         }
         // Minimal reading row: surah · time · juz/page.
         if (!chromeVisible) {
