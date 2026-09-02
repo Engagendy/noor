@@ -8,6 +8,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.text.Layout
 import android.text.StaticLayout
@@ -78,7 +79,10 @@ object ShareCard {
         val referenceLayout = layout(reference, referencePaint, textWidth)
         val attributionLayout = layout(attribution, attributionPaint, textWidth)
 
-        val lampGap = 130f
+        // App-icon badge header: 132px badge + 36px gap (iOS 44pt mark +
+        // 18pt spacing at the 2× render scale of this 1240px card).
+        val badgeSize = 132f
+        val lampGap = badgeSize + 36f
         val translationBlock = translationLayout?.let { it.height + 28f } ?: 0f
         val height = (PADDING + lampGap + arabicLayout.height + translationBlock + 36f +
             referenceLayout.height + 8f + attributionLayout.height + PADDING).toInt()
@@ -127,25 +131,11 @@ object ShareCard {
             canvas.drawPath(eightPointStar(x, y, 16f), star)
         }
 
-        // Mihrab lamp mark: green arch + hanging gold lamp.
-        val cx = WIDTH / 2f
-        val archTop = PADDING + 8f
-        val arch = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = green
-            style = Paint.Style.STROKE
-            strokeWidth = 5f
-            strokeCap = Paint.Cap.ROUND
-        }
-        val archPath = Path().apply {
-            moveTo(cx - 40f, archTop + 88f)
-            lineTo(cx - 40f, archTop + 40f)
-            cubicTo(cx - 40f, archTop, cx + 40f, archTop, cx + 40f, archTop + 40f)
-            lineTo(cx + 40f, archTop + 88f)
-        }
-        canvas.drawPath(archPath, arch)
-        val lamp = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gold }
-        canvas.drawLine(cx, archTop + 10f, cx, archTop + 34f, arch.apply { strokeWidth = 3f })
-        canvas.drawCircle(cx, archTop + 46f, 12f, lamp)
+        // Real app icon as the header mark: rasterize the adaptive-icon
+        // launcher drawables into a rounded-square badge so the card logo
+        // always matches the launcher icon (green field, paper mihrab arch,
+        // gold lamp — Tools/generate_app_icon.swift geometry).
+        drawAppIconBadge(context, canvas, WIDTH / 2f, PADDING, badgeSize)
 
         var y = PADDING + lampGap
         canvas.withTranslation(PADDING, y) { arabicLayout.draw(this) }
@@ -164,6 +154,32 @@ object ShareCard {
 
     private inline fun Canvas.withTranslation(x: Float, y: Float, block: Canvas.() -> Unit) {
         save(); translate(x, y); block(); restore()
+    }
+
+    /// Draws the launcher adaptive-icon layers (background + foreground
+    /// vectors) as a rounded-square badge centered at [cx], top edge [top].
+    private fun drawAppIconBadge(context: Context, canvas: Canvas, cx: Float, top: Float, size: Float) {
+        val layers = listOfNotNull(
+            ResourcesCompat.getDrawable(context.resources, R.drawable.ic_launcher_bg, null),
+            ResourcesCompat.getDrawable(context.resources, R.drawable.ic_launcher_fg, null),
+        )
+        val left = cx - size / 2f
+        val badge = RectF(left, top, left + size, top + size)
+        val corner = size * 0.22f  // squircle-ish, like the launcher mask
+        canvas.save()
+        canvas.clipPath(Path().apply { addRoundRect(badge, corner, corner, Path.Direction.CW) })
+        // Adaptive-icon layers are a 108dp canvas whose central 72dp is the
+        // visible safe zone; overscale by 108/72 so the badge shows the same
+        // crop the launcher does.
+        val inset = size * (108f / 72f - 1f) / 2f
+        for (layer in layers) {
+            layer.setBounds(
+                (badge.left - inset).toInt(), (badge.top - inset).toInt(),
+                (badge.right + inset).toInt(), (badge.bottom + inset).toInt(),
+            )
+            layer.draw(canvas)
+        }
+        canvas.restore()
     }
 
     private fun eightPointStar(cx: Float, cy: Float, radius: Float): Path {
