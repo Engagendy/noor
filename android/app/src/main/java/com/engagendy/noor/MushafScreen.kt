@@ -215,6 +215,11 @@ fun MushafScreen(
     }
 }
 
+/// Outlives the actions sheet: the sheet dismisses itself before firing
+/// its action, so work launched from callbacks must not die with it.
+private val ayahActionScope = kotlinx.coroutines.CoroutineScope(
+    kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Main)
+
 /// Ayah actions from a Madani-page long-press — resolves the verse and
 /// surah off-main, then shows the shared AyahActionsSheet + TafsirSheet.
 @Composable
@@ -224,7 +229,7 @@ private fun MushafAyahActions(
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val scope = ayahActionScope
     val loaded by produceState<Pair<Verse, Surah>?>(initialValue = null, ref) {
         value = withContext(Dispatchers.IO) {
             val surah = QuranDb.get(context).surahs().firstOrNull { it.id == ref.surahId }

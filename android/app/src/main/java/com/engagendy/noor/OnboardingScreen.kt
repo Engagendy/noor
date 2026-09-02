@@ -192,6 +192,28 @@ private fun CityStep(
     onPick: (CityPreset) -> Unit,
     onContinue: () -> Unit,
 ) {
+    val context = LocalContext.current
+    // Auto-locate, like the prayer settings row: one coarse fix, nearest
+    // preset label, exact coords stored — never leaves the device.
+    var fetching by remember { mutableStateOf(false) }
+    fun applyFix(latitude: Double, longitude: Double) {
+        fetching = false
+        val prefs = PrayerPrefs(context)
+        val nearest = Cities.nearest(latitude, longitude)
+        prefs.saveCustomLocation(latitude, longitude, nearest.name)
+        prefs.cityName = nearest.name
+        onPick(nearest)
+        onContinue()
+    }
+    fun startFetch() {
+        fetching = true
+        LocationFetcher.fetch(context) { fix ->
+            if (fix != null) applyFix(fix.latitude, fix.longitude) else fetching = false
+        }
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) startFetch() else fetching = false }
     val filtered = remember(citySearch) {
         val query = citySearch.trim()
         if (query.isEmpty()) Cities.all
@@ -201,6 +223,33 @@ private fun CityStep(
     }
     Column(Modifier.fillMaxSize().padding(24.dp)) {
         StepTitle(stringResource(R.string.g1_your_city))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(top = 12.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(NoorColor.stateReciting, RoundedCornerShape(12.dp))
+                .clickable(enabled = !fetching) {
+                    if (LocationFetcher.hasPermission(context)) startFetch()
+                    else permissionLauncher.launch(
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                }
+                .padding(horizontal = 16.dp, vertical = 13.dp)
+        ) {
+            Text(
+                stringResource(R.string.g1_use_my_location),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = NoorColor.accentPrimary,
+                modifier = Modifier.weight(1f))
+            if (fetching) {
+                androidx.compose.material3.CircularProgressIndicator(
+                    color = NoorColor.accentPrimary,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(18.dp))
+            }
+        }
         TextField(
             value = citySearch,
             onValueChange = onSearch,

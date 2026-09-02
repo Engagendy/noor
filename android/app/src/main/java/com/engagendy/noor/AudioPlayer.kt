@@ -75,6 +75,9 @@ object NoorPlayer {
     var currentAyah by mutableStateOf(0)
     var surahName by mutableStateOf("")
     var isPlaying by mutableStateOf(false)
+    /// True from ayah request until audio actually starts — drives the
+    /// pill's buffering spinner so downloads are visible to the user.
+    var isBuffering by mutableStateOf(false)
     var mode by mutableStateOf(PlaybackMode.CONTINUOUS)
         private set
     var speed by mutableFloatStateOf(1f)
@@ -157,6 +160,53 @@ object NoorPlayer {
     private fun url(host: String, surah: Int, ayah: Int) =
         "%s/%s/%03d%03d.mp3".format(java.util.Locale.ROOT, host, reciter.folder, surah, ayah)
 
+    // MARK: - ayah cache + prefetch (iOS: every ayah cached after first
+    // play; the next few download while the current one plays, so
+    // advancing is instant and replays work offline).
+
+    private val prefetchPool = java.util.concurrent.Executors.newFixedThreadPool(2)
+
+    private fun cacheFile(surah: Int, ayah: Int): java.io.File {
+        val dir = java.io.File(appContext!!.cacheDir,
+            "recitations/${reciter.folder}").apply { mkdirs() }
+        return java.io.File(dir,
+            "%03d%03d.mp3".format(java.util.Locale.ROOT, surah, ayah))
+    }
+
+    /// Downloads one ayah to the cache (main host, then mirror). Quiet —
+    /// failures just mean that ayah streams when its turn comes.
+    private fun download(surah: Int, ayah: Int): Boolean {
+        val target = cacheFile(surah, ayah)
+        if (target.length() > 1024) return true
+        for (host in listOf("https://everyayah.com/data",
+                            "https://mirrors.quranicaudio.com/everyayah")) {
+            try {
+                val temp = java.io.File.createTempFile("ayah", ".mp3", target.parentFile)
+                val connection = java.net.URL(url(host, surah, ayah))
+                    .openConnection() as java.net.HttpURLConnection
+                connection.connectTimeout = 10_000
+                connection.readTimeout = 20_000
+                connection.inputStream.use { input ->
+                    temp.outputStream().use { input.copyTo(it) }
+                }
+                connection.disconnect()
+                if (temp.length() > 1024) { temp.renameTo(target); return true }
+                temp.delete()
+            } catch (_: Exception) { /* try mirror / stream later */ }
+        }
+        return false
+    }
+
+    /// Warm the next few ayat while the current one plays.
+    private fun prefetch(surah: Int, fromAyah: Int) {
+        val reciterAtRequest = reciter.id
+        for (ayah in (fromAyah + 1)..minOf(fromAyah + 3, ayahCount)) {
+            prefetchPool.execute {
+                if (reciter.id == reciterAtRequest) download(surah, ayah)
+            }
+        }
+    }
+
     fun play(surah: Int, ayahCount: Int, fromAyah: Int, name: String, pageEnd: Int = 0) {
         this.ayahCount = ayahCount
         surahName = name
@@ -183,8 +233,11 @@ object NoorPlayer {
             setOnPreparedListener {
                 it.start()
                 NoorPlayer.isPlaying = true
+                NoorPlayer.isBuffering = false
                 applySpeed()
                 NoorAudioService.refresh(appContext)
+                // Warm the ayat ahead while this one plays.
+                prefetch(surah, ayah)
             }
             setOnCompletionListener {
                 if (sleepDeadline != 0L && System.currentTimeMillis() >= sleepDeadline) {
@@ -220,7 +273,15 @@ object NoorPlayer {
                 if (!mirror) playAyah(surah, ayah, mirror = true) else stop()
                 true
             }
-            setDataSource(url(host, surah, ayah))
+            // Cached copy plays instantly (and offline); otherwise stream
+            // and let the cache warm via prefetch for next time.
+            val cached = runCatching { cacheFile(surah, ayah) }.getOrNull()
+            if (cached != null && cached.length() > 1024) {
+                setDataSource(cached.path)
+            } else {
+                setDataSource(url(host, surah, ayah))
+            }
+            NoorPlayer.isBuffering = true
             prepareAsync()
         }
         NoorAudioService.refresh(appContext)
@@ -247,7 +308,7 @@ object NoorPlayer {
 
     fun stop() {
         media?.release(); media = null
-        isPlaying = false; currentSurah = 0; currentAyah = 0
+        isPlaying = false; isBuffering = false; currentSurah = 0; currentAyah = 0
         handler.removeCallbacks(sleepStop)
         sleepDeadline = 0L
         appContext?.let { it.stopService(Intent(it, NoorAudioService::class.java)) }

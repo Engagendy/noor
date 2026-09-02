@@ -111,13 +111,22 @@ fun AudioPillView() {
                     .clickable { NoorPlayer.toggle() }
             ) {
                 // White vector on the green circle — never an emoji glyph.
-                Icon(
-                    painterResource(if (NoorPlayer.isPlaying) R.drawable.ic_pause_fill
-                                    else R.drawable.ic_play_fill),
-                    contentDescription = stringResource(
-                        if (NoorPlayer.isPlaying) R.string.g2_pause else R.string.g2_play),
-                    tint = NoorColor.bgPrimary,
-                    modifier = Modifier.size(18.dp))
+                // While the ayah downloads, the button spins instead so the
+                // wait is visible.
+                if (NoorPlayer.isBuffering) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        color = NoorColor.bgPrimary,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(18.dp))
+                } else {
+                    Icon(
+                        painterResource(if (NoorPlayer.isPlaying) R.drawable.ic_pause_fill
+                                        else R.drawable.ic_play_fill),
+                        contentDescription = stringResource(
+                            if (NoorPlayer.isPlaying) R.string.g2_pause else R.string.g2_play),
+                        tint = NoorColor.bgPrimary,
+                        modifier = Modifier.size(18.dp))
+                }
             }
             Icon(painterResource(R.drawable.ic_next_track), contentDescription = stringResource(R.string.g2_next),
                  tint = NoorColor.inkSecondary,
