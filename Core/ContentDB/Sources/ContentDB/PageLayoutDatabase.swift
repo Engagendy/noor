@@ -49,8 +49,23 @@ public struct PageLine: Identifiable, Hashable, Sendable {
     public let glyphs: String
     /// QCF v2 glyphs (the exact printed Madani mushaf typeface).
     public let glyphsV2: String
+    /// The same v2 glyphs split per word, in reading order. The reader lays
+    /// words out itself to justify each line edge to edge like the print;
+    /// one joined run would render at its natural advance and leave short
+    /// lines floating narrow and centered.
+    public let wordsV2: [String]
     public let ayahRefs: [Ref]
     public var id: Int { line }
+
+    public init(line: Int, kind: Kind, glyphs: String, glyphsV2: String,
+                wordsV2: [String] = [], ayahRefs: [Ref]) {
+        self.line = line
+        self.kind = kind
+        self.glyphs = glyphs
+        self.glyphsV2 = glyphsV2
+        self.wordsV2 = wordsV2
+        self.ayahRefs = ayahRefs
+    }
 }
 
 /// Read-only access to the bundled page-layout DB (built by
@@ -87,6 +102,7 @@ public final class PageLayoutDatabase: Sendable {
                         kind: .words,
                         glyphs: words.map(\.glyph).joined(),
                         glyphsV2: words.map(\.glyphV2).joined(),
+                        wordsV2: words.map(\.glyphV2),
                         ayahRefs: refs)
                 }
                 .sorted { $0.line < $1.line }

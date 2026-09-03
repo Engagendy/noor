@@ -1,5 +1,6 @@
 import ContentDB
 import DesignSystem
+import CoreText
 import SwiftUI
 
 /// Pixel-faithful Madani page: the page's QCF v1 font renders each line's
@@ -31,6 +32,43 @@ struct MadaniPageView: View {
 
     /// v1 fonts consume the v1 codes; v2 fonts the v2 codes — always from
     /// the SAME observed variant the font name uses, never mixed.
+    /// One printed line, justified edge to edge like the Madani print.
+    ///
+    /// Drawing the line as a single run renders it at the font's natural
+    /// advance, so a line that happens to be narrower than the column floats
+    /// short and centered (visible from page 354 onward). Instead each word is
+    /// placed by us and the slack is shared between the gaps — the same
+    /// algorithm the Android reader uses, so both platforms match the print.
+    /// Short closing lines stay centered rather than being stretched apart.
+    @ViewBuilder
+    private func justifiedLine(_ line: PageLine, fontSize: CGFloat, width: CGFloat) -> some View {
+        let fontName = PageFontStore.fontName(page: page)
+        let words = line.wordsV2.isEmpty ? [lineGlyphs(line)] : line.wordsV2
+        let widths = words.map { GlyphMetrics.width($0, font: fontName, size: fontSize) }
+        let total = widths.reduce(0, +)
+        let target = width * 0.97
+        // Overflow shrinks the line; it must never clip.
+        let scale = total > target && total > 0 ? target / total : 1
+        let justify = total >= width * 0.55
+        let slack = max(target - total * scale, 0)
+        let gap = justify && words.count > 1 ? slack / CGFloat(words.count - 1) : 0
+        HStack(spacing: 0) {
+            ForEach(Array(words.enumerated()), id: \.offset) { index, word in
+                if index > 0 && gap > 0 {
+                    Spacer().frame(width: gap)
+                }
+                Text(verbatim: word)
+                    .font(.custom(fontName, size: fontSize * scale))
+                    .foregroundStyle(NoorColor.inkPrimary)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+        }
+        // Words arrive in reading order, so the first must sit at the right
+        // edge regardless of the surrounding interface language.
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
     private func lineGlyphs(_ line: PageLine) -> String {
         if fontVariant == "v1" { return line.glyphs }
         return line.glyphsV2.isEmpty ? line.glyphs : line.glyphsV2
@@ -94,12 +132,9 @@ struct MadaniPageView: View {
                                     .frame(maxWidth: .infinity)
                                     .frame(height: rowHeight)
                             case .words:
-                                // RLI…PDI: hard right-to-left, immune to
-                                // bidi mis-segmentation of ligature codes.
-                                Text(verbatim: "\u{2067}" + lineGlyphs(line) + "\u{2069}")
-                                    .font(.custom(PageFontStore.fontName(page: page), size: fontSize))
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.5)
+                                justifiedLine(line,
+                                              fontSize: fontSize,
+                                              width: geometry.size.width)
                                     .frame(maxWidth: .infinity)
                                     .frame(height: rowHeight)
                                     .background(
@@ -157,4 +192,27 @@ struct MadaniPageView: View {
         .accessibilityLabel("Page \(page)")
     }
 
+}
+
+/// Word advances, measured once per word/size and kept.
+///
+/// The reader re-renders on every animation frame (page turns, the recitation
+/// highlight), and measuring ~120 words per frame with CoreText would show.
+@MainActor
+private enum GlyphMetrics {
+    private static var cache: [String: CGFloat] = [:]
+
+    static func width(_ word: String, font: String, size: CGFloat) -> CGFloat {
+        let key = "\(font)|\(Int(size * 10))|\(word)"
+        if let hit = cache[key] { return hit }
+        let ctFont = CTFontCreateWithName(font as CFString, size, nil)
+        let attributed = NSAttributedString(
+            string: word,
+            attributes: [kCTFontAttributeName as NSAttributedString.Key: ctFont])
+        let measured = CGFloat(
+            CTLineGetTypographicBounds(CTLineCreateWithAttributedString(attributed),
+                                       nil, nil, nil))
+        cache[key] = measured
+        return measured
+    }
 }
