@@ -251,10 +251,17 @@ private fun SettingsMain(
         SettingsCard {
             Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                // versionName alone cannot tell two uploads apart — it stays
+                // "1.0.0" across releases — so show the build number too. That
+                // is the number that increases every Play upload, and the one
+                // to ask a tester for.
                 val versionName = remember {
                     try {
-                        context.packageManager
-                            .getPackageInfo(context.packageName, 0).versionName ?: ""
+                        val info = context.packageManager
+                            .getPackageInfo(context.packageName, 0)
+                        val build = androidx.core.content.pm.PackageInfoCompat
+                            .getLongVersionCode(info)
+                        "${info.versionName ?: ""} ($build)"
                     } catch (e: Exception) { "" }
                 }
                 Text(stringResource(R.string.g1_noor_version, versionName), fontSize = 14.sp,
