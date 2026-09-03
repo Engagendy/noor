@@ -18,7 +18,7 @@ Recitation:
 
 Prayer times and notifications:
 • Fixed the Dynamic Island countdown crashing once a prayer time had passed.
-• The Live Activity now follows through to the next prayer instead of stopping.
+• The lock screen countdown no longer stays stuck on a prayer that has already passed.
 • Turning off the adhan no longer silently cancels your Sunnah fasting reminders.
 • Widgets and the Live Activity now respect your manual per-prayer time adjustments.
 • The qibla compass is more accurate.
