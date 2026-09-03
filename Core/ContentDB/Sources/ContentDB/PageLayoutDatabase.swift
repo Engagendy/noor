@@ -54,16 +54,20 @@ public struct PageLine: Identifiable, Hashable, Sendable {
     /// one joined run would render at its natural advance and leave short
     /// lines floating narrow and centered.
     public let wordsV2: [String]
+    /// The v1 equivalent. v1 fonts consume v1 codes and v2 fonts v2 codes;
+    /// feeding one variant's codes to the other font renders gibberish.
+    public let words: [String]
     public let ayahRefs: [Ref]
     public var id: Int { line }
 
     public init(line: Int, kind: Kind, glyphs: String, glyphsV2: String,
-                wordsV2: [String] = [], ayahRefs: [Ref]) {
+                wordsV2: [String] = [], words: [String] = [], ayahRefs: [Ref]) {
         self.line = line
         self.kind = kind
         self.glyphs = glyphs
         self.glyphsV2 = glyphsV2
         self.wordsV2 = wordsV2
+        self.words = words
         self.ayahRefs = ayahRefs
     }
 }
@@ -103,6 +107,7 @@ public final class PageLayoutDatabase: Sendable {
                         glyphs: words.map(\.glyph).joined(),
                         glyphsV2: words.map(\.glyphV2).joined(),
                         wordsV2: words.map(\.glyphV2),
+                        words: words.map(\.glyph),
                         ayahRefs: refs)
                 }
                 .sorted { $0.line < $1.line }

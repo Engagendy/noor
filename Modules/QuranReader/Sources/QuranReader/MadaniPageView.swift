@@ -30,8 +30,6 @@ struct MadaniPageView: View {
             : String(localized: "Ayahs \(first.ayah) to \(last.ayah)")
     }
 
-    /// v1 fonts consume the v1 codes; v2 fonts the v2 codes — always from
-    /// the SAME observed variant the font name uses, never mixed.
     /// One printed line, justified edge to edge like the Madani print.
     ///
     /// Drawing the line as a single run renders it at the font's natural
@@ -43,7 +41,7 @@ struct MadaniPageView: View {
     @ViewBuilder
     private func justifiedLine(_ line: PageLine, fontSize: CGFloat, width: CGFloat) -> some View {
         let fontName = PageFontStore.fontName(page: page)
-        let words = line.wordsV2.isEmpty ? [lineGlyphs(line)] : line.wordsV2
+        let words = lineWords(line)
         let widths = words.map { GlyphMetrics.width($0, font: fontName, size: fontSize) }
         let total = widths.reduce(0, +)
         let target = width * 0.97
@@ -69,9 +67,23 @@ struct MadaniPageView: View {
         .environment(\.layoutDirection, .rightToLeft)
     }
 
+    /// v1 fonts consume the v1 codes; v2 fonts the v2 codes — always from
+    /// the SAME observed variant the font name uses, never mixed.
     private func lineGlyphs(_ line: PageLine) -> String {
         if fontVariant == "v1" { return line.glyphs }
         return line.glyphsV2.isEmpty ? line.glyphs : line.glyphsV2
+    }
+
+    /// The per-word split of `lineGlyphs`, under the very same variant rule.
+    /// Falls back to the whole line as one word so a page can never blank out.
+    private func lineWords(_ line: PageLine) -> [String] {
+        if fontVariant == "v1" {
+            return line.words.isEmpty ? [line.glyphs] : line.words
+        }
+        if line.glyphsV2.isEmpty {
+            return line.words.isEmpty ? [line.glyphs] : line.words
+        }
+        return line.wordsV2.isEmpty ? [line.glyphsV2] : line.wordsV2
     }
 
     private func isHighlighted(_ line: PageLine) -> Bool {
