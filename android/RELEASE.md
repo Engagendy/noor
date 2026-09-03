@@ -59,6 +59,20 @@ Smoke-test checklist on a device:
 - Prayer times correct for the selected city; adhan notification fires.
 - Everything above works offline except first-time audio streaming.
 
+### Smoke-testing the minified build
+
+`release` is minified with R8, and the Play-signed build owns the release
+application id (locally-signed installs of the same id are rejected). Build
+the `releaseTest` variant instead — same R8 config and signing under
+`com.engagendy.noor.reltest`, so it installs beside the Play build:
+
+```bash
+./gradlew assembleReleaseTest
+adb install -r app/build/outputs/apk/releaseTest/app-releaseTest.apk
+```
+
+Never upload this variant.
+
 ## 4. Play Console upload
 
 1. Play Console → Noor → Production → Create new release.
@@ -80,5 +94,7 @@ readable crash reports.
 - vc2 — first closed-test upload. BROKEN: Arabic-locale digits in download URLs (no mushaf fonts, no audio).
 - vc3 — Locale.ROOT URL fix.
 - vc4 — + dark-mode launch-crash fix (values-night theme must stay AppCompat). Uploaded to closed track 2026-09-02.
-- vc5 (pending) — back-navigation sweep, Madani per-word justification + QCF cmap patch (p76 overlap), page-font retry, audio cache/prefetch/retry + buffering spinner, onboarding language picker + auto-locate. Madani p76 fix VERIFIED on the Samsung (2026-09-02) via the debug build, which now installs side by side as `com.engagendy.noor.debug` (applicationIdSuffix) — no need to uninstall the Play build.
+- vc5 — back-navigation sweep, Madani per-word justification + QCF cmap patch (p76 overlap), page-font retry, audio cache/prefetch/retry + buffering spinner, onboarding language picker + auto-locate. Madani p76 fix VERIFIED on the Samsung (2026-09-02) via the debug build, which now installs side by side as `com.engagendy.noor.debug` (applicationIdSuffix) — no need to uninstall the Play build.
 - vc5 (pending) — back-navigation sweep, Madani per-word justification + QCF cmap patch (p76 overlap, verified on device), page-font retry, audio cache/prefetch/retry, onboarding language picker + auto-locate, plus the 58-fix cross-platform bug sweep (exact-alarm permission, high-latitude crash, audio focus, widget countdown, DB versioning, bookmark sync). Re-run the full smoke checklist above before uploading.
+  Reader now immersive (tab bar hidden); Android player caches the ayah you
+  start on, flows into the next surah, and re-syncs the page to the recitation.

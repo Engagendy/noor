@@ -21,7 +21,7 @@ android {
         applicationId = "com.engagendy.noor"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
+        versionCode = 5
         versionName = "1.0.0"
     }
 
@@ -53,6 +53,15 @@ android {
             if (keystoreProps.containsKey("storeFile")) {
                 signingConfig = signingConfigs.getByName("release")
             }
+        }
+        // Same minified + signed output as `release`, under its own id so it
+        // can be smoke-tested next to the Play build (which owns the release
+        // id and rejects locally-signed installs). Never uploaded.
+        create("releaseTest") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".reltest"
+            versionNameSuffix = "-reltest"
+            matchingFallbacks += listOf("release")
         }
     }
     compileOptions {
