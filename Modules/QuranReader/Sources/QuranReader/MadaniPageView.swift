@@ -43,14 +43,16 @@ struct MadaniPageView: View {
         let fontName = PageFontStore.fontName(page: page)
         let words = lineWords(line)
         let total = GlyphMetrics.total(words, page: page, size: fontSize)
-        let _ = { if line.line <= 2 {
-            print("NOORDBG page=\(page) line=\(line.line) variant=\(fontVariant) font=\(fontName) width=\(width) fontSize=\(fontSize) words=\(words.count) total=\(total) target=\(width * 0.97)")
-        } }()
         if total <= 0 {
             // Could not measure: fall back to the single run, which SwiftUI
             // shrinks to fit. Unjustified but never overflowing.
             Text(verbatim: "\u{2067}" + lineGlyphs(line) + "\u{2069}")
-                .font(.custom(fontName, size: fontSize))
+                // fixedSize, NOT size: `Font.custom(_:size:)` scales with the
+                // user's Dynamic Type setting, so the text drawn is larger
+                // than the size measured against and the line overflows. A
+                // mushaf page is a fixed 15-row grid already sized to the
+                // screen, so it must not scale a second time.
+                .font(.custom(fontName, fixedSize: fontSize))
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
@@ -67,7 +69,9 @@ struct MadaniPageView: View {
                         Spacer().frame(width: gap)
                     }
                     Text(verbatim: word)
-                        .font(.custom(fontName, size: fontSize * scale))
+                        // fixedSize: see the fallback above — Dynamic Type
+                        // must not re-scale what we just measured and fitted.
+                        .font(.custom(fontName, fixedSize: fontSize * scale))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(1)
                         .fixedSize()
