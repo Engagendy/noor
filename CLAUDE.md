@@ -65,6 +65,11 @@ plan section 4 exactly (iOS).
   presentation forms as zero-advance marks (word-overlap bug, e.g. p76 l4);
   render maps chars via `PageFontStore.mapGlyphs`. Lines render per-word
   (justified edge-to-edge like the print; <55%-width closing lines centered).
+- Immersive reader: the tab bar is hidden while either Quran reader is open
+  (`ReaderChrome.readerOpen`, mirroring iOS `.toolbar(.hidden, for: .tabBar)`)
+  — a Madani page is a rigid 15-row grid stretched to the height it gets, so
+  chrome shrinks every line. When it is hidden the bottom Column must carry
+  `navigationBarsPadding()`, since `NavigationBar` was consuming that inset.
 - Release signing: `android/noor-upload.keystore` + `keystore.properties`
   (gitignored — back up!). Play requires targetSdk 36+. Devices running the
   Play-signed closed-test build REJECT adb installs of locally-signed APKs

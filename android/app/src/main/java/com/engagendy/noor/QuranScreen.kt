@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -125,6 +126,12 @@ fun QuranScreen(
             openSurah = null; openAyah = 0; onSurahClosed()
         }
     }
+
+    // Immersive reading: the tab bar steps aside while either reader is open
+    // (iOS hides it outright) and comes back when the reader closes.
+    val readerOpen = openMushafAt > 0 || openSurah != null
+    LaunchedEffect(readerOpen) { ReaderChrome.readerOpen = readerOpen }
+    DisposableEffect(Unit) { onDispose { ReaderChrome.readerOpen = false } }
 
     if (openMushafAt > 0) {
         MushafScreen(

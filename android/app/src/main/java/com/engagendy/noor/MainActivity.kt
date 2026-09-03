@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
@@ -156,8 +157,19 @@ fun NoorApp() {
     Scaffold(
         containerColor = NoorColor.bgPrimary,
         bottomBar = {
-          androidx.compose.foundation.layout.Column {
+          // Immersive reading (iOS `.toolbar(.hidden, for: .tabBar)`): the
+          // reader owns the whole page and navigates with its own back
+          // button. Gated on the tab too, so the bar can never be stranded.
+          val tabsHidden = ReaderChrome.readerOpen && tab == Tab.QURAN
+          androidx.compose.foundation.layout.Column(
+            // NavigationBar consumes the system gesture-bar inset; without it
+            // the pill (and a page with no pill) would sit under the system bar.
+            modifier = if (tabsHidden)
+                Modifier.navigationBarsPadding()
+            else Modifier
+          ) {
             AudioPillView()
+            androidx.compose.animation.AnimatedVisibility(visible = !tabsHidden) {
             NavigationBar(containerColor = NoorColor.bgElevated) {
                 Tab.entries.forEach { item ->
                     val title = stringResource(item.titleRes)
@@ -175,6 +187,7 @@ fun NoorApp() {
                         )
                     )
                 }
+            }
             }
           }
         }
