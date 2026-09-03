@@ -42,29 +42,38 @@ struct MadaniPageView: View {
     private func justifiedLine(_ line: PageLine, fontSize: CGFloat, width: CGFloat) -> some View {
         let fontName = PageFontStore.fontName(page: page)
         let words = lineWords(line)
-        let widths = words.map { GlyphMetrics.width($0, font: fontName, size: fontSize) }
-        let total = widths.reduce(0, +)
-        let target = width * 0.97
-        // Overflow shrinks the line; it must never clip.
-        let scale = total > target && total > 0 ? target / total : 1
-        let justify = total >= width * 0.55
-        let slack = max(target - total * scale, 0)
-        let gap = justify && words.count > 1 ? slack / CGFloat(words.count - 1) : 0
-        HStack(spacing: 0) {
-            ForEach(Array(words.enumerated()), id: \.offset) { index, word in
-                if index > 0 && gap > 0 {
-                    Spacer().frame(width: gap)
+        let total = GlyphMetrics.total(words, page: page, size: fontSize)
+        if total <= 0 {
+            // Could not measure: fall back to the single run, which SwiftUI
+            // shrinks to fit. Unjustified but never overflowing.
+            Text(verbatim: "\u{2067}" + lineGlyphs(line) + "\u{2069}")
+                .font(.custom(fontName, size: fontSize))
+                .foregroundStyle(NoorColor.inkPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+        } else {
+            let target = width * 0.97
+            // Overflow shrinks the line; it must never clip.
+            let scale = total > target ? target / total : 1
+            let justify = total * scale >= width * 0.55
+            let slack = max(target - total * scale, 0)
+            let gap = justify && words.count > 1 ? slack / CGFloat(words.count - 1) : 0
+            HStack(spacing: 0) {
+                ForEach(Array(words.enumerated()), id: \.offset) { index, word in
+                    if index > 0 && gap > 0 {
+                        Spacer().frame(width: gap)
+                    }
+                    Text(verbatim: word)
+                        .font(.custom(fontName, size: fontSize * scale))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                        .lineLimit(1)
+                        .fixedSize()
                 }
-                Text(verbatim: word)
-                    .font(.custom(fontName, size: fontSize * scale))
-                    .foregroundStyle(NoorColor.inkPrimary)
-                    .lineLimit(1)
-                    .fixedSize()
             }
+            // Words arrive in reading order, so the first must sit at the
+            // right edge whatever the interface language.
+            .environment(\.layoutDirection, .rightToLeft)
         }
-        // Words arrive in reading order, so the first must sit at the right
-        // edge regardless of the surrounding interface language.
-        .environment(\.layoutDirection, .rightToLeft)
     }
 
     /// v1 fonts consume the v1 codes; v2 fonts the v2 codes — always from
@@ -206,25 +215,29 @@ struct MadaniPageView: View {
 
 }
 
-/// Word advances, measured once per word/size and kept.
+/// Word advances, measured once per line/size and kept.
 ///
 /// The reader re-renders on every animation frame (page turns, the recitation
-/// highlight), and measuring ~120 words per frame with CoreText would show.
+/// highlight), and measuring every word with CoreText each frame would show.
 @MainActor
 private enum GlyphMetrics {
     private static var cache: [String: CGFloat] = [:]
 
-    static func width(_ word: String, font: String, size: CGFloat) -> CGFloat {
-        let key = "\(font)|\(Int(size * 10))|\(word)"
+    /// Total advance of a line's words, or 0 when the page font is not
+    /// available yet — never a system-font substitute's width, which would be
+    /// a fraction of the truth and defeat the whole point of measuring.
+    static func total(_ words: [String], page: Int, size: CGFloat) -> CGFloat {
+        let key = "\(page)|\(Int(size * 10))|\(words.count)|\(words.first ?? "")"
         if let hit = cache[key] { return hit }
-        let ctFont = CTFontCreateWithName(font as CFString, size, nil)
-        let attributed = NSAttributedString(
-            string: word,
-            attributes: [kCTFontAttributeName as NSAttributedString.Key: ctFont])
-        let measured = CGFloat(
-            CTLineGetTypographicBounds(CTLineCreateWithAttributedString(attributed),
-                                       nil, nil, nil))
-        cache[key] = measured
+        guard let font = PageFontStore.measurementFont(page: page, size: size) else { return 0 }
+        let attributes = [kCTFontAttributeName as NSAttributedString.Key: font]
+        let measured = words.reduce(CGFloat.zero) { running, word in
+            let line = CTLineCreateWithAttributedString(
+                NSAttributedString(string: word, attributes: attributes))
+            return running + CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+        }
+        // Only a real measurement is worth keeping.
+        if measured > 0 { cache[key] = measured }
         return measured
     }
 }

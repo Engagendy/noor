@@ -34,6 +34,31 @@ public final class PageFontStore {
             : String(format: "QCF2%03d", page)
     }
 
+    /// The page's font built straight from the file on disk.
+    ///
+    /// `CTFontCreateWithName` silently substitutes a system font when the name
+    /// does not resolve, and a substitute measures a fraction of the real
+    /// width — which then reads as "this line already fits" and the page
+    /// renders unjustified and overflowing. Going through the file makes a
+    /// wrong font impossible: the caller gets the right font or nothing.
+    public static func measurementFont(page: Int, size: CGFloat) -> CTFont? {
+        let descriptor: CTFontDescriptor
+        if let cached = descriptorCache[page] {
+            descriptor = cached
+        } else {
+            guard let found = CTFontManagerCreateFontDescriptorsFromURL(
+                    localURL(page: page) as CFURL) as? [CTFontDescriptor],
+                  let first = found.first
+            else { return nil }
+            descriptorCache[page] = first
+            descriptor = first
+        }
+        return CTFontCreateWithFontDescriptor(descriptor, size, nil)
+    }
+
+    /// Parsing the file on every measurement would be far too slow.
+    nonisolated(unsafe) private static var descriptorCache: [Int: CTFontDescriptor] = [:]
+
     private static func localURL(page: Int) -> URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         // v1b: cache key bumped after the v1.5 mispairing (resequenced
