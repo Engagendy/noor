@@ -26,6 +26,10 @@ struct TodayView: View {
     @State private var hadiths: [HadithItem] = []
     @State private var dailySahih: (hadith: LibraryHadith, collection: HadithCollectionID)?
     @State private var showHadithList = false
+    /// The daily Sahih hadith's own sheet. Tapping the card used to open the
+    /// whole list, which loses the hadith the card was showing (Android has
+    /// always opened the hadith itself).
+    @State private var showDailySahih = false
     @State private var dailyHadithDetail: HadithItem?
     @State private var showHijriCalendar = false
     @State private var showSettings = false
@@ -172,6 +176,17 @@ struct TodayView: View {
                 .environment(\.locale, locale)
                 .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
+        .sheet(isPresented: $showDailySahih) {
+            if let daily = dailySahih {
+                LibraryHadithDetail(
+                    hadiths: [daily.hadith],
+                    initialId: daily.hadith.id,
+                    collection: daily.collection,
+                    bookTitle: isArabicUI
+                        ? daily.collection.arabicName : daily.collection.englishName,
+                    isArabicUI: isArabicUI)
+            }
+        }
         .sheet(isPresented: $showHadithList) {
             HadithListView(items: hadiths, isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
@@ -306,7 +321,7 @@ struct TodayView: View {
     private func dailyHadithCard(now: Date) -> some View {
         if let daily = dailySahih {
             Button {
-                showHadithList = true
+                showDailySahih = true
             } label: {
                 VStack(spacing: 10) {
                     HStack {
