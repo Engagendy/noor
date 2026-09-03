@@ -43,6 +43,9 @@ struct MadaniPageView: View {
         let fontName = PageFontStore.fontName(page: page)
         let words = lineWords(line)
         let total = GlyphMetrics.total(words, page: page, size: fontSize)
+        let _ = { if line.line <= 2 {
+            print("NOORDBG page=\(page) line=\(line.line) variant=\(fontVariant) font=\(fontName) width=\(width) fontSize=\(fontSize) words=\(words.count) total=\(total) target=\(width * 0.97)")
+        } }()
         if total <= 0 {
             // Could not measure: fall back to the single run, which SwiftUI
             // shrinks to fit. Unjustified but never overflowing.

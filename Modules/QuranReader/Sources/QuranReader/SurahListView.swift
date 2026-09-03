@@ -365,7 +365,7 @@ struct SurahRow: View {
                     Text(surah.nameTransliterated)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
-                    Text("\(surah.nameEnglish) · \(surah.ayahCount) ayat · \(surah.isMeccan ? String(localized: "Makki") : String(localized: "Madani"))")
+                    Text("\(surah.nameEnglish) · \(surah.ayahCount) ayat · \(surah.isMeccan ? String(localized: "Makki", locale: locale) : String(localized: "Madani", locale: locale))")
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }

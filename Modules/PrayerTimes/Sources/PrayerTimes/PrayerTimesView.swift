@@ -37,6 +37,14 @@ public struct PrayerTimesView: View {
     @Environment(\.locale) private var locale
     @Environment(\.layoutDirection) private var appDirection
 
+    /// String(localized:) resolves in the PROCESS language; the app switches
+    /// language through the environment locale, so resolve in that instead.
+    private func appLocalized(_ resource: LocalizedStringResource) -> String {
+        var resource = resource
+        resource.locale = locale
+        return String(localized: resource)
+    }
+
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
     private func notificationBinding(for prayer: Prayer) -> Binding<Bool>? {
@@ -378,7 +386,7 @@ public struct PrayerTimesView: View {
                     Text("Prayer settings")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
-                    Text("\(String(localized: method.displayName)) · \(String(localized: madhab.displayName))")
+                    Text("\(appLocalized(method.displayName)) · \(appLocalized(madhab.displayName))")
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }

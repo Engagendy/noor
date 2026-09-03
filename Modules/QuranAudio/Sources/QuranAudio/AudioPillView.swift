@@ -44,7 +44,7 @@ public struct AudioPillView: View {
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .lineLimit(1)
-                            Text("\(player.surahTitle) · \(String(localized: "Ayah \(current.ayah)"))")
+                            Text("\(player.surahTitle) · \(String(localized: "Ayah \(current.ayah)", locale: locale))")
                                 .font(.system(size: 11.5))
                                 .foregroundStyle(NoorColor.inkSecondary)
                                 .lineLimit(1)
