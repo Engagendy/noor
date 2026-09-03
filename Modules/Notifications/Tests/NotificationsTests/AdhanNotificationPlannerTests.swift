@@ -12,6 +12,22 @@ final class AdhanNotificationPlannerTests: XCTestCase {
         XCTAssertLessThanOrEqual(plan.count, 64, "iOS pending-notification hard limit")
     }
 
+    /// Adhans and sunnah-fasting reminders share iOS's 64-request budget;
+    /// walk a full hijri month so every white-day/weekday alignment is covered.
+    func testAdhanPlusFastingRemindersStayInsideThePendingCap() {
+        let calendar = Calendar.current
+        for dayOffset in 0..<30 {
+            let now = calendar.date(byAdding: .day, value: dayOffset, to: Date())!
+            let adhans = AdhanNotificationPlanner.plan(
+                location: cairo, method: .egyptian, madhab: .shafi, from: now)
+            let fasting = FastingReminderScheduler.plan(from: now)
+            XCTAssertLessThanOrEqual(fasting.count, FastingReminderScheduler.maxPending)
+            XCTAssertLessThanOrEqual(
+                adhans.count + fasting.count, AdhanNotificationPlanner.pendingRequestCap,
+                "day +\(dayOffset): iOS drops everything past the 64th pending request")
+        }
+    }
+
     func testAllFireDatesAreInTheFutureAndAscending() {
         let now = Date()
         let plan = AdhanNotificationPlanner.plan(

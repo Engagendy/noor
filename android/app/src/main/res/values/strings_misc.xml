@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Misc strings (audio, storage, share). Arabic is the DEFAULT locale
+     (primary audience); English lives in values-en/strings_misc.xml. -->
+<resources>
+    <string name="misc_storage_recitations">التلاوات</string>
+    <string name="misc_storage_recitations_sub">ملفات الصوت المحفوظة للاستماع دون اتصال</string>
+    <string name="misc_channel_recitation">التلاوة</string>
+    <string name="misc_channel_recitation_desc">التحكم في تشغيل التلاوة</string>
+</resources>

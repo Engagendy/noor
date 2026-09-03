@@ -31,7 +31,15 @@ public enum WordTimingService {
     /// qurancdn reciter id for gapless Alafasy murattal.
     public static let alafasyReciterId = 7
 
-    private static func cacheURL(reciter: Int, surah: Int) -> URL {
+    /// Timing JSON is tiny and needed for offline follow-along, so it lives in
+    /// Application Support where iOS won't purge it under storage pressure.
+    private static func timingsURL(reciter: Int, surah: Int) -> URL {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        return base.appendingPathComponent("timings/qf\(reciter)_\(surah).json")
+    }
+
+    /// Pre-existing copies written to Caches by earlier versions.
+    private static func legacyTimingsURL(reciter: Int, surah: Int) -> URL {
         let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         return base.appendingPathComponent("timings/qf\(reciter)_\(surah).json")
     }
@@ -43,10 +51,12 @@ public enum WordTimingService {
 
     /// Timings from cache or network.
     public static func timings(reciter: Int = alafasyReciterId, surah: Int) async -> SurahTimings? {
-        let cache = cacheURL(reciter: reciter, surah: surah)
-        if let data = try? Data(contentsOf: cache),
-           let cached = try? JSONDecoder().decode(SurahTimings.self, from: data) {
-            return cached
+        let cache = timingsURL(reciter: reciter, surah: surah)
+        for stored in [cache, legacyTimingsURL(reciter: reciter, surah: surah)] {
+            if let data = try? Data(contentsOf: stored),
+               let cached = try? JSONDecoder().decode(SurahTimings.self, from: data) {
+                return cached
+            }
         }
         guard let url = URL(string:
             "https://api.qurancdn.com/api/qdc/audio/reciters/\(reciter)/audio_files?chapter=\(surah)&segments=true"),
@@ -75,8 +85,11 @@ public enum WordTimingService {
                 segments: timing.segments)
         }
         let timings = SurahTimings(audioURL: file.audio_url, verses: verses)
-        try? FileManager.default.createDirectory(
-            at: cache.deletingLastPathComponent(), withIntermediateDirectories: true)
+        var folder = cache.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? folder.setResourceValues(values)
         try? JSONEncoder().encode(timings).write(to: cache)
         return timings
     }
@@ -94,12 +107,35 @@ public enum WordTimingService {
         }
     }
 
-    /// Local gapless surah audio, downloading once.
+    /// Local gapless surah audio, downloading once. Concurrent callers for
+    /// the same surah (prefetch + playback + next-surah advance) share one
+    /// download instead of each pulling the ~100 MB file.
     public static func localAudio(reciter: Int = alafasyReciterId, surah: Int, remote: String) async -> URL? {
         let local = audioCacheURL(reciter: reciter, surah: surah)
         if FileManager.default.fileExists(atPath: local.path) { return local }
-        guard let url = URL(string: remote),
-              let (temp, response) = try? await URLSession.shared.download(from: url),
+        guard let url = URL(string: remote) else { return nil }
+        return await DownloadCoordinator.shared.download(remote: url, to: local)
+    }
+
+    /// One download at a time per destination file.
+    private actor DownloadCoordinator {
+        static let shared = DownloadCoordinator()
+        private var inFlight: [URL: Task<URL?, Never>] = [:]
+
+        func download(remote: URL, to local: URL) async -> URL? {
+            if let existing = inFlight[local] { return await existing.value }
+            let task = Task<URL?, Never> {
+                await WordTimingService.performDownload(remote: remote, to: local)
+            }
+            inFlight[local] = task
+            let result = await task.value
+            inFlight[local] = nil
+            return result
+        }
+    }
+
+    fileprivate static func performDownload(remote url: URL, to local: URL) async -> URL? {
+        guard let (temp, response) = try? await URLSession.shared.download(from: url),
               (response as? HTTPURLResponse)?.statusCode == 200
         else { return nil }
         try? FileManager.default.createDirectory(

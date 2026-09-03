@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Prayer-module UI strings. Arabic is the DEFAULT locale; English lives in
+     values-en/strings_prayer.xml. -->
+<resources>
+    <!-- Android 12/12L banner when "Alarms & reminders" is off. -->
+    <string name="prayer_exact_alarm_title">تنبيهات الأذان قد تتأخر</string>
+    <string name="prayer_exact_alarm_text">اسمح لنور بضبط المنبهات والتذكيرات ليصلك الأذان في وقته بالضبط.</string>
+    <string name="prayer_exact_alarm_action">السماح</string>
+    <!-- High latitudes (polar day/night): the engine has no times to show. -->
+    <string name="prayer_high_latitude_unavailable">لا يمكن حساب مواقيت الصلاة لهذا الموقع في هذا الوقت من السنة (خطوط العرض العالية). اختر مدينة قريبة من الإعدادات.</string>
+    <string name="prayer_high_latitude_short">غير متاح</string>
+    <!-- Sunnah-fasting eve reminder: substituted into g1_fasting_text as the reason. -->
+    <string name="prayer_fasting_white_day">من الأيام البيض (%1$d هجريًا)</string>
+</resources>

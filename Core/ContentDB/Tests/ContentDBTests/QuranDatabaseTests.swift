@@ -49,6 +49,24 @@ final class QuranDatabaseTests: XCTestCase {
         XCTAssertEqual(QuranStructure.quarterDescription(8).quarterInHizb, 4)
     }
 
+    /// The bundled Tanzil text already carries the sajdah sign ۩ (U+06E9) on
+    /// every sajdah ayah, so readers must NOT append their own (it would show
+    /// as "۩ ۩"). This checks only the presence of the structural mark, not
+    /// the Quranic wording.
+    func testSajdahAyatAlreadyContainSajdahSign() throws {
+        let db = try QuranDatabase()
+        let structure = try db.structure()
+        XCTAssertEqual(structure.sajdaAyat.count, 15)
+        for sajda in structure.sajdaAyat {
+            let verse = try XCTUnwrap(
+                db.verses(surahId: sajda.surahId).first { $0.ayah == sajda.ayah })
+            XCTAssertTrue(verse.text.contains("\u{06E9}"),
+                          "\(sajda.surahId):\(sajda.ayah) lacks ۩ in DB text")
+            XCTAssertFalse(verse.text.contains("\u{06E9} \u{06E9}"),
+                           "\(sajda.surahId):\(sajda.ayah) has a doubled ۩")
+        }
+    }
+
     func testWordSearchIgnoresDiacritics() throws {
         let db = try QuranDatabase()
         // Plain query must match fully-vocalized Uthmani text.

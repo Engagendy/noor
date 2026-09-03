@@ -36,6 +36,8 @@ public final class SurahReaderViewModel {
     private var structure: QuranStructure?
     private let database: QuranDatabase
     private let surahId: Int
+    /// Verified DB basmala, loaded once (used for headers on any surah).
+    private var basmalaAny: String?
     private var pageCache: [Int: [PageSection]] = [:]
     private var flowCache: [Int: [FlowItem]] = [:]
 
@@ -71,8 +73,14 @@ public final class SurahReaderViewModel {
             allSurahs = try database.allSurahs()
             surah = allSurahs.first { $0.id == surahId }
             verses = try database.verses(surahId: surahId)
+            // Constant text — read once here instead of per page render.
+            if surahId == 1 {
+                basmalaAny = verses.first?.text
+            } else {
+                basmalaAny = try database.verses(surahId: 1).first?.text
+            }
             if surahId != 1 && surahId != 9 {
-                basmala = try database.verses(surahId: 1).first?.text
+                basmala = basmalaAny
             }
             let structure = try database.structure()
             self.structure = structure
@@ -135,19 +143,15 @@ public final class SurahReaderViewModel {
             sections.append(PageSection(
                 id: surahId,
                 headerSurah: startsHere ? surahInfo(surahId) : nil,
-                basmala: startsHere && surahId != 1 && surahId != 9 ? basmalaText : nil,
+                basmala: startsHere && surahId != 1 && surahId != 9 ? basmalaAny : nil,
                 verses: sorted))
         }
         pageCache[page] = sections
         return sections
     }
 
-    private var basmalaText: String? {
-        (try? database.verses(surahId: 1))?.first?.text
-    }
-
     /// Basmala for injected print-mode lines (verified DB text).
-    public var basmalaForAnySurah: String? { basmalaText }
+    public var basmalaForAnySurah: String? { basmalaAny }
 
     // MARK: Tappable mushaf flow
 
@@ -155,7 +159,7 @@ public final class SurahReaderViewModel {
     /// splitting the checksummed Tanzil text on spaces — layout only, the
     /// text itself is never altered.
     public struct FlowItem: Identifiable, Hashable {
-        public enum Kind { case word, marker, quarter, sajda }
+        public enum Kind { case word, marker, quarter }
         public let id: Int
         public let surahId: Int
         public let ayah: Int
@@ -180,9 +184,8 @@ public final class SurahReaderViewModel {
             for word in verse.text.split(separator: " ") {
                 add(verse.surahId, verse.ayah, String(word), .word)
             }
-            if sajdaKeys.contains(key) {
-                add(verse.surahId, verse.ayah, "۩", .sajda)
-            }
+            // No synthetic sajdah sign: the Tanzil text of every sajdah ayah
+            // already ends with ۩ (U+06E9), so appending one would double it.
             add(verse.surahId, verse.ayah,
                 "\u{2067}﴿\(verse.ayah.arabicIndic)﴾\u{2069}", .marker)
         }

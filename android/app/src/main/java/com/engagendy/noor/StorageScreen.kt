@@ -102,9 +102,12 @@ fun StorageScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                                  modifier = Modifier
                                      .clickable {
                                          // Heavy IO off-main: delete then rescan.
-                                         scope.launch(Dispatchers.IO) {
-                                             item.dirs.forEach { it.deleteRecursively() }
-                                             items = scanStorage(context)
+                                         scope.launch {
+                                             // Dropping the recitation cache must not
+                                             // leave the player holding a deleted file.
+                                             if (item.stopsPlayback) NoorPlayer.stop()
+                                             withContext(Dispatchers.IO) { item.delete() }
+                                             items = withContext(Dispatchers.IO) { scanStorage(context) }
                                          }
                                      }
                                      .padding(horizontal = 6.dp, vertical = 8.dp))
@@ -126,23 +129,49 @@ data class StorageItem(
     val subtitle: Int,    // string resource
     val bytes: Long,
     val dirs: List<File>,
-)
+    /// Sub-directories owned by another row — never measured or deleted here.
+    val excluded: List<File> = emptyList(),
+    /// Recitations are deleted out from under the player, so stop it first.
+    val stopsPlayback: Boolean = false,
+) {
+    /// Disk IO — call on Dispatchers.IO only.
+    fun delete() {
+        dirs.forEach { dir ->
+            if (excluded.isEmpty()) {
+                dir.deleteRecursively()
+            } else {
+                dir.listFiles()?.forEach { child ->
+                    if (excluded.none { it == child }) child.deleteRecursively()
+                }
+            }
+        }
+    }
+}
 
 /// Disk IO — call on Dispatchers.IO only.
 private fun scanStorage(context: Context): List<StorageItem> {
-    fun size(dir: File): Long =
-        dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
+    fun size(dir: File, excluded: List<File>): Long =
+        dir.walkBottomUp()
+            .filter { file -> file.isFile && excluded.none { file.startsWith(it) } }
+            .sumOf { it.length() }
+    // Recitations live inside cacheDir but get their own row (mirrors iOS
+    // StorageView), so the temporary-files row must skip them.
+    val recitations = File(context.cacheDir, "recitations")
     val candidates = listOf(
-        Triple(R.string.g1_storage_page_fonts, R.string.g1_storage_page_fonts_sub,
-               listOf(PageFontStore.dir(context))),
-        Triple(R.string.g1_storage_tafsir, R.string.g1_storage_tafsir_sub,
-               listOf(File(context.filesDir, "tafsir"))),
-        Triple(R.string.g1_storage_hadith, R.string.g1_storage_hadith_sub,
-               listOf(File(context.filesDir, "hadith"))),
-        Triple(R.string.g1_storage_temp, R.string.g1_storage_temp_sub,
-               listOf(context.cacheDir)),
+        StorageItem(R.string.g1_storage_page_fonts, R.string.g1_storage_page_fonts_sub, 0L,
+                    listOf(PageFontStore.dir(context))),
+        StorageItem(R.string.misc_storage_recitations, R.string.misc_storage_recitations_sub, 0L,
+                    listOf(recitations), stopsPlayback = true),
+        StorageItem(R.string.g1_storage_tafsir, R.string.g1_storage_tafsir_sub, 0L,
+                    listOf(File(context.filesDir, "tafsir"))),
+        StorageItem(R.string.g1_storage_hadith, R.string.g1_storage_hadith_sub, 0L,
+                    listOf(File(context.filesDir, "hadith"))),
+        StorageItem(R.string.g1_storage_temp, R.string.g1_storage_temp_sub, 0L,
+                    listOf(context.cacheDir), excluded = listOf(recitations)),
     )
-    return candidates.map { (title, subtitle, dirs) ->
-        StorageItem(title, subtitle, dirs.sumOf { if (it.exists()) size(it) else 0L }, dirs)
+    return candidates.map { item ->
+        item.copy(bytes = item.dirs.sumOf {
+            if (it.exists()) size(it, item.excluded) else 0L
+        })
     }
 }

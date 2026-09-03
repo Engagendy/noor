@@ -33,7 +33,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,11 +45,13 @@ import androidx.core.os.LocaleListCompat
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Context
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /// The five Tanzil translation editions — 1:1 with the iOS
 /// Core/Translations TranslationStore.allEditions ("translation.id").
@@ -209,7 +210,7 @@ private fun SettingsMain(
         SettingsCard {
             FontSizeRow(prefs = prefs)
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
-            NavRow(title = stringResource(R.string.g1_reciter), value = NoorPlayer.reciter.nameArabic,
+            NavRow(title = stringResource(R.string.g1_reciter), value = NoorPlayer.reciter.localizedName,
                    onClick = { showReciterPicker = true })
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             NavRow(title = stringResource(R.string.g1_tajweed_guide), onClick = openTajweed)
@@ -413,18 +414,60 @@ private fun FontSizeRow(prefs: android.content.SharedPreferences) {
     }
 }
 
+/// Process-scoped owner of the full-mushaf download so it survives the
+/// Settings row leaving composition (back/Done, tab switch, activity
+/// recreation on language/theme change). The row only observes this state.
+object MushafDownloader {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var job: Job? = null
+
+    /// Pages cached on disk; -1 until first counted.
+    var cached by mutableIntStateOf(-1)
+        private set
+    var running by mutableStateOf(false)
+        private set
+
+    fun refresh(context: Context) {
+        val app = context.applicationContext
+        scope.launch { cached = PageFontStore.cachedCount(app) }
+    }
+
+    fun start(context: Context) {
+        if (running) return
+        val app = context.applicationContext
+        val total = PageLayoutDb.PAGE_COUNT
+        running = true
+        job = scope.launch {
+            try {
+                for (page in 1..total) {
+                    if (!isActive) break
+                    PageFontStore.ensure(app, page)
+                    if (page % 5 == 0 || page == total) {
+                        cached = PageFontStore.cachedCount(app)
+                    }
+                }
+            } finally {
+                cached = PageFontStore.cachedCount(app)
+                running = false
+            }
+        }
+    }
+
+    fun stop() {
+        job?.cancel()
+        job = null
+    }
+}
+
 /// Download the full printed mushaf — all 604 QCF v2 page fonts (~350 MB),
 /// like the iOS MushafDownloadRow. Cancellable; progress is page count.
+/// The job lives in MushafDownloader, not this composable's scope.
 @Composable
 private fun MushafDownloadRow() {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var cached by remember { mutableIntStateOf(-1) }
-    var running by remember { mutableStateOf(false) }
-    var job by remember { mutableStateOf<Job?>(null) }
-    LaunchedEffect(Unit) {
-        cached = withContext(Dispatchers.IO) { PageFontStore.cachedCount(context) }
-    }
+    val cached = MushafDownloader.cached
+    val running = MushafDownloader.running
+    LaunchedEffect(Unit) { MushafDownloader.refresh(context) }
     val total = PageLayoutDb.PAGE_COUNT
     val complete = cached >= total
     Row(
@@ -450,24 +493,12 @@ private fun MushafDownloadRow() {
             running -> Text(stringResource(R.string.g1_stop), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                             color = NoorColor.accentGold,
                             modifier = Modifier
-                                .clickable { job?.cancel(); running = false }
+                                .clickable { MushafDownloader.stop() }
                                 .padding(6.dp))
             else -> Text(stringResource(R.string.g1_download), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                          color = NoorColor.accentPrimary,
                          modifier = Modifier
-                             .clickable {
-                                 running = true
-                                 job = scope.launch(Dispatchers.IO) {
-                                     for (page in 1..total) {
-                                         if (!isActive) break
-                                         PageFontStore.ensure(context, page)
-                                         if (page % 5 == 0 || page == total) {
-                                             cached = PageFontStore.cachedCount(context)
-                                         }
-                                     }
-                                     running = false
-                                 }
-                             }
+                             .clickable { MushafDownloader.start(context) }
                              .padding(6.dp))
         }
     }

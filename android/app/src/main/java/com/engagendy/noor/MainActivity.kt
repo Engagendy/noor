@@ -111,6 +111,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // The user may have just granted "Alarms & reminders" (or changed
+        // notification settings) in the system UI — re-arm as exact alarms.
+        if (KhatmahPlan.prefs(this).getBoolean("onboarding.done", false)) {
+            AdhanScheduler.reschedule(this)
+        }
+    }
+
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT < 33) return
         val granted = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==

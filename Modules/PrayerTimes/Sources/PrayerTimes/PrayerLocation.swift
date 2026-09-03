@@ -14,6 +14,10 @@ public enum NoorShared {
     public static let mirroredKeys = [
         "prayer.city", "prayer.useCustom", "prayer.customLat", "prayer.customLon",
         "prayer.customLabel", "prayer.method", "prayer.madhab", "app.language",
+        // Manual per-prayer offsets: PrayerDay.compute reads them from the
+        // defaults it is given, so the widgets need the mirrored copy too.
+        "prayer.adj.fajr", "prayer.adj.dhuhr", "prayer.adj.asr",
+        "prayer.adj.maghrib", "prayer.adj.isha",
     ]
 
     /// Copies widget-relevant settings from standard defaults to the group.

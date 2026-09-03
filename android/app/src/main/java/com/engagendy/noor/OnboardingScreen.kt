@@ -56,8 +56,18 @@ fun OnboardingScreen(onDone: () -> Unit) {
     var cityName by remember { mutableStateOf(prayerPrefs.cityName) }
     var citySearch by remember { mutableStateOf("") }
 
+    // Onboarding always records an EXPLICIT adhan-notification choice, like
+    // iOS (OnboardingView sets notificationsEnabled = granted). Without it
+    // "Later" would leave the pref at its default and the next reschedule()
+    // would sound the adhan five times a day for a user who declined.
+    val finish: (Boolean) -> Unit = { enabled ->
+        KhatmahPlan.prefs(context).edit()
+            .putBoolean("notifications.enabled", enabled).apply()
+        onDone()
+    }
+
     val notificationLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()) { onDone() }
+        ActivityResultContracts.RequestPermission()) { granted -> finish(granted) }
 
     Column(Modifier.fillMaxSize().background(NoorColor.bgPrimary)) {
         // Header — mihrab mark, welcome, promise line.
@@ -103,10 +113,10 @@ fun OnboardingScreen(onDone: () -> Unit) {
                         if (Build.VERSION.SDK_INT >= 33) {
                             notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         } else {
-                            onDone()
+                            finish(true)
                         }
                     },
-                    onLater = onDone)
+                    onLater = { finish(false) })
             }
         }
 

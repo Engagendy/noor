@@ -30,8 +30,14 @@ struct StorageView: View {
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         let candidates: [(LocalizedStringKey, LocalizedStringKey, [URL])] = [
             ("Mushaf page fonts", "Madani print typefaces", [support.appendingPathComponent("pagefonts")]),
-            ("Recitations", "Downloaded ayah audio", [caches.appendingPathComponent("recitations")]),
-            ("Follow-along audio", "Word-tracking surah files", [caches.appendingPathComponent("timings")]),
+            // Both locations: streamed ayahs are cached, explicitly downloaded
+            // surahs live in Application Support so iOS cannot purge them.
+            ("Recitations", "Downloaded ayah audio",
+             [caches.appendingPathComponent("recitations"),
+              support.appendingPathComponent("recitations")]),
+            ("Follow-along audio", "Word-tracking surah files",
+             [caches.appendingPathComponent("timings"),
+              support.appendingPathComponent("timings")]),
             ("Tafsir packs", "Offline tafsir texts", [support.appendingPathComponent("tafsir")]),
             ("Hadith packs", "Sahih al-Bukhari and Muslim", [support.appendingPathComponent("hadith")]),
         ]

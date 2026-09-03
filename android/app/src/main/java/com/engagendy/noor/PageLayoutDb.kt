@@ -2,7 +2,6 @@ package com.engagendy.noor
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import java.io.File
 
 /// One word (or ayah-end marker) on a Madani mushaf page, with its QCF
 /// glyph codes. Port of the iOS ContentDB PageLayoutDatabase.
@@ -71,12 +70,7 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
         }
 
         private fun open(context: Context): PageLayoutDb {
-            val target = File(context.filesDir, "page_layout.sqlite")
-            if (!target.exists()) {
-                context.assets.open("page_layout.sqlite").use { input ->
-                    target.outputStream().use { input.copyTo(it) }
-                }
-            }
+            val target = BundledDb.install(context, "page_layout.sqlite")
             val db = SQLiteDatabase.openDatabase(
                 target.path, null, SQLiteDatabase.OPEN_READONLY)
             return PageLayoutDb(db)

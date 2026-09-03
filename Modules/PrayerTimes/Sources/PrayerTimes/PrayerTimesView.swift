@@ -59,7 +59,7 @@ public struct PrayerTimesView: View {
                     Image(systemName: binding.wrappedValue ? "bell" : "bell.slash")
                         .font(.system(size: 15))
                         .foregroundStyle(binding.wrappedValue ? NoorColor.accentPrimary : NoorColor.inkSecondary.opacity(0.5))
-                        .frame(width: 34, height: 34)
+                        .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)

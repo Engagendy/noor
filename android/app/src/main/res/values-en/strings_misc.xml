@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English overrides for values/strings_misc.xml. -->
+<resources>
+    <string name="misc_storage_recitations">Recitations</string>
+    <string name="misc_storage_recitations_sub">Downloaded ayah audio for offline listening</string>
+    <string name="misc_channel_recitation">Recitation</string>
+    <string name="misc_channel_recitation_desc">Playback controls for the recitation</string>
+</resources>

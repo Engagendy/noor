@@ -44,8 +44,17 @@ struct MadaniPageView: View {
     }
 
     @State private var lines: [PageLine] = []
-    @State private var fontReady = false
-    @State private var fontFailed = false
+    /// Read from the observable store (not @State copies) so the page
+    /// re-renders the moment a download finished by a neighbour's prefetch
+    /// lands, instead of sticking on the spinner.
+    private var fontReady: Bool { fontStore.readyPages.contains(page) }
+    private var fontFailed: Bool { fontStore.failedPages.contains(page) }
+    /// Bumped to re-run `ensure` after a failed font download (tap or auto
+    /// retry) — `.task(id:)` alone only fires on page/variant change.
+    @State private var attempt = 0
+    /// Quiet automatic re-download attempts before the page settles on the
+    /// Retry button.
+    private static let autoRetries = 3
     /// Re-registers and re-renders when the mushaf typeface changes.
     @AppStorage("mushaf.font") private var fontVariant = "v2"
 
@@ -112,6 +121,19 @@ struct MadaniPageView: View {
                         Label("Page font unavailable", systemImage: "wifi.slash")
                     } description: {
                         Text("Connect to the internet once to download this page.")
+                    } actions: {
+                        Button("Retry") { attempt += 1 }
+                            .buttonStyle(.borderedProminent)
+                    }
+                    // A transient network hiccup must not strand the page on
+                    // the offline placeholder: retry quietly a few times with
+                    // backoff (4s, 8s, 16s), then leave it to the Retry button
+                    // so a genuinely offline device stops re-downloading.
+                    .task(id: attempt) {
+                        guard attempt < Self.autoRetries else { return }
+                        try? await Task.sleep(for: .seconds(4 << attempt))
+                        guard !Task.isCancelled else { return }
+                        attempt += 1
                     }
                 } else {
                     VStack(spacing: 10) {
@@ -125,12 +147,9 @@ struct MadaniPageView: View {
             }
         }
         .foregroundStyle(NoorColor.inkPrimary)
-        .task(id: "\(page)-\(fontVariant)") {
-            fontReady = false
+        .task(id: "\(page)-\(fontVariant)-\(attempt)") {
             lines = (try? layout?.lines(page: page)) ?? []
             await fontStore.ensure(page: page)
-            fontReady = fontStore.isReady(page: page)
-            fontFailed = fontStore.failedPages.contains(page)
             // Prefetch neighbors for smooth swiping.
             await fontStore.ensure(page: page + 1)
             await fontStore.ensure(page: page - 1)

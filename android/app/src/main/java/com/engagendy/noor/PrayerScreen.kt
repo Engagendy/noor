@@ -152,6 +152,12 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
             WeekStrip(now = now, dayOffset = dayOffset, onSelect = { dayOffset = it })
             Spacer(Modifier.height(14.dp))
 
+            // High-latitude polar day/night: adhan-java cannot resolve times.
+            if (entries.isEmpty()) {
+                Text(stringResource(R.string.prayer_high_latitude_unavailable),
+                     fontSize = 14.sp, color = NoorColor.inkSecondary,
+                     modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp))
+            }
             // Vertical timeline: next prayer enlarged in a highlighted card.
             entries.forEach { entry ->
                 val bellOn = remember(version) { prefs.notificationEnabled(entry.key) }

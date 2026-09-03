@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -29,12 +30,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 
 /// Prayer settings — city, calculation method, Asr madhab, and manual
 /// per-prayer minute adjustments (-30..30), matching the iOS settings sheet.
@@ -55,6 +59,17 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
     val cityName = remember(version) { prefs.cityName }
     val useCustomLocation = remember(version) { prefs.useCustomLocation }
     val preAlert = remember(version) { prefs.preAlertMinutes }
+    // Android 12/12L: "Alarms & reminders" may be off, in which case adhans
+    // drift by minutes. Re-check when returning from the system screen.
+    val canExactAlarms = remember(version) { AdhanScheduler.canScheduleExact(context) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) changed()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     // Auto location — mirrors the iOS "Use my current location" button:
     // fetch one coarse fix, store the exact coordinate, label it with the
@@ -100,6 +115,39 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
                      modifier = Modifier
                          .clickable(onClick = onDone)
                          .padding(horizontal = 10.dp, vertical = 6.dp))
+            }
+        }
+
+        if (!canExactAlarms) {
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(NoorColor.stateReciting, RoundedCornerShape(12.dp))
+                        .clickable {
+                            runCatching {
+                                context.startActivity(
+                                    AdhanScheduler.exactAlarmSettingsIntent(context))
+                            }
+                        }
+                        .padding(horizontal = 16.dp, vertical = 13.dp)
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.prayer_exact_alarm_title),
+                             fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                             color = NoorColor.accentPrimary)
+                        Text(stringResource(R.string.prayer_exact_alarm_text),
+                             fontSize = 12.sp, color = NoorColor.inkSecondary)
+                    }
+                    Text(stringResource(R.string.prayer_exact_alarm_action),
+                         fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                         color = NoorColor.accentPrimary,
+                         modifier = Modifier.padding(start = 12.dp))
+                }
             }
         }
 

@@ -82,16 +82,26 @@ fun QuranScreen(
     var openAyah by remember(resumeSurahId) { mutableStateOf(0) }
     // Madani page mode: opened from Today (frontier) or the mushaf button.
     var openMushafAt by remember(mushafPage) { mutableStateOf(mushafPage) }
-    // Bookmarks live in prefs as "surah:ayah" strings; state mirrors them.
+    // Bookmarks live in prefs as "surah:ayah" strings; prefs are the source
+    // of truth (MushafScreen toggles them too), state is a display mirror.
     var bookmarks by remember {
         mutableStateOf(prefs.getStringSet("quran.bookmarks", emptySet())!!.toSet())
     }
     fun toggleBookmark(surahId: Int, ayah: Int) {
         val ref = "$surahId:$ayah"
-        val next = bookmarks.toMutableSet()
+        val next = prefs.getStringSet("quran.bookmarks", emptySet())!!.toMutableSet()
         if (!next.add(ref)) next.remove(ref)
         bookmarks = next
         prefs.edit().putStringSet("quran.bookmarks", next).apply()
+    }
+    // Re-sync after the Madani view closes: it may have toggled bookmarks
+    // from its own actions sheet while this screen stayed in composition.
+    // MushafScreen is reachable two ways (openMushafAt, or openSurah while
+    // reader.mode == "page"), so key on both closers.
+    LaunchedEffect(openMushafAt, openSurah) {
+        if (openMushafAt == 0 && openSurah == null) {
+            bookmarks = prefs.getStringSet("quran.bookmarks", emptySet())!!.toSet()
+        }
     }
 
     // From inside the Madani view's options panel: مصحف / آية آية chosen —
@@ -565,7 +575,7 @@ fun ReaderScreen(
         db.quarterStarts().map { it.surahId * 1000 + it.ayah }.toSet()
     }
     val juzAt = remember { db.juzStarts().associateBy({ it.surahId * 1000 + it.ayah }, { it.idx }) }
-    val juz = remember(surah.id) { db.juzFor(surah.id, scrollToAyah.coerceAtLeast(1)) }
+    val juz = remember(surah.id, scrollToAyah) { db.juzFor(surah.id, scrollToAyah.coerceAtLeast(1)) }
     // Resume position: one direct prefs write per surah open, off-main —
     // never observed as Compose state (same rule as the Madani pager).
     LaunchedEffect(surah.id) {
@@ -574,6 +584,9 @@ fun ReaderScreen(
         }
     }
     val hasBasmala = surah.id != 9 && surah.id != 1
+    // Basmala header text comes from the verified DB (1:1), never typed —
+    // same source the Madani page uses.
+    val basmala = remember { db.basmala() }
     // Ayah being recited in THIS surah (iOS recitingKey) — Compose state
     // from the player, so the highlight tracks playback automatically.
     val recitingAyah =
@@ -670,14 +683,16 @@ fun ReaderScreen(
 
     // Open-at-ayah: ayah mode scrolls to the block; flow mode scrolls the
     // single flow item to the ayah's first line once the layout is known.
-    LaunchedEffect(mode, surah.id) {
+    // Keyed on scrollToAyah too: go-to-page / search / hizb references can
+    // resolve inside the surah already open, changing only the ayah.
+    LaunchedEffect(mode, surah.id, scrollToAyah) {
         if (mode == "ayah" && scrollToAyah > 0) {
             val idx = verses.indexOfFirst { it.ayah == scrollToAyah }
             if (idx >= 0) listState.scrollToItem((if (hasBasmala) 1 else 0) + idx)
         }
     }
-    var didScrollFlow by remember(surah.id) { mutableStateOf(false) }
-    LaunchedEffect(textLayout, mode) {
+    var didScrollFlow by remember(surah.id, scrollToAyah) { mutableStateOf(false) }
+    LaunchedEffect(textLayout, mode, scrollToAyah) {
         val layout = textLayout
         if (mode == "ayah" || didScrollFlow || scrollToAyah <= 0 || layout == null) return@LaunchedEffect
         val target = flow.getStringAnnotations("ayah", 0, flow.length)
@@ -820,7 +835,7 @@ fun ReaderScreen(
                 if (hasBasmala) {
                     item {
                         Text(
-                            "بِسْمِ اللَّهِ الرَّحْمَـٰنِ الرَّحِيمِ",
+                            basmala ?: "",
                             fontFamily = QuranFont,
                             fontSize = (fontSize * 0.85f).sp,
                             textAlign = TextAlign.Center,

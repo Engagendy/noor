@@ -8,13 +8,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
@@ -25,7 +28,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,8 +46,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-private enum class PackState { NOT_DOWNLOADED, DOWNLOADING, READY, FAILED }
 
 /// One page of the detail pager, whatever the hadith's source.
 private data class HadithPage(val arabic: String, val reference: String)
@@ -70,10 +70,8 @@ private fun fortyTitle(context: android.content.Context, key: String, arabic: St
 @Composable
 fun HadithScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
     var forty by remember { mutableStateOf<List<BundledHadith>>(emptyList()) }
-    val packStates = remember { mutableStateMapOf<HadithCollection, PackState>() }
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<HadithSearchHit>>(emptyList()) }
 
@@ -83,7 +81,8 @@ fun HadithScreen(modifier: Modifier = Modifier) {
     var detail by remember { mutableStateOf<HadithDetail?>(null) }
 
     LaunchedEffect(Unit) {
-        // Big files parse off the main thread.
+        // Big files parse off the main thread. Pack states live in
+        // HadithLibrary so an in-flight download survives leaving the tab.
         val loaded = withContext(Dispatchers.IO) {
             val items = HadithStore.load(context)
             val states = HadithCollection.entries.associateWith {
@@ -93,8 +92,11 @@ fun HadithScreen(modifier: Modifier = Modifier) {
             items to states
         }
         forty = loaded.first
+        // Disk is the truth except while a download is still running.
         loaded.second.forEach { (collection, state) ->
-            if (packStates[collection] != PackState.DOWNLOADING) packStates[collection] = state
+            if (HadithLibrary.packStates[collection] != PackState.DOWNLOADING) {
+                HadithLibrary.packStates[collection] = state
+            }
         }
     }
     LaunchedEffect(query) {
@@ -183,7 +185,7 @@ fun HadithScreen(modifier: Modifier = Modifier) {
         } else {
             item { HadithSectionHeader(stringResource(R.string.g2_sahihain)) }
             items(HadithCollection.entries) { collection ->
-                val state = packStates[collection] ?: PackState.NOT_DOWNLOADED
+                val state = HadithLibrary.packStates[collection] ?: PackState.NOT_DOWNLOADED
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -222,16 +224,7 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                             fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                             color = NoorColor.accentPrimary,
                             modifier = Modifier
-                                .clickable {
-                                    packStates[collection] = PackState.DOWNLOADING
-                                    scope.launch {
-                                        val ok = withContext(Dispatchers.IO) {
-                                            HadithLibrary.download(context, collection)
-                                        }
-                                        packStates[collection] =
-                                            if (ok) PackState.READY else PackState.FAILED
-                                    }
-                                }
+                                .clickable { HadithLibrary.startDownload(context, collection) }
                                 .padding(8.dp))
                     }
                 }
@@ -282,7 +275,10 @@ private fun HadithSearchField(query: String, onChange: (String) -> Unit,
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 4.dp)
             .background(NoorColor.bgElevated, RoundedCornerShape(12.dp))
-            .padding(horizontal = 14.dp, vertical = 10.dp)
+            // 48dp tall so the clear button can carry a full touch target
+            // without the field growing when a query is typed.
+            .heightIn(min = 48.dp)
+            .padding(horizontal = 14.dp, vertical = 2.dp)
     ) {
         BasicTextField(
             value = query,
@@ -299,9 +295,17 @@ private fun HadithSearchField(query: String, onChange: (String) -> Unit,
             }
         )
         if (query.isNotEmpty()) {
-            Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.g2_clear_search),
-                 tint = NoorColor.inkSecondary,
-                 modifier = Modifier.clickable { onChange("") }.padding(4.dp).size(15.dp))
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .clickable { onChange("") }
+            ) {
+                Icon(painterResource(R.drawable.ic_close),
+                     contentDescription = stringResource(R.string.g2_clear_search),
+                     tint = NoorColor.inkSecondary, modifier = Modifier.size(15.dp))
+            }
         }
     }
 }

@@ -2,10 +2,14 @@ import Foundation
 import UserNotifications
 
 /// Evening-before reminders for sunnah fasting days: Mondays, Thursdays,
-/// and the white days (13–15 hijri). At most ~8 pending — fits alongside
-/// the adhan window inside iOS's 64-request cap.
+/// and the white days (13–15 hijri).
 public struct FastingReminderScheduler {
     public init() {}
+
+    /// Worst case for the default 10-day window: 3 white days plus two
+    /// Mondays and two Thursdays that miss them = 7; one slot of slack.
+    /// The adhan planner reserves this many of iOS's 64 pending requests.
+    public static let maxPending = 8
 
     /// (fireDate, arabic reason, english reason) for the next `days` days.
     public static func plan(from now: Date = .now, days: Int = 10) -> [(Date, String, String)] {

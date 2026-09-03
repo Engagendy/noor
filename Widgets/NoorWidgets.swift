@@ -93,11 +93,14 @@ struct PrayerProvider: AppIntentTimelineProvider {
         let arabic = WidgetSettings.isArabic
         let method = WidgetSettings.method
         let madhab = WidgetSettings.madhab
-        guard let day = PrayerDay.compute(location: location, method: method, madhab: madhab, date: date)
+        let defaults = NoorShared.defaults
+        guard let day = PrayerDay.compute(location: location, method: method, madhab: madhab,
+                                          date: date, defaults: defaults)
         else { return nil }
         let next = day.next(at: date)
             ?? PrayerDay.compute(location: location, method: method, madhab: madhab,
-                                 date: date.addingTimeInterval(86400))?.entries.first
+                                 date: date.addingTimeInterval(86400),
+                                 defaults: defaults)?.entries.first
         guard let next else { return nil }
         return PrayerEntry(
             date: date,

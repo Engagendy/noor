@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.batoulapps.adhan.CalculationMethod
 import com.batoulapps.adhan.Coordinates
+import com.batoulapps.adhan.HighLatitudeRule
 import com.batoulapps.adhan.Madhab
 import com.batoulapps.adhan.PrayerTimes
 import com.batoulapps.adhan.data.DateComponents
@@ -260,10 +261,20 @@ object PrayerEngine {
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH) + 1,
             calendar.get(Calendar.DAY_OF_MONTH))
-        val params = method.adhanMethod.parameters.apply {
-            this.madhab = madhab.adhanMadhab
-        }
-        val times = PrayerTimes(Coordinates(city.latitude, city.longitude), components, params)
+        val coordinates = Coordinates(city.latitude, city.longitude)
+        // adhan-java nulls EVERY prayer when any one is unresolvable (polar
+        // twilight above ~48°N in summer for 18° methods). Retry with the
+        // high-latitude fallbacks before giving up; a polar day/night with no
+        // sunrise or sunset at all still yields an empty list, which callers
+        // render as "unavailable" rather than crashing on a null Date.
+        val rules = listOf(null, HighLatitudeRule.SEVENTH_OF_THE_NIGHT, HighLatitudeRule.TWILIGHT_ANGLE)
+        val times = rules.firstNotNullOfOrNull { rule ->
+            val params = method.adhanMethod.parameters.apply {
+                this.madhab = madhab.adhanMadhab
+                if (rule != null) highLatitudeRule = rule
+            }
+            PrayerTimes(coordinates, components, params).takeIf { it.isComplete() }
+        } ?: return emptyList()
         fun adjusted(time: Date, key: String): Date =
             Date(time.time + adjustments(key) * 60_000L)
         return listOf(
@@ -280,4 +291,9 @@ object PrayerEngine {
 
     fun next(entries: List<PrayerEntry>, now: Date = Date()): PrayerEntry? =
         entries.firstOrNull { it.time.after(now) }
+
+    /// Platform-typed fields: adhan-java leaves all six null when unresolvable.
+    private fun PrayerTimes.isComplete(): Boolean =
+        fajr != null && sunrise != null && dhuhr != null &&
+            asr != null && maghrib != null && isha != null
 }

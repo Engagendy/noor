@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,9 +73,9 @@ fun TodayScreen(
     openAthkar: () -> Unit,
 ) {
     val context = LocalContext.current
-    var showSettings by remember { mutableStateOf(false) }
-    var showHijriCalendar by remember { mutableStateOf(false) }
-    var showAllEvents by remember { mutableStateOf(false) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
+    var showHijriCalendar by rememberSaveable { mutableStateOf(false) }
+    var showAllEvents by rememberSaveable { mutableStateOf(false) }
     var detailEvent by remember { mutableStateOf<IslamicEvent?>(null) }
     var hadithDetail by remember { mutableStateOf<Pair<String, String>?>(null) }
 

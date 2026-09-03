@@ -46,7 +46,7 @@ struct PrayerLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(timerInterval: Date()...context.state.time, countsDown: true)
+                    Text(timerInterval: countdownRange(to: context.state.time), countsDown: true)
                         .font(.system(size: 20, weight: .bold).monospacedDigit())
                         .frame(maxWidth: 90)
                         .environment(\.locale, context.attributes.isArabic ? Locale(identifier: "ar") : .current)
@@ -61,7 +61,7 @@ struct PrayerLiveActivity: Widget {
                 Image(systemName: "moon.stars.fill")
                     .foregroundStyle(WidgetTheme.gold)
             } compactTrailing: {
-                Text(timerInterval: Date()...context.state.time, countsDown: true)
+                Text(timerInterval: countdownRange(to: context.state.time), countsDown: true)
                     .font(.system(size: 13, weight: .semibold).monospacedDigit())
                     .frame(maxWidth: 52)
                     .environment(\.locale, context.attributes.isArabic ? Locale(identifier: "ar") : .current)
@@ -71,4 +71,13 @@ struct PrayerLiveActivity: Widget {
             }
         }
     }
+}
+
+/// `ClosedRange` traps when lowerBound > upperBound, and the Dynamic Island
+/// is re-rendered after the prayer time has passed (stale re-render, locale
+/// or appearance change). Clamp so the timer bottoms out at 0:00 instead of
+/// crashing the widget extension.
+private func countdownRange(to time: Date) -> ClosedRange<Date> {
+    let now = Date()
+    return now...max(now, time)
 }

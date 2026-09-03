@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English prayer-module UI strings. -->
+<resources>
+    <!-- Android 12/12L banner when "Alarms & reminders" is off. -->
+    <string name="prayer_exact_alarm_title">Adhan alerts may be late</string>
+    <string name="prayer_exact_alarm_text">Allow Noor to set alarms and reminders so the adhan arrives exactly on time.</string>
+    <string name="prayer_exact_alarm_action">Allow</string>
+    <!-- High latitudes (polar day/night): the engine has no times to show. -->
+    <string name="prayer_high_latitude_unavailable">Prayer times can\'t be computed for this location at this time of year (high latitude). Choose a nearby city in Settings.</string>
+    <string name="prayer_high_latitude_short">Unavailable</string>
+    <!-- Sunnah-fasting eve reminder: substituted into g1_fasting_text as the reason. -->
+    <string name="prayer_fasting_white_day">a white day (%1$dh)</string>
+</resources>

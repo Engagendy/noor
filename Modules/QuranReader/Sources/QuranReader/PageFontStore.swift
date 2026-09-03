@@ -11,7 +11,10 @@ import Observation
 public final class PageFontStore {
     public private(set) var readyPages: Set<Int> = []
     public private(set) var failedPages: Set<Int> = []
-    private var inFlight: Set<Int> = []
+    /// In-progress downloads, keyed by page. A second caller for the same
+    /// page (e.g. the page's own view arriving while a neighbour's prefetch
+    /// is running) awaits the existing task instead of returning early.
+    private var inFlight: [Int: Task<Void, Never>] = [:]
 
     // Full-mushaf background download state.
     public private(set) var bulkProgress: Int = 0     // pages on disk
@@ -100,14 +103,27 @@ public final class PageFontStore {
         }
     }
 
-    /// Ensures the font for `page` is downloaded and registered.
+    /// Ensures the font for `page` is downloaded and registered. Returns
+    /// only once the page is ready or has failed — even when the work was
+    /// started by another caller.
     public func ensure(page: Int) async {
         refreshVariantIfNeeded()
-        guard page >= 1, page <= 604,
-              !readyPages.contains(page), !inFlight.contains(page) else { return }
-        inFlight.insert(page)
-        defer { inFlight.remove(page) }
+        guard page >= 1, page <= 604, !readyPages.contains(page) else { return }
+        if let existing = inFlight[page] {
+            await existing.value
+            return
+        }
+        // A retry after a failure shows the spinner, not the stale placeholder.
+        failedPages.remove(page)
+        // Unstructured so a cancelled awaiter (view swiped away) does not
+        // abort a download other pages may be waiting on.
+        let task = Task { await self.fetchAndRegister(page: page) }
+        inFlight[page] = task
+        await task.value
+        if inFlight[page] == task { inFlight[page] = nil }
+    }
 
+    private func fetchAndRegister(page: Int) async {
         let local = Self.localURL(page: page)
         if !FileManager.default.fileExists(atPath: local.path) {
             let remote = Self.remoteURL(page: page)
@@ -125,9 +141,26 @@ public final class PageFontStore {
                 return
             }
         }
-        // Registration failure for an already-registered font is fine.
-        CTFontManagerRegisterFontsForURL(local as CFURL, .process, nil)
+        guard Self.register(url: local) else {
+            // The cached file is unusable (truncated move, non-font body).
+            // Drop it so the next ensure() re-downloads instead of rendering
+            // tofu forever.
+            try? FileManager.default.removeItem(at: local)
+            failedPages.insert(page)
+            return
+        }
         failedPages.remove(page)
         readyPages.insert(page)
+    }
+
+    /// Registers a font file with the process font manager. Returns false
+    /// only for a genuinely bad file — an already-registered font counts as
+    /// success.
+    private static func register(url: URL) -> Bool {
+        var error: Unmanaged<CFError>?
+        if CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error) { return true }
+        guard let cfError = error?.takeRetainedValue() else { return false }
+        let code = CFErrorGetCode(cfError)
+        return code == CTFontManagerError.alreadyRegistered.rawValue
     }
 }

@@ -1,5 +1,7 @@
 package com.engagendy.noor
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -87,11 +89,28 @@ private fun computeNextPrayer(context: Context): NextPrayerData {
     val prefs = PrayerPrefs(context)
     val city = prefs.location
     val now = Date()
-    val entries = PrayerEngine.today(prefs, now)
-    val next = PrayerEngine.next(entries, now)
-        ?: PrayerEngine.today(prefs, Date(now.time + 86_400_000L)).first()
+    val todayEntries = PrayerEngine.today(prefs, now)
+    // After Isha there is no remaining prayer today: fall back to tomorrow and
+    // draw tomorrow's rows too, so the highlighted row is the one in the header.
+    val todayNext = PrayerEngine.next(todayEntries, now)
+    val tomorrowEntries =
+        if (todayNext == null) PrayerEngine.today(prefs, Date(now.time + 86_400_000L))
+        else emptyList()
+    val entries = if (tomorrowEntries.isEmpty()) todayEntries else tomorrowEntries
+    val next = todayNext ?: tomorrowEntries.firstOrNull()
     val formatter = SimpleDateFormat("h:mm", Locale.getDefault()).apply {
         timeZone = TimeZone.getTimeZone(city.timeZone)
+    }
+    if (next == null) {
+        // High-latitude polar day/night: the engine has no times to show.
+        return NextPrayerData(
+            todayLabel = context.getString(R.string.g1_today),
+            city = city.displayName(),
+            nextName = context.getString(R.string.prayer_high_latitude_short),
+            nextTime = "",
+            remaining = context.getString(R.string.prayer_high_latitude_short),
+            passedCount = 0,
+            times = emptyList())
     }
     val remainingMinutes = ((next.time.time - now.time) / 60_000L).coerceAtLeast(0)
     val clock = "${(remainingMinutes / 60).toInt().localizedDigits()}:" +
@@ -104,7 +123,7 @@ private fun computeNextPrayer(context: Context): NextPrayerData {
         nextName = next.displayName(),
         nextTime = formatter.format(next.time),
         remaining = context.getString(R.string.g1_widget_in, clock),
-        passedCount = entries.count { !it.time.after(now) },
+        passedCount = if (tomorrowEntries.isEmpty()) entries.count { !it.time.after(now) } else 0,
         times = entries.map {
             WidgetPrayer(it.displayName(), formatter.format(it.time), it.key == next.key)
         })
@@ -232,6 +251,16 @@ private fun DarkRowWidget(data: NextPrayerData) {
 
 class NextPrayerWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = NextPrayerWidget()
+
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        AdhanScheduler.scheduleWidgetRefresh(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        AdhanScheduler.scheduleWidgetRefresh(context)
+    }
 }
 
 // MARK: — Daily ayah
@@ -318,17 +347,38 @@ class DailyAyahWidget : GlanceAppWidget() {
 
 class DailyAyahWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = DailyAyahWidget()
+
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        AdhanScheduler.scheduleWidgetRefresh(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        AdhanScheduler.scheduleWidgetRefresh(context)
+    }
 }
 
 /// Push fresh data to every placed widget — called on app open, after
-/// onboarding/settings changes, and when an adhan alarm fires. The OS
-/// hourly `updatePeriodMillis` covers the rest.
+/// onboarding/settings changes, when an adhan alarm fires, and from the
+/// widget refresh tick (`AdhanScheduler.scheduleWidgetRefresh`), which every
+/// refresh re-arms so the countdown keeps up regardless of the notification
+/// toggles. The OS hourly `updatePeriodMillis` is only a backstop.
 object NoorWidgets {
     fun refresh(context: Context) {
         val app = context.applicationContext
         CoroutineScope(Dispatchers.Default).launch {
             NextPrayerWidget().updateAll(app)
             DailyAyahWidget().updateAll(app)
+            AdhanScheduler.scheduleWidgetRefresh(app)
         }
+    }
+
+    /// True while at least one Noor widget sits on a home screen — the tick
+    /// is armed only then, and cancelled once the last one is removed.
+    fun hasPlacedWidgets(context: Context): Boolean {
+        val manager = AppWidgetManager.getInstance(context) ?: return false
+        return listOf(NextPrayerWidgetReceiver::class.java, DailyAyahWidgetReceiver::class.java)
+            .any { manager.getAppWidgetIds(ComponentName(context, it)).isNotEmpty() }
     }
 }

@@ -36,6 +36,9 @@ public struct QiblaView: View {
     }
     private var hasCompass: Bool { headingProvider.heading != nil }
     private var isAligned: Bool { hasCompass && abs(turn) < 6 }
+    /// Green confirmation only when the heading is true-north referenced;
+    /// a magnetic-only heading can be off by the local declination (10–20°).
+    private var isConfirmed: Bool { isAligned && headingProvider.isTrueNorth }
 
     public var body: some View {
         VStack(spacing: 22) {
@@ -63,7 +66,7 @@ public struct QiblaView: View {
                         .animation(.easeInOut(duration: 0.25), value: turn)
                 }
                 Circle()
-                    .stroke(isAligned ? NoorColor.accentPrimary : NoorColor.inkSecondary.opacity(0.15),
+                    .stroke(isConfirmed ? NoorColor.accentPrimary : NoorColor.inkSecondary.opacity(0.15),
                             lineWidth: isAligned ? 3 : 1.5)
                     .frame(width: 250, height: 250)
                     .scaleEffect(pulse ? 1.06 : 1)
@@ -72,7 +75,7 @@ public struct QiblaView: View {
                 // Prayer-mat motif (geometry, not imagery — design §1.6).
                 VStack(spacing: 0) {
                     MihrabArch()
-                        .stroke(isAligned ? NoorColor.accentPrimary : NoorColor.accentGold,
+                        .stroke(isConfirmed ? NoorColor.accentPrimary : NoorColor.accentGold,
                                 style: StrokeStyle(lineWidth: 4, lineJoin: .round))
                         .frame(width: 74, height: 96)
                 }
@@ -88,10 +91,18 @@ public struct QiblaView: View {
             .environment(\.layoutDirection, .leftToRight)  // compass never mirrors
 
             VStack(spacing: 5) {
-                if isAligned {
+                if isConfirmed {
                     Text("Facing the qibla")
                         .font(.system(size: 24, weight: .semibold))
                         .foregroundStyle(NoorColor.accentPrimary)
+                } else if isAligned {
+                    Text("Roughly facing the qibla")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(NoorColor.inkPrimary)
+                    Text("Compass uses magnetic north — may differ slightly")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                        .multilineTextAlignment(.center)
                 } else if hasCompass {
                     Text(turn >= 0 ? "Turn right" : "Turn left")
                         .font(.system(size: 22, weight: .semibold))
@@ -114,7 +125,7 @@ public struct QiblaView: View {
         .navigationTitle(Text("Qibla"))
         .onAppear { headingProvider.start() }
         .onDisappear { headingProvider.stop() }
-        .onChange(of: isAligned) { _, aligned in
+        .onChange(of: isConfirmed) { _, aligned in
             guard aligned else { return }
             pulse = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { pulse = false }
@@ -123,7 +134,7 @@ public struct QiblaView: View {
             #endif
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(isAligned
+        .accessibilityLabel(isConfirmed
             ? "Facing the qibla"
             : "Qibla bearing \(Int(bearing.rounded())) degrees")
     }
@@ -147,11 +158,17 @@ struct MihrabArch: Shape {
     }
 }
 
-/// Device compass heading (iPhone). No location permission needed — heading
-/// only; the qibla is computed from the chosen prayer location.
+/// Device compass heading (iPhone). The qibla is computed from the chosen
+/// prayer location, but `CLHeading.trueHeading` is only valid while location
+/// updates are running, so when location is already authorized (prayer
+/// times ask for it) we also run coarse location updates. Coordinates never
+/// leave the device. Without permission we fall back to magnetic heading
+/// and flag it via `isTrueNorth == false`.
 @Observable
 final class HeadingProvider: NSObject, CLLocationManagerDelegate {
     private(set) var heading: Double?
+    /// True when `heading` is referenced to true north (declination applied).
+    private(set) var isTrueNorth = false
     private let manager = CLLocationManager()
 
     func start() {
@@ -160,18 +177,45 @@ final class HeadingProvider: NSObject, CLLocationManagerDelegate {
         manager.delegate = self
         manager.headingFilter = 2
         manager.startUpdatingHeading()
+        startLocationIfAuthorized()
         #endif
     }
 
     func stop() {
         #if os(iOS)
         manager.stopUpdatingHeading()
+        manager.stopUpdatingLocation()
         #endif
     }
 
     #if os(iOS)
+    private func startLocationIfAuthorized() {
+        switch manager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            manager.desiredAccuracy = kCLLocationAccuracyKilometer
+            manager.distanceFilter = 1_000
+            manager.startUpdatingLocation()
+        default:
+            break
+        }
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        startLocationIfAuthorized()
+    }
+
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-        heading = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
+        if newHeading.trueHeading >= 0 {
+            heading = newHeading.trueHeading
+            isTrueNorth = true
+        } else {
+            heading = newHeading.magneticHeading
+            isTrueNorth = false
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        // Heading keeps flowing; we just stay on magnetic north.
     }
     #endif
 }

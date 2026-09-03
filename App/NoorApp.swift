@@ -96,6 +96,10 @@ final class NoorNotificationDelegate: NSObject, UNUserNotificationCenterDelegate
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
-        [.banner, .sound, .list]
+        // The adhan just fired: move the Live Activity to the next prayer.
+        #if os(iOS)
+        await PrayerLiveActivityController.refresh()
+        #endif
+        return [.banner, .sound, .list]
     }
 }

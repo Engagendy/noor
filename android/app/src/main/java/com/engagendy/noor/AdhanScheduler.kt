@@ -10,6 +10,7 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -30,15 +31,40 @@ object AdhanScheduler {
     private const val PREALERT_BASE = 1000
     /// Request codes 200.. are the sunnah-fasting eve reminders.
     private const val FASTING_BASE = 200
+    /// Request code for the home-widget refresh tick.
+    private const val WIDGET_BASE = 300
+    /// Widgets show a countdown, so they need a tick of their own; anything
+    /// finer drains the battery for a surface that is only read at a glance.
+    private const val WIDGET_TICK_MS = 5 * 60_000L
+    const val WIDGET_ACTION = "com.engagendy.noor.WIDGET_REFRESH"
 
-    fun channelId(sound: AdhanSound): String = "adhan.${sound.name}"
+    /// Channel IDs are versioned: a channel's sound is immutable once created,
+    /// so any change to how the sound URI is built needs a new ID (and the old
+    /// one deleted in ensureChannels) for existing installs to pick it up.
+    /// v2: name-based resource URI (v1 baked in the numeric R.raw ID, which
+    /// shifts between builds and pointed old channels at the wrong resource).
+    fun channelId(sound: AdhanSound): String = "adhan.${sound.name}.v2"
+
+    /// Whether adhans can fire on the minute. False only on Android 12/12L
+    /// when the user revoked "Alarms & reminders" (API 33+ holds
+    /// USE_EXACT_ALARM from the manifest); alarms then degrade to inexact.
+    fun canScheduleExact(context: Context): Boolean =
+        Build.VERSION.SDK_INT < 31 ||
+            context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+
+    /// System screen where the user grants "Alarms & reminders" for Noor.
+    fun exactAlarmSettingsIntent(context: Context): Intent =
+        Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+               Uri.parse("package:${context.packageName}"))
     const val PREALERT_CHANNEL_ID = "prealert"
     const val REMINDER_CHANNEL_ID = "reminders"
 
     fun ensureChannels(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
-        // Legacy channel from earlier releases — superseded by per-sound channels.
+        // Legacy channels from earlier releases — superseded by per-sound
+        // channels, then by v2 IDs whose sound URI survives resource renumbering.
         manager.deleteNotificationChannel("adhan")
+        for (sound in AdhanSound.entries) manager.deleteNotificationChannel("adhan.${sound.name}")
         for (sound in AdhanSound.entries) {
             val id = channelId(sound)
             if (manager.getNotificationChannel(id) != null) continue
@@ -51,8 +77,11 @@ object AdhanScheduler {
             ).apply {
                 description = context.getString(R.string.g1_channel_adhan_desc)
                 when {
+                    // Name-based URI: numeric resource IDs are not stable across
+                    // app updates, but the channel (and its sound) is immutable.
                     sound.rawRes != null -> setSound(
-                        Uri.parse("android.resource://${context.packageName}/${sound.rawRes}"),
+                        Uri.parse("android.resource://${context.packageName}/raw/" +
+                            context.resources.getResourceEntryName(sound.rawRes)),
                         AudioAttributes.Builder()
                             .setUsage(AudioAttributes.USAGE_NOTIFICATION)
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -82,12 +111,14 @@ object AdhanScheduler {
     fun reschedule(context: Context) {
         ensureChannels(context)
         val alarmManager = context.getSystemService(AlarmManager::class.java)
-        val canExact = Build.VERSION.SDK_INT < 31 || alarmManager.canScheduleExactAlarms()
+        val canExact = canScheduleExact(context)
 
         val noorPrefs = KhatmahPlan.prefs(context)
         val notificationsEnabled = noorPrefs.getBoolean("notifications.enabled", true)
-        val fastingEnabled = notificationsEnabled &&
-            noorPrefs.getBoolean("fasting.reminders", false)
+        // Fasting reminders are their own toggle on iOS (MainTabView keys them
+        // off "fasting.reminders" alone), so the adhan master switch must not
+        // silence them here either.
+        val fastingEnabled = noorPrefs.getBoolean("fasting.reminders", false)
         val prefs = PrayerPrefs(context)
         val city = prefs.location
         val zone = TimeZone.getTimeZone(city.timeZone)
@@ -157,23 +188,30 @@ object AdhanScheduler {
             slot++
         }
 
-        // Sunnah-fasting eve reminders (Monday & Thursday): a nudge at 20:00
-        // the evening before, rolling forward with the same window.
+        // Sunnah-fasting eve reminders (Monday, Thursday & the white days
+        // 13–15 hijri, matching iOS FastingReminderScheduler): a nudge at
+        // 20:30 the evening before, rolling forward with the same window.
+        // Fasting follows the user's own civil day, so this uses the DEVICE
+        // zone — not the prayer city's zone (a traveller keeping the Makkah
+        // preset must still be nudged at 20:30 where they actually are).
         for (dayOffset in 0..DAYS_AHEAD) {
-            val eve = Calendar.getInstance(zone).apply {
+            val eve = Calendar.getInstance().apply {
                 time = now
                 add(Calendar.DAY_OF_YEAR, dayOffset)
                 set(Calendar.HOUR_OF_DAY, 20)
-                set(Calendar.MINUTE, 0)
+                set(Calendar.MINUTE, 30)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
             }
-            val tomorrow = (eve.clone() as Calendar)
-                .apply { add(Calendar.DAY_OF_YEAR, 1) }
-                .get(Calendar.DAY_OF_WEEK)
-            val dayName = when (tomorrow) {
-                Calendar.MONDAY -> context.getString(R.string.g1_monday)
-                Calendar.THURSDAY -> context.getString(R.string.g1_thursday)
+            val next = (eve.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, 1) }
+            val hijriDay = Hijri.components(next.time).first
+            val dayName = when {
+                hijriDay in 13..15 ->
+                    context.getString(R.string.prayer_fasting_white_day, hijriDay)
+                next.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY ->
+                    context.getString(R.string.g1_monday)
+                next.get(Calendar.DAY_OF_WEEK) == Calendar.THURSDAY ->
+                    context.getString(R.string.g1_thursday)
                 else -> null
             }
             val intent = Intent(context, AdhanAlarmReceiver::class.java).apply {
@@ -190,6 +228,41 @@ object AdhanScheduler {
                 alarmManager.cancel(pending)
             }
         }
+
+        scheduleWidgetRefresh(context)
+    }
+
+    /// Home widgets must keep their countdown and next-prayer name honest
+    /// even when every notification toggle is off, so their refresh tick is
+    /// armed independently of the adhan alarms above. Fires at the earlier of
+    /// the tick, the next prayer, and local midnight (the daily-ayah rollover)
+    /// — and stays cancelled while no widget is placed.
+    fun scheduleWidgetRefresh(context: Context) {
+        val alarmManager = context.getSystemService(AlarmManager::class.java)
+        val pending = PendingIntent.getBroadcast(
+            context, WIDGET_BASE,
+            Intent(context, AdhanAlarmReceiver::class.java).apply { action = WIDGET_ACTION },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        if (!NoorWidgets.hasPlacedWidgets(context)) {
+            alarmManager.cancel(pending)
+            return
+        }
+        val prefs = PrayerPrefs(context)
+        val zone = TimeZone.getTimeZone(prefs.location.timeZone)
+        val now = Date()
+        val midnight = Calendar.getInstance(zone).apply {
+            time = now
+            add(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val nextPrayer = PrayerEngine.next(PrayerEngine.today(prefs, now), now)
+            ?.time?.time?.plus(1_000L) ?: Long.MAX_VALUE
+        val at = minOf(now.time + WIDGET_TICK_MS, nextPrayer, midnight)
+        // Inexact: a glanceable countdown never justifies an exact alarm.
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
     }
 }
 
@@ -197,6 +270,10 @@ object AdhanScheduler {
 /// scheduling window forward.
 class AdhanAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == AdhanScheduler.WIDGET_ACTION) {
+            NoorWidgets.refresh(context)
+            return
+        }
         AdhanScheduler.ensureChannels(context)
         if (intent.action == "com.engagendy.noor.FASTING") {
             val dayName = intent.getStringExtra("dayName") ?: return
@@ -248,11 +325,22 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
     }
 }
 
-/// Alarms don't survive a reboot — reschedule when the device boots.
+/// Alarms don't survive a reboot, an app update, or the user revoking
+/// "Alarms & reminders" (Android 12+ cancels every alarm and force-stops the
+/// app). Re-arm on all of those, plus when the permission is granted back
+/// (upgrade inexact → exact) and when the device clock/time-zone changes
+/// (the scheduled window was computed against the old zone).
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            AdhanScheduler.reschedule(context)
+        when (intent.action) {
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            Intent.ACTION_TIMEZONE_CHANGED,
+            Intent.ACTION_TIME_CHANGED,
+            AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> {
+                AdhanScheduler.reschedule(context)
+                NoorWidgets.refresh(context)
+            }
         }
     }
 }

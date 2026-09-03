@@ -32,6 +32,44 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
 
+/// Parses a hand-typed money amount tolerantly: Arabic-Indic digits are
+/// folded to ASCII, Arabic separators (٫ decimal, ٬/، thousands) and plain
+/// spaces are understood, and "," / "." are disambiguated by position so
+/// that "10,000" is ten thousand while "10,5" is ten and a half.
+internal fun parseMoneyInput(text: String): Double {
+    val digits = text.map { c ->
+        when (c) {
+            in '٠'..'٩' -> '0' + (c - '٠')   // Arabic-Indic
+            in '۰'..'۹' -> '0' + (c - '۰')   // Extended Arabic-Indic
+            '٫' -> '.'                        // Arabic decimal separator
+            '٬', '،', ' ', ' ', ' ', '\'' -> ' '  // grouping marks
+            else -> c
+        }
+    }.joinToString("").filter { it.isDigit() || it == '.' || it == ',' || it == '-' }
+    val lastDot = digits.lastIndexOf('.')
+    val lastComma = digits.lastIndexOf(',')
+    val decimalAt = when {
+        // Both present: the right-most one is the decimal point, the other groups.
+        lastDot >= 0 && lastComma >= 0 -> maxOf(lastDot, lastComma)
+        // A lone comma is a decimal point unless it groups a trailing run of
+        // exactly three digits ("10,000" is ten thousand, "10,5" is ten and a half).
+        lastComma >= 0 ->
+            lastComma.takeIf { digits.count { c -> c == ',' } == 1 && digits.length - it - 1 != 3 } ?: -1
+        // Several dots can only be grouping ("1.000.000").
+        else -> lastDot.takeIf { digits.count { c -> c == '.' } == 1 } ?: -1
+    }
+    val normalized = buildString {
+        digits.forEachIndexed { i, c ->
+            when {
+                i == decimalAt -> append('.')
+                c == '.' || c == ',' -> Unit
+                else -> append(c)
+            }
+        }
+    }
+    return normalized.toDoubleOrNull() ?: 0.0
+}
+
 /// Offline zakat calculator — 1:1 with iOS App/ZakatView.swift. Nothing
 /// leaves the device; the gold price is entered by hand (offline-first —
 /// no market API). Nisab = value of 85g of gold.
@@ -52,18 +90,12 @@ fun ZakatScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var moneyOwed by remember { mutableStateOf("") }
     var debtsDue by remember { mutableStateOf("") }
 
-    fun value(text: String): Double =
-        text.replace("،", ".").replace(",", ".")
-            .map { c -> if (c in '٠'..'٩') '0' + (c - '٠') else c }
-            .joinToString("")
-            .toDoubleOrNull() ?: 0.0
-
-    val gold = value(goldPrice)
+    val gold = parseMoneyInput(goldPrice)
     val nisab = 85 * gold
-    val totalAssets = value(cash) + value(goldGrams) * gold +
-        value(silverGrams) * (gold / 90) +  // rough silver ≈ gold/90 if unknown
-        value(investments) + value(businessGoods) + value(moneyOwed)
-    val zakatBase = (totalAssets - value(debtsDue)).coerceAtLeast(0.0)
+    val totalAssets = parseMoneyInput(cash) + parseMoneyInput(goldGrams) * gold +
+        parseMoneyInput(silverGrams) * (gold / 90) +  // rough silver ≈ gold/90 if unknown
+        parseMoneyInput(investments) + parseMoneyInput(businessGoods) + parseMoneyInput(moneyOwed)
+    val zakatBase = (totalAssets - parseMoneyInput(debtsDue)).coerceAtLeast(0.0)
     val isDue = gold > 0 && zakatBase >= nisab
     val zakatAmount = zakatBase * 0.025
 
@@ -106,7 +138,7 @@ fun ZakatScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             moneyField(stringResource(R.string.g2_gold_price_today), goldPrice) {
                 goldPrice = it
                 // User-typed value — persisted from the input handler.
-                prefs.edit().putFloat("zakat.goldPrice", value(it).toFloat()).apply()
+                prefs.edit().putFloat("zakat.goldPrice", parseMoneyInput(it).toFloat()).apply()
             }
             Text(
                 stringResource(R.string.g2_gold_price_note),

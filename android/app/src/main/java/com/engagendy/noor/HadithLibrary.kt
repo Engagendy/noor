@@ -4,6 +4,12 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.JsonReader
 import android.util.JsonToken
+import androidx.compose.runtime.mutableStateMapOf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.File
 import java.io.InputStreamReader
@@ -21,6 +27,9 @@ enum class HadithCollection(
     BUKHARI("bukhari", "صحيح البخاري", "Sahih al-Bukhari", "~١٤ م.ب"),
     MUSLIM("muslim", "صحيح مسلم", "Sahih Muslim", "~١٥ م.ب"),
 }
+
+/// Download lifecycle of one collection pack, shared by every screen.
+enum class PackState { NOT_DOWNLOADED, DOWNLOADING, READY, FAILED }
 
 data class HadithBook(val index: Int, val arabicTitle: String, val count: Int)
 data class LibraryHadith(val number: String, val arabic: String, val english: String, val book: Int)
@@ -48,11 +57,43 @@ object HadithLibrary {
         dbFile(context, collection).delete()
         jsonFile(context, collection, "ara").delete()
         jsonFile(context, collection, "eng").delete()
+        packStates[collection] = PackState.NOT_DOWNLOADED
+    }
+
+    // MARK: - Process-level download state
+
+    /// Downloads outlive the Hadith tab: a screen-scoped job would be
+    /// cancelled on tab switch while the blocking IO work kept running,
+    /// and re-entering the tab would offer a duplicate download writing
+    /// the same .part/.building files. Keeping the jobs and their states
+    /// here makes download starts idempotent and the UI resumable.
+    private val downloadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val inFlight = mutableMapOf<HadithCollection, Job>()
+
+    /// Observed by Compose; seeded from disk when the Hadith tab appears.
+    val packStates = mutableStateMapOf<HadithCollection, PackState>()
+
+    /// Starts the pack download, or does nothing if one is already running.
+    @Synchronized
+    fun startDownload(context: Context, collection: HadithCollection) {
+        if (inFlight.containsKey(collection)) return
+        val app = context.applicationContext
+        packStates[collection] = PackState.DOWNLOADING
+        inFlight[collection] = downloadScope.launch {
+            val ok = runCatching { download(app, collection) }.getOrDefault(false)
+            finishDownload(collection, ok)
+        }
+    }
+
+    @Synchronized
+    private fun finishDownload(collection: HadithCollection, ok: Boolean) {
+        inFlight.remove(collection)
+        packStates[collection] = if (ok) PackState.READY else PackState.FAILED
     }
 
     /// Fetches both language editions and converts them into SQLite.
-    /// Blocking — call from Dispatchers.IO.
-    fun download(context: Context, collection: HadithCollection): Boolean {
+    /// Blocking — go through `startDownload`, which serializes callers.
+    private fun download(context: Context, collection: HadithCollection): Boolean {
         if (isDownloaded(context, collection)) return true
         for (lang in listOf("ara", "eng")) {
             val target = jsonFile(context, collection, lang)

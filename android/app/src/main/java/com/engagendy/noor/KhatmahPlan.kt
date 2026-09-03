@@ -60,11 +60,24 @@ data class KhatmahPlan(
         fun completions(context: Context): Int =
             prefs(context).getInt("khatmah.completions", 0)
 
+        /// Completion timestamps (epoch seconds, oldest first) — kept for
+        /// the future history UI, mirroring iOS "khatmah.completionDates".
+        /// Stored comma-joined so the order survives (a StringSet wouldn't).
+        fun completionDates(context: Context): List<Long> =
+            prefs(context).getString("khatmah.completionDates", "")
+                .orEmpty()
+                .split(",")
+                .mapNotNull { it.trim().toLongOrNull() }
+
         /// Records the completion once, then a new plan can begin.
         fun recordCompletion(context: Context) {
             val p = prefs(context)
             if (p.getInt("khatmah.goalDays", 0) <= 0) return
-            p.edit().putInt("khatmah.completions", completions(context) + 1).apply()
+            val dates = completionDates(context) + System.currentTimeMillis() / 1000
+            p.edit()
+                .putInt("khatmah.completions", completions(context) + 1)
+                .putString("khatmah.completionDates", dates.joinToString(","))
+                .apply()
             clear(context)
         }
     }

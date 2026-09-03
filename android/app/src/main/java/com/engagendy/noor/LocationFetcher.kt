@@ -20,6 +20,10 @@ object LocationFetcher {
         context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
 
+    private fun hasFinePermission(context: Context): Boolean =
+        context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+
     /// Delivers one fix (or null) on the main thread, at most once.
     fun fetch(context: Context, onResult: (Location?) -> Unit) {
         val manager = context.getSystemService(LocationManager::class.java)
@@ -38,12 +42,19 @@ object LocationFetcher {
         // with location services degraded) — fall back to the last fix.
         handler.postDelayed({ deliver(null) }, 20_000)
 
+        // GPS and PASSIVE require FINE; with COARSE only (what we ask for,
+        // like iOS kCLLocationAccuracyKilometer) they throw SecurityException.
+        // FUSED (API 31+) works with COARSE and is the best default; devices
+        // without a network provider (AOSP/microG) would otherwise dead-end.
+        val fine = hasFinePermission(context)
         val provider = when {
+            Build.VERSION.SDK_INT >= 31 -> LocationManager.FUSED_PROVIDER
             manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ->
                 LocationManager.NETWORK_PROVIDER
-            manager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->
+            fine && manager.isProviderEnabled(LocationManager.GPS_PROVIDER) ->
                 LocationManager.GPS_PROVIDER
-            else -> LocationManager.PASSIVE_PROVIDER
+            fine -> LocationManager.PASSIVE_PROVIDER
+            else -> LocationManager.NETWORK_PROVIDER
         }
         try {
             if (Build.VERSION.SDK_INT >= 30) {
@@ -63,13 +74,21 @@ object LocationFetcher {
         }
     }
 
-    private fun lastKnown(manager: LocationManager): Location? = try {
-        listOf(
-            LocationManager.NETWORK_PROVIDER,
-            LocationManager.GPS_PROVIDER,
-            LocationManager.PASSIVE_PROVIDER,
-        ).firstNotNullOfOrNull { manager.getLastKnownLocation(it) }
-    } catch (_: SecurityException) {
-        null
-    }
+    private fun lastKnown(manager: LocationManager): Location? =
+        buildList {
+            if (Build.VERSION.SDK_INT >= 31) add(LocationManager.FUSED_PROVIDER)
+            add(LocationManager.NETWORK_PROVIDER)
+            add(LocationManager.GPS_PROVIDER)
+            add(LocationManager.PASSIVE_PROVIDER)
+        }.firstNotNullOfOrNull { provider ->
+            // Per-provider guard: a provider we lack permission for (GPS and
+            // PASSIVE need FINE) must not skip the remaining ones.
+            try {
+                manager.getLastKnownLocation(provider)
+            } catch (_: SecurityException) {
+                null
+            } catch (_: IllegalArgumentException) {
+                null
+            }
+        }
 }

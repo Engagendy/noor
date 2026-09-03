@@ -28,9 +28,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -97,11 +99,10 @@ fun AudioPillView() {
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Icon(painterResource(R.drawable.ic_prev_track), contentDescription = stringResource(R.string.g2_previous),
-                 tint = NoorColor.inkSecondary,
-                 modifier = Modifier.clip(CircleShape).clickable { NoorPlayer.previous() }.padding(4.dp).size(16.dp))
+            PillIconButton(R.drawable.ic_prev_track, stringResource(R.string.g2_previous),
+                           NoorColor.inkSecondary) { NoorPlayer.previous() }
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -128,21 +129,41 @@ fun AudioPillView() {
                         modifier = Modifier.size(18.dp))
                 }
             }
-            Icon(painterResource(R.drawable.ic_next_track), contentDescription = stringResource(R.string.g2_next),
-                 tint = NoorColor.inkSecondary,
-                 modifier = Modifier.clip(CircleShape).clickable { NoorPlayer.next() }.padding(4.dp).size(16.dp))
-            Icon(
-                painterResource(modeIcon(NoorPlayer.mode)),
-                contentDescription = stringResource(R.string.g2_playback_mode),
-                tint = if (NoorPlayer.mode == PlaybackMode.CONTINUOUS)
-                    NoorColor.inkSecondary else NoorColor.accentPrimary,
-                modifier = Modifier.clip(CircleShape).clickable { showModePicker = true }.padding(4.dp).size(16.dp)
-            )
-            Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.g2_stop),
-                 tint = NoorColor.inkSecondary,
-                 modifier = Modifier.clip(CircleShape).clickable { NoorPlayer.stop() }.padding(4.dp).size(15.dp))
+            PillIconButton(R.drawable.ic_next_track, stringResource(R.string.g2_next),
+                           NoorColor.inkSecondary) { NoorPlayer.next() }
+            PillIconButton(
+                modeIcon(NoorPlayer.mode),
+                stringResource(R.string.g2_playback_mode),
+                if (NoorPlayer.mode == PlaybackMode.CONTINUOUS)
+                    NoorColor.inkSecondary else NoorColor.accentPrimary
+            ) { showModePicker = true }
+            PillIconButton(R.drawable.ic_close, stringResource(R.string.g2_stop),
+                           NoorColor.inkSecondary, glyphSize = 15.dp) { NoorPlayer.stop() }
         }
     }
+    }
+}
+
+/// Pill control with a 38×44dp hit area around a small glyph — mirrors the
+/// iOS AudioPillView button frames and keeps every control above the
+/// minimum touch-target size even though the icon itself stays 16dp.
+@Composable
+private fun PillIconButton(
+    icon: Int,
+    contentDescription: String,
+    tint: Color,
+    glyphSize: Dp = 16.dp,
+    onClick: () -> Unit
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(width = 38.dp, height = 44.dp)
+            .clip(RoundedCornerShape(50))
+            .clickable(onClick = onClick)
+    ) {
+        Icon(painterResource(icon), contentDescription = contentDescription,
+             tint = tint, modifier = Modifier.size(glyphSize))
     }
 }
 

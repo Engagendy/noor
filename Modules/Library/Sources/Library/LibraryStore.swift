@@ -46,6 +46,14 @@ public final class LibraryStore {
     /// on a signed-in device — doing that in init froze app launch.
     private var container: ModelContainer?
 
+    /// Taps that arrived before the container finished building. They are
+    /// applied optimistically to `bookmarks` and replayed once it is ready,
+    /// so an early bookmark is never silently dropped.
+    private var pendingChanges: [(surahId: Int, ayah: Int, bookmarked: Bool)] = []
+
+    /// `false` while the container is still building — persistence is queued.
+    public var isReady: Bool { container != nil }
+
     public init(inMemory: Bool = false) throws {
         if inMemory {
             let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
@@ -68,6 +76,7 @@ public final class LibraryStore {
             }
             await MainActor.run { [weak self] in
                 self?.container = built
+                self?.flushPendingChanges()
                 self?.refresh()
             }
         }
@@ -81,7 +90,11 @@ public final class LibraryStore {
     }
 
     public func toggle(surahId: Int, ayah: Int) {
-        guard let container else { return }
+        guard let container else {
+            enqueue(surahId: surahId, ayah: ayah,
+                    bookmarked: !isBookmarked(surahId: surahId, ayah: ayah))
+            return
+        }
         let context = container.mainContext
         if let existing = try? context.fetch(Self.descriptor(surahId: surahId, ayah: ayah)).first {
             context.delete(existing)
@@ -93,13 +106,45 @@ public final class LibraryStore {
     }
 
     public func remove(_ item: BookmarkItem) {
-        guard let container else { return }
+        guard let container else {
+            enqueue(surahId: item.surahId, ayah: item.ayah, bookmarked: false)
+            return
+        }
         let context = container.mainContext
         for model in (try? context.fetch(Self.descriptor(surahId: item.surahId, ayah: item.ayah))) ?? [] {
             context.delete(model)
         }
         try? context.save()
         refresh()
+    }
+
+    /// Optimistically update the published list and remember the change.
+    private func enqueue(surahId: Int, ayah: Int, bookmarked: Bool) {
+        pendingChanges.removeAll { $0.surahId == surahId && $0.ayah == ayah }
+        pendingChanges.append((surahId: surahId, ayah: ayah, bookmarked: bookmarked))
+        bookmarks.removeAll { $0.surahId == surahId && $0.ayah == ayah }
+        if bookmarked {
+            bookmarks.insert(
+                BookmarkItem(surahId: surahId, ayah: ayah, createdAt: .now), at: 0)
+        }
+    }
+
+    private func flushPendingChanges() {
+        guard let container, !pendingChanges.isEmpty else { return }
+        let context = container.mainContext
+        for change in pendingChanges {
+            let existing = (try? context.fetch(
+                Self.descriptor(surahId: change.surahId, ayah: change.ayah))) ?? []
+            if change.bookmarked {
+                if existing.isEmpty {
+                    context.insert(Bookmark(surahId: change.surahId, ayah: change.ayah))
+                }
+            } else {
+                for model in existing { context.delete(model) }
+            }
+        }
+        pendingChanges.removeAll()
+        try? context.save()
     }
 
     private static func descriptor(surahId: Int, ayah: Int) -> FetchDescriptor<Bookmark> {

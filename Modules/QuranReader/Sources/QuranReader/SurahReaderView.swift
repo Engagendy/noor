@@ -148,6 +148,15 @@ public struct SurahReaderView: View {
         .simultaneousGesture(pinch)
         .task {
             viewModel.load()
+            // Opening a page counts even without swiping (resume accuracy
+            // + khatmah credit for single-page sessions). This must run
+            // AFTER load(): before it `structure`/`surah` are nil, so the
+            // ayah-mode page lookup and lastSurah write would be no-ops.
+            if mode == .ayah {
+                persistPosition(page: viewModel.page(surahId: surahId, ayah: scrollToAyah ?? 1))
+            } else {
+                persistPosition(page: currentPage)
+            }
             // Continue-listening: start recitation at the arrival ayah.
             if UserDefaults.standard.bool(forKey: "pending.autoplay") {
                 UserDefaults.standard.set(false, forKey: "pending.autoplay")
@@ -200,13 +209,6 @@ public struct SurahReaderView: View {
                     }
                 }
             default: break
-            }
-            // Opening a page counts even without swiping (resume accuracy
-            // + khatmah credit for single-page sessions).
-            if mode == .ayah {
-                persistPosition(page: viewModel.page(surahId: surahId, ayah: scrollToAyah ?? 1))
-            } else {
-                persistPosition(page: currentPage)
             }
         }
         .onChange(of: selectedKey) { _, key in
@@ -574,9 +576,6 @@ public struct SurahReaderView: View {
         let key = verse.surahId * 1000 + verse.ayah
         let isSelected = selectedKey == key
         let isReciting = recitingKey == key
-        let sajda = viewModel.sajdaKeys.contains(key)
-            ? Text(verbatim: " ۩").foregroundStyle(NoorColor.accentGold)
-            : Text(verbatim: "")
         return VStack(alignment: .leading, spacing: 10) {
             if wordByWord, let layout {
                 WordByWordContainer(
@@ -584,8 +583,9 @@ public struct SurahReaderView: View {
                     highlightPosition: recitingWordPosition(surahId: verse.surahId, ayah: verse.ayah),
                     onTapWord: { _ in tafsirVerse = verse })
             } else {
+                // The sajdah sign ۩ is already part of the Tanzil text for
+                // sajdah ayat — never append a second one.
                 (Text(verse.text)
-                    + sajda
                     + Text(verbatim: "  \u{2067}﴿\(verse.ayah.arabicIndic)﴾\u{2069}")
                         .font(NoorFont.quran(size: liveFontSize * 0.62))
                         .foregroundStyle(NoorColor.accentGold))

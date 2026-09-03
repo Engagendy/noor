@@ -49,6 +49,13 @@ struct MainTabView: View {
     @AppStorage("prayer.customLabel") private var customLabel = ""
     @AppStorage("fasting.reminders") private var fastingReminders = false
     @AppStorage("prayer.prealert") private var preAlertMinutes = 0
+    // Manual per-prayer minute offsets: PrayerDay.compute applies them, so
+    // a change must reschedule or the adhan fires at the unadjusted time.
+    @AppStorage("prayer.adj.fajr") private var adjFajr = 0
+    @AppStorage("prayer.adj.dhuhr") private var adjDhuhr = 0
+    @AppStorage("prayer.adj.asr") private var adjAsr = 0
+    @AppStorage("prayer.adj.maghrib") private var adjMaghrib = 0
+    @AppStorage("prayer.adj.isha") private var adjIsha = 0
 
     var body: some View {
         mainTabs
@@ -68,7 +75,9 @@ struct MainTabView: View {
                           String(notifFajr), String(notifDhuhr), String(notifAsr),
                           String(notifMaghrib), String(notifIsha),
                           appLanguage, customLabel, String(fastingReminders),
-                          String(preAlertMinutes)]))
+                          String(preAlertMinutes),
+                          String(adjFajr), String(adjDhuhr), String(adjAsr),
+                          String(adjMaghrib), String(adjIsha)]))
     }
 
     private var mainTabs: some View {
@@ -176,21 +185,32 @@ struct MainTabView: View {
 
     private func rescheduleNotifications() async {
         let scheduler = AdhanNotificationScheduler()
-        guard notificationsEnabled else {
-            scheduler.cancelAll()
+        // Adhan and fasting reminders are independent toggles: only ever
+        // remove the `adhan-`/`pre-adhan-` requests here so the fasting
+        // reminders survive turning adhan off (and vice versa).
+        if !notificationsEnabled {
+            await scheduler.cancelAll()
+        }
+        // Cancelling fasting reminders must run even when BOTH toggles are
+        // off — it is the only path that removes the `fasting-` requests.
+        guard notificationsEnabled || fastingReminders else {
+            await FastingReminderScheduler().reschedule(
+                arabic: isArabicNotifications, enabled: false)
             return
         }
         guard await scheduler.requestAuthorization() else {
             notificationsEnabled = false
             return
         }
-        await scheduler.reschedule(
-            location: PrayerLocation.current(),
-            method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
-            madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
-            sound: AdhanSound(rawValue: soundRaw) ?? .adhanMadinah,
-            arabic: isArabicNotifications,
-            preAlertMinutes: preAlertMinutes)
+        if notificationsEnabled {
+            await scheduler.reschedule(
+                location: PrayerLocation.current(),
+                method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
+                madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
+                sound: AdhanSound(rawValue: soundRaw) ?? .adhanMadinah,
+                arabic: isArabicNotifications,
+                preAlertMinutes: preAlertMinutes)
+        }
         await FastingReminderScheduler().reschedule(
             arabic: isArabicNotifications, enabled: fastingReminders)
     }
@@ -219,7 +239,14 @@ private struct TabLifecycle: ViewModifier {
             }
             #endif
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active { openPendingPage() }
+                if phase == .active {
+                    openPendingPage()
+                    // Roll a running Live Activity past an adhan that already
+                    // fired; end it when nothing is left to count down to.
+                    #if os(iOS)
+                    Task { await PrayerLiveActivityController.refresh() }
+                    #endif
+                }
                 // Push reading progress to iCloud when leaving the front.
                 if phase == .background || phase == .inactive { CloudSync.pushLocal() }
             }

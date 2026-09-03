@@ -77,6 +77,12 @@ public final class QuranAudioPlayer {
     /// surah*1_000_000 + ayah*1_000 + wordNumber while following, else nil.
     public private(set) var recitingWordKey: Int?
     public private(set) var isFollowAlong = false
+    /// Surah the live follow-along observer belongs to (stale ticks from a
+    /// replaced player are ignored).
+    private var followSurah = 0
+    /// True between "surah finished" and the next surah actually starting,
+    /// so the 100 ms observer can't spawn duplicate advances.
+    private var isAdvancingSurah = false
 
     // Sleep timer + playback rate.
     public private(set) var sleepDeadline: Date?
@@ -120,6 +126,9 @@ public final class QuranAudioPlayer {
     /// inside AVFoundation, so there is no fetch-then-swap pause.
     private var queuedNext: (item: AVPlayerItem, ref: Reference)?
     private var endObserver: NSObjectProtocol?
+    private var interruptionObserver: NSObjectProtocol?
+    private var routeChangeObserver: NSObjectProtocol?
+    private var resumeAfterInterruption = false
     private var commandsConfigured = false
 
     public init() {
@@ -277,6 +286,8 @@ public final class QuranAudioPlayer {
         stopFollowAlong()
         followTimings = timings
         isFollowAlong = true
+        followSurah = surah
+        isAdvancingSurah = false
         let avPlayer = AVPlayer(url: playURL)
         followPlayer = avPlayer
         current = Reference(surah: surah, ayah: ayah)
@@ -297,7 +308,7 @@ public final class QuranAudioPlayer {
     }
 
     private func followTick(ms: Int, surah: Int) {
-        guard let timings = followTimings else { return }
+        guard surah == followSurah, let timings = followTimings else { return }
         if let position = timings.position(atMs: ms) {
             let key = surah * 1_000_000 + position.ayah * 1_000 + position.word
             if recitingWordKey != key { recitingWordKey = key }
@@ -309,19 +320,21 @@ public final class QuranAudioPlayer {
         }
         // Finished the surah: flow into the next one (continuous mode),
         // exactly like ayah playback does.
-        if let last = timings.verses.last, ms >= last.toMs {
+        if let last = timings.verses.last, ms >= last.toMs, !isAdvancingSurah {
             guard mode == .continuous, surah < 114,
                   let next = surahAdvance?(surah + 1) else {
                 stop()
                 return
             }
             let reciterId = followReciterId
+            isAdvancingSurah = true
             Task { [weak self] in
                 guard let self else { return }
                 let ok = await self.playFollowAlong(
                     surah: surah + 1, ayahCount: next.ayahCount, from: 1,
                     title: next.title, arabicTitle: next.arabicTitle,
                     qfReciterId: reciterId)
+                self.isAdvancingSurah = false
                 if !ok { self.stop() }
             }
         }
@@ -346,6 +359,8 @@ public final class QuranAudioPlayer {
         followTimings = nil
         recitingWordKey = nil
         isFollowAlong = false
+        followSurah = 0
+        isAdvancingSurah = false
     }
 
     // MARK: - Internals
@@ -447,6 +462,7 @@ public final class QuranAudioPlayer {
         #endif
         guard !commandsConfigured else { return }
         commandsConfigured = true
+        installSessionObservers()
         let commands = MPRemoteCommandCenter.shared()
         commands.playCommand.addTarget { [weak self] _ in
             Task { @MainActor in
@@ -468,6 +484,61 @@ public final class QuranAudioPlayer {
             Task { @MainActor in self?.previous() }
             return .success
         }
+    }
+
+    /// Keeps `isPlaying` honest when iOS pauses us behind our back (phone
+    /// call, Siri, alarm) or the output route disappears (headphones
+    /// unplugged). Without this the pill shows "pause" while nothing plays
+    /// and the first tap after a call is swallowed.
+    private func installSessionObservers() {
+        #if os(iOS)
+        let session = AVAudioSession.sharedInstance()
+        interruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification, object: session, queue: .main
+        ) { [weak self] note in
+            guard let info = note.userInfo,
+                  let raw = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+                  let type = AVAudioSession.InterruptionType(rawValue: raw) else { return }
+            let options = (info[AVAudioSessionInterruptionOptionKey] as? UInt)
+                .map(AVAudioSession.InterruptionOptions.init(rawValue:)) ?? []
+            Task { @MainActor in self?.handleInterruption(type, options: options) }
+        }
+        routeChangeObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification, object: session, queue: .main
+        ) { [weak self] note in
+            guard let raw = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
+                  let reason = AVAudioSession.RouteChangeReason(rawValue: raw),
+                  reason == .oldDeviceUnavailable else { return }
+            Task { @MainActor in self?.pauseFromSystem() }
+        }
+        #endif
+    }
+
+    #if os(iOS)
+    private func handleInterruption(_ type: AVAudioSession.InterruptionType,
+                                    options: AVAudioSession.InterruptionOptions) {
+        switch type {
+        case .began:
+            resumeAfterInterruption = isPlaying
+            pauseFromSystem()
+        case .ended:
+            let shouldResume = resumeAfterInterruption && options.contains(.shouldResume)
+            resumeAfterInterruption = false
+            guard shouldResume, !isPlaying else { return }
+            try? AVAudioSession.sharedInstance().setActive(true)
+            togglePlayPause()
+        @unknown default:
+            break
+        }
+    }
+    #endif
+
+    /// Mirrors a pause the system already performed into our state.
+    private func pauseFromSystem() {
+        guard isPlaying else { return }
+        if isFollowAlong { followPlayer?.pause() } else { player?.pause() }
+        isPlaying = false
+        updateNowPlaying()
     }
 
     /// App-icon artwork for the lock screen, rendered once.
@@ -495,35 +566,78 @@ public final class QuranAudioPlayer {
     }
 }
 
-/// Simple ayah-file cache in Caches/ — replays work offline.
+/// Ayah-file storage. Explicit "download surah" files live in Application
+/// Support so iOS never purges them (offline-first guarantee); opportunistic
+/// playback caching stays in Caches. Reads check both locations.
 enum AudioCache {
+    /// Opportunistic playback cache — the system may evict this under storage pressure.
     static var directory: URL {
         let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         return base.appendingPathComponent("recitations", isDirectory: true)
     }
 
-    static func localURL(reciter: Reciter, surah: Int, ayah: Int) -> URL {
-        directory
+    /// User-requested downloads — kept until the user deletes them.
+    static var downloadsDirectory: URL {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        return base.appendingPathComponent("recitations", isDirectory: true)
+    }
+
+    private static func fileURL(in base: URL, reciter: Reciter, surah: Int, ayah: Int) -> URL {
+        base
             .appendingPathComponent(reciter.rawValue, isDirectory: true)
             .appendingPathComponent(Reciter.fileName(surah: surah, ayah: ayah))
     }
 
-    /// Returns a playable local file: the cache if present, else downloads
-    /// from the first reachable source (EveryAyah → mirror) and caches it.
-    static func ensureLocal(reciter: Reciter, surah: Int, ayah: Int) async -> URL? {
-        let local = localURL(reciter: reciter, surah: surah, ayah: ayah)
-        if FileManager.default.fileExists(atPath: local.path) { return local }
+    /// Permanent location for an explicitly downloaded ayah.
+    static func downloadedURL(reciter: Reciter, surah: Int, ayah: Int) -> URL {
+        fileURL(in: downloadsDirectory, reciter: reciter, surah: surah, ayah: ayah)
+    }
+
+    /// An existing local file for this ayah — permanent download first, then cache.
+    static func localURL(reciter: Reciter, surah: Int, ayah: Int) -> URL? {
+        [downloadedURL(reciter: reciter, surah: surah, ayah: ayah),
+         fileURL(in: directory, reciter: reciter, surah: surah, ayah: ayah)]
+            .first { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
+    /// Returns a playable local file: an existing copy if present, else downloads
+    /// from the first reachable source (EveryAyah → mirror) and stores it.
+    /// `persistent` marks a user-requested download (purge-proof storage).
+    static func ensureLocal(
+        reciter: Reciter, surah: Int, ayah: Int, persistent: Bool = false
+    ) async -> URL? {
+        let destination = persistent
+            ? downloadedURL(reciter: reciter, surah: surah, ayah: ayah)
+            : fileURL(in: directory, reciter: reciter, surah: surah, ayah: ayah)
+        if let existing = localURL(reciter: reciter, surah: surah, ayah: ayah) {
+            guard persistent, existing != destination else { return existing }
+            // Promote a cache hit into permanent storage instead of re-downloading.
+            guard prepare(destination), (try? FileManager.default.moveItem(at: existing, to: destination)) != nil
+            else { return existing }
+            return destination
+        }
         for remote in reciter.urls(surah: surah, ayah: ayah) {
             guard let (temp, response) = try? await URLSession.shared.download(from: remote),
                   (response as? HTTPURLResponse)?.statusCode == 200
             else { continue }
-            try? FileManager.default.createDirectory(
-                at: local.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try? FileManager.default.removeItem(at: local)
-            guard (try? FileManager.default.moveItem(at: temp, to: local)) != nil else { continue }
-            return local
+            guard prepare(destination),
+                  (try? FileManager.default.moveItem(at: temp, to: destination)) != nil
+            else { continue }
+            return destination
         }
         return nil
+    }
+
+    /// Creates the parent directory (excluded from backup) and clears any stale file.
+    private static func prepare(_ file: URL) -> Bool {
+        var parent = file.deletingLastPathComponent()
+        guard (try? FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)) != nil
+        else { return false }
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? parent.setResourceValues(values)
+        try? FileManager.default.removeItem(at: file)
+        return true
     }
 }
 

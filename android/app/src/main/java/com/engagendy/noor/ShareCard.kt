@@ -10,12 +10,15 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
+import android.net.Uri
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextDirectionHeuristics
 import android.text.TextPaint
 import androidx.core.content.FileProvider
 import androidx.core.content.res.ResourcesCompat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.math.cos
 import kotlin.math.sin
@@ -32,6 +35,7 @@ object ShareCard {
     private val green = Color.parseColor("#0E6B5C")
     private val ink = Color.parseColor("#1F2933")
     private val gray = Color.parseColor("#5C6670")
+    private const val STALE_SHARE_MS = 60 * 60 * 1000L
 
     private fun layout(text: String, paint: TextPaint, width: Int): StaticLayout =
         StaticLayout.Builder.obtain(text, 0, text.length, paint, width)
@@ -196,15 +200,10 @@ object ShareCard {
     }
 
     /// Saves the bitmap into the shared cache and opens the system share
-    /// sheet. Call from the main thread with a pre-rendered bitmap.
-    fun share(context: Context, bitmap: Bitmap, text: String? = null) {
-        val dir = File(context.cacheDir, "shared").apply { mkdirs() }
-        // Fresh file name each time — some targets cache by URI and would
-        // otherwise show a stale card.
-        dir.listFiles()?.forEach { it.delete() }
-        val file = File(dir, "noor-share-${System.currentTimeMillis()}.png")
-        file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    /// sheet. Suspends: the PNG encode + file write (hundreds of ms for a
+    /// tall card) run on IO, only the chooser is launched on the main thread.
+    suspend fun share(context: Context, bitmap: Bitmap, text: String? = null) {
+        val uri = withContext(Dispatchers.IO) { writeShareFile(context, bitmap) }
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
@@ -217,6 +216,19 @@ object ShareCard {
         val chooser = Intent.createChooser(intent, null).apply {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(chooser)
+        withContext(Dispatchers.Main) { context.startActivity(chooser) }
+    }
+
+    /// Encodes the card and hands back its content URI. Blocking — IO only.
+    private fun writeShareFile(context: Context, bitmap: Bitmap): Uri {
+        val dir = File(context.cacheDir, "shared").apply { mkdirs() }
+        // Fresh file name each time — some targets cache by URI and would
+        // otherwise show a stale card. Only prune cards old enough that no
+        // share target can still be reading them.
+        val cutoff = System.currentTimeMillis() - STALE_SHARE_MS
+        dir.listFiles()?.forEach { if (it.lastModified() < cutoff) it.delete() }
+        val file = File(dir, "noor-share-${System.currentTimeMillis()}.png")
+        file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
     }
 }

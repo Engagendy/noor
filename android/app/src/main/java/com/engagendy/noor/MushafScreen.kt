@@ -47,7 +47,6 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.min
@@ -284,7 +283,8 @@ private fun MushafAyahActions(
         },
         onToggleBookmark = {
             val key = "${surah.id}:${verse.ayah}"
-            val next = bookmarks.toMutableSet()
+            // Prefs are the source of truth — the index screen toggles too.
+            val next = prefs.getStringSet("quran.bookmarks", emptySet())!!.toMutableSet()
             if (!next.remove(key)) next.add(key)
             bookmarks = next
             prefs.edit().putStringSet("quran.bookmarks", next).apply()
@@ -365,18 +365,17 @@ private fun MushafTopBar(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxSize().alpha(fullAlpha)
         ) {
-            // Circular elevated back button. RTL: back points RIGHT,
+            // Circular elevated back button, 48dp touch target. The chevron
+            // follows the direction-aware rule (RIGHT in ar, LEFT in en),
             // matching the iOS auto-mirrored chevron.backward.
             Surface(
                 shape = CircleShape,
                 color = NoorColor.bgElevated,
                 shadowElevation = 3.dp,
-                modifier = Modifier.size(38.dp).clip(CircleShape).clickable(enabled = chromeVisible, onClick = onBack)
+                modifier = Modifier.size(48.dp).clip(CircleShape).clickable(enabled = chromeVisible, onClick = onBack)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    // Explicit right-pointing drawable (not auto-mirrored):
-                    // in this forced-RTL app, BACK always points RIGHT.
-                    Icon(painterResource(R.drawable.ic_chevron_right),
+                    Icon(painterResource(NoorIcons.chevronBackward()),
                          contentDescription = stringResource(R.string.g2_back),
                          tint = NoorColor.accentPrimary,
                          modifier = Modifier.size(18.dp))
@@ -431,8 +430,17 @@ private fun MushafTopBar(
         }
         // Minimal reading row: surah · time · juz/page.
         if (!chromeVisible) {
-            val time = remember(page) {
-                SimpleDateFormat("h:mm", Locale.getDefault()).format(Date())
+            // Live clock: ticks on the minute boundary and uses the device
+            // 12/24-hour preference + locale digits (never a hard-coded "h:mm").
+            val timeFormat = remember(context) {
+                android.text.format.DateFormat.getTimeFormat(context)
+            }
+            val time by produceState("", timeFormat) {
+                while (true) {
+                    val now = System.currentTimeMillis()
+                    value = timeFormat.format(Date(now))
+                    delay(60_000L - now % 60_000L)
+                }
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -455,6 +463,10 @@ private class PageContent(
     val basmala: String?,
 )
 
+/// Quiet automatic re-download attempts before the page settles on the
+/// tap-to-retry placeholder.
+private const val AUTO_RETRIES = 3
+
 @Composable
 private fun MadaniPage(
     page: Int,
@@ -466,6 +478,9 @@ private fun MadaniPage(
     var attempt by remember(page) { mutableStateOf(0) }
     // Layout rows + the ~600 KB page font parse off the main thread.
     val content by produceState<PageContent?>(initialValue = null, page, attempt) {
+        // Spinner on the first load only — during an auto-retry the offline
+        // placeholder stays put instead of flashing back to a spinner.
+        if (attempt == 0) value = null
         value = withContext(Dispatchers.IO) {
             PageContent(
                 lines = PageLayoutDb.get(context).lines(page),
@@ -481,14 +496,21 @@ private fun MadaniPage(
     }
     // A transient network hiccup must not strand the page on the offline
     // placeholder: keep retrying quietly every few seconds while visible.
-    LaunchedEffect(page, content?.fontFamily == null) {
-        if (content != null && content?.fontFamily == null) {
-            delay(4000)
+    // Keyed on the PageContent instance: every produceState run yields a new
+    // object, so the effect restarts after each failed attempt (a boolean key
+    // would stay `true` from the initial null through the failure and never
+    // re-fire).
+    val loaded = content
+    LaunchedEffect(loaded) {
+        // Bounded with backoff (4s, 8s, 16s) so a genuinely offline device
+        // does not re-download and re-spin forever; the tap-to-retry text
+        // below stays available without a limit.
+        if (loaded != null && loaded.fontFamily == null && attempt < AUTO_RETRIES) {
+            delay(4000L shl attempt)
             attempt++
         }
     }
 
-    val loaded = content
     when {
         loaded == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = NoorColor.accentPrimary)
@@ -538,10 +560,15 @@ private fun MadaniPageBody(
                 detectTapGestures(
                     onTap = { onTap() },
                     onLongPress = { pos ->
-                        // The 15 rows are equal-weight: the pressed row is
-                        // pure geometry; its first ayah drives the sheet.
+                        // Rows are a fixed height/15 tall and the block is
+                        // vertically centered (iOS MadaniPageView), so the
+                        // pressed row is pure geometry off that top offset;
+                        // its first ayah drives the sheet.
                         if (content.lines.isNotEmpty()) {
-                            val row = (pos.y / (size.height / content.lines.size))
+                            val rowPx =
+                                size.height.toFloat() / maxOf(content.lines.size, 15)
+                            val top = (size.height - rowPx * content.lines.size) / 2f
+                            val row = ((pos.y - top) / rowPx)
                                 .toInt().coerceIn(0, content.lines.lastIndex)
                             content.lines[row].ayahRefs.firstOrNull()
                                 ?.let(onAyahLongPress)
@@ -561,7 +588,12 @@ private fun MadaniPageBody(
             min(maxWidthPx / 9.8f, rowHeight.toPx() * 0.72f)
         }
         val basmalaSize = with(density) { (rowHeight.toPx() * 0.45f).toSp() }
-        Column(Modifier.fillMaxSize()) {
+        // Short pages (1, 2) keep printed row height and sit centered
+        // rather than stretching a handful of lines over the whole screen.
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+        ) {
             content.lines.forEach { line ->
                 // Soft rounded stateReciting wash behind every line that
                 // carries the playing ayah (line-level, like iOS page mode).
@@ -570,7 +602,7 @@ private fun MadaniPageBody(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+                        .height(rowHeight)
                         .then(
                             if (highlighted)
                                 Modifier.background(

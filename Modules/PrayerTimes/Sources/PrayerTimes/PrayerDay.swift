@@ -19,16 +19,22 @@ public struct PrayerDay {
         city: CityPreset,
         method: CalculationMethodChoice,
         madhab: MadhabChoice,
-        date: Date = .now
+        date: Date = .now,
+        defaults: UserDefaults = .standard
     ) -> PrayerDay? {
-        compute(location: city.location, method: method, madhab: madhab, date: date)
+        compute(location: city.location, method: method, madhab: madhab,
+                date: date, defaults: defaults)
     }
 
+    /// `defaults` supplies the manual per-prayer offsets (`prayer.adj.*`):
+    /// the app passes `.standard`; widgets run in their own sandbox and must
+    /// pass `NoorShared.defaults`, where `syncFromApp()` mirrors the keys.
     public static func compute(
         location: PrayerLocation,
         method: CalculationMethodChoice,
         madhab: MadhabChoice,
-        date: Date = .now
+        date: Date = .now,
+        defaults: UserDefaults = .standard
     ) -> PrayerDay? {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: location.timeZoneIdentifier) ?? .current
@@ -40,7 +46,7 @@ public struct PrayerDay {
         // Manual per-prayer offsets (match the local mosque exactly).
         func adjusted(_ time: Date, _ key: String) -> Date {
             time.addingTimeInterval(TimeInterval(
-                UserDefaults.standard.integer(forKey: "prayer.adj.\(key)") * 60))
+                defaults.integer(forKey: "prayer.adj.\(key)") * 60))
         }
         let entries: [Entry] = [
             Entry(prayer: .fajr, name: "Fajr", time: adjusted(times.fajr, "fajr")),

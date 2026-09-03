@@ -3,6 +3,8 @@ package com.engagendy.noor
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
 import androidx.compose.runtime.getValue
@@ -110,6 +112,62 @@ object NoorPlayer {
     private val handler by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
     private val sleepStop = Runnable { stop() }
 
+    // MARK: - audio focus (iOS: AVAudioSession .playback category + interruption
+    // notifications). Share the speaker politely: pause for calls / other
+    // players, duck under navigation prompts, resume when focus returns.
+
+    private val audioAttributes = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_MEDIA)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
+    private var hasFocus = false
+    /// True while paused by a transient loss so GAIN resumes only what we paused.
+    private var pausedByFocusLoss = false
+    private val focusListener = AudioManager.OnAudioFocusChangeListener { change ->
+        val player = media ?: return@OnAudioFocusChangeListener
+        when (change) {
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                // Another app took over for good — pause and let go; the user
+                // resumes from the pill/notification (which re-requests focus).
+                pausedByFocusLoss = false
+                if (isPlaying) pause()
+                abandonFocus()
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                // Flag AFTER pause() — pause() clears it (see its doc).
+                if (isPlaying) { pause(); pausedByFocusLoss = true }
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK ->
+                runCatching { player.setVolume(0.2f, 0.2f) }
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                runCatching { player.setVolume(1f, 1f) }
+                if (pausedByFocusLoss) { pausedByFocusLoss = false; resume() }
+            }
+        }
+    }
+    private val focusRequest: AudioFocusRequest by lazy {
+        AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(audioAttributes)
+            .setOnAudioFocusChangeListener(focusListener, handler)
+            .build()
+    }
+
+    /// Requests focus (idempotent). False means the system refused — e.g. an
+    /// active phone call — so playback must not start.
+    private fun requestFocus(): Boolean {
+        if (hasFocus) return true
+        val manager = appContext?.getSystemService(AudioManager::class.java) ?: return true
+        hasFocus = manager.requestAudioFocus(focusRequest) ==
+            AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        return hasFocus
+    }
+
+    private fun abandonFocus() {
+        if (!hasFocus) return
+        hasFocus = false
+        appContext?.getSystemService(AudioManager::class.java)
+            ?.abandonAudioFocusRequest(focusRequest)
+    }
+
     /// Called once from MainActivity — restores persisted choices.
     fun init(context: Context) {
         if (appContext != null) return
@@ -159,8 +217,11 @@ object NoorPlayer {
         if (currentSurah != 0) playAyah(currentSurah, memorizeStart)
     }
 
-    private fun url(host: String, surah: Int, ayah: Int) =
-        "%s/%s/%03d%03d.mp3".format(java.util.Locale.ROOT, host, reciter.folder, surah, ayah)
+    /// Takes the reciter explicitly (not `reciter`) so the URL and the cache
+    /// path for one request always come from the same snapshot, even if the
+    /// user switches reciter while a download is in flight.
+    private fun url(host: String, voice: ReciterA, surah: Int, ayah: Int) =
+        "%s/%s/%03d%03d.mp3".format(java.util.Locale.ROOT, host, voice.folder, surah, ayah)
 
     // MARK: - ayah cache + prefetch (iOS: every ayah cached after first
     // play; the next few download while the current one plays, so
@@ -168,31 +229,40 @@ object NoorPlayer {
 
     private val prefetchPool = java.util.concurrent.Executors.newFixedThreadPool(2)
 
-    private fun cacheFile(surah: Int, ayah: Int): java.io.File {
+    private fun cacheFile(voice: ReciterA, surah: Int, ayah: Int): java.io.File {
         val dir = java.io.File(appContext!!.cacheDir,
-            "recitations/${reciter.folder}").apply { mkdirs() }
+            "recitations/${voice.folder}").apply { mkdirs() }
         return java.io.File(dir,
             "%03d%03d.mp3".format(java.util.Locale.ROOT, surah, ayah))
     }
 
     /// Downloads one ayah to the cache (main host, then mirror). Quiet —
     /// failures just mean that ayah streams when its turn comes.
-    private fun download(surah: Int, ayah: Int): Boolean {
-        val target = cacheFile(surah, ayah)
+    private fun download(voice: ReciterA, surah: Int, ayah: Int): Boolean {
+        val target = cacheFile(voice, surah, ayah)
         if (target.length() > 1024) return true
         for (host in listOf("https://everyayah.com/data",
                             "https://mirrors.quranicaudio.com/everyayah")) {
             try {
                 val temp = java.io.File.createTempFile("ayah", ".mp3", target.parentFile)
-                val connection = java.net.URL(url(host, surah, ayah))
+                val connection = java.net.URL(url(host, voice, surah, ayah))
                     .openConnection() as java.net.HttpURLConnection
                 connection.connectTimeout = 10_000
                 connection.readTimeout = 20_000
-                connection.inputStream.use { input ->
+                // Only cache a real, complete audio body: a captive-portal
+                // HTML page or a stream cut short would otherwise be saved
+                // and replayed (and fail) forever.
+                val type = connection.contentType.orEmpty().lowercase(java.util.Locale.ROOT)
+                val ok = connection.responseCode == 200 &&
+                    (type.startsWith("audio/") || type.startsWith("application/octet-stream"))
+                val copied = if (ok) connection.inputStream.use { input ->
                     temp.outputStream().use { input.copyTo(it) }
-                }
+                } else -1L
+                val expected = connection.contentLengthLong
                 connection.disconnect()
-                if (temp.length() > 1024) { temp.renameTo(target); return true }
+                if (ok && copied > 1024 && (expected <= 0 || copied == expected)) {
+                    if (temp.renameTo(target)) return true
+                }
                 temp.delete()
             } catch (_: Exception) { /* try mirror / stream later */ }
         }
@@ -200,11 +270,12 @@ object NoorPlayer {
     }
 
     /// Warm the next few ayat while the current one plays.
-    private fun prefetch(surah: Int, fromAyah: Int) {
-        val reciterAtRequest = reciter.id
+    private fun prefetch(voice: ReciterA, surah: Int, fromAyah: Int) {
         for (ayah in (fromAyah + 1)..minOf(fromAyah + 3, ayahCount)) {
             prefetchPool.execute {
-                if (reciter.id == reciterAtRequest) download(surah, ayah)
+                // Skip stale work if the user already moved on to another
+                // voice; `voice` itself guarantees path and URL agree.
+                if (reciter.id == voice.id) download(voice, surah, ayah)
             }
         }
     }
@@ -215,23 +286,34 @@ object NoorPlayer {
         pageEndAyah = pageEnd
         memorizeDone = 0
         playAyah(surah, fromAyah)
-        startService()
+        if (currentSurah != 0) startService()  // focus denied → nothing to keep alive
     }
 
-    private fun playAyah(surah: Int, ayah: Int, mirror: Boolean = false) {
+    /// `skipCache` ignores any cached copy for this attempt — set after a
+    /// cached file failed to play, so a delete that did not take (read-only
+    /// or busy file) cannot bounce playAyah back onto the same bad file.
+    private fun playAyah(
+        surah: Int,
+        ayah: Int,
+        mirror: Boolean = false,
+        skipCache: Boolean = false,
+    ) {
         currentSurah = surah; currentAyah = ayah
         // Resume point for the Today "continue listening" card — written
         // from user-driven playback only, never from a compose observer.
         appContext?.getSharedPreferences("audio", Context.MODE_PRIVATE)?.edit()
             ?.putInt("audio.lastSurah", surah)?.putInt("audio.lastAyah", ayah)?.apply()
         media?.release()
+        if (!requestFocus()) { media = null; stop(); return }
         val host = if (mirror) "https://mirrors.quranicaudio.com/everyayah"
                    else "https://everyayah.com/data"
+        val voice = reciter  // one snapshot for cache path, URL and prefetch
+        // Set below, before prepareAsync(); read by the error listener so a
+        // corrupt cached file is deleted rather than replayed on every retry.
+        var cachedSource: java.io.File? = null
+        var playedFromCache = false
         media = MediaPlayer().apply {
-            setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+            setAudioAttributes(audioAttributes)
             setOnPreparedListener {
                 it.start()
                 NoorPlayer.isPlaying = true
@@ -239,11 +321,16 @@ object NoorPlayer {
                 applySpeed()
                 NoorAudioService.refresh(appContext)
                 // Warm the ayat ahead while this one plays.
-                prefetch(surah, ayah)
+                prefetch(voice, surah, ayah)
             }
             setOnCompletionListener {
                 if (sleepDeadline != 0L && System.currentTimeMillis() >= sleepDeadline) {
                     stop(); return@setOnCompletionListener
+                }
+                // "End of surah" chip: stop once the current mode reaches the
+                // end of what it plays, instead of repeating/looping again.
+                if (stopAfterSurah && atModeEnd()) {
+                    stop(); return@setOnCompletionListener  // stop() clears the chip
                 }
                 when (mode) {
                     PlaybackMode.REPEAT_AYAH -> playAyah(surah, ayah)
@@ -268,13 +355,18 @@ object NoorPlayer {
                     }
                     PlaybackMode.CONTINUOUS ->
                         if (currentAyah < ayahCount) playAyah(surah, currentAyah + 1)
-                        else stop()  // stopAfterSurah: surah end always stops here
+                        else stop()  // surah end: no next-surah flow on Android
                 }
             }
             setOnErrorListener { _, _, _ ->
-                // Host → mirror → one delayed retry (transient network),
-                // then stop. Never strand playback on a hiccup.
+                // Bad cache file → drop it and stream; host → mirror → one
+                // delayed retry (transient network), then stop. Never
+                // strand playback on a hiccup.
                 when {
+                    playedFromCache -> {
+                        cachedSource?.delete()
+                        playAyah(surah, ayah, skipCache = true)
+                    }
                     !mirror -> playAyah(surah, ayah, mirror = true)
                     retriedAyah != surah to ayah -> {
                         retriedAyah = surah to ayah
@@ -290,11 +382,12 @@ object NoorPlayer {
             }
             // Cached copy plays instantly (and offline); otherwise stream
             // and let the cache warm via prefetch for next time.
-            val cached = runCatching { cacheFile(surah, ayah) }.getOrNull()
-            if (cached != null && cached.length() > 1024) {
-                setDataSource(cached.path)
+            cachedSource = runCatching { cacheFile(voice, surah, ayah) }.getOrNull()
+            playedFromCache = !skipCache && cachedSource?.let { it.length() > 1024 } == true
+            if (playedFromCache) {
+                setDataSource(cachedSource!!.path)
             } else {
-                setDataSource(url(host, surah, ayah))
+                setDataSource(url(host, voice, surah, ayah))
             }
             NoorPlayer.isBuffering = true
             prepareAsync()
@@ -311,11 +404,41 @@ object NoorPlayer {
         } catch (_: IllegalStateException) { /* not yet prepared */ }
     }
 
-    fun toggle() {
+    fun toggle() { if (isPlaying) pause() else resume() }
+
+    /// Pauses without touching focus — used by the user, by focus loss and
+    /// by the becoming-noisy receiver (headphones unplugged). `pause()` clears
+    /// the auto-resume flag so a user-initiated pause is never undone by a
+    /// later AUDIOFOCUS_GAIN; the transient-loss path re-arms it afterwards.
+    fun pause() {
         val player = media ?: return
-        if (isPlaying) player.pause() else { player.start(); applySpeed() }
-        isPlaying = !isPlaying
+        if (!isPlaying) return
+        pausedByFocusLoss = false
+        player.pause()
+        isPlaying = false
         NoorAudioService.refresh(appContext)
+    }
+
+    fun resume() {
+        val player = media ?: return
+        if (isPlaying || !requestFocus()) return
+        player.start(); applySpeed()
+        isPlaying = true
+        NoorAudioService.refresh(appContext)
+    }
+
+    /// True when the ayah that just finished is the last one the current mode
+    /// would play before looping or advancing — the "End of surah" stop point.
+    private fun atModeEnd(): Boolean = when (mode) {
+        // A single repeated ayah has no further ayah: stop after this pass.
+        PlaybackMode.REPEAT_AYAH -> true
+        // Let the last ayah of the range finish its repeats first.
+        PlaybackMode.MEMORIZE ->
+            currentAyah >= minOf(memorizeEnd, ayahCount) &&
+                memorizeDone + 1 >= memorizePerAyah
+        PlaybackMode.PAGE_ONLY ->
+            currentAyah >= (if (pageEndAyah in 1..ayahCount) pageEndAyah else ayahCount)
+        PlaybackMode.CONTINUOUS -> currentAyah >= ayahCount
     }
 
     fun next() { if (currentAyah < ayahCount) playAyah(currentSurah, currentAyah + 1) }
@@ -323,9 +446,12 @@ object NoorPlayer {
 
     fun stop() {
         media?.release(); media = null
+        pausedByFocusLoss = false
+        abandonFocus()
         isPlaying = false; isBuffering = false; currentSurah = 0; currentAyah = 0
         handler.removeCallbacks(sleepStop)
         sleepDeadline = 0L
+        stopAfterSurah = false
         appContext?.let { it.stopService(Intent(it, NoorAudioService::class.java)) }
     }
 

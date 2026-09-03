@@ -1,8 +1,8 @@
 import Foundation
 import Observation
 
-/// Downloads a whole surah's ayah files for one reciter into the same cache
-/// the player reads from — after download, playback is fully offline.
+/// Downloads a whole surah's ayah files for one reciter into purge-proof
+/// storage the player reads from — after download, playback is fully offline.
 @Observable
 @MainActor
 public final class SurahDownloader {
@@ -20,7 +20,7 @@ public final class SurahDownloader {
     public static func isDownloaded(reciter: Reciter, surah: Int, ayahCount: Int) -> Bool {
         (1...ayahCount).allSatisfy {
             FileManager.default.fileExists(
-                atPath: AudioCache.localURL(reciter: reciter, surah: surah, ayah: $0).path)
+                atPath: AudioCache.downloadedURL(reciter: reciter, surah: surah, ayah: $0).path)
         }
     }
 
@@ -56,7 +56,8 @@ public final class SurahDownloader {
     }
 
     private static func fetch(reciter: Reciter, surah: Int, ayah: Int) async throws {
-        guard await AudioCache.ensureLocal(reciter: reciter, surah: surah, ayah: ayah) != nil else {
+        guard await AudioCache.ensureLocal(
+            reciter: reciter, surah: surah, ayah: ayah, persistent: true) != nil else {
             throw URLError(.badServerResponse)
         }
     }

@@ -584,7 +584,11 @@ struct TodayView: View {
     }
 
     private func nextPrayerHero(day: PrayerDay, now: Date) -> some View {
-        let next = day.next(at: now)
+        // After Isha, roll over to tomorrow's Fajr so the countdown never stalls
+        // (mirrors the widget's fallback in NoorWidgets.swift).
+        let today = day.next(at: now)
+        let next = today ?? prayerDay(date: now.addingTimeInterval(86400))?.entries.first
+        let isTomorrow = today == nil && next != nil
         let passed = day.passedCount(at: now)
         return VStack(alignment: .leading, spacing: 4) {
             HStack {
@@ -592,6 +596,11 @@ struct TodayView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .tracking(1.5)
                     .opacity(0.85)
+                if isTomorrow {
+                    Text(isArabicUI ? "غدًا" : "Tomorrow")
+                        .font(.system(size: 11, weight: .semibold))
+                        .opacity(0.75)
+                }
                 Spacer()
                 if let next {
                     Text(next.time, format: cityTimeFormat)

@@ -37,7 +37,18 @@ public final class TafsirService {
 
     public private(set) var state: State = .idle
 
+    /// Token of the most recent `load` call. A superseded/cancelled request
+    /// must never write `state` after a newer request has taken over
+    /// (`.task(id:)` cancels the old task, whose URLSession error would
+    /// otherwise land as `.failed("cancelled")` on top of the new result).
+    private var currentRequest = UUID()
+
     public init() {}
+
+    private func commit(_ request: UUID, _ newState: State) {
+        guard request == currentRequest, !Task.isCancelled else { return }
+        state = newState
+    }
 
     private static func cacheFile(edition: TafsirEdition, surah: Int, ayah: Int) -> URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -45,10 +56,12 @@ public final class TafsirService {
     }
 
     public func load(edition: TafsirEdition, surah: Int, ayah: Int) async {
+        let request = UUID()
+        currentRequest = request
         state = .loading
         let cache = Self.cacheFile(edition: edition, surah: surah, ayah: ayah)
         if let cached = try? String(contentsOf: cache, encoding: .utf8), !cached.isEmpty {
-            state = .ready(cached)
+            commit(request, .ready(cached))
             return
         }
         let url = URL(string:
@@ -62,9 +75,9 @@ public final class TafsirService {
             try? FileManager.default.createDirectory(
                 at: cache.deletingLastPathComponent(), withIntermediateDirectories: true)
             try? text.write(to: cache, atomically: true, encoding: .utf8)
-            state = .ready(text)
+            commit(request, .ready(text))
         } catch {
-            state = .failed(error.localizedDescription)
+            commit(request, .failed(error.localizedDescription))
         }
     }
 
@@ -126,6 +139,8 @@ public final class TafsirService {
                     try? Self.stripHTML(item.text).write(to: file, atomically: true, encoding: .utf8)
                 }
             } catch {
+                // A cancelled download is not a failure worth reporting.
+                if Task.isCancelled { packState = .idle; return }
                 packState = .failed("\(surah): \(error.localizedDescription)")
                 return
             }

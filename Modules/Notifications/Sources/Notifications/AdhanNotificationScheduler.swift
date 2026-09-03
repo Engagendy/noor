@@ -30,15 +30,19 @@ public struct AdhanNotificationScheduler: Sendable {
         preAlertMinutes: Int = 0
     ) async {
         let center = UNUserNotificationCenter.current()
-        center.removeAllPendingNotificationRequests()
+        await cancelAll()
 
-        // Pre-alerts double the request count: shrink the day window to
-        // stay inside iOS's 64-pending limit (5d*5*2=50 + fasting ≈ 58).
+        // Pre-alerts double the request count: shrink the day window and
+        // halve the cap so adhans + pre-alerts + fasting reminders all fit
+        // inside iOS's 64-pending limit.
         let days = preAlertMinutes > 0 ? 5 : AdhanNotificationPlanner.defaultDays
+        let limit = preAlertMinutes > 0
+            ? AdhanNotificationPlanner.defaultLimit / 2
+            : AdhanNotificationPlanner.defaultLimit
         for planned in AdhanNotificationPlanner.plan(
             location: location, method: method, madhab: madhab,
             enabledPrayers: PrayerNotificationPrefs.enabledPrayers(),
-            days: days, arabic: arabic) {
+            days: days, limit: limit, arabic: arabic) {
             if preAlertMinutes > 0 {
                 let preFire = planned.fireDate.addingTimeInterval(TimeInterval(-preAlertMinutes * 60))
                 if preFire > Date() {
@@ -76,7 +80,13 @@ public struct AdhanNotificationScheduler: Sendable {
         }
     }
 
-    public func cancelAll() {
-        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+    /// Removes only adhan and pre-adhan requests so other schedulers'
+    /// pending notifications (e.g. `fasting-*`) survive.
+    public func cancelAll() async {
+        let center = UNUserNotificationCenter.current()
+        let ids = await center.pendingNotificationRequests()
+            .map(\.identifier)
+            .filter { $0.hasPrefix("adhan-") || $0.hasPrefix("pre-adhan-") }
+        center.removePendingNotificationRequests(withIdentifiers: ids)
     }
 }

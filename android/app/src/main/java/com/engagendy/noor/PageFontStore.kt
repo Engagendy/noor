@@ -15,20 +15,85 @@ import java.util.concurrent.ConcurrentHashMap
 /// mustafa0x/qpc-fonts mirror (see LICENSES.md).
 object PageFontStore {
     private val cache = ConcurrentHashMap<Int, FontFamily>()
+    // One lock per page: the pager's off-screen composition, the neighbour
+    // prefetch and Settings' download-all can all call ensure() for the same
+    // page at once — without this they'd write into one shared file.
+    private val locks = ConcurrentHashMap<Int, Any>()
+    private fun lockFor(page: Int): Any = locks.getOrPut(page) { Any() }
 
     /// Where the downloaded page fonts live — measured by the Storage screen.
     fun dir(context: Context) = File(context.filesDir, "pagefonts")
 
-    /// How many of the 604 page fonts are already offline. Disk IO — call
-    /// on Dispatchers.IO.
-    fun cachedCount(context: Context): Int =
-        dir(context).listFiles { f -> f.name.endsWith(".ttf") }?.size ?: 0
+    private const val PREFIX = "v2c_page_"
+    // Pre-cmap-patch name used by earlier builds; same bytes minus the patch.
+    private const val LEGACY_PREFIX = "v2_page_"
 
-    // v2b: cmap-patched files (presentation-form codepoints shifted to PUA
+    /// How many of the 604 page fonts are already offline. Only files of the
+    /// current (patched) generation count — legacy `v2_` files still need
+    /// patching before a page can render. Disk IO — call on Dispatchers.IO.
+    fun cachedCount(context: Context): Int {
+        // Settings can ask before any page was opened; kick the migration so
+        // an old install's legacy files are promoted rather than re-fetched.
+        sweepStaleOnce(context)
+        return dir(context).listFiles { f -> f.name.startsWith(PREFIX) && f.name.endsWith(".ttf") }?.size ?: 0
+    }
+
+    // v2c: cmap-patched files (presentation-form codepoints shifted to PUA
     // so Android's shaper can't treat the shadda-ligature glyphs as
     // combining marks and stack them — the page-76 word-overlap bug).
     private fun localFile(context: Context, page: Int) =
-        File(context.filesDir, "pagefonts/v2c_page_%03d.ttf".format(java.util.Locale.ROOT, page))
+        File(dir(context), "%s%03d.ttf".format(java.util.Locale.ROOT, PREFIX, page))
+
+    private fun legacyFile(context: Context, page: Int) =
+        File(dir(context), "%s%03d.ttf".format(java.util.Locale.ROOT, LEGACY_PREFIX, page))
+
+    /// Re-uses a legacy unpatched download instead of fetching ~600 KB
+    /// again: patch it in place and promote it to the current name. Caller
+    /// holds lockFor(page). Returns true if `local` now exists.
+    private fun migrateLegacy(context: Context, page: Int, local: File): Boolean {
+        val legacy = legacyFile(context, page)
+        if (!legacy.exists()) return false
+        if (local.exists()) { legacy.delete(); return true }
+        return try {
+            patchCmap(legacy)
+            legacy.renameTo(local)
+        } catch (e: Exception) {
+            false
+        }.also { if (!it) legacy.delete() }
+    }
+
+    @Volatile private var sweepStarted = false
+
+    /// One-off, off the caller's thread: promotes every leftover legacy
+    /// file and removes stray `.part` temps, so old installs neither keep
+    /// ~360 MB of orphans nor re-download pages they already have.
+    private fun sweepStaleOnce(context: Context) {
+        if (sweepStarted) return
+        synchronized(this) {
+            if (sweepStarted) return
+            sweepStarted = true
+        }
+        val appContext = context.applicationContext
+        Thread({
+            val files = dir(appContext).listFiles() ?: return@Thread
+            // A .part younger than this may be a download in flight.
+            val staleBefore = System.currentTimeMillis() - 10 * 60_000L
+            for (f in files) {
+                val name = f.name
+                when {
+                    name.endsWith(".part") -> if (f.lastModified() < staleBefore) f.delete()
+                    name.startsWith(LEGACY_PREFIX) && name.endsWith(".ttf") -> {
+                        val page = name.removePrefix(LEGACY_PREFIX).removeSuffix(".ttf").toIntOrNull()
+                        if (page == null || page < 1 || page > PageLayoutDb.PAGE_COUNT) {
+                            f.delete()
+                        } else synchronized(lockFor(page)) {
+                            migrateLegacy(appContext, page, localFile(appContext, page))
+                        }
+                    }
+                }
+            }
+        }, "pagefont-sweep").apply { isDaemon = true; priority = Thread.MIN_PRIORITY }.start()
+    }
 
     /// Maps a DB glyph string to the patched font's codepoints.
     fun mapGlyphs(text: String): String = buildString(text.length) {
@@ -101,24 +166,37 @@ object PageFontStore {
     fun ensure(context: Context, page: Int): FontFamily? {
         if (page < 1 || page > PageLayoutDb.PAGE_COUNT) return null
         cache[page]?.let { return it }
+        sweepStaleOnce(context)
 
-        val local = localFile(context, page)
-        if (!local.exists() && !download(page, local)) return null
-        try {
-            // Validates the file — throws on a corrupt/partial download.
-            Typeface.createFromFile(local)
-        } catch (e: RuntimeException) {
-            local.delete()  // refetch next time
-            return null
+        synchronized(lockFor(page)) {
+            // Re-check: another caller may have finished while we waited.
+            cache[page]?.let { return it }
+            val local = localFile(context, page)
+            if (!local.exists() && !migrateLegacy(context, page, local) &&
+                !download(page, local)) return null
+            try {
+                // Validates the file — throws on a corrupt/partial download.
+                Typeface.createFromFile(local)
+            } catch (e: RuntimeException) {
+                local.delete()  // refetch next time
+                return null
+            }
+            val family = FontFamily(Font(local))
+            cache[page] = family
+            return family
         }
-        val family = FontFamily(Font(local))
-        cache[page] = family
-        return family
     }
 
     private fun download(page: Int, local: File): Boolean {
-        local.parentFile?.mkdirs()
-        val temp = File(local.path + ".part")
+        val dir = local.parentFile ?: return false
+        dir.mkdirs()
+        // Uniquely named temp so no two writers can ever share a file, then
+        // an atomic rename once the bytes are complete and patched.
+        val temp = try {
+            File.createTempFile(local.name + ".", ".part", dir)
+        } catch (e: java.io.IOException) {
+            return false
+        }
         return try {
             val connection = URL(remoteUrl(page)).openConnection() as HttpURLConnection
             connection.connectTimeout = 15_000
@@ -128,7 +206,7 @@ object PageFontStore {
             }
             connection.disconnect()
             patchCmap(temp)
-            temp.renameTo(local)
+            temp.renameTo(local).also { if (!it) temp.delete() }
         } catch (e: Exception) {
             temp.delete()
             false

@@ -2,7 +2,44 @@ package com.engagendy.noor
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import android.os.Build
 import java.io.File
+
+/// Installs a bundled read-only content DB (quran.sqlite, page_layout.sqlite)
+/// into filesDir so SQLite can open it. The copy is atomic (write to a .tmp
+/// then rename) and stamped with the app versionCode, so a process kill
+/// mid-copy never leaves a truncated file that wins forever, and an app
+/// update that ships a regenerated DB replaces the stale copy.
+internal object BundledDb {
+    fun install(context: Context, name: String): File {
+        val target = File(context.filesDir, name)
+        val stamp = File(context.filesDir, "$name.version")
+        val version = appVersionCode(context).toString()
+        val stale = !target.exists() || !stamp.exists() || stamp.readText() != version
+        if (stale) {
+            val tmp = File(context.filesDir, "$name.tmp")
+            context.assets.open(name).use { input ->
+                tmp.outputStream().use { out -> input.copyTo(out); out.fd.sync() }
+            }
+            stamp.delete()
+            if (!tmp.renameTo(target)) {
+                target.delete()
+                check(tmp.renameTo(target)) { "Cannot install $name" }
+            }
+            // Stamp only after the DB is fully in place; a missing/old stamp
+            // means "re-copy on next launch".
+            stamp.writeText(version)
+        }
+        return target
+    }
+
+    private fun appVersionCode(context: Context): Long {
+        val info = context.packageManager.getPackageInfo(context.packageName, 0)
+        @Suppress("DEPRECATION")
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) info.longVersionCode
+        else info.versionCode.toLong()
+    }
+}
 
 data class Surah(
     val id: Int,
@@ -32,12 +69,7 @@ class QuranDb private constructor(private val db: SQLiteDatabase) {
         }
 
         private fun open(context: Context): QuranDb {
-            val target = File(context.filesDir, "quran.sqlite")
-            if (!target.exists()) {
-                context.assets.open("quran.sqlite").use { input ->
-                    target.outputStream().use { input.copyTo(it) }
-                }
-            }
+            val target = BundledDb.install(context, "quran.sqlite")
             val db = SQLiteDatabase.openDatabase(
                 target.path, null, SQLiteDatabase.OPEN_READONLY)
             return QuranDb(db)

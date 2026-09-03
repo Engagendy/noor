@@ -14,8 +14,11 @@ public struct PlannedNotification: Equatable {
 /// Plans adhan notifications within iOS's 64-pending-request limit
 /// (plan §6.4): 5 prayers/day for the next `days` days, capped at `limit`.
 public enum AdhanNotificationPlanner {
+    /// iOS keeps only the 64 soonest pending requests and silently drops the rest.
+    public static let pendingRequestCap = 64
     public static let defaultDays = 12
-    public static let defaultLimit = 60
+    /// Leave room for the sunnah-fasting reminders, which share the cap.
+    public static let defaultLimit = pendingRequestCap - FastingReminderScheduler.maxPending
 
     /// Arabic prayer names for notification copy (String(localized:)
     /// resolves with the PROCESS language, not the in-app choice).
