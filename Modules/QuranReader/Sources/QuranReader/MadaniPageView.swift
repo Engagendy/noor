@@ -57,7 +57,7 @@ struct MadaniPageView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
         } else {
-            let target = width * 0.97
+            let target = width * 0.995
             // Overflow shrinks the line; it must never clip.
             let scale = total > target ? target / total : 1
             let justify = total * scale >= width * 0.55
@@ -109,6 +109,9 @@ struct MadaniPageView: View {
         }
     }
 
+    /// Side margin of the printed page.
+    private static let pageMargin: CGFloat = 16
+
     @State private var lines: [PageLine] = []
     /// Read from the observable store (not @State copies) so the page
     /// re-renders the moment a download finished by a neighbour's prefetch
@@ -128,8 +131,12 @@ struct MadaniPageView: View {
         GeometryReader { geometry in
             // Every printed line must fit: bound the size by height (15 rows)
             // AND width, so no line is ever clipped or dropped.
+            // Breathing room down both sides, like the printed page. Every
+            // measurement below works from the remaining width, never the
+            // full screen, so justified lines stop at the margin.
+            let contentWidth = geometry.size.width - Self.pageMargin * 2
             let rowHeight = geometry.size.height / CGFloat(max(lines.count, 15))
-            let fontSize = min(geometry.size.width / 9.8, rowHeight * 0.72)
+            let fontSize = min(contentWidth / 9.8, rowHeight * 0.72)
             Group {
                 if fontReady && !lines.isEmpty {
                     VStack(spacing: 0) {
@@ -162,7 +169,7 @@ struct MadaniPageView: View {
                             case .words:
                                 justifiedLine(line,
                                               fontSize: fontSize,
-                                              width: geometry.size.width)
+                                              width: contentWidth)
                                     .frame(maxWidth: .infinity)
                                     .frame(height: rowHeight)
                                     .background(
@@ -176,7 +183,7 @@ struct MadaniPageView: View {
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, Self.pageMargin)
                     .contentShape(Rectangle())
                     .onTapGesture { onTap?() }
                 } else if fontFailed {

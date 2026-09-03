@@ -596,7 +596,10 @@ private fun MadaniPageBody(
                         }
                     })
             }
-            .padding(horizontal = 6.dp)
+            // Same side margin as iOS (MadaniPageView.pageMargin): the
+            // constraints below are measured after it, so justified lines
+            // stop at the margin rather than the screen edge.
+            .padding(horizontal = 16.dp)
     ) {
         // Every printed line must fit: 15 fixed rows bound the base size by
         // height AND width, then each line is measured and scaled down so
@@ -671,7 +674,7 @@ private fun MadaniPageBody(
                                 }
                             }
                             val total = widths.sum()
-                            val target = maxWidthPx * 0.97f
+                            val target = maxWidthPx * 0.995f
                             // Overflow shrinks; short closing lines (<55%)
                             // stay centered like the print.
                             val scale = if (total > target) target / total else 1f
