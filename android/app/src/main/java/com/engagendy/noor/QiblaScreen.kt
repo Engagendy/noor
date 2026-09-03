@@ -299,5 +299,9 @@ private fun vibrate(context: Context) {
         @Suppress("DEPRECATION")
         context.getSystemService(Vibrator::class.java)
     } ?: return
-    vibrator.vibrate(VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE))
+    // Belt and braces: a haptic is a nicety, never a reason to lose the screen
+    // (some OEM/work-profile builds deny VIBRATE even when it is declared).
+    runCatching {
+        vibrator.vibrate(VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE))
+    }
 }

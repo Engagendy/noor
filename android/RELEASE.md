@@ -98,3 +98,7 @@ readable crash reports.
 - vc5 (pending) — back-navigation sweep, Madani per-word justification + QCF cmap patch (p76 overlap, verified on device), page-font retry, audio cache/prefetch/retry, onboarding language picker + auto-locate, plus the 58-fix cross-platform bug sweep (exact-alarm permission, high-latitude crash, audio focus, widget countdown, DB versioning, bookmark sync). Re-run the full smoke checklist above before uploading.
   Reader now immersive (tab bar hidden); Android player caches the ayah you
   start on, flows into the next surah, and re-syncs the page to the recitation.
+- vc6 — fixes a crash on the Qibla screen the moment the compass aligns:
+  the alignment haptic called Vibrator without `android.permission.VIBRATE`
+  declared, so the SecurityException killed the app. Permission added and the
+  haptic is now guarded.
