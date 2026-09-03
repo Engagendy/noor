@@ -51,6 +51,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.min
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -127,6 +128,26 @@ fun MushafScreen(
                 if (followPlayback && page != pager.currentPage + 1) {
                     pager.animateScrollToPage(page - 1)
                 }
+            }
+    }
+    // The reader swiped away, then drove the player by hand (previous / next /
+    // play, or tapped the pill's ayah reference): treat that as "follow the
+    // recitation again" and jump straight back to the ayah being recited.
+    LaunchedEffect(pager) {
+        snapshotFlow { NoorPlayer.resyncRequest }
+            .drop(1)
+            .collect {
+                val surahId = NoorPlayer.currentSurah
+                val ayah = NoorPlayer.currentAyah
+                if (surahId == 0 || ayah == 0) return@collect
+                followPlayback = true
+                val page = withContext(Dispatchers.IO) {
+                    runCatching { PageLayoutDb.get(context).pageFor(surahId, ayah) }
+                        .getOrDefault(0)
+                }
+                if (page !in 1..PageLayoutDb.PAGE_COUNT) return@collect
+                followTargetPage = page
+                if (page != pager.currentPage + 1) pager.animateScrollToPage(page - 1)
             }
     }
     // Auto-hide the chrome shortly after arrival, like the iOS reader.

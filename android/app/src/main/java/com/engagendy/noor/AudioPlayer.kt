@@ -269,9 +269,17 @@ object NoorPlayer {
         return false
     }
 
-    /// Warm the next few ayat while the current one plays.
-    private fun prefetch(voice: ReciterA, surah: Int, fromAyah: Int) {
-        for (ayah in (fromAyah + 1)..minOf(fromAyah + 3, ayahCount)) {
+    /// Warm the next few ayat while the current one plays. `includeCurrent`
+    /// also saves the ayah being streamed right now: without it the ayah the
+    /// user pressed play on is the one ayah never cached, so replaying it
+    /// buffers from the network every time (advanced-to ayat were prefetched).
+    private fun prefetch(
+        voice: ReciterA,
+        surah: Int,
+        fromAyah: Int,
+        includeCurrent: Boolean = false,
+    ) {
+        for (ayah in (if (includeCurrent) fromAyah else fromAyah + 1)..minOf(fromAyah + 3, ayahCount)) {
             prefetchPool.execute {
                 // Skip stale work if the user already moved on to another
                 // voice; `voice` itself guarantees path and URL agree.
@@ -281,6 +289,9 @@ object NoorPlayer {
     }
 
     fun play(surah: Int, ayahCount: Int, fromAyah: Int, name: String, pageEnd: Int = 0) {
+        // Warm the surah table off-main so the next-surah hand-off at the end
+        // of a continuous surah never queries the DB on the main thread.
+        if (surahMeta == null) prefetchPool.execute { surahInfo(surah) }
         this.ayahCount = ayahCount
         surahName = name
         pageEndAyah = pageEnd
@@ -320,8 +331,9 @@ object NoorPlayer {
                 NoorPlayer.isBuffering = false
                 applySpeed()
                 NoorAudioService.refresh(appContext)
-                // Warm the ayat ahead while this one plays.
-                prefetch(voice, surah, ayah)
+                // Warm the ayat ahead while this one plays — and this ayah
+                // itself when it was streamed, so the replay is instant.
+                prefetch(voice, surah, ayah, includeCurrent = !playedFromCache)
             }
             setOnCompletionListener {
                 if (sleepDeadline != 0L && System.currentTimeMillis() >= sleepDeadline) {
@@ -355,7 +367,7 @@ object NoorPlayer {
                     }
                     PlaybackMode.CONTINUOUS ->
                         if (currentAyah < ayahCount) playAyah(surah, currentAyah + 1)
-                        else stop()  // surah end: no next-surah flow on Android
+                        else advanceToNextSurah()
                 }
             }
             setOnErrorListener { _, _, _ ->
@@ -424,6 +436,7 @@ object NoorPlayer {
         if (isPlaying || !requestFocus()) return
         player.start(); applySpeed()
         isPlaying = true
+        resyncRequest++  // deliberate user action: follow the recitation again
         NoorAudioService.refresh(appContext)
     }
 
@@ -441,8 +454,52 @@ object NoorPlayer {
         PlaybackMode.CONTINUOUS -> currentAyah >= ayahCount
     }
 
-    fun next() { if (currentAyah < ayahCount) playAyah(currentSurah, currentAyah + 1) }
-    fun previous() { if (currentAyah > 1) playAyah(currentSurah, currentAyah - 1) }
+    /// Surah metadata for the next-surah flow, read once from the bundled DB
+    /// (iOS gets the same from the reader's `surahAdvance` closure; reading
+    /// the DB here means every entry point flows, not only the reader).
+    /// Written from the prefetch pool, read on the main thread at surah end.
+    @Volatile private var surahMeta: List<Surah>? = null
+
+    private fun surahInfo(id: Int): Surah? {
+        val context = appContext ?: return null
+        val list = surahMeta
+            ?: runCatching { QuranDb.get(context).surahs() }.getOrNull()?.also { surahMeta = it }
+        return list?.firstOrNull { it.id == id }
+    }
+
+    /// End of the surah in continuous mode: roll into the next one (iOS
+    /// QuranAudioPlayer.advanceAfterFinish). The "End of surah" chip is
+    /// checked before this, so it still stops here when the user asked it to.
+    private fun advanceToNextSurah() {
+        val next = surahInfo(currentSurah + 1)
+        if (next == null) { stop(); return }  // end of the mushaf
+        ayahCount = next.ayahCount
+        surahName = next.nameArabic
+        pageEndAyah = 0
+        memorizeDone = 0
+        playAyah(next.id, 1)
+    }
+
+    fun next() {
+        if (currentAyah < ayahCount) playAyah(currentSurah, currentAyah + 1)
+        else if (mode == PlaybackMode.CONTINUOUS) advanceToNextSurah()
+        resyncRequest++
+    }
+
+    fun previous() {
+        if (currentAyah > 1) playAyah(currentSurah, currentAyah - 1)
+        resyncRequest++
+    }
+
+    /// Bumped whenever the user drives the player by hand (transport buttons,
+    /// resume, or tapping the pill's ayah reference). The reader watches this
+    /// and snaps back to the ayah being recited — swiping pages away from the
+    /// recitation stops the auto page-flip, and this is how it is re-armed.
+    var resyncRequest by mutableStateOf(0)
+        private set
+
+    /// "Take me back to what is playing" — used by the pill's ayah reference.
+    fun syncToCurrent() { if (currentSurah != 0) resyncRequest++ }
 
     fun stop() {
         media?.release(); media = null

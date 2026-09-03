@@ -31,6 +31,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -64,6 +66,7 @@ fun AudioPillView() {
             .background(NoorColor.bgElevated)
             .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
+        val goToReciting = stringResource(R.string.misc_go_to_reciting)
         // Icon AND name open the reciter picker, like iOS.
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -87,13 +90,22 @@ fun AudioPillView() {
                     color = NoorColor.inkPrimary,
                     maxLines = 1
                 )
+                // The reference itself is "take me back to what is playing":
+                // after swiping away from the recitation, tapping it returns
+                // the reader to the ayah being recited (the transport buttons
+                // do the same). Its own clickable wins over the row's picker.
                 Text(
                     stringResource(
                         R.string.g2_ayah_ref,
                         NoorPlayer.surahName, NoorPlayer.currentAyah.localizedDigits()),
                     fontSize = 11.sp,
-                    color = NoorColor.inkSecondary,
-                    maxLines = 1
+                    color = NoorColor.accentPrimary,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { NoorPlayer.syncToCurrent() }
+                        .padding(horizontal = 4.dp, vertical = 5.dp)
+                        .semantics { contentDescription = goToReciting }
                 )
             }
         }

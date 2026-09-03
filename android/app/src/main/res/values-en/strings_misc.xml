@@ -3,6 +3,7 @@
 <resources>
     <string name="misc_storage_recitations">Recitations</string>
     <string name="misc_storage_recitations_sub">Downloaded ayah audio for offline listening</string>
+    <string name="misc_go_to_reciting">Go to the ayah being recited</string>
     <string name="misc_channel_recitation">Recitation</string>
     <string name="misc_channel_recitation_desc">Playback controls for the recitation</string>
 </resources>
