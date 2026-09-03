@@ -98,7 +98,17 @@ readable crash reports.
 - vc5 (pending) — back-navigation sweep, Madani per-word justification + QCF cmap patch (p76 overlap, verified on device), page-font retry, audio cache/prefetch/retry, onboarding language picker + auto-locate, plus the 58-fix cross-platform bug sweep (exact-alarm permission, high-latitude crash, audio focus, widget countdown, DB versioning, bookmark sync). Re-run the full smoke checklist above before uploading.
   Reader now immersive (tab bar hidden); Android player caches the ayah you
   start on, flows into the next surah, and re-syncs the page to the recitation.
-- vc6 — fixes a crash on the Qibla screen the moment the compass aligns:
+- vc6 (1.0.1) — fixes a crash on the Qibla screen the moment the compass aligns:
   the alignment haptic called Vibrator without `android.permission.VIBRATE`
   declared, so the SecurityException killed the app. Permission added and the
   haptic is now guarded.
+
+## Versioning convention
+
+Bump BOTH on every release handed to testers:
+- `versionCode` — Play orders uploads by this; must always increase.
+- `versionName` — what the store listing and the in-app About row show.
+  Leaving it at one value across uploads makes tester reports useless,
+  which is exactly what happened for vc2 through vc5 (all "1.0.0").
+
+The About row renders `versionName (versionCode)`, e.g. `1.0.1 (6)`.
