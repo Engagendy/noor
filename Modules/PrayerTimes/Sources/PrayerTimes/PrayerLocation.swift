@@ -95,8 +95,22 @@ public final class OneShotLocationFetcher: NSObject, CLLocationManagerDelegate, 
         manager.desiredAccuracy = kCLLocationAccuracyKilometer  // coarse is plenty
     }
 
+    /// A stored fix this recent is good enough for city-level prayer times,
+    /// so it is returned straight away rather than making the reader wait on
+    /// a fresh fix that would name the same place.
+    private static let freshEnough: TimeInterval = 30 * 60
+
+    /// requestLocation can simply never call back — indoors, or with location
+    /// services degraded — and without this the caller waits forever.
+    private static let timeout: TimeInterval = 10
+
     public func fetch() async -> CLLocationCoordinate2D? {
-        await withCheckedContinuation { continuation in
+        // Fast path: a recent fix answers instantly, no spinner at all.
+        if let cached = manager.location,
+           -cached.timestamp.timeIntervalSinceNow < Self.freshEnough {
+            return cached.coordinate
+        }
+        return await withCheckedContinuation { continuation in
             self.continuation = continuation
             switch manager.authorizationStatus {
             case .notDetermined:
@@ -106,6 +120,12 @@ public final class OneShotLocationFetcher: NSObject, CLLocationManagerDelegate, 
                 resume(nil)
             default:
                 manager.requestLocation()
+            }
+            // Whatever happens, stop waiting eventually and fall back to the
+            // stored fix, however old, before giving up entirely.
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.timeout) { [weak self] in
+                guard let self, self.continuation != nil else { return }
+                self.resume(self.manager.location?.coordinate)
             }
         }
     }
@@ -120,7 +140,9 @@ public final class OneShotLocationFetcher: NSObject, CLLocationManagerDelegate, 
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        resume(nil)
+        // A failure does not mean we know nothing: an earlier fix still names
+        // the right city for prayer times.
+        resume(manager.location?.coordinate)
     }
 
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {

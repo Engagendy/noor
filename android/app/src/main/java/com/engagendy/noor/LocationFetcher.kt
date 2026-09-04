@@ -24,6 +24,15 @@ object LocationFetcher {
         context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
 
+    /// A stored fix this recent is good enough for city-level prayer times,
+    /// so it is delivered straight away rather than making the reader watch a
+    /// spinner while the provider warms up.
+    private const val FRESH_ENOUGH_MS = 30 * 60 * 1000L
+
+    /// Waiting longer than this buys almost nothing: by then the provider is
+    /// not going to answer, and the stored fix is the better outcome.
+    private const val TIMEOUT_MS = 10_000L
+
     /// Delivers one fix (or null) on the main thread, at most once.
     fun fetch(context: Context, onResult: (Location?) -> Unit) {
         val manager = context.getSystemService(LocationManager::class.java)
@@ -31,16 +40,30 @@ object LocationFetcher {
             onResult(null)
             return
         }
+        // Fast path: a recent fix answers instantly. Prayer times only need
+        // the city, and the provider would just hand back the same place.
+        val cached = lastKnown(manager)
+        if (cached != null &&
+            System.currentTimeMillis() - cached.time in 0 until FRESH_ENOUGH_MS
+        ) {
+            onResult(cached)
+            return
+        }
         var delivered = false
         val handler = Handler(Looper.getMainLooper())
+        val cancel = android.os.CancellationSignal()
         fun deliver(location: Location?) {
             if (delivered) return
             delivered = true
-            onResult(location ?: lastKnown(manager))
+            handler.removeCallbacksAndMessages(null)
+            // Stop the provider once we have answered; otherwise it keeps
+            // working after the screen that asked for it has moved on.
+            if (location == null) runCatching { cancel.cancel() }
+            onResult(location ?: cached ?: lastKnown(manager))
         }
-        // Don't hang forever if the provider never answers (e.g. indoors
-        // with location services degraded) — fall back to the last fix.
-        handler.postDelayed({ deliver(null) }, 20_000)
+        // Don't hang if the provider never answers (indoors, or location
+        // services degraded) — fall back to the stored fix, however old.
+        handler.postDelayed({ deliver(null) }, TIMEOUT_MS)
 
         // GPS and PASSIVE require FINE; with COARSE only (what we ask for,
         // like iOS kCLLocationAccuracyKilometer) they throw SecurityException.
@@ -58,7 +81,7 @@ object LocationFetcher {
         }
         try {
             if (Build.VERSION.SDK_INT >= 30) {
-                manager.getCurrentLocation(provider, null, context.mainExecutor) {
+                manager.getCurrentLocation(provider, cancel, context.mainExecutor) {
                     deliver(it)
                 }
             } else {
