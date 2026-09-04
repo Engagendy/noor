@@ -86,8 +86,12 @@ object PageFontStore {
                         val page = name.removePrefix(LEGACY_PREFIX).removeSuffix(".ttf").toIntOrNull()
                         if (page == null || page < 1 || page > PageLayoutDb.PAGE_COUNT) {
                             f.delete()
-                        } else synchronized(lockFor(page)) {
-                            migrateLegacy(appContext, page, localFile(appContext, page))
+                        } else if (!cache.containsKey(page)) {
+                            // Never rewrite a file a live FontFamily is
+                            // already reading: Compose resolves it lazily.
+                            synchronized(lockFor(page)) {
+                                migrateLegacy(appContext, page, localFile(appContext, page))
+                            }
                         }
                     }
                 }
@@ -163,9 +167,24 @@ object PageFontStore {
 
     /// Ensures the font for `page` is on disk and loaded. Blocking network
     /// and file I/O — call on Dispatchers.IO only. Returns null offline.
+    /// Drops a page's cached family and its file, so the next `ensure`
+    /// refetches. Called when the font turns out to be unusable at render
+    /// time — Compose rejects some files Typeface accepts.
+    fun invalidate(context: Context, page: Int) {
+        cache.remove(page)
+        runCatching { localFile(context, page).delete() }
+    }
+
     fun ensure(context: Context, page: Int): FontFamily? {
         if (page < 1 || page > PageLayoutDb.PAGE_COUNT) return null
-        cache[page]?.let { return it }
+        // A cached family is only good while its file is still there: the
+        // file backs the FontFamily lazily, and handing out one whose file
+        // has gone makes Compose throw "Could not load font" mid-layout,
+        // which takes the whole app down.
+        cache[page]?.let {
+            if (localFile(context, page).exists()) return it
+            cache.remove(page)
+        }
         sweepStaleOnce(context)
 
         synchronized(lockFor(page)) {

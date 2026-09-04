@@ -559,16 +559,20 @@ private fun MadaniPage(
                 )
             }
         }
-        else -> MadaniPageBody(loaded, onTap, onAyahLongPress)
+        else -> MadaniPageBody(loaded, page, { attempt++ }, onTap, onAyahLongPress)
     }
 }
 
 @Composable
 private fun MadaniPageBody(
     content: PageContent,
+    page: Int,
+    /// The page font turned out to be unusable — refetch and re-render.
+    onFontUnusable: () -> Unit,
     onTap: () -> Unit,
     onAyahLongPress: (AyahRef) -> Unit = {},
 ) {
+    val context = LocalContext.current
     // Ayah being recited (iOS MadaniPageView highlightKey/isHighlighted):
     // reading the player's Compose state here recomposes just this page.
     val reciting =
@@ -665,13 +669,31 @@ private fun MadaniPageBody(
                             val words = remember(line.glyphsV2) {
                                 line.wordsV2.map { PageFontStore.mapGlyphs(it) }
                             }
+                            // A font file that Typeface accepted can still be
+                            // rejected by Compose's resolver, and an uncaught
+                            // "Could not load font" here kills the app on every
+                            // attempt to open the page. Measure defensively and
+                            // treat a failure as "this font is unusable".
                             val widths = remember(line.glyphsV2, baseSizePx, content.fontFamily) {
-                                words.map { word ->
-                                    measurer.measure(
-                                        AnnotatedString(word), style,
-                                        softWrap = false, maxLines = 1
-                                    ).size.width.toFloat()
+                                runCatching {
+                                    words.map { word ->
+                                        measurer.measure(
+                                            AnnotatedString(word), style,
+                                            softWrap = false, maxLines = 1
+                                        ).size.width.toFloat()
+                                    }
+                                }.getOrNull()
+                            }
+                            if (widths == null) {
+                                // Throw the bad file away and ask for it again;
+                                // the placeholder shows until it arrives.
+                                LaunchedEffect(page) {
+                                    withContext(Dispatchers.IO) {
+                                        PageFontStore.invalidate(context, page)
+                                    }
+                                    onFontUnusable()
                                 }
+                                return@Box
                             }
                             val total = widths.sum()
                             val target = maxWidthPx * 0.995f
