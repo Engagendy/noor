@@ -99,7 +99,7 @@ readable crash reports.
   Reader now immersive (tab bar hidden); Android player caches the ayah you
   start on, flows into the next surah, and re-syncs the page to the recitation.
 - vc6 — uploaded to the closed track.
-- vc7 (1.0.1) — fixes a crash on the Qibla screen the moment the compass aligns:
+- vc7 (1.0.1) — uploaded to the closed track. Fixes a crash on the Qibla screen the moment the compass aligns:
   the alignment haptic called Vibrator without `android.permission.VIBRATE`
   declared, so the SecurityException killed the app. Permission added and the
   haptic is now guarded.
@@ -113,3 +113,8 @@ Bump BOTH on every release handed to testers:
   which is exactly what happened for vc2 through vc5 (all "1.0.0").
 
 The About row renders `versionName (versionCode)`, e.g. `1.0.1 (6)`.
+- vc8 (1.0.2) — per-app language finally works on Android 13+ (the manifest
+  had no `android:localeConfig`, so the system silently ignored both the
+  onboarding and Settings pickers, including the RTL flip). Location now
+  answers from a recent stored fix instead of spinning for 20 seconds.
+  Mushaf page gains side margins. About row shows the build number.

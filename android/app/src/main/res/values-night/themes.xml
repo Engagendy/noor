@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- No android:statusBarColor / navigationBarColor: both are deprecated
+     from Android 15 and Play flags them. enableEdgeToEdge() in MainActivity
+     makes the bars transparent and applies its own scrim, so the window
+     background below is what shows through. -->
 <resources>
     <!-- Tahajjud launch window (bgPrimary dark) so system-dark users
          don't see a paper flash before Compose takes over. -->
@@ -6,7 +10,6 @@
          a Material parent here crashed every system-dark device at launch. -->
     <style name="Theme.Noor" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">#0F1512</item>
-        <item name="android:statusBarColor">#0F1512</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- No android:statusBarColor / navigationBarColor: both are deprecated
+     from Android 15 and Play flags them. enableEdgeToEdge() in MainActivity
+     makes the bars transparent and applies its own scrim, so the window
+     background below is what shows through. -->
 <resources>
     <style name="Theme.Noor" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">#FAF6EE</item>
-        <item name="android:statusBarColor">#FAF6EE</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>
