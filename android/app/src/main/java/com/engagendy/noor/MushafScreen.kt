@@ -682,6 +682,9 @@ private fun MadaniPageBody(
                                             softWrap = false, maxLines = 1
                                         ).size.width.toFloat()
                                     }
+                                }.onFailure {
+                                    android.util.Log.e("NoorFont",
+                                        "measure failed page=$page family=${content.fontFamily}", it)
                                 }.getOrNull()
                             }
                             if (widths == null) {

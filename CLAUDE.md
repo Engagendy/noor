@@ -62,12 +62,13 @@ plan section 4 exactly (iOS).
 - `AyahActionsSheet` self-dismisses BEFORE firing its action — any state or
   coroutine the action needs must live above the sheet (screen level / a
   scope that outlives it).
-- Madani page mode: QCF v2 per-page fonts are downloaded then CMAP-PATCHED
-  (`PageFontStore.patchCmap` shifts U+FB50–FD79 → PUA −0x1000 with idDelta
-  compensation) because Android's shaper stacks the shadda-ligature
-  presentation forms as zero-advance marks (word-overlap bug, e.g. p76 l4);
-  render maps chars via `PageFontStore.mapGlyphs`. Lines render per-word
-  (justified edge-to-edge like the print; <55%-width closing lines centered).
+- Madani page mode: QCF v2 per-page fonts are downloaded and used UNTOUCHED.
+  Do NOT reintroduce a cmap patch: rewriting the file made Compose's font
+  loader reject it outright ("Could not load font", thrown during layout, so
+  it killed the app), and it was never what fixed the p76 l4 word overlap —
+  the per-word renderer was. Lines render per-word (justified edge-to-edge
+  like the print; <55%-width closing lines centered), so glyph bearings can
+  never overlap a neighbouring word whatever the shaper does.
 - Immersive reader: the tab bar is hidden while either Quran reader is open
   (`ReaderChrome.readerOpen`, mirroring iOS `.toolbar(.hidden, for: .tabBar)`)
   — a Madani page is a rigid 15-row grid stretched to the height it gets, so

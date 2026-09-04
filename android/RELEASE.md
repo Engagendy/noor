@@ -118,3 +118,6 @@ The About row renders `versionName (versionCode)`, e.g. `1.0.1 (6)`.
   onboarding and Settings pickers, including the RTL flip). Location now
   answers from a recent stored fix instead of spinning for 20 seconds.
   Mushaf page gains side margins. About row shows the build number.
+  Also drops the QCF cmap patch: it made Compose reject the font file
+  ("Could not load font"), crashing every entry into the Madani page and
+  then rendering blank once the crash was caught. Fonts now ship untouched.

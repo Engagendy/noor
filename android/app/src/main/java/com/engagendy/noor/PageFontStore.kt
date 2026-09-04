@@ -24,7 +24,7 @@ object PageFontStore {
     /// Where the downloaded page fonts live — measured by the Storage screen.
     fun dir(context: Context) = File(context.filesDir, "pagefonts")
 
-    private const val PREFIX = "v2c_page_"
+    private const val PREFIX = "v2u_page_"
     // Pre-cmap-patch name used by earlier builds; same bytes minus the patch.
     private const val LEGACY_PREFIX = "v2_page_"
 
@@ -55,7 +55,6 @@ object PageFontStore {
         if (!legacy.exists()) return false
         if (local.exists()) { legacy.delete(); return true }
         return try {
-            patchCmap(legacy)
             legacy.renameTo(local)
         } catch (e: Exception) {
             false
@@ -99,67 +98,10 @@ object PageFontStore {
         }, "pagefont-sweep").apply { isDaemon = true; priority = Thread.MIN_PRIORITY }.start()
     }
 
-    /// Maps a DB glyph string to the patched font's codepoints.
-    fun mapGlyphs(text: String): String = buildString(text.length) {
-        for (ch in text) {
-            append(if (ch.code in 0xFB50..0xFD79) (ch.code - 0x1000).toChar() else ch)
-        }
-    }
-
-    /// Shifts every cmap character code in FB50..FD79 down by 0x1000 into
-    /// the PUA (EB50..ED79). Segment structure is untouched, so this is a
-    /// safe in-place byte edit; glyphs and metrics are unchanged.
-    private fun patchCmap(file: File) {
-        val bytes = file.readBytes()
-        fun u16(o: Int) = ((bytes[o].toInt() and 255) shl 8) or (bytes[o + 1].toInt() and 255)
-        fun u32(o: Int) = (u16(o).toLong() shl 16) or u16(o + 2).toLong()
-        fun put16(o: Int, v: Int) { bytes[o] = (v shr 8).toByte(); bytes[o + 1] = v.toByte() }
-        fun put32(o: Int, v: Long) { put16(o, (v shr 16).toInt()); put16(o + 2, (v and 0xFFFF).toInt()) }
-        val numTables = u16(4)
-        var cmapOffset = -1
-        for (i in 0 until numTables) {
-            val rec = 12 + i * 16
-            val tag = String(bytes, rec, 4, Charsets.US_ASCII)
-            if (tag == "cmap") { cmapOffset = u32(rec + 8).toInt(); break }
-        }
-        if (cmapOffset < 0) return
-        val subCount = u16(cmapOffset + 2)
-        for (i in 0 until subCount) {
-            val subOffset = cmapOffset + u32(cmapOffset + 4 + i * 8 + 4).toInt()
-            when (u16(subOffset)) {
-                4 -> {
-                    val segCount = u16(subOffset + 6) / 2
-                    val endBase = subOffset + 14
-                    val startBase = endBase + segCount * 2 + 2
-                    val deltaBase = startBase + segCount * 2
-                    val rangeBase = deltaBase + segCount * 2
-                    for (seg in 0 until segCount) {
-                        val sv = u16(startBase + seg * 2)
-                        if (sv !in 0xFB50..0xFD79) continue
-                        put16(startBase + seg * 2, sv - 0x1000)
-                        put16(endBase + seg * 2, u16(endBase + seg * 2) - 0x1000)
-                        // glyph = charCode + idDelta (mod 2^16) when
-                        // idRangeOffset == 0 — compensate the shift.
-                        if (u16(rangeBase + seg * 2) == 0) {
-                            put16(deltaBase + seg * 2,
-                                  (u16(deltaBase + seg * 2) + 0x1000) and 0xFFFF)
-                        }
-                    }
-                }
-                12 -> {
-                    val groups = u32(subOffset + 12).toInt()
-                    for (g in 0 until groups) {
-                        val go = subOffset + 16 + g * 12
-                        for (field in 0..1) {
-                            val v = u32(go + field * 4)
-                            if (v in 0xFB50L..0xFD79L) put32(go + field * 4, v - 0x1000)
-                        }
-                    }
-                }
-            }
-        }
-        file.writeBytes(bytes)
-    }
+    /// The font is shipped untouched, so the DB's glyph codes are already
+    /// the font's codes. Kept as the single place callers go through, so a
+    /// future remapping has one home.
+    fun mapGlyphs(text: String): String = text
 
     private fun remoteUrl(page: Int) =
         "https://raw.githubusercontent.com/mustafa0x/qpc-fonts/master/mushaf-v2/QCF2%03d.ttf"
@@ -224,7 +166,6 @@ object PageFontStore {
                 temp.outputStream().use { input.copyTo(it) }
             }
             connection.disconnect()
-            patchCmap(temp)
             temp.renameTo(local).also { if (!it) temp.delete() }
         } catch (e: Exception) {
             temp.delete()
