@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Required from Android 13: AppCompatDelegate.setApplicationLocales
+     forwards to the system LocaleManager there, and the system ignores a
+     per-app locale unless the app declares which locales it supports.
+     Without this the language picker in onboarding and in Settings does
+     nothing on API 33+, and the app is missing from
+     Settings > System > Languages > App languages.
+     Arabic first: it is the default (unqualified values/), English is
+     values-en/. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="ar" />
+    <locale android:name="en" />
+</locale-config>

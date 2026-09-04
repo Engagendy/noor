@@ -44,7 +44,10 @@ plan section 4 exactly (iOS).
   `Theme.kt` (`NoorColor` is a REACTIVE palette — light "Mushaf" / dark
   "Tahajjud", switched via `NoorColor.apply`); Arabic-default resources with
   `values-en/` for English; per-app locale via AppCompatDelegate
-  (MainActivity MUST stay an AppCompatActivity and BOTH `values/themes.xml`
+  (MainActivity MUST stay an AppCompatActivity, `res/xml/locales_config.xml`
+  + `android:localeConfig` MUST be declared — from API 33 the per-app locale
+  goes through the system LocaleManager, which silently ignores it otherwise,
+  so the language pickers do nothing — and BOTH `values/themes.xml`
   and `values-night/themes.xml` MUST stay `Theme.AppCompat` descendants —
   a Material parent crashes every system-dark device at launch).
 - **Locale-safe formatting:** Kotlin `"%d".format()` uses the default locale;
