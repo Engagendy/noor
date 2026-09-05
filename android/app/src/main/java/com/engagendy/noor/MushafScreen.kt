@@ -736,6 +736,10 @@ private fun MadaniPageBody(
                                         fontSize = with(density) { (baseSizePx * scale).toSp() },
                                         maxLines = 1,
                                         softWrap = false,
+                                        // QCF glyphs overhang their advance (the final
+                                        // letter of الرحمن on page 1); Clip would cut
+                                        // that ink off at the word's measured width.
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Visible,
                                         color = NoorColor.inkPrimary
                                     )
                                 }
