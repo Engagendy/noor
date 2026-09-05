@@ -31,4 +31,13 @@
     <string name="feat_video_composing">جارٍ إنشاء الفيديو…</string>
     <string name="feat_video_offline">اتصل بالإنترنت مرة واحدة لتنزيل تلاوة هذه الآية</string>
     <string name="feat_video_failed">تعذّر إنشاء الفيديو</string>
+    <!-- Athkar recordings (Hisn al-Muslim, Hamad Al-Duraihim) -->
+    <string name="feat_athkar_play">تشغيل</string>
+    <string name="feat_athkar_pause">إيقاف مؤقت</string>
+    <string name="feat_athkar_play_chapter">تشغيل الفصل</string>
+    <string name="feat_athkar_pause_chapter">إيقاف الفصل</string>
+    <string name="feat_athkar_audio_offline">اتصل بالإنترنت مرة لتنزيل هذا الذكر</string>
+    <string name="feat_athkar_audio_failed">تعذّر تشغيل التسجيل</string>
+    <string name="feat_storage_athkar_audio">تسجيلات الأذكار</string>
+    <string name="feat_storage_athkar_audio_sub">أذكار مسموعة تم تنزيلها للاستماع دون اتصال</string>
 </resources>

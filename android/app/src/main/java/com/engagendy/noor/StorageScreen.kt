@@ -106,6 +106,7 @@ fun StorageScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                                              // Dropping the recitation cache must not
                                              // leave the player holding a deleted file.
                                              if (item.stopsPlayback) NoorPlayer.stop()
+                                             if (item.stopsAthkarPlayback) AthkarPlayer.stop()
                                              withContext(Dispatchers.IO) { item.delete() }
                                              items = withContext(Dispatchers.IO) { scanStorage(context) }
                                          }
@@ -133,6 +134,8 @@ data class StorageItem(
     val excluded: List<File> = emptyList(),
     /// Recitations are deleted out from under the player, so stop it first.
     val stopsPlayback: Boolean = false,
+    /// Athkar recordings likewise — AthkarPlayer holds an open file handle.
+    val stopsAthkarPlayback: Boolean = false,
 ) {
     /// Disk IO — call on Dispatchers.IO only.
     fun delete() {
@@ -166,6 +169,8 @@ private fun scanStorage(context: Context): List<StorageItem> {
                     listOf(File(context.filesDir, "tafsir"))),
         StorageItem(R.string.g1_storage_hadith, R.string.g1_storage_hadith_sub, 0L,
                     listOf(File(context.filesDir, "hadith"))),
+        StorageItem(R.string.feat_storage_athkar_audio, R.string.feat_storage_athkar_audio_sub, 0L,
+                    listOf(AthkarAudio.dir(context)), stopsAthkarPlayback = true),
         StorageItem(R.string.g1_storage_temp, R.string.g1_storage_temp_sub, 0L,
                     listOf(context.cacheDir), excluded = listOf(recitations)),
     )

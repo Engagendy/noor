@@ -29,4 +29,13 @@
     <string name="feat_video_composing">Composing video…</string>
     <string name="feat_video_offline">Connect once to download this ayah\'s recitation</string>
     <string name="feat_video_failed">Couldn\'t create the video</string>
+    <!-- Athkar recordings (Hisn al-Muslim, Hamad Al-Duraihim) -->
+    <string name="feat_athkar_play">Play</string>
+    <string name="feat_athkar_pause">Pause</string>
+    <string name="feat_athkar_play_chapter">Play chapter</string>
+    <string name="feat_athkar_pause_chapter">Pause chapter</string>
+    <string name="feat_athkar_audio_offline">Connect once to download this dhikr</string>
+    <string name="feat_athkar_audio_failed">Could not play this recording</string>
+    <string name="feat_storage_athkar_audio">Athkar audio</string>
+    <string name="feat_storage_athkar_audio_sub">Recordings downloaded for offline listening</string>
 </resources>
