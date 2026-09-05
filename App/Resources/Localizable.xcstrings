@@ -2686,6 +2686,23 @@
         }
       }
     },
+    "Send the app to family and friends — a poster with the store links, ready for a status.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send the app to family and friends — a poster with the store links, ready for a status."
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أرسل التطبيق للأهل والأصدقاء: صورة فيها روابط المتجر، جاهزة للحالة."
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "ar": {
@@ -2714,6 +2731,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "مشاركة"
+          }
+        }
+      }
+    },
+    "Share Noor": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share Noor"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شارك التطبيق"
           }
         }
       }

@@ -3,7 +3,9 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import arabic_reshaper
 from bidi.algorithm import get_display
 
-LINK = "https://apps.apple.com/ae/app/noor-al-muslim/id6807128479"
+import sys
+STORE = sys.argv[1] if len(sys.argv) > 1 else "ios"
+LINK = "https://play.google.com/store/apps/details?id=com.engagendy.noor" if STORE == "play" else "https://apps.apple.com/ae/app/noor-al-muslim/id6807128479"
 PAPER, INK, INK2, GREEN, GOLD = "#FAF6EE", "#1F2933", "#5C6670", "#0E6B5C", "#B98A2F"
 AR = "/System/Library/Fonts/SFArabic.ttf"
 LAT = "/System/Library/Fonts/SFNS.ttf"
@@ -58,6 +60,7 @@ def shadow_card(base, box, radius, fill="white", blur=28, alpha=40):
     ImageDraw.Draw(base).rounded_rectangle(box, radius=radius, fill=fill)
 
 def apple_badge(d, cx, cy, w=420, h=104):
+    if STORE == "play": return play_badge(d, cx, cy, w, h)
     x0, y0 = cx - w//2, cy - h//2
     d.rounded_rectangle([x0,y0,x0+w,y0+h], radius=h//2, fill="#111111", outline="#A6A6A6", width=2)
     logo = F(LAT, 58)
@@ -79,6 +82,14 @@ def dotted_line(d, cx, y, parts, font, fill, dot=GOLD, gap=34):
             x -= gap
             d.ellipse([x-5, y+font.size*0.42, x+5, y+font.size*0.42+10], fill=dot)
             x -= gap
+
+def play_badge(d, cx, cy, w=420, h=104):
+    x0, y0 = cx - w//2, cy - h//2
+    d.rounded_rectangle([x0,y0,x0+w,y0+h], radius=h//2, fill="#111111", outline="#A6A6A6", width=2)
+    # simple play triangle
+    d.polygon([(x0+44, cy-26), (x0+44, cy+26), (x0+92, cy)], fill="#34A853")
+    d.text((x0+112, cy-24), "GET IT ON", font=F(LAT, 22), fill="white", anchor="lm")
+    d.text((x0+112, cy+16), "Google Play", font=F(LAT, 40), fill="white", anchor="lm")
 
 def render(W, H, out):
     im = Image.new("RGBA", (W, H), PAPER)
@@ -124,7 +135,7 @@ def render(W, H, out):
     y = top + 40 + qr_size + 24
     d.text((W//2, y), ar("امسح الرمز لتحميل التطبيق"), font=F(AR, 38), fill=INK, anchor="mt")
     y += 56
-    d.text((W//2, y), "Scan to download on the App Store", font=F(LAT, 28), fill=INK2, anchor="mt")
+    d.text((W//2, y), ("Scan to download on Google Play" if STORE == "play" else "Scan to download on the App Store"), font=F(LAT, 28), fill=INK2, anchor="mt")
     y += 60
     apple_badge(d, W//2, y + 52)
 
@@ -136,5 +147,6 @@ def render(W, H, out):
     im.convert("RGB").save(out, quality=95)
     print("wrote", out, im.size, "slack", extra)
 
-render(1080, 1350, "/tmp/noorpromo/noor-appstore-share.jpg")
-render(1080, 1920, "/tmp/noorpromo/noor-appstore-status.jpg")
+tag = "play" if STORE == "play" else "appstore"
+render(1080, 1350, f"/tmp/noorpromo/noor-{tag}-share.jpg")
+render(1080, 1920, f"/tmp/noorpromo/noor-{tag}-status.jpg")

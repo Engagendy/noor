@@ -7,6 +7,8 @@ import QuranReader
 import SwiftUI
 
 struct SettingsView: View {
+    static let shareTextAr = "نور: القرآن ومواقيت الصلاة والأذكار، مجانًا للأبد بلا إعلانات ولا تتبّع.\nApp Store: https://apps.apple.com/ae/app/noor-al-muslim/id6807128479\nGoogle Play: https://play.google.com/store/apps/details?id=com.engagendy.noor"
+    static let shareTextEn = "Noor: Quran, prayer times and athkar, free forever with no ads and no tracking.\nApp Store: https://apps.apple.com/ae/app/noor-al-muslim/id6807128479\nGoogle Play: https://play.google.com/store/apps/details?id=com.engagendy.noor"
     /// "system" | "en" | "ar" — applied live via the locale environment,
     /// and to AppleLanguages so system-provided strings follow on relaunch.
     @AppStorage("app.language") private var language = "system"
@@ -190,6 +192,19 @@ struct SettingsView: View {
                 Text("Quran")
             }
 
+            Section {
+                // Marketing share: the bundled poster (QR + store links) with
+                // the links as text — drops straight into a WhatsApp status.
+                if let poster = Bundle.main.url(forResource: "share_noor", withExtension: "jpg") {
+                    ShareLink(item: poster,
+                              message: Text(verbatim: isArabicUI ? Self.shareTextAr : Self.shareTextEn)) {
+                        Label("Share Noor", systemImage: "square.and.arrow.up")
+                            .foregroundStyle(NoorColor.accentPrimary)
+                    }
+                }
+            } footer: {
+                Text("Send the app to family and friends — a poster with the store links, ready for a status.")
+            }
             Section {
                 Text(verbatim: "Quran text: Tanzil.net (Uthmani)")
                 Text(verbatim: "Font: KFGQPC Uthmanic Hafs")

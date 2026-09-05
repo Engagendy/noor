@@ -29,6 +29,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import android.graphics.BitmapFactory
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -96,6 +99,7 @@ private fun SettingsMain(
     openZakat: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val prefs = remember { KhatmahPlan.prefs(context) }
     // Bumped after every prefs write (click handlers only) so rows re-read
@@ -232,6 +236,18 @@ private fun SettingsMain(
             NavRow(title = stringResource(R.string.g1_storage), onClick = openStorage)
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             NavRow(title = stringResource(R.string.g1_zakat_calculator), onClick = openZakat)
+            HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
+            // Marketing share: the bundled poster (QR + store link) plus the
+            // link as text, so it works as a WhatsApp status or a message.
+            val shareText = stringResource(R.string.feat_share_app_text)
+            NavRow(title = stringResource(R.string.feat_share_app), onClick = {
+                scope.launch {
+                    val bitmap = withContext(Dispatchers.IO) {
+                        context.assets.open("share_noor.jpg").use { BitmapFactory.decodeStream(it) }
+                    }
+                    if (bitmap != null) ShareCard.share(context, bitmap, shareText)
+                }
+            })
         }
 
         SectionTitle(stringResource(R.string.g1_section_quran))
