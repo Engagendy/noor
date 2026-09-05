@@ -1,30 +1,30 @@
-# What's New — 1.2.0 (build 12)
+# What's New — 1.2.0 (build 13)
 
-Covers everything since build 9, the build currently on the App Store.
+Everything since build 9, the build on the App Store.
 
-## English (App Store Connect, en)
+## English
+
+New in this version:
+• Share an ayah as a video: the ayah card with your reciter's recitation and a gentle animation that moves with the voice, ready for WhatsApp status.
+• Listen to the athkar: every dhikr in Hisn al-Muslim has a play button, and each chapter can be played straight through, read by Sheikh Hamad Al-Duraihim. Downloads once, plays offline.
+• After-salah athkar reminder: an optional quiet nudge a few minutes after each prayer that opens the athkar for after the prayer.
+• Find your city anywhere: search over 34,000 cities worldwide, or browse by country. Works offline.
+• Two new adhan recordings from Masjid al-Haram in Makkah.
+• Share Noor with family and friends from Settings.
 
 Mushaf reading, fixed and refined:
-• Every printed line is now justified edge to edge, exactly like the Madani print, instead of floating short and centred.
-• The page no longer overflows the screen at larger text sizes.
-• Comfortable margins down both sides of the page.
-• Pages that failed to download their typeface now retry on their own, and offer a Retry button.
-• Fixed a page that could spin forever when a neighbouring page was already fetching its font.
+• Every line is now justified edge to edge, exactly like the Madani print, with comfortable margins.
+• The page no longer overflows the screen at larger text sizes, and no letter is ever cut off.
+• Pages that fail to download their typeface retry on their own, with a Retry button.
 
-Recitation:
+Recitation and prayer:
 • Playback no longer breaks after a phone call or when headphones are unplugged.
-• Downloaded recitations are kept safely and are no longer purged by the system.
-• Continuous playback no longer starts a surah twice at the boundary.
-
-Prayer times and notifications:
+• Downloaded recitations are no longer purged by the system.
 • Fixed the Dynamic Island countdown crashing once a prayer time had passed.
-• The lock screen countdown no longer stays stuck on a prayer that has already passed.
-• Turning off the adhan no longer silently cancels your Sunnah fasting reminders.
-• Widgets and the Live Activity now respect your manual per-prayer time adjustments.
-• The qibla compass is more accurate.
+• Widgets and the Live Activity respect your manual prayer-time adjustments.
+• Location is found faster.
 
 Also:
-• The daily hadith card now opens that hadith instead of the whole collection.
-• Corrected a duplicated sajdah sign in the reader.
+• Athkar chapter names in English when the app is in English, and the Athkar and Hadith pages follow the interface direction.
+• The daily hadith card opens that hadith.
 • Many Arabic interface strings that were showing in English are now translated.
-• Two new adhan recordings from Masjid al-Haram in Makkah.
