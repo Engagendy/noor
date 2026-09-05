@@ -33,6 +33,21 @@ object AdhanScheduler {
     private const val FASTING_BASE = 200
     /// Request code for the home-widget refresh tick.
     private const val WIDGET_BASE = 300
+    /// Request codes 400.. are the after-salah athkar reminders: one per
+    /// prayer per day within DAYS_AHEAD (5 × 3 = 15 codes).
+    private const val ATHKAR_BASE = 400
+    private const val ATHKAR_PER_DAY = 5
+    const val ATHKAR_ACTION = "com.engagendy.noor.ATHKAR"
+    const val ATHKAR_CHANNEL_ID = "athkar"
+    /// Content-intent request code for the athkar tap (distinct from the
+    /// adhan/fasting taps, which share requestCode 0 and no extras).
+    const val ATHKAR_OPEN_REQUEST = 4001
+    /// Inexact window: no exact-alarm permission needed, battery-friendly.
+    /// MainActivity extra naming the screen a notification tap opens.
+    const val EXTRA_OPEN = "open"
+    const val OPEN_ATHKAR_AFTER_SALAH = "athkar_after_salah"
+    /// Exact category title in assets/athkar.json.
+    const val ATHKAR_AFTER_SALAH_TITLE = "الأذكار بعد السلام من الصلاة"
     /// Widgets show a countdown, so they need a tick of their own; anything
     /// finer drains the battery for a surface that is only read at a glance.
     private const val WIDGET_TICK_MS = 5 * 60_000L
@@ -103,6 +118,16 @@ object AdhanScheduler {
                 REMINDER_CHANNEL_ID, context.getString(R.string.g1_channel_reminders),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply { description = context.getString(R.string.g1_channel_reminders_desc) })
+        }
+        if (manager.getNotificationChannel(ATHKAR_CHANNEL_ID) == null) {
+            // Silent by design: a nudge minutes after the adhan, not another adhan.
+            manager.createNotificationChannel(NotificationChannel(
+                ATHKAR_CHANNEL_ID, context.getString(R.string.feat_channel_athkar),
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = context.getString(R.string.feat_channel_athkar_desc)
+                setSound(null, null)
+            })
         }
     }
 
@@ -229,7 +254,48 @@ object AdhanScheduler {
             }
         }
 
+        scheduleAthkarReminders(context, alarmManager, prefs, now)
         scheduleWidgetRefresh(context)
+    }
+
+    /// After-salah athkar reminder N minutes after each of the five daily
+    /// prayers (iOS AthkarReminderScheduler; keys "athkar.afterSalah" and
+    /// "athkar.afterSalahMinutes"). Independent of the adhan master toggle
+    /// and the per-prayer bells. Inexact with a 10-minute window — needs no
+    /// exact-alarm permission. Every code is cancelled when off.
+    private fun scheduleAthkarReminders(
+        context: Context, alarmManager: AlarmManager, prefs: PrayerPrefs, now: Date,
+    ) {
+        val noorPrefs = KhatmahPlan.prefs(context)
+        val enabled = noorPrefs.getBoolean("athkar.afterSalah", false)
+        val minutes = noorPrefs.getInt("athkar.afterSalahMinutes", 20).coerceIn(1, 120)
+        val zone = TimeZone.getTimeZone(prefs.location.timeZone)
+        for (dayOffset in 0..DAYS_AHEAD) {
+            val day = Calendar.getInstance(zone).apply {
+                time = now
+                add(Calendar.DAY_OF_YEAR, dayOffset)
+            }.time
+            val entries = if (enabled) PrayerEngine.today(prefs, day) else emptyList()
+            for (index in 0 until ATHKAR_PER_DAY) {
+                val entry = entries.getOrNull(index)
+                val pending = PendingIntent.getBroadcast(
+                    context, ATHKAR_BASE + dayOffset * ATHKAR_PER_DAY + index,
+                    Intent(context, AdhanAlarmReceiver::class.java).apply {
+                        action = ATHKAR_ACTION
+                        putExtra("prayerKey", entry?.key)
+                    },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                val at = entry?.let { it.time.time + minutes * 60_000L }
+                if (enabled && at != null && at > now.time) {
+                    // Inexact (batched, no exact-alarm permission) but Doze-exempt:
+                    // setWindow is deferred to the next maintenance window once the
+                    // phone dozes after Isha, which is exactly when this fires.
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
+                } else {
+                    alarmManager.cancel(pending)
+                }
+            }
+        }
     }
 
     /// Home widgets must keep their countdown and next-prayer name honest
@@ -275,6 +341,38 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
             return
         }
         AdhanScheduler.ensureChannels(context)
+        if (intent.action == AdhanScheduler.ATHKAR_ACTION) {
+            // Prayer name resolved NOW from resources, like the adhan title,
+            // so it follows the per-app locale in force when it fires.
+            val prayerKey = intent.getStringExtra("prayerKey") ?: return
+            val nameRes = when (prayerKey) {
+                "fajr" -> R.string.g1_fajr
+                "dhuhr" -> R.string.g1_dhuhr
+                "asr" -> R.string.g1_asr
+                "maghrib" -> R.string.g1_maghrib
+                "isha" -> R.string.g1_isha
+                else -> return
+            }
+            val prayerName = context.getString(nameRes)
+            val open = Intent(context, MainActivity::class.java).apply {
+                putExtra(AdhanScheduler.EXTRA_OPEN, AdhanScheduler.OPEN_ATHKAR_AFTER_SALAH)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            }
+            val notification = android.app.Notification
+                .Builder(context, AdhanScheduler.ATHKAR_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_sparkle)
+                .setContentTitle(context.getString(R.string.feat_athkar_after_salah))
+                .setContentText(context.getString(R.string.feat_athkar_after_salah_text, prayerName))
+                .setContentIntent(PendingIntent.getActivity(
+                    context, AdhanScheduler.ATHKAR_OPEN_REQUEST, open,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+                .setAutoCancel(true)
+                .build()
+            context.getSystemService(NotificationManager::class.java)
+                .notify("athkar-after-salah".hashCode(), notification)
+            AdhanScheduler.reschedule(context)
+            return
+        }
         if (intent.action == "com.engagendy.noor.FASTING") {
             val dayName = intent.getStringExtra("dayName") ?: return
             val notification = android.app.Notification

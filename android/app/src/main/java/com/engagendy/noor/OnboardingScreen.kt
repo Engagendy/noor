@@ -16,18 +16,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,8 +53,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
     androidx.activity.compose.BackHandler(enabled = step > 0) { step-- }
     // Explicit user actions only — writes happen in click handlers.
     val prayerPrefs = remember { PrayerPrefs(context) }
-    var cityName by remember { mutableStateOf(prayerPrefs.cityName) }
-    var citySearch by remember { mutableStateOf("") }
+    var cityVersion by remember { mutableIntStateOf(0) }
 
     // Onboarding always records an EXPLICIT adhan-notification choice, like
     // iOS (OnboardingView sets notificationsEnabled = granted). Without it
@@ -98,12 +97,15 @@ fun OnboardingScreen(onDone: () -> Unit) {
             when (step) {
                 0 -> LanguageStep(onContinue = { step = 1 })
                 1 -> CityStep(
-                    cityName = cityName,
-                    citySearch = citySearch,
-                    onSearch = { citySearch = it },
+                    version = cityVersion,
                     onPick = { city ->
-                        cityName = city.name
-                        prayerPrefs.cityName = city.name
+                        prayerPrefs.saveCity(city)
+                        cityVersion++
+                        AdhanScheduler.reschedule(context)
+                        NoorWidgets.refresh(context)
+                    },
+                    onLocated = {
+                        cityVersion++
                         AdhanScheduler.reschedule(context)
                         NoorWidgets.refresh(context)
                     },
@@ -196,27 +198,37 @@ private fun LanguageStep(onContinue: () -> Unit) {
     }
 }
 
-/// Step 2 — searchable city list for prayer times (writes PrayerPrefs).
+/// Step 2 — offline city picker for prayer times (writes PrayerPrefs via
+/// the callbacks; the picker itself never touches prefs).
 @Composable
 private fun CityStep(
-    cityName: String,
-    citySearch: String,
-    onSearch: (String) -> Unit,
-    onPick: (CityPreset) -> Unit,
+    version: Int,
+    onPick: (City) -> Unit,
+    onLocated: () -> Unit,
     onContinue: () -> Unit,
 ) {
     val context = LocalContext.current
-    // Auto-locate, like the prayer settings row: one coarse fix, nearest
-    // preset label, exact coords stored — never leaves the device.
+    val prefs = remember { PrayerPrefs(context) }
+    val selectedId = remember(version) { prefs.cityId }
+    val located = remember(version) { prefs.useCustomLocation }
+    val current = remember(version) { prefs.location }
+    val scope = rememberCoroutineScope()
+    // Auto-locate, like the prayer settings row: one coarse fix, labelled
+    // with the nearest city from the offline table, exact coords stored —
+    // never leaves the device.
     var fetching by remember { mutableStateOf(false) }
     fun applyFix(latitude: Double, longitude: Double) {
-        fetching = false
-        val prefs = PrayerPrefs(context)
-        val nearest = Cities.nearest(latitude, longitude)
-        prefs.saveCustomLocation(latitude, longitude, nearest.name)
-        prefs.cityName = nearest.name
-        onPick(nearest)
-        onContinue()
+        scope.launch {
+            val near = withContext(Dispatchers.IO) {
+                runCatching { CityDb.get(context).nearest(latitude, longitude, 1).firstOrNull() }
+                    .getOrNull()
+            }
+            val preset = near?.asPreset() ?: Cities.nearest(latitude, longitude)
+            prefs.saveCustomLocation(latitude, longitude, preset.name, preset.nameArabic)
+            fetching = false
+            onLocated()
+            onContinue()
+        }
     }
     fun startFetch() {
         fetching = true
@@ -227,80 +239,55 @@ private fun CityStep(
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted -> if (granted) startFetch() else fetching = false }
-    val filtered = remember(citySearch) {
-        val query = citySearch.trim()
-        if (query.isEmpty()) Cities.all
-        else Cities.all.filter {
-            it.name.contains(query, ignoreCase = true) || it.nameArabic.contains(query)
-        }
-    }
-    Column(Modifier.fillMaxSize().padding(24.dp)) {
-        StepTitle(stringResource(R.string.g1_your_city))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(top = 12.dp)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(NoorColor.stateReciting, RoundedCornerShape(12.dp))
-                .clickable(enabled = !fetching) {
-                    if (LocationFetcher.hasPermission(context)) startFetch()
-                    else permissionLauncher.launch(
-                        android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                }
-                .padding(horizontal = 16.dp, vertical = 13.dp)
-        ) {
-            Text(
-                stringResource(R.string.g1_use_my_location),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = NoorColor.accentPrimary,
-                modifier = Modifier.weight(1f))
-            if (fetching) {
-                androidx.compose.material3.CircularProgressIndicator(
-                    color = NoorColor.accentPrimary,
-                    strokeWidth = 2.dp,
-                    modifier = Modifier.size(18.dp))
-            }
-        }
-        TextField(
-            value = citySearch,
-            onValueChange = onSearch,
-            placeholder = {
-                Text(stringResource(R.string.g1_search_city), color = NoorColor.inkSecondary.copy(alpha = 0.7f))
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(10.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = NoorColor.bgElevated,
-                unfocusedContainerColor = NoorColor.bgElevated,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent),
-            modifier = Modifier.fillMaxWidth().padding(top = 12.dp))
-        LazyColumn(Modifier.weight(1f).padding(top = 8.dp)) {
-            items(filtered, key = { it.name }) { city ->
-                val selected = city.name == cityName
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onPick(city) }
-                        .padding(horizontal = 12.dp, vertical = 11.dp)
-                ) {
+    Column(Modifier.fillMaxSize().padding(top = 24.dp, bottom = 24.dp)) {
+        Column(Modifier.padding(horizontal = 24.dp)) {
+            StepTitle(stringResource(R.string.g1_your_city))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(NoorColor.stateReciting, RoundedCornerShape(12.dp))
+                    .clickable(enabled = !fetching) {
+                        if (LocationFetcher.hasPermission(context)) startFetch()
+                        else permissionLauncher.launch(
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                    }
+                    .padding(horizontal = 16.dp, vertical = 13.dp)
+            ) {
+                Column(Modifier.weight(1f)) {
                     Text(
-                        city.displayName(),
+                        if (located) stringResource(R.string.g1_using_current_location)
+                        else stringResource(R.string.g1_use_my_location),
                         fontSize = 15.sp,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = NoorColor.inkPrimary)
-                    Spacer(Modifier.weight(1f))
-                    if (selected) {
-                        Icon(painterResource(R.drawable.ic_check), contentDescription = null,
-                             tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
+                        fontWeight = FontWeight.SemiBold,
+                        color = NoorColor.accentPrimary)
+                    if (located) {
+                        Text(stringResource(R.string.g1_near_city, current.displayName()),
+                             fontSize = 12.sp, color = NoorColor.inkSecondary)
                     }
                 }
+                if (fetching) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        color = NoorColor.accentPrimary,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(18.dp))
+                } else if (located) {
+                    Icon(painterResource(R.drawable.ic_check), contentDescription = null,
+                         tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
+                }
             }
         }
-        PrimaryButton(stringResource(R.string.g1_continue), onContinue)
+        // Inline picker (no auto-focus here — the keyboard would cover the
+        // Continue button before the reader has seen the step).
+        CityPickerContent(
+            selectedCityId = if (located) 0 else selectedId,
+            onPick = onPick,
+            modifier = Modifier.weight(1f).padding(top = 4.dp))
+        Column(Modifier.padding(horizontal = 24.dp)) {
+            PrimaryButton(stringResource(R.string.g1_continue), onContinue)
+        }
     }
 }
 

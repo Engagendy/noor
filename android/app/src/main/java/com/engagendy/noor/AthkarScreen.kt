@@ -60,12 +60,29 @@ enum class AthkarExtra(val titleRes: Int) {
     TASBIH(R.string.g2_tasbih),
 }
 
+/// `openCategoryTitle` + `openSerial`: a deep link (notification tap) into
+/// one category — keyed on the serial, not the title, so a second tap on
+/// the same category re-opens it after the reader backed out.
 @Composable
-fun AthkarScreen(modifier: Modifier = Modifier) {
+fun AthkarScreen(
+    modifier: Modifier = Modifier,
+    openCategoryTitle: String? = null,
+    openSerial: Int = 0,
+    onOpenConsumed: () -> Unit = {},
+) {
     val context = LocalContext.current
     val categories = remember { AthkarStore.load(context) }
     var open by remember { mutableStateOf<DhikrCategory?>(null) }
     var extra by remember { mutableStateOf<AthkarExtra?>(null) }
+    androidx.compose.runtime.LaunchedEffect(openSerial) {
+        if (openSerial == 0 || openCategoryTitle == null) return@LaunchedEffect
+        categories.firstOrNull { it.title == openCategoryTitle }?.let {
+            extra = null
+            open = it
+        }
+        // Consumed: a later visit to the tab must not re-open it.
+        onOpenConsumed()
+    }
 
     // System back closes the open tool/category, same as its back button.
     androidx.activity.compose.BackHandler(enabled = extra != null || open != null) {

@@ -1,4 +1,5 @@
 import DesignSystem
+import Notifications
 import PrayerTimes
 import QuranReader
 import SwiftUI
@@ -80,7 +81,7 @@ struct MenuBarPrayerView: View {
                     Text("\(String(localized: entry.name))  \(entry.time.formatted(date: .omitted, time: .shortened))\(mark)")
                 }
                 Divider()
-                Text(cityName)
+                Text(verbatim: PrayerLocation.current().displayName(arabicUI: false))
             }
         }
     }
@@ -88,9 +89,30 @@ struct MenuBarPrayerView: View {
 #endif
 
 
-/// Presents adhan notifications (banner + sound) while the app is open.
+/// Presents adhan notifications (banner + sound) while the app is open and
+/// routes taps (after-salah athkar reminder → Athkar tab, category pushed).
 final class NoorNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NoorNotificationDelegate()
+
+    /// Stores the route in defaults (survives a cold start, where
+    /// MainTabView does not exist yet) and pokes the live UI if it does.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier,
+              let route = response.notification.request.content.userInfo["open"] as? String
+        else { return }
+        switch route {
+        case AthkarReminderScheduler.openRoute:
+            UserDefaults.standard.set(route, forKey: "pending.openRoute")
+            await MainActor.run {
+                NotificationCenter.default.post(name: .noorOpenPendingPage, object: nil)
+            }
+        default:
+            break
+        }
+    }
 
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,

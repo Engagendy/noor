@@ -1,3 +1,4 @@
+import ContentDB
 import CoreLocation
 import Foundation
 
@@ -13,7 +14,11 @@ public enum NoorShared {
     /// Keys the app mirrors into the shared suite for widgets.
     public static let mirroredKeys = [
         "prayer.city", "prayer.useCustom", "prayer.customLat", "prayer.customLon",
-        "prayer.customLabel", "prayer.method", "prayer.madhab", "app.language",
+        "prayer.customLabel", "prayer.customLabelAr",
+        "prayer.method", "prayer.madhab", "app.language",
+        // Offline city-database selection, cached so widgets never open the DB.
+        "prayer.cityId", "prayer.cityName", "prayer.cityNameAr", "prayer.cityCountry",
+        "prayer.cityLat", "prayer.cityLon", "prayer.cityTz",
         // Manual per-prayer offsets: PrayerDay.compute reads them from the
         // defaults it is given, so the widgets need the mirrored copy too.
         "prayer.adj.fajr", "prayer.adj.dhuhr", "prayer.adj.asr",
@@ -34,20 +39,35 @@ public struct PrayerLocation: Equatable, Sendable {
     public let latitude: Double
     public let longitude: Double
     public let timeZoneIdentifier: String
+    /// Latin name (legacy preset name for preset locations).
     public let label: String
+    /// Arabic name when known; nil falls back to the preset table or `label`.
+    public let labelArabic: String?
     public let isCustom: Bool
 
     public init(latitude: Double, longitude: Double, timeZoneIdentifier: String,
-                label: String, isCustom: Bool) {
+                label: String, labelArabic: String? = nil, isCustom: Bool) {
         self.latitude = latitude
         self.longitude = longitude
         self.timeZoneIdentifier = timeZoneIdentifier
         self.label = label
+        self.labelArabic = labelArabic
         self.isCustom = isCustom
     }
 
+    /// The name to show in the UI for this location, in the UI language.
+    public func displayName(arabicUI: Bool) -> String {
+        guard arabicUI else { return label }
+        if let labelArabic, !labelArabic.isEmpty { return labelArabic }
+        if let preset = CityPreset.all.first(where: { $0.name == label }) {
+            return preset.nameArabic
+        }
+        return label
+    }
+
     /// Resolves the active location from settings: the saved device location
-    /// when enabled, otherwise the selected city preset.
+    /// when enabled, else the city picked from the offline database (cached
+    /// fields, so widgets never open the DB), else the legacy preset.
     public static func current(defaults: UserDefaults = .standard) -> PrayerLocation {
         if defaults.bool(forKey: "prayer.useCustom") {
             return PrayerLocation(
@@ -55,19 +75,68 @@ public struct PrayerLocation: Equatable, Sendable {
                 longitude: defaults.double(forKey: "prayer.customLon"),
                 timeZoneIdentifier: TimeZone.current.identifier,
                 label: defaults.string(forKey: "prayer.customLabel") ?? String(localized: "My location"),
+                labelArabic: defaults.string(forKey: "prayer.customLabelAr"),
                 isCustom: true)
+        }
+        if defaults.integer(forKey: "prayer.cityId") > 0,
+           let name = defaults.string(forKey: "prayer.cityName"),
+           let tz = defaults.string(forKey: "prayer.cityTz") {
+            return PrayerLocation(
+                latitude: defaults.double(forKey: "prayer.cityLat"),
+                longitude: defaults.double(forKey: "prayer.cityLon"),
+                timeZoneIdentifier: tz,
+                label: name,
+                labelArabic: defaults.string(forKey: "prayer.cityNameAr"),
+                isCustom: false)
         }
         let city = CityPreset.named(defaults.string(forKey: "prayer.city") ?? "Makkah")
         return city.location
     }
 
+    /// Selected city id from the offline database (0 = legacy preset).
+    public static func selectedCityId(defaults: UserDefaults = .standard) -> Int {
+        defaults.integer(forKey: "prayer.cityId")
+    }
+
+    /// Persists a city from the offline database as the manual location and
+    /// turns "use my location" off. `prayer.city` (legacy preset name) is
+    /// kept for older readers and for the widget's preset menu.
+    public static func select(city: City, defaults: UserDefaults = .standard) {
+        defaults.set(city.id, forKey: "prayer.cityId")
+        defaults.set(city.name, forKey: "prayer.cityName")
+        defaults.set(city.nameArabic, forKey: "prayer.cityNameAr")
+        defaults.set(city.countryCode, forKey: "prayer.cityCountry")
+        defaults.set(city.latitude, forKey: "prayer.cityLat")
+        defaults.set(city.longitude, forKey: "prayer.cityLon")
+        defaults.set(city.timeZoneIdentifier, forKey: "prayer.cityTz")
+        if let preset = CityPreset.all.first(where: { $0.name == city.name || $0.nameArabic == city.nameArabic }) {
+            defaults.set(preset.name, forKey: "prayer.city")
+        }
+        defaults.set(false, forKey: "prayer.useCustom")
+    }
+
     public static func saveCustom(latitude: Double, longitude: Double,
-                                  label: String,
+                                  label: String, labelArabic: String? = nil,
                                   defaults: UserDefaults = .standard) {
         defaults.set(latitude, forKey: "prayer.customLat")
         defaults.set(longitude, forKey: "prayer.customLon")
         defaults.set(label, forKey: "prayer.customLabel")
+        defaults.set(labelArabic, forKey: "prayer.customLabelAr")
         defaults.set(true, forKey: "prayer.useCustom")
+    }
+
+    /// Names a device fix from the offline city database (nearest place);
+    /// falls back to the preset table. Never geocodes over the network.
+    public static func saveCustom(latitude: Double, longitude: Double,
+                                  defaults: UserDefaults = .standard) {
+        if let city = try? CityDatabase().nearest(latitude: latitude, longitude: longitude, limit: 1).first {
+            saveCustom(latitude: latitude, longitude: longitude,
+                       label: city.name, labelArabic: city.nameArabic, defaults: defaults)
+        } else {
+            let preset = CityPreset.nearest(latitude: latitude, longitude: longitude)
+            saveCustom(latitude: latitude, longitude: longitude,
+                       label: preset.name, labelArabic: preset.nameArabic, defaults: defaults)
+        }
     }
 
     public static func clearCustom(defaults: UserDefaults = .standard) {
@@ -78,7 +147,8 @@ public struct PrayerLocation: Equatable, Sendable {
 extension CityPreset {
     public var location: PrayerLocation {
         PrayerLocation(latitude: latitude, longitude: longitude,
-                       timeZoneIdentifier: timeZoneIdentifier, label: name, isCustom: false)
+                       timeZoneIdentifier: timeZoneIdentifier, label: name,
+                       labelArabic: nameArabic, isCustom: false)
     }
 }
 

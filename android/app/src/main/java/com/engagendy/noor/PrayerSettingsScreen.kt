@@ -25,6 +25,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,7 +60,11 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
     }
     val method = remember(version) { prefs.method }
     val madhab = remember(version) { prefs.madhab }
-    val cityName = remember(version) { prefs.cityName }
+    val city = remember(version) { prefs.city }
+    val cityId = remember(version) { prefs.cityId }
+    val customLabel = remember(version) { prefs.location }
+    val scope = rememberCoroutineScope()
+    var showCityPicker by remember { mutableStateOf(false) }
     val useCustomLocation = remember(version) { prefs.useCustomLocation }
     val preAlert = remember(version) { prefs.preAlertMinutes }
     // Android 12/12L: "Alarms & reminders" may be off, in which case adhans
@@ -77,10 +85,17 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
     var fetchingLocation by remember { mutableStateOf(false) }
     var locationFailed by remember { mutableStateOf(false) }
     fun applyFix(latitude: Double, longitude: Double) {
-        val nearest = Cities.nearest(latitude, longitude)
-        prefs.saveCustomLocation(latitude, longitude, nearest.name)
-        prefs.cityName = nearest.name
-        changed()
+        // Label the fix with the nearest city from the offline table (no
+        // geocoder, no network); the curated preset is the fallback.
+        scope.launch {
+            val near = withContext(Dispatchers.IO) {
+                runCatching { CityDb.get(context).nearest(latitude, longitude, 1).firstOrNull() }
+                    .getOrNull()
+            }
+            val preset = near?.asPreset() ?: Cities.nearest(latitude, longitude)
+            prefs.saveCustomLocation(latitude, longitude, preset.name, preset.nameArabic)
+            changed()
+        }
     }
     fun startLocationFetch() {
         fetchingLocation = true
@@ -99,6 +114,19 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
     val adjustments = remember(version) {
         listOf("fajr", "dhuhr", "asr", "maghrib", "isha")
             .associateWith(prefs::adjustment)
+    }
+
+    if (showCityPicker) {
+        CityPickerScreen(
+            selectedCityId = cityId,
+            onPick = { picked ->
+                prefs.saveCity(picked)
+                changed()
+                showCityPicker = false
+            },
+            onClose = { showCityPicker = false },
+            modifier = modifier)
+        return
     }
 
     LazyColumn(modifier.fillMaxSize().padding(horizontal = 20.dp)) {
@@ -179,8 +207,7 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
                         color = if (useCustomLocation) NoorColor.accentPrimary
                                 else NoorColor.inkPrimary)
                     if (useCustomLocation) {
-                        Text(stringResource(R.string.g1_near_city,
-                                            Cities.named(cityName).displayName()),
+                        Text(stringResource(R.string.g1_near_city, customLabel.displayName()),
                              fontSize = 12.sp, color = NoorColor.inkSecondary)
                     }
                 }
@@ -284,18 +311,15 @@ fun PrayerSettingsScreen(modifier: Modifier = Modifier, onDone: () -> Unit) {
         }
 
         item { SectionHeader(stringResource(R.string.g1_city)) }
-        items(Cities.all) { city ->
-            val selected = !useCustomLocation && cityName == city.name
+        item {
+            // Opens the offline database picker; the selected city is the
+            // active one only while the device-location override is off.
             SettingRow(
                 title = city.displayName(),
                 subtitle = if (isArabicUi()) city.name else city.nameArabic,
-                selected = selected,
-                onClick = {
-                    // A manual pick turns off the device-location override.
-                    prefs.useCustomLocation = false
-                    prefs.cityName = city.name
-                    changed()
-                })
+                selected = !useCustomLocation,
+                trailing = stringResource(R.string.feat_change_city),
+                onClick = { showCityPicker = true })
         }
         item { androidx.compose.foundation.layout.Spacer(Modifier.padding(bottom = 24.dp)) }
     }
@@ -313,6 +337,7 @@ private fun SettingRow(
     title: String,
     subtitle: String? = null,
     selected: Boolean,
+    trailing: String? = null,
     onClick: () -> Unit,
 ) {
     Row(
@@ -336,9 +361,16 @@ private fun SettingRow(
                 Text(subtitle, fontSize = 12.sp, color = NoorColor.inkSecondary)
             }
         }
-        if (selected) {
-            Icon(painterResource(R.drawable.ic_check), contentDescription = null,
-                 tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
+        Row(verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (trailing != null) {
+                Text(trailing, fontSize = 13.sp, color = NoorColor.accentPrimary)
+                Icon(painterResource(NoorIcons.chevronForward()), contentDescription = null,
+                     tint = NoorColor.accentPrimary, modifier = Modifier.size(14.dp))
+            } else if (selected) {
+                Icon(painterResource(R.drawable.ic_check), contentDescription = null,
+                     tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
+            }
         }
     }
 }

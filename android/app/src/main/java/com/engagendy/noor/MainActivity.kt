@@ -2,6 +2,7 @@ package com.engagendy.noor
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
@@ -46,7 +47,28 @@ enum class Tab(val titleRes: Int, val icon: Int) {
 /// AppCompatActivity (not ComponentActivity) so the per-app locale picked
 /// in Settings (AppCompatDelegate.setApplicationLocales) applies and the
 /// activity recreates in the new language. Compose setup is unchanged.
+/// A screen requested by a notification tap. The serial makes every tap a
+/// NEW request, so tapping the same notification twice re-opens the screen.
+data class OpenRequest(val route: String, val serial: Int)
+
 class MainActivity : AppCompatActivity() {
+    /// Set from onCreate/onNewIntent (never from composition); NoorApp
+    /// consumes it in a LaunchedEffect.
+    private var openRequest by mutableStateOf<OpenRequest?>(null)
+    private var openSerial = 0
+
+    private fun consumeOpenIntent(intent: Intent?) {
+        val route = intent?.getStringExtra(AdhanScheduler.EXTRA_OPEN) ?: return
+        intent.removeExtra(AdhanScheduler.EXTRA_OPEN)
+        openRequest = OpenRequest(route, ++openSerial)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        consumeOpenIntent(intent)
+    }
+
     private val notificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) AdhanScheduler.reschedule(this)
@@ -70,6 +92,9 @@ class MainActivity : AppCompatActivity() {
             AdhanScheduler.reschedule(this)
         }
         NoorWidgets.refresh(this)
+        // Cold start only: on process-death restore the OS re-delivers the same
+        // Intent, which would re-open the category the user already left.
+        if (savedInstanceState == null) consumeOpenIntent(intent)
         setContent {
             // Re-resolve the palette whenever the system appearance flips
             // (only matters while app.theme == "system"). Prefs are read
@@ -105,7 +130,7 @@ class MainActivity : AppCompatActivity() {
                             showOnboarding = false
                         })
                     } else {
-                        NoorApp()
+                        NoorApp(openRequest = openRequest)
                     }
                 }
             }
@@ -132,9 +157,22 @@ class MainActivity : AppCompatActivity() {
 }
 
 @Composable
-fun NoorApp() {
+fun NoorApp(openRequest: OpenRequest? = null) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
+    // Athkar category requested by a notification tap; the serial changes
+    // per tap so the same category re-opens on a second tap.
+    var athkarCategory by rememberSaveable { mutableStateOf<String?>(null) }
+    var athkarSerial by rememberSaveable { mutableStateOf(0) }
+    LaunchedEffect(openRequest) {
+        when (openRequest?.route) {
+            AdhanScheduler.OPEN_ATHKAR_AFTER_SALAH -> {
+                athkarCategory = AdhanScheduler.ATHKAR_AFTER_SALAH_TITLE
+                athkarSerial = openRequest.serial
+                tab = Tab.ATHKAR
+            }
+        }
+    }
     // Standard bottom-nav convention: system back on a non-Today tab returns
     // to Today; on Today (nothing open) the default behavior exits the app.
     // Screen-level BackHandlers compose later (LIFO) and win while open.
@@ -206,7 +244,9 @@ fun NoorApp() {
                                      onSurahClosed = { quranSurah = 0 })
             Tab.PRAYER -> PrayerScreen(modifier)
             Tab.HADITH -> HadithScreen(modifier)
-            Tab.ATHKAR -> AthkarScreen(modifier)
+            Tab.ATHKAR -> AthkarScreen(modifier, openCategoryTitle = athkarCategory,
+                                       openSerial = athkarSerial,
+                                       onOpenConsumed = { athkarCategory = null; athkarSerial = 0 })
         }
     }
 }

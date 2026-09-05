@@ -121,3 +121,7 @@ The About row renders `versionName (versionCode)`, e.g. `1.0.1 (6)`.
   Also drops the QCF cmap patch: it made Compose reject the font file
   ("Could not load font"), crashing every entry into the Madani page and
   then rendering blank once the crash was caught. Fonts now ship untouched.
+  Also in vc8: after-salah athkar reminder (opt-in, 10/15/20/30 min, quiet
+  channel, inexact Doze-exempt alarm, tap opens the athkar), and the offline
+  GeoNames city picker (34k cities, search-first, browse by country;
+  `prayer.cityId` + cached fields, legacy `prayer.city` still honoured).

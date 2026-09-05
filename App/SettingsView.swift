@@ -1,4 +1,5 @@
 import DesignSystem
+import Notifications
 import PrayerTimes
 import Translations
 import QuranAudio
@@ -20,6 +21,9 @@ struct SettingsView: View {
     @State private var showZakat = false
     @AppStorage("notifications.enabled") private var notificationsEnabled = false
     @AppStorage("fasting.reminders") private var fastingReminders = false
+    @AppStorage(AthkarReminderScheduler.enabledKey) private var athkarAfterSalah = false
+    @AppStorage(AthkarReminderScheduler.minutesKey) private var athkarAfterSalahMinutes
+        = AthkarReminderScheduler.defaultMinutes
     @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanMadinah.rawValue
     @Environment(\.locale) private var locale
 
@@ -50,6 +54,20 @@ struct SettingsView: View {
                 }
                 Toggle(isOn: $fastingReminders) {
                     Text("Sunnah fasting reminders")
+                }
+                Toggle(isOn: $athkarAfterSalah) {
+                    Text("After-prayer athkar reminder")
+                }
+                if athkarAfterSalah {
+                    Picker(selection: $athkarAfterSalahMinutes) {
+                        ForEach(AthkarReminderScheduler.minuteChoices, id: \.self) { minutes in
+                            Text("\(minutes) min").tag(minutes)
+                        }
+                    } label: {
+                        Text("After prayer by")
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityLabel("After prayer by")
                 }
                 Button {
                     showAdhanSounds = true

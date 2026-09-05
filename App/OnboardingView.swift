@@ -7,25 +7,14 @@ import SwiftUI
 /// seconds, skippable, never shown again.
 struct OnboardingView: View {
     @AppStorage("app.language") private var language = "system"
-    @AppStorage("prayer.city") private var cityName = "Makkah"
     @AppStorage("notifications.enabled") private var notificationsEnabled = false
     @Binding var done: Bool
 
     @State private var step = 0
-    @State private var citySearch = ""
 
     private var isArabicUI: Bool {
         language == "ar" || (language == "system"
             && Locale.current.language.languageCode?.identifier == "ar")
-    }
-
-    private var filteredCities: [CityPreset] {
-        let query = citySearch.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return CityPreset.all }
-        return CityPreset.all.filter {
-            $0.name.localizedCaseInsensitiveContains(query)
-                || $0.nameArabic.contains(query)
-        }
     }
 
     var body: some View {
@@ -107,52 +96,18 @@ struct OnboardingView: View {
         .buttonStyle(.plain)
     }
 
-    // Step 2 — city
+    // Step 2 — city: the same offline database picker as Settings, kept
+    // on the page (no dismiss) so the checkmark and Continue stay visible.
     private var cityStep: some View {
         VStack(spacing: 12) {
             stepTitle(isArabicUI ? "مدينتك لمواقيت الصلاة" : "Your city for prayer times")
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 14))
-                    .foregroundStyle(NoorColor.inkSecondary)
-                TextField("", text: $citySearch)
-                    .textFieldStyle(.plain)
-                    .multilineTextAlignment(.leading)
-                    .overlay(alignment: .leading) {
-                        if citySearch.isEmpty {
-                            Text(verbatim: isArabicUI ? "ابحث عن مدينتك" : "Search your city")
-                                .foregroundStyle(NoorColor.inkSecondary.opacity(0.7))
-                                .allowsHitTesting(false)
-                        }
-                    }
+            NavigationStack {
+                CityPickerView(dismissOnSelect: false)
+                    #if os(iOS)
+                    .toolbar(.hidden, for: .navigationBar)
+                    #endif
             }
-            .padding(10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(NoorColor.bgElevated))
-            ScrollView {
-                LazyVStack(spacing: 2) {
-                    ForEach(filteredCities, id: \.name) { city in
-                        Button {
-                            cityName = city.name
-                        } label: {
-                            HStack {
-                                Text(verbatim: isArabicUI ? city.nameArabic : city.name)
-                                    .font(.system(size: 15, weight: cityName == city.name ? .semibold : .regular))
-                                    .foregroundStyle(NoorColor.inkPrimary)
-                                Spacer()
-                                if cityName == city.name {
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundStyle(NoorColor.accentPrimary)
-                                }
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 9)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
+            .clipShape(RoundedRectangle(cornerRadius: 14))
             primaryButton(isArabicUI ? "متابعة" : "Continue") { step = 2 }
         }
         .padding(24)

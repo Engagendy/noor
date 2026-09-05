@@ -157,8 +157,17 @@ enum class AdhanSound(val nameRes: Int, val rawRes: Int?) {
 /// SharedPreferences-backed prayer settings — mirrors the iOS @AppStorage keys.
 /// Writes happen only from explicit user actions (never from Compose observers).
 class PrayerPrefs(context: Context) {
+    private val appContext: Context = context.applicationContext
     private val prefs: SharedPreferences =
-        context.applicationContext.getSharedPreferences("prayer", Context.MODE_PRIVATE)
+        appContext.getSharedPreferences("prayer", Context.MODE_PRIVATE)
+
+    /// A resource in a specific language regardless of the UI locale — the
+    /// Arabic label is stored separately and must stay Arabic.
+    private fun localized(resId: Int, language: String): String {
+        val config = android.content.res.Configuration(appContext.resources.configuration)
+        config.setLocale(java.util.Locale(language))
+        return appContext.createConfigurationContext(config).getString(resId)
+    }
 
     var cityName: String
         get() = prefs.getString("prayer.city", Cities.all[0].name) ?: Cities.all[0].name
@@ -172,7 +181,50 @@ class PrayerPrefs(context: Context) {
         get() = MadhabChoice.named(prefs.getString("prayer.madhab", null))
         set(value) = prefs.edit().putString("prayer.madhab", value.name).apply()
 
-    val city: CityPreset get() = Cities.named(cityName)
+    /// Legacy preset selection (prayer.city) — kept for installs that chose
+    /// a city before the offline database picker existed.
+    val presetCity: CityPreset get() = Cities.named(cityName)
+
+    /// GeoNames id of the city picked from the bundled database (0 = none,
+    /// fall back to the legacy preset). Mirrors the iOS "prayer.cityId".
+    val cityId: Int get() = prefs.getInt("prayer.cityId", 0)
+
+    /// Stores a database pick with every field prayer computation and the
+    /// widgets need cached in prefs, so neither ever opens the DB. A manual
+    /// pick also turns off the device-location override.
+    fun saveCity(city: City) {
+        prefs.edit()
+            .putInt("prayer.cityId", city.id)
+            .putString("prayer.cityName", city.name)
+            .putString("prayer.cityNameAr", city.nameArabic)
+            .putString("prayer.cityCountry", city.countryCode)
+            .putLong("prayer.cityLat", city.latitude.toRawBits())
+            .putLong("prayer.cityLon", city.longitude.toRawBits())
+            .putString("prayer.cityTz", city.timeZone)
+            .putBoolean("prayer.useCustom", false)
+            .apply()
+    }
+
+    /// The selected city (database pick, else legacy preset) — ignores the
+    /// device-location override.
+    val city: CityPreset
+        get() {
+            val id = cityId
+            if (id > 0) {
+                val name = prefs.getString("prayer.cityName", null)
+                val tz = prefs.getString("prayer.cityTz", null)
+                if (name != null && tz != null) {
+                    return CityPreset(
+                        name = name,
+                        nameArabic = prefs.getString("prayer.cityNameAr", null)
+                            ?.takeIf { it.isNotBlank() } ?: name,
+                        latitude = Double.fromBits(prefs.getLong("prayer.cityLat", 0L)),
+                        longitude = Double.fromBits(prefs.getLong("prayer.cityLon", 0L)),
+                        timeZone = tz)
+                }
+            }
+            return presetCity
+        }
 
     /// One-shot device location — mirrors the iOS "prayer.useCustom",
     /// "prayer.customLat/Lon/Label" keys. Exact coordinates are stored and
@@ -181,32 +233,48 @@ class PrayerPrefs(context: Context) {
         get() = prefs.getBoolean("prayer.useCustom", false)
         set(value) = prefs.edit().putBoolean("prayer.useCustom", value).apply()
 
+    /// Whether a device fix was ever stored (drives the picker's "Nearby").
+    val hasCustomFix: Boolean get() = prefs.contains("prayer.customLat")
+
     val customLat: Double
         get() = Double.fromBits(prefs.getLong("prayer.customLat", 0L))
 
     val customLon: Double
         get() = Double.fromBits(prefs.getLong("prayer.customLon", 0L))
 
+    /// Latin label of the device fix (nearest city) — "prayer.customLabel".
     val customLabel: String
-        get() = prefs.getString("prayer.customLabel", null) ?: "موقعي"
+        get() = prefs.getString("prayer.customLabel", null)
+            ?: appContext.getString(R.string.feat_my_location)
 
-    fun saveCustomLocation(latitude: Double, longitude: Double, label: String) {
+    /// Arabic label of the device fix — "prayer.customLabelAr". Older
+    /// installs stored only a preset name; look its Arabic up.
+    val customLabelAr: String
+        get() = prefs.getString("prayer.customLabelAr", null)?.takeIf { it.isNotBlank() }
+            ?: Cities.all.firstOrNull { it.name == customLabel }?.nameArabic
+            ?: localized(R.string.feat_my_location, "ar")
+
+    fun saveCustomLocation(
+        latitude: Double, longitude: Double, label: String, labelArabic: String? = null,
+    ) {
         prefs.edit()
             .putLong("prayer.customLat", latitude.toRawBits())
             .putLong("prayer.customLon", longitude.toRawBits())
             .putString("prayer.customLabel", label)
+            .putString("prayer.customLabelAr", labelArabic)
             .putBoolean("prayer.useCustom", true)
             .apply()
     }
 
-    /// The active location: the saved device fix (device time zone, labelled
-    /// with the nearest preset like iOS) or the selected city preset.
+    /// The active location, resolved like iOS PrayerLocation.current():
+    /// the saved device fix (device time zone, labelled with the nearest
+    /// city) → the database pick (cached fields) → the legacy preset.
+    /// Widgets and the scheduler go through this same resolver.
     val location: CityPreset
         get() = if (useCustomLocation) {
-            val label = customLabel
             CityPreset(
-                name = label,
-                nameArabic = Cities.all.firstOrNull { it.name == label }?.nameArabic ?: label,
+                name = customLabel,
+                nameArabic = customLabelAr,
                 latitude = customLat,
                 longitude = customLon,
                 timeZone = TimeZone.getDefault().id)

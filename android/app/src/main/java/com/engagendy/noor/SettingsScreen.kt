@@ -106,6 +106,8 @@ private fun SettingsMain(
     val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
     val notificationsEnabled = remember(version) { prefs.getBoolean("notifications.enabled", true) }
     val fastingReminders = remember(version) { prefs.getBoolean("fasting.reminders", false) }
+    val athkarAfterSalah = remember(version) { prefs.getBoolean("athkar.afterSalah", false) }
+    val athkarMinutes = remember(version) { prefs.getInt("athkar.afterSalahMinutes", 20) }
     val sound = remember(version) { PrayerPrefs(context).sound }
     val translationId = remember(version) { prefs.getString("translation.id", "en.sahih") ?: "en.sahih" }
 
@@ -191,6 +193,28 @@ private fun SettingsMain(
                 prefs.edit().putBoolean("fasting.reminders", on).apply()
                 version++
                 AdhanScheduler.reschedule(context)
+            }
+            HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
+            // After-salah athkar nudge (iOS "athkar.afterSalah" keys) —
+            // scheduled independently of the adhan master toggle.
+            ToggleRow(stringResource(R.string.feat_athkar_after_salah), athkarAfterSalah) { on ->
+                prefs.edit().putBoolean("athkar.afterSalah", on).apply()
+                version++
+                AdhanScheduler.reschedule(context)
+            }
+            if (athkarAfterSalah) {
+                ChoiceRow(
+                    title = stringResource(R.string.feat_athkar_after_by),
+                    options = listOf(10, 15, 20, 30).map {
+                        it.toString() to stringResource(R.string.feat_minutes_short,
+                                                        it.localizedDigits())
+                    },
+                    selectedId = athkarMinutes.toString(),
+                    onSelect = { id ->
+                        prefs.edit().putInt("athkar.afterSalahMinutes", id.toInt()).apply()
+                        version++
+                        AdhanScheduler.reschedule(context)
+                    })
             }
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             NavRow(title = stringResource(R.string.g1_notification_sound),

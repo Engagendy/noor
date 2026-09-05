@@ -12,6 +12,22 @@
         }
       }
     },
+    "%lld min": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld د"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        }
+      }
+    },
     "%lld of 604 pages · ~350 MB total": {
       "extractionState": "stale",
       "localizations": {
@@ -175,6 +191,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "Adhan sound"
+          }
+        }
+      }
+    },
+    "After prayer by": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بعد الصلاة بـ"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After prayer by"
+          }
+        }
+      }
+    },
+    "After-prayer athkar reminder": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تذكير أذكار ما بعد الصلاة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After-prayer athkar reminder"
           }
         }
       }
@@ -445,6 +493,22 @@
         }
       }
     },
+    "Browse by country": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تصفّح حسب الدولة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browse by country"
+          }
+        }
+      }
+    },
     "Business inventory": {
       "localizations": {
         "ar": {
@@ -538,12 +602,17 @@
       }
     },
     "City": {
-      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "المدينة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "City"
           }
         }
       }
@@ -555,6 +624,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "اسم المدينة"
+          }
+        }
+      }
+    },
+    "Clear": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مسح"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
           }
         }
       }
@@ -667,6 +752,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "العدد"
+          }
+        }
+      }
+    },
+    "Countries": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الدول"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Countries"
+          }
+        }
+      }
+    },
+    "Country": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الدولة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Country"
           }
         }
       }
@@ -1717,12 +1834,33 @@
       }
     },
     "Near %@": {
-      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "قرب %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Near %@"
+          }
+        }
+      }
+    },
+    "Nearby": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بالقرب منك"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nearby"
           }
         }
       }
@@ -1789,6 +1927,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nisab"
+          }
+        }
+      }
+    },
+    "No cities found": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم يُعثر على مدن"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No cities found"
           }
         }
       }
@@ -2058,6 +2212,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "وجّه السهم نحو الكعبة"
+          }
+        }
+      }
+    },
+    "Popular": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأكثر شيوعًا"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Popular"
           }
         }
       }
@@ -2434,6 +2604,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "ابحث في الأذكار"
+          }
+        }
+      }
+    },
+    "Search city": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ابحث عن مدينة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search city"
           }
         }
       }

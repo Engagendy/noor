@@ -3,10 +3,29 @@ import SwiftUI
 
 /// Athkar home: tasbih counter up top, then Hisn al-Muslim categories.
 public struct AthkarView: View {
+    /// Exact `category` title in athkar.json for the after-taslim athkar;
+    /// the after-salah reminder deep-links here (same string on Android).
+    public static let afterSalahCategory = "الأذكار بعد السلام من الصلاة"
+
     @State private var categories: [DhikrCategory] = []
     @State private var searchText = ""
+    @State private var pushedCategory: DhikrCategory?
+    /// Set by the app to push a category (notification tap); cleared once
+    /// consumed. Kept as a binding so a request made while this tab is
+    /// off-screen is honored when it appears.
+    @Binding private var openCategory: String?
 
-    public init() {}
+    public init(openCategory: Binding<String?> = .constant(nil)) {
+        _openCategory = openCategory
+    }
+
+    private func consumeOpenRequest() {
+        guard let title = openCategory, !categories.isEmpty,
+              let category = categories.first(where: { $0.category == title })
+        else { return }
+        openCategory = nil
+        pushedCategory = category
+    }
 
     private var filtered: [DhikrCategory] {
         let query = searchText.trimmingCharacters(in: .whitespaces)
@@ -125,9 +144,15 @@ public struct AthkarView: View {
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
         .navigationTitle(Text("Athkar"))
+        .navigationDestination(item: $pushedCategory) { category in
+            DhikrListView(category: category)
+        }
         .task {
             if categories.isEmpty { categories = AthkarStore.load() }
+            consumeOpenRequest()
         }
+        .onAppear(perform: consumeOpenRequest)
+        .onChange(of: openCategory) { _, _ in consumeOpenRequest() }
     }
 }
 

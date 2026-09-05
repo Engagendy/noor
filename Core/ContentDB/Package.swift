@@ -16,7 +16,8 @@ let package = Package(
             dependencies: [.product(name: "GRDB", package: "GRDB.swift")],
             resources: [
                 .copy("Resources/quran.sqlite"),
-                .copy("Resources/page_layout.sqlite")
+                .copy("Resources/page_layout.sqlite"),
+                .copy("Resources/cities.sqlite")
             ]
         ),
         .testTarget(

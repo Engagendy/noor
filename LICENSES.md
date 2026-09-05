@@ -141,3 +141,15 @@ Attributions are displayed in Settings → About.
 - **Source:** AhmedBaset/hadith-json (github.com/AhmedBaset/hadith-json)
 - **License:** MIT (data of classical public-domain texts)
 - **Attribution:** "Arabic book titles courtesy of the hadith-json project."
+
+### City database for the prayer-times picker (bundled)
+- **Source:** GeoNames `cities15000` and `countryInfo` exports
+  (https://www.geonames.org), every place with population ≥ 15,000, with
+  IANA time zones. Built by `Tools/build_cities_db.py`; Arabic names come
+  from GeoNames alternate names, overridden by the app's own curated
+  spellings for the cities in `CityPreset.all`.
+- **License:** Creative Commons Attribution 4.0 (CC BY 4.0).
+- **File:** `Core/ContentDB/Sources/ContentDB/Resources/cities.sqlite`
+  (copied to `android/app/src/main/assets/cities.sqlite`). Searched entirely
+  on device — choosing a city never sends a query anywhere.
+- **Attribution:** "City data © GeoNames (geonames.org), CC BY 4.0."

@@ -60,6 +60,8 @@ struct TodayView: View {
     @State private var khatmahPlanVersion = 0
 
     @AppStorage("prayer.city") private var cityName = "Makkah"
+    @AppStorage("prayer.cityId") private var cityId = 0
+    @AppStorage("prayer.useCustom") private var useCustomLocation = false
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
     @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
     @AppStorage("reader.lastSurah") private var lastSurah = 1

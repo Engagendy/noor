@@ -29,6 +29,8 @@ struct MainTabView: View {
     /// Open the reader at an exact mushaf page (continue / khatmah).
     @State private var quranOpenPage: Int?
     @State private var quranOpenTarget: ReaderTarget?
+    /// Athkar category to push after a reminder tap (exact json title).
+    @State private var athkarOpenCategory: String?
     @State private var translations = TranslationStore()
     @AppStorage("translation.id") private var translationId = "en.sahih"
     @State private var library = LibraryStore.sharedInstance
@@ -56,6 +58,19 @@ struct MainTabView: View {
     @AppStorage("prayer.adj.asr") private var adjAsr = 0
     @AppStorage("prayer.adj.maghrib") private var adjMaghrib = 0
     @AppStorage("prayer.adj.isha") private var adjIsha = 0
+    // Offline city-database selection (cached fields mirrored to widgets).
+    @AppStorage("prayer.cityId") private var cityId = 0
+    @AppStorage("prayer.cityName") private var selectedCityName = ""
+    @AppStorage("prayer.cityNameAr") private var selectedCityNameAr = ""
+    @AppStorage("prayer.cityCountry") private var selectedCityCountry = ""
+    @AppStorage("prayer.cityLat") private var selectedCityLat = 0.0
+    @AppStorage("prayer.cityLon") private var selectedCityLon = 0.0
+    @AppStorage("prayer.cityTz") private var selectedCityTz = ""
+    @AppStorage("prayer.customLabelAr") private var customLabelAr = ""
+    // After-salah athkar reminder — independent of the adhan toggle.
+    @AppStorage(AthkarReminderScheduler.enabledKey) private var athkarAfterSalah = false
+    @AppStorage(AthkarReminderScheduler.minutesKey) private var athkarAfterSalahMinutes
+        = AthkarReminderScheduler.defaultMinutes
 
     var body: some View {
         mainTabs
@@ -77,7 +92,11 @@ struct MainTabView: View {
                           appLanguage, customLabel, String(fastingReminders),
                           String(preAlertMinutes),
                           String(adjFajr), String(adjDhuhr), String(adjAsr),
-                          String(adjMaghrib), String(adjIsha)]))
+                          String(adjMaghrib), String(adjIsha),
+                          String(cityId), selectedCityName, selectedCityNameAr,
+                          selectedCityCountry, String(selectedCityLat),
+                          String(selectedCityLon), selectedCityTz, customLabelAr,
+                          String(athkarAfterSalah), String(athkarAfterSalahMinutes)]))
     }
 
     private var mainTabs: some View {
@@ -134,7 +153,7 @@ struct MainTabView: View {
             .tag(Tab.prayer)
 
             NavigationStack {
-                AthkarView()
+                AthkarView(openCategory: $athkarOpenCategory)
                     .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
             }
                 .tabItem { Label("Athkar", systemImage: "sparkles") }
@@ -149,9 +168,16 @@ struct MainTabView: View {
         }
     }
 
-    /// Siri "read my wird": consume the pending page request.
+    /// Siri "read my wird" / notification taps: consume pending routes.
+    /// Also runs on first appearance so a cold start from a notification
+    /// (delegate fires before this view exists) still lands on the target.
     private func openPendingPage() {
         let defaults = UserDefaults.standard
+        if defaults.string(forKey: "pending.openRoute") == AthkarReminderScheduler.openRoute {
+            defaults.removeObject(forKey: "pending.openRoute")
+            tab = .athkar
+            athkarOpenCategory = AthkarView.afterSalahCategory
+        }
         let page = defaults.integer(forKey: "pending.openPage")
         guard page > 0 else { return }
         defaults.set(0, forKey: "pending.openPage")
@@ -185,32 +211,68 @@ struct MainTabView: View {
 
     private func rescheduleNotifications() async {
         let scheduler = AdhanNotificationScheduler()
-        // Adhan and fasting reminders are independent toggles: only ever
-        // remove the `adhan-`/`pre-adhan-` requests here so the fasting
-        // reminders survive turning adhan off (and vice versa).
+        let location = PrayerLocation.current()
+        let method = CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee
+        let madhab = MadhabChoice(rawValue: madhabRaw) ?? .shafi
+        // Adhan, fasting, and after-salah athkar are independent toggles:
+        // each scheduler only ever removes its own prefix (`adhan-`/
+        // `pre-adhan-`, `fasting-`, `athkar-`), so turning one off never
+        // drops the others.
         if !notificationsEnabled {
             await scheduler.cancelAll()
         }
-        // Cancelling fasting reminders must run even when BOTH toggles are
-        // off — it is the only path that removes the `fasting-` requests.
-        guard notificationsEnabled || fastingReminders else {
+        // Cancelling the fasting/athkar requests must run even when EVERY
+        // toggle is off — these calls are the only paths that remove them.
+        // (An early `guard` here once skipped the fasting cancel; keep the
+        // disable calls ahead of any return.)
+        guard notificationsEnabled || fastingReminders || athkarAfterSalah else {
             await FastingReminderScheduler().reschedule(
                 arabic: isArabicNotifications, enabled: false)
+            await AthkarReminderScheduler().reschedule(
+                enabled: false, minutes: athkarAfterSalahMinutes,
+                location: location, method: method, madhab: madhab,
+                adhanEnabled: false, arabic: isArabicNotifications)
             return
+        }
+        // Disabling must never depend on authorization succeeding: with
+        // permission revoked in iOS Settings the guard below returns early,
+        // and a reminder switched off here would otherwise survive and fire
+        // the moment permission is granted again.
+        if !fastingReminders {
+            await FastingReminderScheduler().reschedule(
+                arabic: isArabicNotifications, enabled: false)
+        }
+        if !athkarAfterSalah {
+            await AthkarReminderScheduler().reschedule(
+                enabled: false, minutes: athkarAfterSalahMinutes,
+                location: location, method: method, madhab: madhab,
+                adhanEnabled: false, arabic: isArabicNotifications)
         }
         guard await scheduler.requestAuthorization() else {
             notificationsEnabled = false
             return
         }
+        // One `now` for both schedulers: each plans against the same 56-item
+        // budget, and a prayer passing between the two calls would otherwise
+        // shift one plan by a prayer and let the pair exceed it by one.
+        let now = Date()
+        // Both adhan and athkar plan from the same day loop with one shared
+        // budget (56 + fasting's 8 = iOS's 64), so pass the athkar offset
+        // to the adhan scheduler even though it only schedules adhans.
+        let athkarMinutes = athkarAfterSalah ? athkarAfterSalahMinutes : nil
         if notificationsEnabled {
             await scheduler.reschedule(
-                location: PrayerLocation.current(),
-                method: CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee,
-                madhab: MadhabChoice(rawValue: madhabRaw) ?? .shafi,
+                location: location, method: method, madhab: madhab,
                 sound: AdhanSound(rawValue: soundRaw) ?? .adhanMadinah,
                 arabic: isArabicNotifications,
-                preAlertMinutes: preAlertMinutes)
+                preAlertMinutes: preAlertMinutes,
+                athkarMinutes: athkarMinutes, now: now)
         }
+        await AthkarReminderScheduler().reschedule(
+            enabled: athkarAfterSalah, minutes: athkarAfterSalahMinutes,
+            location: location, method: method, madhab: madhab,
+            adhanEnabled: notificationsEnabled, preAlertMinutes: preAlertMinutes,
+            arabic: isArabicNotifications, now: now)
         await FastingReminderScheduler().reschedule(
             arabic: isArabicNotifications, enabled: fastingReminders)
     }
@@ -256,6 +318,9 @@ private struct TabLifecycle: ViewModifier {
                 }
                 CloudSync.start()
                 syncWidgets()
+                // Cold start from a notification tap: the route was stored
+                // before this view existed.
+                openPendingPage()
                 await reschedule()
             }
             .onChange(of: watched) {

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- After-salah athkar reminder + offline city picker. Arabic is the DEFAULT
+     locale; English lives in values-en/strings_features.xml. -->
+<resources>
+    <!-- After-salah athkar reminder -->
+    <string name="feat_channel_athkar">تذكير الأذكار</string>
+    <string name="feat_channel_athkar_desc">أذكار ما بعد الصلاة</string>
+    <string name="feat_athkar_after_salah">أذكار ما بعد الصلاة</string>
+    <string name="feat_athkar_after_salah_text">تقبّل الله صلاتك · اضغط لقراءة أذكار ما بعد صلاة %1$s</string>
+    <string name="feat_athkar_after_by">بعد الصلاة بـ</string>
+    <string name="feat_minutes_short">%1$s د</string>
+
+    <!-- Offline city picker -->
+    <string name="feat_choose_city">اختر مدينتك</string>
+    <string name="feat_nearby">قريب منك</string>
+    <string name="feat_popular">الأكثر اختيارًا</string>
+    <string name="feat_browse_by_country">تصفح حسب الدولة</string>
+    <string name="feat_countries">الدول</string>
+    <string name="feat_no_results">لا توجد نتائج</string>
+    <string name="feat_clear_search">مسح البحث</string>
+    <string name="feat_close">إغلاق</string>
+    <string name="feat_selected">محدد</string>
+    <string name="feat_change_city">تغيير المدينة</string>
+    <string name="feat_my_location">موقعي</string>
+</resources>

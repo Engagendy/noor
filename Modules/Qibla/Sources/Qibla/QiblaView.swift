@@ -9,6 +9,7 @@ import SwiftUI
 /// (iPad/Mac/simulator) the static bearing is shown.
 public struct QiblaView: View {
     @AppStorage("prayer.city") private var cityName = "Makkah"
+    @AppStorage("prayer.cityId") private var cityId = 0
     @AppStorage("prayer.useCustom") private var useCustomLocation = false
     @State private var headingProvider = HeadingProvider()
     @State private var pulse = false
@@ -17,12 +18,8 @@ public struct QiblaView: View {
     public init() {}
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
-    private var location: PrayerLocation {
-        useCustomLocation ? PrayerLocation.current() : CityPreset.named(cityName).location
-    }
-    private var locationLabel: String {
-        useCustomLocation ? location.label : CityPreset.named(cityName).displayName(arabicUI: isArabicUI)
-    }
+    private var location: PrayerLocation { PrayerLocation.current() }
+    private var locationLabel: String { location.displayName(arabicUI: isArabicUI) }
     private var bearing: Double {
         QiblaMath.bearing(fromLatitude: location.latitude, longitude: location.longitude)
     }

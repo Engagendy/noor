@@ -98,7 +98,8 @@ fun TodayScreen(
     }
 
     val prayerPrefs = remember { PrayerPrefs(context) }
-    val entries = remember(now.time / 60_000, prayerPrefs.cityName, prayerPrefs.useCustomLocation) {
+    val entries = remember(now.time / 60_000, prayerPrefs.cityName, prayerPrefs.cityId,
+                           prayerPrefs.useCustomLocation) {
         PrayerEngine.today(prayerPrefs, now)
     }
 

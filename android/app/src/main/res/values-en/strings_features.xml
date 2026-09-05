@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- After-salah athkar reminder -->
+    <string name="feat_channel_athkar">Athkar reminders</string>
+    <string name="feat_channel_athkar_desc">After-prayer athkar</string>
+    <string name="feat_athkar_after_salah">After-prayer athkar</string>
+    <string name="feat_athkar_after_salah_text">May Allah accept your prayer · Tap to read the athkar after %1$s</string>
+    <string name="feat_athkar_after_by">After prayer by</string>
+    <string name="feat_minutes_short">%1$s min</string>
+
+    <!-- Offline city picker -->
+    <string name="feat_choose_city">Choose your city</string>
+    <string name="feat_nearby">Nearby</string>
+    <string name="feat_popular">Popular</string>
+    <string name="feat_browse_by_country">Browse by country</string>
+    <string name="feat_countries">Countries</string>
+    <string name="feat_no_results">No results</string>
+    <string name="feat_clear_search">Clear search</string>
+    <string name="feat_close">Close</string>
+    <string name="feat_selected">Selected</string>
+    <string name="feat_change_city">Change city</string>
+    <string name="feat_my_location">My location</string>
+</resources>

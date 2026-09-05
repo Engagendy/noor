@@ -21,67 +21,62 @@ public struct AdhanNotificationScheduler: Sendable {
         }
     }
 
+    /// `athkarMinutes` is the after-salah reminder offset when that toggle is
+    /// on: the reminders are scheduled by `AthkarReminderScheduler`, but they
+    /// share the pending budget, so the planner must count them here too.
     public func reschedule(
         location: PrayerLocation,
         method: CalculationMethodChoice,
         madhab: MadhabChoice,
         sound: AdhanSound,
         arabic: Bool = false,
-        preAlertMinutes: Int = 0
+        preAlertMinutes: Int = 0,
+        athkarMinutes: Int? = nil,
+        now: Date = .now
     ) async {
         let center = UNUserNotificationCenter.current()
         await cancelAll()
 
-        // Pre-alerts double the request count: shrink the day window and
-        // halve the cap so adhans + pre-alerts + fasting reminders all fit
-        // inside iOS's 64-pending limit.
-        let days = preAlertMinutes > 0 ? 5 : AdhanNotificationPlanner.defaultDays
-        let limit = preAlertMinutes > 0
-            ? AdhanNotificationPlanner.defaultLimit / 2
-            : AdhanNotificationPlanner.defaultLimit
-        for planned in AdhanNotificationPlanner.plan(
+        // One shared budget: pre-alerts, adhans, and athkar reminders are
+        // planned together so the sum (plus fasting's 8) stays under 64.
+        let planned = AdhanNotificationPlanner.planAll(
             location: location, method: method, madhab: madhab,
-            enabledPrayers: PrayerNotificationPrefs.enabledPrayers(),
-            days: days, limit: limit, arabic: arabic) {
-            if preAlertMinutes > 0 {
-                let preFire = planned.fireDate.addingTimeInterval(TimeInterval(-preAlertMinutes * 60))
-                if preFire > Date() {
-                    let pre = UNMutableNotificationContent()
-                    pre.title = arabic
-                        ? "بقي \(preAlertMinutes) دقيقة على صلاة \(planned.prayerName)"
-                        : "\(planned.prayerName) in \(preAlertMinutes) minutes"
-                    pre.body = "\(planned.prayerName) · \(planned.timeString)"
-                    pre.sound = .default
-                    let comps = Calendar.current.dateComponents(
-                        [.year, .month, .day, .hour, .minute], from: preFire)
-                    try? await center.add(UNNotificationRequest(
-                        identifier: "pre-\(planned.id)",
-                        content: pre,
-                        trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)))
-                }
-            }
+            adhanPrayers: PrayerNotificationPrefs.enabledPrayers(),
+            preAlertMinutes: preAlertMinutes, athkarMinutes: athkarMinutes, from: now, arabic: arabic)
+        for item in planned {
             let content = UNMutableNotificationContent()
-            // Calm microcopy per design §7 — no exclamation marks.
-            content.title = arabic
-                ? "حان وقت صلاة \(planned.prayerName)"
-                : String(localized: "It's time for \(planned.prayerName)")
-            content.body = "\(planned.prayerName) · \(planned.timeString)"
-            if let file = sound.fileName {
-                // Bundled adhan clips, all ≤30s (see LICENSES.md).
-                content.sound = UNNotificationSound(named: UNNotificationSoundName(file))
-            } else {
-                content.sound = sound == .silent ? nil : .default
+            switch item.kind {
+            case .preAlert:
+                content.title = arabic
+                    ? "بقي \(preAlertMinutes) دقيقة على صلاة \(item.prayerName)"
+                    : "\(item.prayerName) in \(preAlertMinutes) minutes"
+                content.body = "\(item.prayerName) · \(item.timeString)"
+                content.sound = .default
+            case .adhan:
+                // Calm microcopy per design §7 — no exclamation marks.
+                content.title = arabic
+                    ? "حان وقت صلاة \(item.prayerName)"
+                    : String(localized: "It's time for \(item.prayerName)")
+                content.body = "\(item.prayerName) · \(item.timeString)"
+                if let file = sound.fileName {
+                    // Bundled adhan clips, all ≤30s (see LICENSES.md).
+                    content.sound = UNNotificationSound(named: UNNotificationSoundName(file))
+                } else {
+                    content.sound = sound == .silent ? nil : .default
+                }
+            case .athkar:
+                continue
             }
             let components = Calendar.current.dateComponents(
-                [.year, .month, .day, .hour, .minute], from: planned.fireDate)
+                [.year, .month, .day, .hour, .minute], from: item.fireDate)
             let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
             try? await center.add(UNNotificationRequest(
-                identifier: planned.id, content: content, trigger: trigger))
+                identifier: item.id, content: content, trigger: trigger))
         }
     }
 
     /// Removes only adhan and pre-adhan requests so other schedulers'
-    /// pending notifications (e.g. `fasting-*`) survive.
+    /// pending notifications (e.g. `fasting-*`, `athkar-*`) survive.
     public func cancelAll() async {
         let center = UNUserNotificationCenter.current()
         let ids = await center.pendingNotificationRequests()

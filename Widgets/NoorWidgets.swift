@@ -70,8 +70,7 @@ enum WidgetSettings {
     }
 
     static func cityLabel(_ location: PrayerLocation, arabic: Bool) -> String {
-        guard !location.isCustom else { return location.label }
-        return CityPreset.named(location.label).displayName(arabicUI: arabic)
+        location.displayName(arabicUI: arabic)
     }
 }
 

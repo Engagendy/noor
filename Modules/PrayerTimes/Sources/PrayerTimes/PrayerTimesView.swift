@@ -8,6 +8,10 @@ import SwiftUI
 /// calculation-settings row. Updates minute-level, calmly.
 public struct PrayerTimesView: View {
     @AppStorage("prayer.city") private var cityName = "Makkah"
+    // Observed so the timeline refreshes when the offline picker writes
+    // the cached city fields (PrayerLocation.current() reads them).
+    @AppStorage("prayer.cityId") private var cityId = 0
+    @AppStorage("prayer.customLabel") private var customLabel = ""
     @AppStorage("prayer.useCustom") private var useCustomLocation = false
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
     @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
@@ -79,9 +83,7 @@ public struct PrayerTimesView: View {
 
     public init() {}
 
-    private var location: PrayerLocation {
-        useCustomLocation ? PrayerLocation.current() : CityPreset.named(cityName).location
-    }
+    private var location: PrayerLocation { PrayerLocation.current() }
     private var method: CalculationMethodChoice {
         CalculationMethodChoice(rawValue: methodRaw) ?? .moonsightingCommittee
     }
@@ -138,9 +140,9 @@ public struct PrayerTimesView: View {
                 .font(.system(size: 12))
             Group {
                 if useCustomLocation {
-                    Text("Near \(CityPreset.named(location.label).displayName(arabicUI: isArabicUI))")
+                    Text("Near \(location.displayName(arabicUI: isArabicUI))")
                 } else {
-                    Text(verbatim: "\(CityPreset.named(cityName).displayName(arabicUI: isArabicUI))")
+                    Text(verbatim: location.displayName(arabicUI: isArabicUI))
                 }
             }
             .font(NoorFont.caption)
@@ -423,13 +425,10 @@ public struct PrayerTimesView: View {
                     Task {
                         defer { fetchingLocation = false }
                         if let coordinate = await locationFetcher.fetch() {
-                            let nearest = CityPreset.nearest(
-                                latitude: coordinate.latitude, longitude: coordinate.longitude)
+                            // Named offline from the bundled city database.
                             PrayerLocation.saveCustom(
                                 latitude: coordinate.latitude,
-                                longitude: coordinate.longitude,
-                                label: nearest.name)
-                            cityName = nearest.name
+                                longitude: coordinate.longitude)
                             useCustomLocation = true
                         } else {
                             locationFailed = true
@@ -473,12 +472,13 @@ public struct PrayerTimesView: View {
                 }
 
                 NavigationLink {
-                    CityPickerView(cityName: $cityName)
+                    CityPickerView()
                 } label: {
                     HStack {
                         Text("City")
                         Spacer()
-                        Text(verbatim: CityPreset.named(cityName).name)
+                        Text(verbatim: PrayerLocation.current(defaults: .standard)
+                            .displayName(arabicUI: isArabicUI))
                             .foregroundStyle(.secondary)
                     }
                 }

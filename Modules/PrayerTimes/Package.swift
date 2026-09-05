@@ -9,14 +9,16 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/batoulapps/adhan-swift.git", from: "1.4.0"),
-        .package(path: "../../Core/DesignSystem")
+        .package(path: "../../Core/DesignSystem"),
+        .package(path: "../../Core/ContentDB")
     ],
     targets: [
         .target(
             name: "PrayerTimes",
             dependencies: [
                 .product(name: "Adhan", package: "adhan-swift"),
-                "DesignSystem"
+                "DesignSystem",
+                "ContentDB"
             ]
         ),
         .testTarget(
