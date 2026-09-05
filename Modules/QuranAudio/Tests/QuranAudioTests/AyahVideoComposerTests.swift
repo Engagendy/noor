@@ -23,7 +23,7 @@ final class AyahVideoComposerTests: XCTestCase {
         let size = try await video[0].load(.naturalSize)
         XCTAssertEqual(size, CGSize(width: 1080, height: 1920))
         let fps = try await video[0].load(.nominalFrameRate)
-        XCTAssertEqual(fps, 15, accuracy: 0.5)
+        XCTAssertEqual(fps, Float(AyahVideoComposer.framesPerSecond), accuracy: 0.5)
         let duration = try await asset.load(.duration).seconds
         XCTAssertEqual(duration, 2.5, accuracy: 0.15)
         let playable = try await asset.load(.isPlayable)
