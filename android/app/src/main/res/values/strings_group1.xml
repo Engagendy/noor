@@ -142,6 +142,8 @@
     <string name="g1_adhan_madinah">أذان الحرم النبوي</string>
     <string name="g1_adhan_melodic">أذان مجوّد</string>
     <string name="g1_adhan_azeez">أذان (عاقب عزيز)</string>
+    <string name="g1_adhan_makkah">أذان الحرم المكي</string>
+    <string name="g1_adhan_makkah_maghrib">أذان الحرم المكي (المغرب)</string>
     <string name="g1_adhan_bell">تنبيه</string>
     <string name="g1_adhan_silent">صامت</string>
 

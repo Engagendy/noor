@@ -122,6 +122,18 @@ Attributions are displayed in Settings → About.
 - **License:** CC0 (public domain)
 - **Attribution:** none required (credited as courtesy).
 
+### Adhan — Masjid al-Haram, Makkah, 21 Jan 2013 (bundled, trimmed to 28s)
+- **Source:** Wikimedia Commons, "Adhan, Great Mosque of Mecca - Jan 21, 2013.webm"
+  (audio extracted; licence reviewer-verified on Commons, 2018)
+- **License:** CC BY 3.0
+- **Attribution:** "Adhan at Masjid al-Haram, Makkah, by Seyfula Islam (Wikimedia Commons, CC BY 3.0)."
+
+### Adhan — Masjid al-Haram, Makkah, Maghrib 25 Feb 2012 (bundled, trimmed to 28s)
+- **Source:** Wikimedia Commons, "Maghrib Adhan at the Masjid al Haram, Mecca - 25 Feb, 2012.webm"
+  (audio extracted; licence reviewer-verified on Commons, 2020)
+- **License:** CC BY 3.0
+- **Attribution:** "Maghrib adhan at Masjid al-Haram, Makkah, by 3omar Faruq (Wikimedia Commons, CC BY 3.0)."
+
 ### Hadith — An-Nawawi's Forty + Forty Hadith Qudsi (bundled)
 - **Source:** fawazahmed0/hadith-api (github.com/fawazahmed0/hadith-api), editions ara/eng-nawawi and ara/eng-qudsi
 - **License:** Unlicense (public domain dataset); the classical texts themselves are public domain

@@ -138,6 +138,8 @@
     <string name="g1_adhan_madinah">Adhan (Madinah)</string>
     <string name="g1_adhan_melodic">Adhan (melodic)</string>
     <string name="g1_adhan_azeez">Adhan (Azeez)</string>
+    <string name="g1_adhan_makkah">Adhan (Makkah)</string>
+    <string name="g1_adhan_makkah_maghrib">Adhan (Makkah, Maghrib)</string>
     <string name="g1_adhan_bell">Bell</string>
     <string name="g1_adhan_silent">Silent</string>
 

@@ -124,18 +124,35 @@
       }
     },
     "Adhan (Makkah)": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adhan (Makkah)"
+          }
+        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "أذان الحرم المكي"
           }
-        },
+        }
+      }
+    },
+    "Adhan (Makkah, Maghrib)": {
+      "extractionState": "manual",
+      "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adhan (Makkah)"
+            "value": "Adhan (Makkah, Maghrib)"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أذان الحرم المكي (المغرب)"
           }
         }
       }

@@ -145,6 +145,8 @@ enum class AdhanSound(val nameRes: Int, val rawRes: Int?) {
     MADINAH(R.string.g1_adhan_madinah, R.raw.adhan_madinah),
     MELODIC(R.string.g1_adhan_melodic, R.raw.adhan_melodic),
     AZEEZ(R.string.g1_adhan_azeez, R.raw.adhan_azeez),
+    MAKKAH(R.string.g1_adhan_makkah, R.raw.adhan_makkah),
+    MAKKAH_MAGHRIB(R.string.g1_adhan_makkah_maghrib, R.raw.adhan_makkah_maghrib),
     BELL(R.string.g1_adhan_bell, null),
     SILENT(R.string.g1_adhan_silent, null);
 

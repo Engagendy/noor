@@ -27,3 +27,4 @@ Also:
 • The daily hadith card now opens that hadith instead of the whole collection.
 • Corrected a duplicated sajdah sign in the reader.
 • Many Arabic interface strings that were showing in English are now translated.
+• Two new adhan recordings from Masjid al-Haram in Makkah.
