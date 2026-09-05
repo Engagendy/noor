@@ -19,7 +19,6 @@ struct HadithCollectionsView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
-        .environment(\.layoutDirection, .rightToLeft)
         .navigationTitle(Text("Hadith library"))
     }
 
@@ -124,7 +123,6 @@ struct HadithBooksView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
-        .environment(\.layoutDirection, .rightToLeft)
         .searchable(text: $searchText, prompt: Text(verbatim: isArabicUI ? "ابحث في الكتب" : "Search books"))
         .navigationTitle(Text(verbatim: isArabicUI ? collection.arabicName : collection.englishName))
         #if os(iOS)
@@ -176,6 +174,8 @@ struct HadithBookView: View {
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(3)
                         .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: isArabicUI ? .leading : .trailing)
+                        .environment(\.layoutDirection, .rightToLeft)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.vertical, 4)
@@ -187,7 +187,6 @@ struct HadithBookView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
-        .environment(\.layoutDirection, .rightToLeft)
         .searchable(text: $searchText, prompt: Text(verbatim: isArabicUI ? "ابحث في الأحاديث" : "Search hadiths"))
         .navigationTitle(Text(verbatim: isArabicUI ? book.arabicTitle : book.englishTitle))
         #if os(iOS)

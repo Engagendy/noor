@@ -30,7 +30,11 @@ import androidx.compose.ui.unit.sp
 import org.json.JSONArray
 
 data class Dhikr(val text: String, val count: Int)
-data class DhikrCategory(val title: String, val items: List<Dhikr>)
+data class DhikrCategory(val title: String, val titleEn: String?, val items: List<Dhikr>) {
+    /// Arabic title is the data key (deep links match on it); English UI shows
+    /// the translated chapter name, falling back to Arabic if a row lacks one.
+    @Composable fun displayTitle(): String = if (isArabicUi()) title else (titleEn ?: title)
+}
 
 object AthkarStore {
     fun load(context: Context): List<DhikrCategory> {
@@ -46,7 +50,7 @@ object AthkarStore {
                         add(Dhikr(item.getString("text"), item.optInt("count", 1)))
                     }
                 }
-                add(DhikrCategory(obj.getString("category"), items))
+                add(DhikrCategory(obj.getString("category"), obj.optString("category_en", "").ifBlank { null }, items))
             }
         }
     }
@@ -140,7 +144,7 @@ fun AthkarScreen(
                     .clickable { open = category }
                     .padding(horizontal = 20.dp, vertical = 14.dp)
             ) {
-                Text(category.title, fontSize = 16.sp, color = NoorColor.inkPrimary)
+                Text(category.displayTitle(), fontSize = 16.sp, color = NoorColor.inkPrimary)
                 Text(category.items.size.localizedDigits(), fontSize = 13.sp,
                      color = NoorColor.inkSecondary)
             }
@@ -158,7 +162,7 @@ fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modif
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
         ) {
-            Text(category.title, fontSize = 18.sp, fontWeight = FontWeight.Bold,
+            Text(category.displayTitle(), fontSize = 18.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary)
             Text(stringResource(R.string.g2_back), color = NoorColor.accentPrimary, fontWeight = FontWeight.SemiBold,
                  modifier = Modifier.clickable(onClick = onBack).padding(8.dp))

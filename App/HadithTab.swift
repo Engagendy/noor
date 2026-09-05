@@ -75,7 +75,6 @@ struct HadithTab: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
-        .environment(\.layoutDirection, .rightToLeft)
         .navigationTitle(Text("Hadith"))
         .searchable(text: $searchText,
                     prompt: Text(verbatim: isArabicUI ? "ابحث في كل الأحاديث" : "Search all hadiths"))
@@ -122,6 +121,7 @@ struct HadithTab: View {
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .environment(\.layoutDirection, .rightToLeft)
                         Text(verbatim: isArabicUI
                              ? "\(hit.collection.arabicName) · \(hit.bookTitle) · \(hit.hadith.number)"
                              : "\(hit.collection.englishName) · \(hit.bookTitle) · \(hit.hadith.number)")
@@ -245,6 +245,7 @@ struct FortyList: View {
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                            .environment(\.layoutDirection, .rightToLeft)
                 }
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
@@ -255,7 +256,6 @@ struct FortyList: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
-        .environment(\.layoutDirection, .rightToLeft)
         .navigationTitle(Text(verbatim: title))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)

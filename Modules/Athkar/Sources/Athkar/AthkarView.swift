@@ -14,6 +14,8 @@ public struct AthkarView: View {
     /// consumed. Kept as a binding so a request made while this tab is
     /// off-screen is honored when it appears.
     @Binding private var openCategory: String?
+    @Environment(\.locale) private var locale
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
     public init(openCategory: Binding<String?> = .constant(nil)) {
         _openCategory = openCategory
@@ -32,6 +34,7 @@ public struct AthkarView: View {
         guard !query.isEmpty else { return categories }
         return categories.filter {
             $0.category.contains(query)
+                || ($0.categoryEn?.localizedCaseInsensitiveContains(query) ?? false)
                 || $0.items.contains { $0.text.contains(query) }
         }
     }
@@ -124,7 +127,7 @@ public struct AthkarView: View {
                     DhikrListView(category: category)
                 } label: {
                     HStack {
-                        Text(verbatim: category.category)
+                        Text(verbatim: category.displayTitle(arabicUI: isArabicUI))
                             .font(.system(size: 16))
                             .foregroundStyle(NoorColor.inkPrimary)
                         Spacer()
@@ -138,8 +141,8 @@ public struct AthkarView: View {
             }
         }
         .listStyle(.plain)
-        // Athkar content is Arabic — always right-to-left, any UI language.
-        .environment(\.layoutDirection, .rightToLeft)
+        // The chapter list follows the interface direction; only the Arabic
+        // dhikr pages themselves stay right-to-left.
         .searchable(text: $searchText, prompt: Text("Search athkar"))
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
