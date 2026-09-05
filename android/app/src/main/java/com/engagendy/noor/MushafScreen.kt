@@ -707,6 +707,14 @@ private fun MadaniPageBody(
                             val slack = (target - total * scale).coerceAtLeast(0f)
                             val gap = if (justify && words.size > 1)
                                 slack / (words.size - 1) else 0f
+                            // Words arrive in reading order, so the first must
+                            // sit at the RIGHT edge whatever the interface
+                            // language: under an English (LTR) UI the Row would
+                            // otherwise lay them out backwards.
+                            androidx.compose.runtime.CompositionLocalProvider(
+                                androidx.compose.ui.platform.LocalLayoutDirection provides
+                                    androidx.compose.ui.unit.LayoutDirection.Rtl
+                            ) {
                             androidx.compose.foundation.layout.Row(
                                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically,
@@ -725,6 +733,7 @@ private fun MadaniPageBody(
                                         color = NoorColor.inkPrimary
                                     )
                                 }
+                            }
                             }
                         }
                     }

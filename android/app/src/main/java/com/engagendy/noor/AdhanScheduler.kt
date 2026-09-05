@@ -58,7 +58,9 @@ object AdhanScheduler {
     /// one deleted in ensureChannels) for existing installs to pick it up.
     /// v2: name-based resource URI (v1 baked in the numeric R.raw ID, which
     /// shifts between builds and pointed old channels at the wrong resource).
-    fun channelId(sound: AdhanSound): String = "adhan.${sound.name}.v2"
+    /// v3: the adhan now plays on the ALARM stream. Channels are immutable once
+    /// created, so a sound/attribute change needs a new id (v2 is deleted below).
+    fun channelId(sound: AdhanSound): String = "adhan.${sound.name}.v3"
 
     /// Whether adhans can fire on the minute. False only on Android 12/12L
     /// when the user revoked "Alarms & reminders" (API 33+ holds
@@ -79,7 +81,10 @@ object AdhanScheduler {
         // Legacy channels from earlier releases — superseded by per-sound
         // channels, then by v2 IDs whose sound URI survives resource renumbering.
         manager.deleteNotificationChannel("adhan")
-        for (sound in AdhanSound.entries) manager.deleteNotificationChannel("adhan.${sound.name}")
+        for (sound in AdhanSound.entries) {
+            manager.deleteNotificationChannel("adhan.${sound.name}")
+            manager.deleteNotificationChannel("adhan.${sound.name}.v2")
+        }
         for (sound in AdhanSound.entries) {
             val id = channelId(sound)
             if (manager.getNotificationChannel(id) != null) continue
@@ -97,8 +102,14 @@ object AdhanScheduler {
                     sound.rawRes != null -> setSound(
                         Uri.parse("android.resource://${context.packageName}/raw/" +
                             context.resources.getResourceEntryName(sound.rawRes)),
+                        // ALARM, not NOTIFICATION: a notification-stream sound is
+                        // silenced whenever the ringer is on mute/vibrate, which
+                        // is how most phones sit all day — so the adhan never
+                        // played for them. The alarm stream is exempt from the
+                        // ringer (still subject to Do Not Disturb), exactly like
+                        // a clock alarm, and follows the alarm volume.
                         AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                            .setUsage(AudioAttributes.USAGE_ALARM)
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                             .build())
                     sound == AdhanSound.SILENT -> setSound(null, null)

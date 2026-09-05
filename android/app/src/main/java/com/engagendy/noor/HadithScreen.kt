@@ -208,9 +208,10 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                         }
                     }
                     when (state) {
-                        // Disclosure points LEFT in the forced-RTL app.
+                        // Disclosure points in the forward direction: LEFT in
+                        // Arabic, RIGHT in English.
                         PackState.READY -> Icon(
-                            painterResource(R.drawable.ic_chevron_left),
+                            painterResource(NoorIcons.chevronForward()),
                             contentDescription = null,
                             tint = NoorColor.accentPrimary,
                             modifier = Modifier.size(16.dp))
@@ -247,8 +248,8 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                              color = NoorColor.inkSecondary,
                              modifier = Modifier.padding(top = 2.dp))
                     }
-                    // Disclosure points LEFT in the forced-RTL app.
-                    Icon(painterResource(R.drawable.ic_chevron_left),
+                    // Disclosure points forward: LEFT in Arabic, RIGHT in English.
+                    Icon(painterResource(NoorIcons.chevronForward()),
                          contentDescription = null,
                          tint = NoorColor.accentPrimary,
                          modifier = Modifier.size(16.dp))

@@ -484,7 +484,13 @@ object AdhanPreview {
     fun play(context: Context, sound: AdhanSound) {
         stop()
         val res = sound.rawRes ?: return
-        player = MediaPlayer.create(context, res)?.apply { start() }
+        // Same stream as the real adhan (ALARM), so the preview is audible in
+        // silent mode and previews the volume the adhan will actually use.
+        val attrs = android.media.AudioAttributes.Builder()
+            .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
+        player = MediaPlayer.create(context, res, attrs, 0)?.apply { start() }
     }
 
     fun stop() {

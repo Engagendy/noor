@@ -784,9 +784,9 @@ fun ReaderScreen(
                 modifier = Modifier.size(38.dp).clip(CircleShape).clickable(onClick = onBack)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    // Explicit right-pointing drawable (not auto-mirrored):
-                    // BACK points RIGHT in RTL (iOS mirrored chevron.backward).
-                    Icon(painterResource(R.drawable.ic_chevron_right),
+                    // Direction-aware: back points RIGHT in Arabic, LEFT in
+                    // English (the fixed drawable was reversed under English).
+                    Icon(painterResource(NoorIcons.chevronBackward()),
                          contentDescription = stringResource(R.string.g2_back),
                          tint = NoorColor.accentPrimary,
                          modifier = Modifier.size(18.dp))
