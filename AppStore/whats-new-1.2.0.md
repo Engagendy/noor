@@ -1,4 +1,4 @@
-# What's New — 1.1.0 (build 10)
+# What's New — 1.2.0 (build 12)
 
 Covers everything since build 9, the build currently on the App Store.
 
