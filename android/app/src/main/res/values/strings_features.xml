@@ -24,4 +24,11 @@
     <string name="feat_my_location">موقعي</string>
     <string name="feat_share_app">شارك التطبيق</string>
     <string name="feat_share_app_text">نور: القرآن ومواقيت الصلاة والأذكار، مجانًا للأبد بلا إعلانات ولا تتبّع.\nApp Store: https://apps.apple.com/ae/app/noor-al-muslim/id6807128479\nGoogle Play: https://play.google.com/store/apps/details?id=com.engagendy.noor</string>
+    <!-- Share as video (ayah card + recitation) -->
+    <string name="feat_share_video">مشاركة كفيديو</string>
+    <string name="feat_share_video_caption">بصوت %1$s</string>
+    <string name="feat_video_downloading">جارٍ تنزيل التلاوة…</string>
+    <string name="feat_video_composing">جارٍ إنشاء الفيديو…</string>
+    <string name="feat_video_offline">اتصل بالإنترنت مرة واحدة لتنزيل تلاوة هذه الآية</string>
+    <string name="feat_video_failed">تعذّر إنشاء الفيديو</string>
 </resources>

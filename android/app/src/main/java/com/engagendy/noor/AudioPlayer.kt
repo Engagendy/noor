@@ -269,6 +269,15 @@ object NoorPlayer {
         return false
     }
 
+    /// The cached recitation file for one ayah of the current reciter,
+    /// downloading it first if needed (main host, then mirror). Null when
+    /// it is not cached and cannot be fetched (offline). Runs on IO.
+    suspend fun ensureAyahFile(surah: Int, ayah: Int): java.io.File? =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val voice = reciter
+            if (download(voice, surah, ayah)) cacheFile(voice, surah, ayah) else null
+        }
+
     /// Warm the next few ayat while the current one plays. `includeCurrent`
     /// also saves the ayah being streamed right now: without it the ayah the
     /// user pressed play on is the one ayah never cached, so replaying it

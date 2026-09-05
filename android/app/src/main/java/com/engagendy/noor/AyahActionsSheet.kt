@@ -29,8 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /// Ayah tap target — port of the iOS AyahActionsSheet: the ayah framed in
-/// gold, then big (56dp) action rows: play from here, tafsir, share, copy,
-/// bookmark. All side effects run in the row click handlers.
+/// gold, then big (56dp) action rows: play from here, tafsir, share, share
+/// as video (captioned with the current reciter), copy, bookmark. All side effects run in the row click handlers.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AyahActionsSheet(
@@ -39,6 +39,7 @@ fun AyahActionsSheet(
     onPlay: () -> Unit,
     onTafsir: () -> Unit,
     onShare: () -> Unit,
+    onShareVideo: () -> Unit,
     onCopy: () -> Unit,
     onToggleBookmark: () -> Unit,
     onDismiss: () -> Unit,
@@ -70,6 +71,11 @@ fun AyahActionsSheet(
             }
             ActionRow(stringResource(R.string.g2_tafsir), icon = R.drawable.ic_book) { onDismiss(); onTafsir() }
             ActionRow(stringResource(R.string.g2_share), icon = R.drawable.ic_share) { onDismiss(); onShare() }
+            ActionRow(
+                stringResource(R.string.feat_share_video),
+                icon = R.drawable.ic_share,
+                caption = stringResource(R.string.feat_share_video_caption, NoorPlayer.reciter.localizedName),
+            ) { onDismiss(); onShareVideo() }
             ActionRow(stringResource(R.string.g2_copy), glyph = "⧉") { onDismiss(); onCopy() }
             ActionRow(
                 stringResource(
@@ -88,6 +94,7 @@ private fun ActionRow(
     glyph: String? = null,
     prominent: Boolean = false,
     gold: Boolean = false,
+    caption: String? = null,
     onClick: () -> Unit,
 ) {
     val tint = when {
@@ -117,12 +124,24 @@ private fun ActionRow(
                 Text(glyph ?: "", fontSize = 19.sp, color = tint)
             }
         }
-        Text(
-            title,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = tint,
-            modifier = Modifier.padding(start = 14.dp)
-        )
+        Column(modifier = Modifier.padding(start = 14.dp)) {
+            Text(
+                title,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = tint,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (caption != null) {
+                Text(
+                    caption,
+                    fontSize = 12.sp,
+                    color = NoorColor.inkSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
 }

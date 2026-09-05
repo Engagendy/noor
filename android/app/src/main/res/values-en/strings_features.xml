@@ -22,4 +22,11 @@
     <string name="feat_my_location">My location</string>
     <string name="feat_share_app">Share Noor</string>
     <string name="feat_share_app_text">Noor: Quran, prayer times and athkar, free forever with no ads and no tracking.\nApp Store: https://apps.apple.com/ae/app/noor-al-muslim/id6807128479\nGoogle Play: https://play.google.com/store/apps/details?id=com.engagendy.noor</string>
+    <!-- Share as video (ayah card + recitation) -->
+    <string name="feat_share_video">Share as video</string>
+    <string name="feat_share_video_caption">Recited by %1$s</string>
+    <string name="feat_video_downloading">Downloading recitation…</string>
+    <string name="feat_video_composing">Composing video…</string>
+    <string name="feat_video_offline">Connect once to download this ayah\'s recitation</string>
+    <string name="feat_video_failed">Couldn\'t create the video</string>
 </resources>

@@ -570,6 +570,8 @@ fun ReaderScreen(
     val verses = remember(surah.id) { db.verses(surah.id) }
     val prefs = remember { KhatmahPlan.prefs(context) }
     val scope = rememberCoroutineScope()
+    // Video share state lives here, above the self-dismissing actions sheet.
+    val videoShare = rememberAyahVideoShare(scope)
     var showOptions by remember { mutableStateOf(false) }
     var showGoToPage by remember { mutableStateOf(false) }
     // Options panel is a plain overlay: back closes it before the caller's
@@ -739,10 +741,12 @@ fun ReaderScreen(
             onPlay = { startPlayback(actionVerse.ayah) },
             onTafsir = { tafsirAyah = actionVerse.ayah },
             onShare = { shareAyah(actionVerse) },
+            onShareVideo = { videoShare.start(actionVerse, surah) },
             onCopy = { copyAyah(actionVerse) },
             onToggleBookmark = { onToggleBookmark(actionVerse.ayah) },
             onDismiss = { actionAyah = 0 })
     }
+    AyahVideoProgressDialog(videoShare)
 
     if (tafsirAyah > 0) {
         val verse = verses.firstOrNull { it.ayah == tafsirAyah }

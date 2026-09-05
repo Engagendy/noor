@@ -23,6 +23,7 @@ android {
         targetSdk = 36
         versionCode = 9
         versionName = "1.0.3"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -89,4 +90,7 @@ dependencies {
     // Prayer time calculations — same engine family as the iOS app.
     implementation("com.batoulapps.adhan:adhan:1.2.1")
     debugImplementation("androidx.compose.ui:ui-tooling")
+    // On-device checks (media codecs have no JVM equivalent).
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
 }

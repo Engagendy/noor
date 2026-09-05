@@ -73,6 +73,8 @@ fun MushafScreen(
 ) {
     val context = LocalContext.current
     val scope = androidx.compose.runtime.rememberCoroutineScope()
+    // "Share as video" state — screen level, so it outlives the actions sheet.
+    val videoShare = rememberAyahVideoShare(scope)
     val pager = rememberPagerState(
         initialPage = (startPage - 1).coerceIn(0, PageLayoutDb.PAGE_COUNT - 1)
     ) { PageLayoutDb.PAGE_COUNT }
@@ -225,8 +227,10 @@ fun MushafScreen(
             // The sheet dismisses itself before firing the action, so tafsir
             // state must outlive it — it lives here on the screen.
             onOpenTafsir = { tafsirRef = ref },
+            onShareVideo = { verse, surah -> videoShare.start(verse, surah) },
             onDismiss = { actionRef = null })
     }
+    AyahVideoProgressDialog(videoShare)
     tafsirRef?.let { ref -> MushafTafsir(ref, onDismiss = { tafsirRef = null }) }
     // Go-to-page (iOS GoToPageSheet): opened from the juz/page line in the
     // top bar; animates the pager like the iOS withAnimation currentPage set.
@@ -250,6 +254,7 @@ private val ayahActionScope = kotlinx.coroutines.CoroutineScope(
 private fun MushafAyahActions(
     ref: AyahRef,
     onOpenTafsir: () -> Unit,
+    onShareVideo: (Verse, Surah) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -295,6 +300,7 @@ private fun MushafAyahActions(
                 ShareCard.share(context, bitmap)
             }
         },
+        onShareVideo = { onShareVideo(verse, surah) },
         onCopy = {
             val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
                 as android.content.ClipboardManager

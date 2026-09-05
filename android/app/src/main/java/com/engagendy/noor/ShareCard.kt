@@ -219,6 +219,23 @@ object ShareCard {
         withContext(Dispatchers.Main) { context.startActivity(chooser) }
     }
 
+    /// Shares an MP4 already written under cacheDir/shared (by
+    /// AyahVideoComposer) through the same FileProvider, as video/mp4.
+    suspend fun shareVideo(context: Context, file: File, text: String? = null) {
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "video/mp4"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            if (!text.isNullOrBlank()) putExtra(Intent.EXTRA_TEXT, text)
+            clipData = ClipData.newRawUri("noor", uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        val chooser = Intent.createChooser(intent, null).apply {
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        withContext(Dispatchers.Main) { context.startActivity(chooser) }
+    }
+
     /// Encodes the card and hands back its content URI. Blocking — IO only.
     private fun writeShareFile(context: Context, bitmap: Bitmap): Uri {
         val dir = File(context.cacheDir, "shared").apply { mkdirs() }
