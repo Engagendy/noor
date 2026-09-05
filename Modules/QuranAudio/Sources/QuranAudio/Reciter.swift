@@ -1,5 +1,12 @@
 import Foundation
 
+/// Transmission (riwayah) of the recitation. The mushaf text always follows
+/// Hafs; Warsh readers are audio-only (files are Hafs-numbered on EveryAyah).
+public enum Riwayah: String, CaseIterable, Codable {
+    case hafs
+    case warsh
+}
+
 /// Ayah-by-ayah recitations from EveryAyah.com (see LICENSES.md).
 public enum Reciter: String, CaseIterable, Identifiable, Codable {
     case alafasy
@@ -35,7 +42,22 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
     case abdulKareem
 
     case husaryMuallim, mustafaIsmail, khalidQahtani, sahlYassin, suesy, neana, alaqimy, tunaiji, akhdar, alili
+    // Warsh 'an Nafi' (verified 2026-09-02; Hafs-numbered files).
+    case dosaryWarsh
+    case jazaeryWarsh
     public var id: String { rawValue }
+
+    public var riwayah: Riwayah {
+        switch self {
+        case .dosaryWarsh, .jazaeryWarsh: .warsh
+        default: .hafs
+        }
+    }
+
+    /// Reciters of one riwayah, in picker order.
+    public static func all(riwayah: Riwayah) -> [Reciter] {
+        allCases.filter { $0.riwayah == riwayah }
+    }
 
     public var englishName: String {
         switch self {
@@ -80,6 +102,8 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .tunaiji: "Khalifa Al-Tunaiji"
         case .akhdar: "Ibrahim Al-Akhdar"
         case .alili: "Aziz Alili"
+        case .dosaryWarsh: "Ibrahim Al-Dosary (Warsh)"
+        case .jazaeryWarsh: "Yassin Al-Jazaery (Warsh)"
         }
     }
 
@@ -126,6 +150,8 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .tunaiji: "خليفة الطنيجي"
         case .akhdar: "إبراهيم الأخضر"
         case .alili: "عزيز عليلي"
+        case .dosaryWarsh: "إبراهيم الدوسري (ورش)"
+        case .jazaeryWarsh: "ياسين الجزائري (ورش)"
         }
     }
 
@@ -152,6 +178,8 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .tunaiji: "🇦🇪"
         case .akhdar: "🇸🇦"
         case .alili: "🇧🇦"
+        case .dosaryWarsh: "🇸🇦"
+        case .jazaeryWarsh: "🇩🇿"
         }
     }
 
@@ -226,8 +254,14 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .tunaiji: "khalefa_al_tunaiji_64kbps"
         case .akhdar: "Ibrahim_Akhdar_32kbps"
         case .alili: "aziz_alili_128kbps"
+        // Nested folders: URLs keep the "/", on-disk paths use rawValue.
+        case .dosaryWarsh: "warsh/warsh_ibrahim_aldosary_128kbps"
+        case .jazaeryWarsh: "warsh/warsh_yassin_al_jazaery_64kbps"
         }
     }
+
+    /// On-disk cache sub-folder (never contains a path separator).
+    var cacheFolder: String { rawValue }
 
     /// Remote URL for one ayah, e.g. .../Alafasy_128kbps/001001.mp3
     public func url(surah: Int, ayah: Int) -> URL {
@@ -237,7 +271,13 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
     /// Candidate sources in order — EveryAyah, then the quranicaudio mirror
     /// (identical layout). Playback falls through automatically.
     public func urls(surah: Int, ayah: Int) -> [URL] {
-        let file = "\(folder)/\(Self.fileName(surah: surah, ayah: ayah))"
+        Self.everyAyahURLs(folder: folder, surah: surah, ayah: ayah)
+    }
+
+    /// EveryAyah, then the quranicaudio mirror (identical layout), for any
+    /// folder under /data (reciters and translated readings alike).
+    static func everyAyahURLs(folder: String, surah: Int, ayah: Int) -> [URL] {
+        let file = "\(folder)/\(fileName(surah: surah, ayah: ayah))"
         return [
             URL(string: "https://everyayah.com/data/\(file)")!,
             URL(string: "https://mirrors.quranicaudio.com/everyayah/\(file)")!,

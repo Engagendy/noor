@@ -17,6 +17,16 @@ val ReciterA.localizedName: String
 val ReciterA.secondaryName: String
     get() = if (isArabicLocale()) nameEnglish else nameArabic
 
+/// Localized translation-voice name (picker rows).
+val TranslationVoice.localizedName: String
+    get() = if (isArabicLocale()) nameArabic else nameEnglish
+
+/// What the player pill / notification subtitle shows: the translation
+/// voice while its segment plays, otherwise the reciter.
+val NoorPlayer.nowPlayingName: String
+    get() = if (isPlayingTranslation) translation.localizedName
+            else reciter.localizedName
+
 /// Localized collection name — iOS shows the English forms in en.
 val HadithCollection.localizedName: String
     get() = if (isArabicLocale()) nameArabic else nameEnglish

@@ -60,6 +60,11 @@
     <string name="g2_cancel">إلغاء</string>
     <string name="g2_choose_reciter">اختر القارئ</string>
     <string name="g2_search_reciters">ابحث عن قارئ…</string>
+    <string name="g2_section_hafs">رواية حفص عن عاصم</string>
+    <string name="g2_section_warsh">رواية ورش عن نافع</string>
+    <string name="g2_warsh_note">النص المعروض برواية حفص، والتلاوة برواية ورش عن نافع.</string>
+    <string name="g2_translation_audio">قراءة الترجمة</string>
+    <string name="g2_translation_audio_note">تُقرأ ترجمة كل آية بعد تلاوتها بالعربية.</string>
 
     <!-- Hadith -->
     <string name="g2_hadith_title">الحديث</string>

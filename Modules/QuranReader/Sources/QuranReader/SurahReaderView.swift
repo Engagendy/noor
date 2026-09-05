@@ -687,8 +687,10 @@ public struct SurahReaderView: View {
             player?.pageEndAyah = last.surahId == verse.surahId ? last.ayah : surah.ayahCount
         }
         // Word-by-word + a timing-capable reciter: gapless follow-along
-        // (Alafasy, Husary, Minshawi, Abdul Basit, and more).
-        if wordByWord, let player, let qfId = player.reciter.qfTimingId {
+        // (Alafasy, Husary, Minshawi, Abdul Basit, and more). Translated
+        // readings interleave per ayah, so they need the ayah player.
+        if wordByWord, let player, player.translationVoice == .none,
+           let qfId = player.reciter.qfTimingId {
             let title = surah.displayName(arabicUI: isArabicUI)
             Task {
                 let ok = await player.playFollowAlong(
@@ -793,7 +795,8 @@ public struct SurahReaderView: View {
                 Button {
                     Task {
                         await downloader.download(
-                            reciter: player.reciter, surah: surah.id, ayahCount: surah.ayahCount)
+                            reciter: player.reciter, surah: surah.id, ayahCount: surah.ayahCount,
+                            translation: player.translationVoice)
                     }
                 } label: {
                     Group {
@@ -804,7 +807,8 @@ public struct SurahReaderView: View {
                             Label("Audio downloaded", systemImage: "checkmark.circle")
                         default:
                             if SurahDownloader.isDownloaded(
-                                reciter: player.reciter, surah: surah.id, ayahCount: surah.ayahCount) {
+                                reciter: player.reciter, surah: surah.id, ayahCount: surah.ayahCount,
+                                translation: player.translationVoice) {
                                 Label("Audio downloaded", systemImage: "checkmark.circle")
                             } else {
                                 Label("Download surah audio", systemImage: "arrow.down.circle")

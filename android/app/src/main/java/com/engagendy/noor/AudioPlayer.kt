@@ -20,7 +20,37 @@ data class ReciterA(
     val nameArabic: String,
     val flag: String,
     val folder: String,
+    val riwayah: Riwayah = Riwayah.HAFS,
 )
+
+/// Riwayah of a recitation. The mushaf text is always Hafs; Warsh readers
+/// are EveryAyah sets with Hafs ayah numbering, so the same files line up.
+enum class Riwayah { HAFS, WARSH }
+
+/// Translated readings played after each Arabic ayah (EveryAyah folders,
+/// same host + numbering scheme as the reciters). NONE = off.
+enum class TranslationVoice(
+    val folder: String,
+    val nameEnglish: String,
+    val nameArabic: String,
+) {
+    NONE("", "Off", "إيقاف"),
+    ENGLISH("English/Sahih_Intnl_Ibrahim_Walk_192kbps",
+            "English · Ibrahim Walk", "الإنجليزية · إبراهيم ووك"),
+    URDU("translations/urdu_shamshad_ali_khan_46kbps",
+         "Urdu · Shamshad Ali Khan", "الأردية · شمشاد علي خان"),
+    PERSIAN("translations/Fooladvand_Hedayatfar_40Kbps",
+            "Persian · Fooladvand", "الفارسية · فولادوند"),
+    BOSNIAN("translations/besim_korkut_ajet_po_ajet",
+            "Bosnian · Besim Korkut", "البوسنية · بسيم كوركوت"),
+    AZERBAIJANI("translations/azerbaijani/balayev",
+                "Azerbaijani · Balayev", "الأذربيجانية · بالاييف");
+
+    companion object {
+        fun byName(name: String?): TranslationVoice =
+            entries.firstOrNull { it.name == name } ?: NONE
+    }
+}
 
 /// Full verified EveryAyah roster — same 31 entries and folders as iOS.
 object Reciters {
@@ -66,7 +96,15 @@ object Reciters {
         ReciterA("tunaiji", "Khalifa Al-Tunaiji", "خليفة الطنيجي", "🇦🇪", "khalefa_al_tunaiji_64kbps"),
         ReciterA("akhdar", "Ibrahim Al-Akhdar", "إبراهيم الأخضر", "🇸🇦", "Ibrahim_Akhdar_32kbps"),
         ReciterA("alili", "Aziz Alili", "عزيز عليلي", "🇧🇦", "aziz_alili_128kbps"),
+        // Warsh 'an Nafi' — Hafs-numbered EveryAyah files (verified).
+        ReciterA("dosaryWarsh", "Ibrahim Al-Dosary (Warsh)", "إبراهيم الدوسري (ورش)", "🇸🇦",
+                 "warsh/warsh_ibrahim_aldosary_128kbps", Riwayah.WARSH),
+        ReciterA("jazaeryWarsh", "Yassin Al-Jazaery (Warsh)", "ياسين الجزائري (ورش)", "🇩🇿",
+                 "warsh/warsh_yassin_al_jazaery_64kbps", Riwayah.WARSH),
     )
+
+    val hafs: List<ReciterA> get() = all.filter { it.riwayah == Riwayah.HAFS }
+    val warsh: List<ReciterA> get() = all.filter { it.riwayah == Riwayah.WARSH }
 
     fun byId(id: String): ReciterA = all.firstOrNull { it.id == id } ?: all[0]
 }
@@ -82,6 +120,13 @@ val PlaybackSpeeds = listOf(0.75f, 1f, 1.25f, 1.5f, 2f)
 /// NoorAudioService (foreground MediaSession) so audio survives backgrounding.
 object NoorPlayer {
     var reciter by mutableStateOf(Reciters.all[0])
+        private set
+    /// Translated reading played after each Arabic ayah (NONE = off).
+    var translation by mutableStateOf(TranslationVoice.NONE)
+        private set
+    /// True while the translation segment of the current ayah is playing —
+    /// the pill / notification then show the translation voice's name.
+    var isPlayingTranslation by mutableStateOf(false)
         private set
     var currentSurah by mutableStateOf(0)
     var currentAyah by mutableStateOf(0)
@@ -185,6 +230,15 @@ object NoorPlayer {
         val prefs = context.getSharedPreferences("audio", Context.MODE_PRIVATE)
         reciter = Reciters.byId(prefs.getString("reciter", "alafasy") ?: "alafasy")
         speed = prefs.getFloat("speed", 1f)
+        translation = TranslationVoice.byName(prefs.getString("translation", null))
+    }
+
+    /// User action only. Restarts the current ayah pair with the new choice.
+    fun selectTranslation(value: TranslationVoice) {
+        translation = value
+        appContext?.getSharedPreferences("audio", Context.MODE_PRIVATE)
+            ?.edit()?.putString("translation", value.name)?.apply()
+        if (currentSurah != 0) playAyah(currentSurah, currentAyah)
     }
 
     /// User actions only — never call from a compose observer.
@@ -227,11 +281,12 @@ object NoorPlayer {
         if (currentSurah != 0) playAyah(currentSurah, memorizeStart)
     }
 
-    /// Takes the reciter explicitly (not `reciter`) so the URL and the cache
-    /// path for one request always come from the same snapshot, even if the
-    /// user switches reciter while a download is in flight.
-    private fun url(host: String, voice: ReciterA, surah: Int, ayah: Int) =
-        "%s/%s/%03d%03d.mp3".format(java.util.Locale.ROOT, host, voice.folder, surah, ayah)
+    /// Takes the EveryAyah folder explicitly (a reciter's or a translation
+    /// voice's, not `reciter`) so the URL and the cache path for one request
+    /// always come from the same snapshot, even if the user switches voice
+    /// while a download is in flight.
+    private fun url(host: String, folder: String, surah: Int, ayah: Int) =
+        "%s/%s/%03d%03d.mp3".format(java.util.Locale.ROOT, host, folder, surah, ayah)
 
     // MARK: - ayah cache + prefetch (iOS: every ayah cached after first
     // play; the next few download while the current one plays, so
@@ -239,23 +294,25 @@ object NoorPlayer {
 
     private val prefetchPool = java.util.concurrent.Executors.newFixedThreadPool(2)
 
-    private fun cacheFile(voice: ReciterA, surah: Int, ayah: Int): java.io.File {
+    /// Folders such as "warsh/…" or "translations/…" become one flat
+    /// sub-directory ("warsh_…") so every voice is a single directory.
+    private fun cacheFile(folder: String, surah: Int, ayah: Int): java.io.File {
         val dir = java.io.File(appContext!!.cacheDir,
-            "recitations/${voice.folder}").apply { mkdirs() }
+            "recitations/${folder.replace('/', '_')}").apply { mkdirs() }
         return java.io.File(dir,
             "%03d%03d.mp3".format(java.util.Locale.ROOT, surah, ayah))
     }
 
     /// Downloads one ayah to the cache (main host, then mirror). Quiet —
     /// failures just mean that ayah streams when its turn comes.
-    private fun download(voice: ReciterA, surah: Int, ayah: Int): Boolean {
-        val target = cacheFile(voice, surah, ayah)
+    private fun download(folder: String, surah: Int, ayah: Int): Boolean {
+        val target = cacheFile(folder, surah, ayah)
         if (target.length() > 1024) return true
         for (host in listOf("https://everyayah.com/data",
                             "https://mirrors.quranicaudio.com/everyayah")) {
             try {
                 val temp = java.io.File.createTempFile("ayah", ".mp3", target.parentFile)
-                val connection = java.net.URL(url(host, voice, surah, ayah))
+                val connection = java.net.URL(url(host, folder, surah, ayah))
                     .openConnection() as java.net.HttpURLConnection
                 connection.connectTimeout = 10_000
                 connection.readTimeout = 20_000
@@ -282,10 +339,21 @@ object NoorPlayer {
     /// The cached recitation file for one ayah of the current reciter,
     /// downloading it first if needed (main host, then mirror). Null when
     /// it is not cached and cannot be fetched (offline). Runs on IO.
-    suspend fun ensureAyahFile(surah: Int, ayah: Int): java.io.File? =
+    /// `withTranslation` also fetches the selected translated reading so
+    /// the pair plays gaplessly / offline afterwards (the video share keeps
+    /// the default: Arabic recitation only).
+    suspend fun ensureAyahFile(
+        surah: Int,
+        ayah: Int,
+        withTranslation: Boolean = false,
+    ): java.io.File? =
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            val voice = reciter
-            if (download(voice, surah, ayah)) cacheFile(voice, surah, ayah) else null
+            val folder = reciter.folder
+            val voice = translation
+            if (withTranslation && voice != TranslationVoice.NONE) {
+                download(voice.folder, surah, ayah)
+            }
+            if (download(folder, surah, ayah)) cacheFile(folder, surah, ayah) else null
         }
 
     /// Warm the next few ayat while the current one plays. `includeCurrent`
@@ -293,7 +361,7 @@ object NoorPlayer {
     /// user pressed play on is the one ayah never cached, so replaying it
     /// buffers from the network every time (advanced-to ayat were prefetched).
     private fun prefetch(
-        voice: ReciterA,
+        folder: String,
         surah: Int,
         fromAyah: Int,
         includeCurrent: Boolean = false,
@@ -301,8 +369,10 @@ object NoorPlayer {
         for (ayah in (if (includeCurrent) fromAyah else fromAyah + 1)..minOf(fromAyah + 3, ayahCount)) {
             prefetchPool.execute {
                 // Skip stale work if the user already moved on to another
-                // voice; `voice` itself guarantees path and URL agree.
-                if (reciter.id == voice.id) download(voice, surah, ayah)
+                // voice; `folder` itself guarantees path and URL agree.
+                if (folder == reciter.folder || folder == translation.folder) {
+                    download(folder, surah, ayah)
+                }
             }
         }
     }
@@ -322,13 +392,18 @@ object NoorPlayer {
     /// `skipCache` ignores any cached copy for this attempt — set after a
     /// cached file failed to play, so a delete that did not take (read-only
     /// or busy file) cannot bounce playAyah back onto the same bad file.
+    /// `translated` plays the translated reading of the same ayah (the second
+    /// half of the pair); the highlight stays on the ayah and the mode logic
+    /// runs only once the pair is done.
     private fun playAyah(
         surah: Int,
         ayah: Int,
         mirror: Boolean = false,
         skipCache: Boolean = false,
+        translated: Boolean = false,
     ) {
         currentSurah = surah; currentAyah = ayah
+        isPlayingTranslation = translated
         // Resume point for the Today "continue listening" card — written
         // from user-driven playback only, never from a compose observer.
         appContext?.getSharedPreferences("audio", Context.MODE_PRIVATE)?.edit()
@@ -337,7 +412,9 @@ object NoorPlayer {
         if (!requestFocus()) { media = null; stop(); return }
         val host = if (mirror) "https://mirrors.quranicaudio.com/everyayah"
                    else "https://everyayah.com/data"
-        val voice = reciter  // one snapshot for cache path, URL and prefetch
+        // One snapshot for cache path, URL and prefetch.
+        val translationVoice = translation
+        val folder = if (translated) translationVoice.folder else reciter.folder
         // Set below, before prepareAsync(); read by the error listener so a
         // corrupt cached file is deleted rather than replayed on every retry.
         var cachedSource: java.io.File? = null
@@ -352,53 +429,37 @@ object NoorPlayer {
                 NoorAudioService.refresh(appContext)
                 // Warm the ayat ahead while this one plays — and this ayah
                 // itself when it was streamed, so the replay is instant.
-                prefetch(voice, surah, ayah, includeCurrent = !playedFromCache)
+                prefetch(folder, surah, ayah, includeCurrent = !playedFromCache)
+                // The translation of THIS ayah is up next — fetch it now so
+                // the hand-off is gapless, plus the ones ahead.
+                if (!translated && translationVoice != TranslationVoice.NONE) {
+                    prefetch(translationVoice.folder, surah, ayah, includeCurrent = true)
+                }
             }
             setOnCompletionListener {
                 if (sleepDeadline != 0L && System.currentTimeMillis() >= sleepDeadline) {
                     stop(); return@setOnCompletionListener
                 }
-                // "End of surah" chip: stop once the current mode reaches the
-                // end of what it plays, instead of repeating/looping again.
-                if (stopAfterSurah && atModeEnd()) {
-                    stop(); return@setOnCompletionListener  // stop() clears the chip
+                // Arabic done → the translated reading of the same ayah,
+                // then the normal mode logic once the pair is complete.
+                if (!translated && translation != TranslationVoice.NONE) {
+                    playAyah(surah, ayah, translated = true)
+                    return@setOnCompletionListener
                 }
-                when (mode) {
-                    PlaybackMode.REPEAT_AYAH -> playAyah(surah, ayah)
-                    PlaybackMode.MEMORIZE -> {
-                        memorizeDone += 1
-                        when {
-                            memorizeDone < memorizePerAyah -> playAyah(surah, ayah)
-                            ayah < minOf(memorizeEnd, ayahCount) -> {
-                                memorizeDone = 0
-                                playAyah(surah, ayah + 1)
-                            }
-                            else -> {
-                                // Loop the range again from the start.
-                                memorizeDone = 0
-                                playAyah(surah, memorizeStart)
-                            }
-                        }
-                    }
-                    PlaybackMode.PAGE_ONLY -> {
-                        val last = if (pageEndAyah in 1..ayahCount) pageEndAyah else ayahCount
-                        if (currentAyah < last) playAyah(surah, currentAyah + 1) else stop()
-                    }
-                    PlaybackMode.CONTINUOUS ->
-                        if (currentAyah < ayahCount) playAyah(surah, currentAyah + 1)
-                        else advanceToNextSurah()
-                }
+                afterPair(surah, ayah)
             }
             setOnErrorListener { _, _, _ ->
                 // Bad cache file → drop it and stream; host → mirror → one
                 // delayed retry (transient network), then stop. Never
-                // strand playback on a hiccup.
+                // strand playback on a hiccup. A translation that cannot be
+                // fetched is skipped: the Arabic recitation carries on.
                 when {
                     playedFromCache -> {
                         cachedSource?.delete()
-                        playAyah(surah, ayah, skipCache = true)
+                        playAyah(surah, ayah, skipCache = true, translated = translated)
                     }
-                    !mirror -> playAyah(surah, ayah, mirror = true)
+                    !mirror -> playAyah(surah, ayah, mirror = true, translated = translated)
+                    translated -> { isPlayingTranslation = false; afterPair(surah, ayah) }
                     retriedAyah != surah to ayah -> {
                         retriedAyah = surah to ayah
                         handler.postDelayed({
@@ -413,17 +474,53 @@ object NoorPlayer {
             }
             // Cached copy plays instantly (and offline); otherwise stream
             // and let the cache warm via prefetch for next time.
-            cachedSource = runCatching { cacheFile(voice, surah, ayah) }.getOrNull()
+            cachedSource = runCatching { cacheFile(folder, surah, ayah) }.getOrNull()
             playedFromCache = !skipCache && cachedSource?.let { it.length() > 1024 } == true
             if (playedFromCache) {
                 setDataSource(cachedSource!!.path)
             } else {
-                setDataSource(url(host, voice, surah, ayah))
+                setDataSource(url(host, folder, surah, ayah))
             }
             NoorPlayer.isBuffering = true
             prepareAsync()
         }
         NoorAudioService.refresh(appContext)
+    }
+
+    /// Mode logic once an ayah (Arabic + optional translation) is done —
+    /// shared by the completion listener and the skip-a-broken-translation
+    /// path, so both advance identically.
+    private fun afterPair(surah: Int, ayah: Int) {
+        // "End of surah" chip: stop once the current mode reaches the
+        // end of what it plays, instead of repeating/looping again.
+        if (stopAfterSurah && atModeEnd()) {
+            stop(); return  // stop() clears the chip
+        }
+        when (mode) {
+            PlaybackMode.REPEAT_AYAH -> playAyah(surah, ayah)
+            PlaybackMode.MEMORIZE -> {
+                memorizeDone += 1
+                when {
+                    memorizeDone < memorizePerAyah -> playAyah(surah, ayah)
+                    ayah < minOf(memorizeEnd, ayahCount) -> {
+                        memorizeDone = 0
+                        playAyah(surah, ayah + 1)
+                    }
+                    else -> {
+                        // Loop the range again from the start.
+                        memorizeDone = 0
+                        playAyah(surah, memorizeStart)
+                    }
+                }
+            }
+            PlaybackMode.PAGE_ONLY -> {
+                val last = if (pageEndAyah in 1..ayahCount) pageEndAyah else ayahCount
+                if (currentAyah < last) playAyah(surah, currentAyah + 1) else stop()
+            }
+            PlaybackMode.CONTINUOUS ->
+                if (currentAyah < ayahCount) playAyah(surah, currentAyah + 1)
+                else advanceToNextSurah()
+        }
     }
 
     /// PlaybackParams throws unless the player is prepared; guard with isPlaying.
@@ -525,6 +622,7 @@ object NoorPlayer {
         pausedByFocusLoss = false
         abandonFocus()
         isPlaying = false; isBuffering = false; currentSurah = 0; currentAyah = 0
+        isPlayingTranslation = false
         handler.removeCallbacks(sleepStop)
         sleepDeadline = 0L
         stopAfterSurah = false

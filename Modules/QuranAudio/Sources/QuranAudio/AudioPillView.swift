@@ -40,7 +40,11 @@ public struct AudioPillView: View {
                             .frame(width: 38, height: 38)
                             .background(Circle().fill(NoorColor.accentPrimary.opacity(0.15)))
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(verbatim: player.reciter.displayName(arabicUI: isArabicUI))
+                            // During the translated reading the voice's name
+                            // replaces the reciter's.
+                            Text(verbatim: player.isPlayingTranslation
+                                 ? player.translationVoice.displayName(arabicUI: isArabicUI)
+                                 : player.reciter.displayName(arabicUI: isArabicUI))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .lineLimit(1)
@@ -52,7 +56,9 @@ public struct AudioPillView: View {
                     }
                     .contentShape(Rectangle())
                 }
-                .accessibilityLabel("Reciter: \(player.reciter.displayName)")
+                .accessibilityLabel(player.isPlayingTranslation
+                                    ? "Translation audio: \(player.translationVoice.displayName(arabicUI: isArabicUI))"
+                                    : "Reciter: \(player.reciter.displayName)")
                 Spacer(minLength: 4)
 
                 Button { player.previous() } label: {
@@ -112,6 +118,9 @@ public struct AudioPillView: View {
                     selection: Binding(
                         get: { player.reciter.rawValue },
                         set: { player.reciter = Reciter(rawValue: $0) ?? .alafasy }),
+                    translationSelection: Binding(
+                        get: { player.translationVoice.rawValue },
+                        set: { player.translationVoice = TranslationVoice(rawValue: $0) ?? .none }),
                     isArabicUI: isArabicUI)
                     .environment(\.locale, locale)
                     .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
@@ -129,60 +138,67 @@ public struct AudioPillView: View {
 /// presenter re-applies it).
 public struct ReciterPickerSheet: View {
     @Binding var selection: String
+    /// Raw `TranslationVoice`; nil hides the "Translation audio" section.
+    private var translationSelection: Binding<String>?
     let isArabicUI: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
 
-    public init(selection: Binding<String>, isArabicUI: Bool) {
+    public init(selection: Binding<String>, translationSelection: Binding<String>? = nil,
+                isArabicUI: Bool) {
         _selection = selection
+        self.translationSelection = translationSelection
         self.isArabicUI = isArabicUI
     }
 
-    private var filtered: [Reciter] {
-        let query = searchText.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return Reciter.allCases }
-        return Reciter.allCases.filter {
+    private var query: String { searchText.trimmingCharacters(in: .whitespaces) }
+
+    private func filtered(_ riwayah: Riwayah) -> [Reciter] {
+        let all = Reciter.all(riwayah: riwayah)
+        guard !query.isEmpty else { return all }
+        return all.filter {
             $0.arabicName.localizedCaseInsensitiveContains(query)
                 || $0.englishName.localizedCaseInsensitiveContains(query)
         }
     }
 
+    private var filteredVoices: [TranslationVoice] {
+        guard !query.isEmpty else { return TranslationVoice.allCases }
+        return TranslationVoice.allCases.filter {
+            $0.arabicName.localizedCaseInsensitiveContains(query)
+                || $0.englishName.localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    private var hafs: [Reciter] { filtered(.hafs) }
+    private var warsh: [Reciter] { filtered(.warsh) }
+
     public var body: some View {
         NavigationStack {
-            List(filtered) { reciter in
-                Button {
-                    selection = reciter.rawValue
-                    dismiss()
-                } label: {
-                    HStack(spacing: 12) {
-                        if !reciter.flag.isEmpty {
-                            Text(verbatim: reciter.flag)
-                                .font(.system(size: 18))
-                        }
-                        Text(verbatim: reciter.displayName(arabicUI: isArabicUI))
-                            .font(.system(size: 16, weight: selection == reciter.rawValue ? .semibold : .regular))
-                            .foregroundStyle(NoorColor.inkPrimary)
-                        if reciter.qfTimingId != nil {
-                            // Supports word-by-word follow-along.
-                            Text(isArabicUI ? "تتبع الكلمات" : "word tracking")
-                                .font(.system(size: 10, weight: .semibold))
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 3)
-                                .background(Capsule().fill(NoorColor.accentPrimary.opacity(0.12)))
-                                .foregroundStyle(NoorColor.accentPrimary)
-                        }
-                        Spacer(minLength: 4)
-                        if selection == reciter.rawValue {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(NoorColor.accentPrimary)
-                        }
-                    }
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
+            List {
+                Section {
+                    ForEach(hafs) { reciter in reciterRow(reciter) }
                 }
-                .buttonStyle(.borderless)
-                .listRowBackground(Color.clear)
+                if !warsh.isEmpty {
+                    Section {
+                        ForEach(warsh) { reciter in reciterRow(reciter) }
+                    } header: {
+                        Text("Warsh riwayah")
+                    } footer: {
+                        Text("The mushaf text shown follows Hafs; the recitation follows Warsh.")
+                    }
+                }
+                if let translationSelection, !filteredVoices.isEmpty {
+                    Section {
+                        ForEach(filteredVoices) { voice in
+                            voiceRow(voice, selection: translationSelection)
+                        }
+                    } header: {
+                        Text("Translation audio")
+                    } footer: {
+                        Text("Reads each ayah in the chosen language right after the Arabic.")
+                    }
+                }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
@@ -238,6 +254,74 @@ public struct ReciterPickerSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+}
+
+extension ReciterPickerSheet {
+    private func reciterRow(_ reciter: Reciter) -> some View {
+        Button {
+            selection = reciter.rawValue
+            dismiss()
+        } label: {
+            HStack(spacing: 12) {
+                if !reciter.flag.isEmpty {
+                    Text(verbatim: reciter.flag)
+                        .font(.system(size: 18))
+                }
+                Text(verbatim: reciter.displayName(arabicUI: isArabicUI))
+                    .font(.system(size: 16, weight: selection == reciter.rawValue ? .semibold : .regular))
+                    .foregroundStyle(NoorColor.inkPrimary)
+                if reciter.qfTimingId != nil {
+                    // Supports word-by-word follow-along.
+                    Text(isArabicUI ? "تتبع الكلمات" : "word tracking")
+                        .font(.system(size: 10, weight: .semibold))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(NoorColor.accentPrimary.opacity(0.12)))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                }
+                Spacer(minLength: 4)
+                if selection == reciter.rawValue {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                }
+            }
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .listRowBackground(Color.clear)
+    }
+
+    /// Translated-reading option; "Off" first. Selecting doesn't dismiss so
+    /// the user can still pick a reciter in the same visit.
+    private func voiceRow(_ voice: TranslationVoice, selection: Binding<String>) -> some View {
+        let isOn = selection.wrappedValue == voice.rawValue
+        return Button {
+            selection.wrappedValue = voice.rawValue
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: voice == .none ? "speaker.slash" : "globe")
+                    .font(.system(size: 15))
+                    .foregroundStyle(NoorColor.accentPrimary)
+                    .frame(width: 24)
+                Text(verbatim: voice.displayName(arabicUI: isArabicUI))
+                    .font(.system(size: 16, weight: isOn ? .semibold : .regular))
+                    .foregroundStyle(NoorColor.inkPrimary)
+                Spacer(minLength: 4)
+                if isOn {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                }
+            }
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .listRowBackground(Color.clear)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 }
 

@@ -58,6 +58,28 @@ public final class QuranAudioPlayer {
         didSet { UserDefaults.standard.set(reciterRaw, forKey: "audio.reciter") }
     }
 
+    /// Translated reading played after each Arabic ayah (`.none` = off).
+    public var translationVoice: TranslationVoice {
+        get { TranslationVoice(rawValue: translationRaw) ?? .none }
+        set {
+            guard newValue.rawValue != translationRaw else { return }
+            translationRaw = newValue.rawValue
+            translationDidChange()
+        }
+    }
+    private var translationRaw: String
+        = UserDefaults.standard.string(forKey: TranslationVoice.defaultsKey) ?? TranslationVoice.none.rawValue {
+        didSet { UserDefaults.standard.set(translationRaw, forKey: TranslationVoice.defaultsKey) }
+    }
+    /// True while the translated reading of `current` is what's audible.
+    /// The ayah highlight stays put; the pill shows the voice's name.
+    public private(set) var isPlayingTranslation = false
+    /// Translation item staged in the queue (or playing) for `current`.
+    private var translationItem: AVPlayerItem?
+    /// Arabic finished before the translation file arrived — play it as
+    /// soon as it lands instead of advancing.
+    private var awaitingTranslation = false
+
     /// Supplies the next surah's metadata so continuous playback flows
     /// across surah boundaries (set by the reader, which owns the DB).
     public var surahAdvance: ((Int) -> (ayahCount: Int, title: String, arabicTitle: String)?)?
@@ -138,9 +160,13 @@ public final class QuranAudioPlayer {
 
     public func play(surah: Int, ayahCount: Int, from ayah: Int, title: String,
                      arabicTitle: String? = nil, pageEndAyah: Int? = nil) {
-        // Settings may have changed the reciter while we were idle.
+        // Settings may have changed the reciter/translation while we were idle.
         if let stored = UserDefaults.standard.string(forKey: "audio.reciter"), stored != reciterRaw {
             reciterRaw = stored
+        }
+        if let stored = UserDefaults.standard.string(forKey: TranslationVoice.defaultsKey),
+           stored != translationRaw {
+            translationRaw = stored
         }
         surahTitle = title
         surahTitleArabic = arabicTitle ?? title
@@ -216,10 +242,33 @@ public final class QuranAudioPlayer {
         player?.pause()
         player?.removeAllItems()
         queuedNext = nil
+        clearTranslationState()
         player = nil
         current = nil
         isPlaying = false
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    }
+
+    private func clearTranslationState() {
+        translationItem = nil
+        isPlayingTranslation = false
+        awaitingTranslation = false
+    }
+
+    /// Voice switched from the picker: mid-translation (or when the Arabic
+    /// has already ended) restart the pair; while the Arabic is still
+    /// playing just swap what's staged behind it.
+    private func translationDidChange() {
+        guard let current, isPlaying || player != nil, !isFollowAlong else { return }
+        if isPlayingTranslation || awaitingTranslation {
+            playAyah(current)
+            return
+        }
+        if let translationItem { player?.remove(translationItem) }
+        if let next = queuedNext { player?.remove(next.item) }
+        queuedNext = nil
+        clearTranslationState()
+        stageAfterArabic()
     }
 
     public func next() {
@@ -370,11 +419,22 @@ public final class QuranAudioPlayer {
         isPlaying = true
         UserDefaults.standard.set(reference.surah, forKey: "audio.lastSurah")
         UserDefaults.standard.set(reference.ayah, forKey: "audio.lastAyah")
+        // Silence whatever is still queued (a translation segment, the
+        // pre-enqueued next ayah) so its end can't advance us twice.
+        player?.pause()
+        player?.removeAllItems()
+        queuedNext = nil
+        clearTranslationState()
         let reciter = self.reciter
-        let ayahCount = self.ayahCount
+        let voice = self.translationVoice
         // Fetch-then-play: tries EveryAyah then the mirror, caches the file
         // (~50–200 KB), plays locally. Replays are offline automatically.
         Task { [weak self] in
+            // Warm the translation alongside so the hand-off is gapless.
+            if voice != .none {
+                Task { _ = await AudioCache.ensureLocal(
+                    voice: voice, surah: reference.surah, ayah: reference.ayah) }
+            }
             let local = await AudioCache.ensureLocal(
                 reciter: reciter, surah: reference.surah, ayah: reference.ayah)
             guard let self, self.current == reference else { return }
@@ -384,12 +444,12 @@ public final class QuranAudioPlayer {
             }
             self.startPlayer(with: local)
         }
-        _ = ayahCount
     }
 
     private func startPlayer(with url: URL) {
         let item = AVPlayerItem(url: url)
         queuedNext = nil
+        clearTranslationState()
         if let player {
             player.removeAllItems()
             player.insert(item, after: nil)
@@ -401,7 +461,63 @@ public final class QuranAudioPlayer {
         player?.rate = rate
         isPlaying = true
         updateNowPlaying()
-        enqueueNextIfNeeded()
+        stageAfterArabic()
+    }
+
+    /// What follows the Arabic ayah in the queue: its translated reading
+    /// when a voice is on (then the next pair is only prefetched to disk),
+    /// otherwise the next ayah itself for a gapless roll-over.
+    private func stageAfterArabic() {
+        guard translationVoice != .none else {
+            enqueueNextIfNeeded()
+            return
+        }
+        stageTranslation()
+        prefetchNextPair()
+    }
+
+    private func stageTranslation() {
+        guard let cur = current, translationItem == nil else { return }
+        let voice = translationVoice
+        Task { [weak self] in
+            let local = await AudioCache.ensureLocal(voice: voice, surah: cur.surah, ayah: cur.ayah)
+            guard let self, self.current == cur, !self.isPlayingTranslation,
+                  self.translationItem == nil, self.translationVoice == voice,
+                  let player = self.player else { return }
+            guard let local else {
+                // Unreachable and not cached: the pair is just the Arabic.
+                if self.awaitingTranslation {
+                    self.awaitingTranslation = false
+                    self.pairDidFinish()
+                }
+                return
+            }
+            let item = AVPlayerItem(url: local)
+            player.insert(item, after: nil)
+            self.translationItem = item
+            if self.awaitingTranslation {
+                // Arabic already ended while we were fetching — go now.
+                self.awaitingTranslation = false
+                self.isPlayingTranslation = true
+                player.play()
+                player.rate = self.rate
+                self.updateNowPlaying()
+            }
+        }
+    }
+
+    /// Warms the next ayah's Arabic + translation files on disk.
+    private func prefetchNextPair() {
+        guard mode != .repeatAyah, mode != .memorize,
+              let cur = current, cur.ayah < ayahCount else { return }
+        if mode == .pageOnly, let end = pageEndAyah, cur.ayah >= end { return }
+        let reciter = self.reciter
+        let voice = self.translationVoice
+        let next = Reference(surah: cur.surah, ayah: cur.ayah + 1)
+        Task {
+            _ = await AudioCache.ensureLocal(reciter: reciter, surah: next.surah, ayah: next.ayah)
+            _ = await AudioCache.ensureLocal(voice: voice, surah: next.surah, ayah: next.ayah)
+        }
     }
 
     /// One persistent end-of-item observer for whatever we play.
@@ -409,12 +525,38 @@ public final class QuranAudioPlayer {
         guard endObserver == nil else { return }
         endObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime, object: nil, queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor in self?.itemDidEnd() }
+        ) { [weak self] note in
+            let item = note.object as? AVPlayerItem
+            Task { @MainActor in self?.itemDidEnd(item) }
         }
     }
 
-    private func itemDidEnd() {
+    private func itemDidEnd(_ item: AVPlayerItem?) {
+        guard current != nil, !isFollowAlong else { return }
+        if isPlayingTranslation {
+            // Translated reading finished: the pair is complete.
+            clearTranslationState()
+            pairDidFinish()
+            return
+        }
+        if let translationItem, item !== translationItem {
+            // Arabic ended with the translation staged behind it — the
+            // queue player is already rolling into it.
+            isPlayingTranslation = true
+            updateNowPlaying()
+            return
+        }
+        if translationVoice != .none, translationItem == nil, !awaitingTranslation {
+            // Slow network: the translation isn't in yet; wait for it.
+            awaitingTranslation = true
+            stageTranslation()
+            return
+        }
+        pairDidFinish()
+    }
+
+    /// The ayah (Arabic, plus its translation when on) has finished.
+    private func pairDidFinish() {
         guard let cur = current else { return }
         if mode == .repeatAyah || mode == .memorize {
             advanceAfterFinish()
@@ -439,7 +581,7 @@ public final class QuranAudioPlayer {
     /// Downloads (or reads from cache) the next ayah and appends it to the
     /// queue while the current one is still playing.
     private func enqueueNextIfNeeded() {
-        guard queuedNext == nil, mode != .repeatAyah, mode != .memorize,
+        guard queuedNext == nil, translationVoice == .none, mode != .repeatAyah, mode != .memorize,
               let cur = current, cur.ayah < ayahCount else { return }
         if mode == .pageOnly, let end = pageEndAyah, cur.ayah >= end { return }
         let nextRef = Reference(surah: cur.surah, ayah: cur.ayah + 1)
@@ -448,7 +590,8 @@ public final class QuranAudioPlayer {
             guard let local = await AudioCache.ensureLocal(
                 reciter: reciter, surah: nextRef.surah, ayah: nextRef.ayah) else { return }
             guard let self, self.current == cur, self.queuedNext == nil,
-                  self.reciter == reciter, self.player != nil else { return }
+                  self.reciter == reciter, self.translationVoice == .none,
+                  self.player != nil else { return }
             let item = AVPlayerItem(url: local)
             self.player?.insert(item, after: nil)
             self.queuedNext = (item, nextRef)
@@ -556,7 +699,7 @@ public final class QuranAudioPlayer {
         let title = surahTitleArabic.isEmpty ? surahTitle : surahTitleArabic
         var info: [String: Any] = [
             MPMediaItemPropertyTitle: "\(title) · \(current.ayah.arabicIndicDigits)",
-            MPMediaItemPropertyArtist: reciter.arabicName,
+            MPMediaItemPropertyArtist: isPlayingTranslation ? translationVoice.arabicName : reciter.arabicName,
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
         ]
         if let artwork = Self.lockScreenArtwork {
@@ -582,21 +725,58 @@ enum AudioCache {
         return base.appendingPathComponent("recitations", isDirectory: true)
     }
 
-    private static func fileURL(in base: URL, reciter: Reciter, surah: Int, ayah: Int) -> URL {
+    /// One downloadable ayah file: where it lives on disk and where to get it.
+    struct Track: Equatable {
+        /// Single path component under the recitations directory.
+        let cacheFolder: String
+        let urls: [URL]
+
+        init(reciter: Reciter, surah: Int, ayah: Int) {
+            cacheFolder = reciter.cacheFolder
+            urls = reciter.urls(surah: surah, ayah: ayah)
+        }
+
+        /// nil for `.none`.
+        init?(voice: TranslationVoice, surah: Int, ayah: Int) {
+            guard let folder = voice.cacheFolder else { return nil }
+            cacheFolder = folder
+            urls = voice.urls(surah: surah, ayah: ayah)
+        }
+    }
+
+    private static func fileURL(in base: URL, track: Track, surah: Int, ayah: Int) -> URL {
         base
-            .appendingPathComponent(reciter.rawValue, isDirectory: true)
+            .appendingPathComponent(track.cacheFolder, isDirectory: true)
             .appendingPathComponent(Reciter.fileName(surah: surah, ayah: ayah))
     }
 
     /// Permanent location for an explicitly downloaded ayah.
     static func downloadedURL(reciter: Reciter, surah: Int, ayah: Int) -> URL {
-        fileURL(in: downloadsDirectory, reciter: reciter, surah: surah, ayah: ayah)
+        downloadedURL(track: Track(reciter: reciter, surah: surah, ayah: ayah), surah: surah, ayah: ayah)
+    }
+
+    /// Permanent location for an explicitly downloaded translated reading.
+    static func downloadedURL(voice: TranslationVoice, surah: Int, ayah: Int) -> URL? {
+        Track(voice: voice, surah: surah, ayah: ayah).map { downloadedURL(track: $0, surah: surah, ayah: ayah) }
+    }
+
+    static func downloadedURL(track: Track, surah: Int, ayah: Int) -> URL {
+        fileURL(in: downloadsDirectory, track: track, surah: surah, ayah: ayah)
+    }
+
+    /// Opportunistic-cache location (what playback writes to).
+    static func cachedURL(track: Track, surah: Int, ayah: Int) -> URL {
+        fileURL(in: directory, track: track, surah: surah, ayah: ayah)
     }
 
     /// An existing local file for this ayah — permanent download first, then cache.
     static func localURL(reciter: Reciter, surah: Int, ayah: Int) -> URL? {
-        [downloadedURL(reciter: reciter, surah: surah, ayah: ayah),
-         fileURL(in: directory, reciter: reciter, surah: surah, ayah: ayah)]
+        localURL(track: Track(reciter: reciter, surah: surah, ayah: ayah), surah: surah, ayah: ayah)
+    }
+
+    static func localURL(track: Track, surah: Int, ayah: Int) -> URL? {
+        [downloadedURL(track: track, surah: surah, ayah: ayah),
+         cachedURL(track: track, surah: surah, ayah: ayah)]
             .first { FileManager.default.fileExists(atPath: $0.path) }
     }
 
@@ -606,17 +786,32 @@ enum AudioCache {
     static func ensureLocal(
         reciter: Reciter, surah: Int, ayah: Int, persistent: Bool = false
     ) async -> URL? {
+        await ensureLocal(track: Track(reciter: reciter, surah: surah, ayah: ayah),
+                          surah: surah, ayah: ayah, persistent: persistent)
+    }
+
+    /// Translated reading for the ayah; nil for `.none` or when unreachable.
+    static func ensureLocal(
+        voice: TranslationVoice, surah: Int, ayah: Int, persistent: Bool = false
+    ) async -> URL? {
+        guard let track = Track(voice: voice, surah: surah, ayah: ayah) else { return nil }
+        return await ensureLocal(track: track, surah: surah, ayah: ayah, persistent: persistent)
+    }
+
+    static func ensureLocal(
+        track: Track, surah: Int, ayah: Int, persistent: Bool = false
+    ) async -> URL? {
         let destination = persistent
-            ? downloadedURL(reciter: reciter, surah: surah, ayah: ayah)
-            : fileURL(in: directory, reciter: reciter, surah: surah, ayah: ayah)
-        if let existing = localURL(reciter: reciter, surah: surah, ayah: ayah) {
+            ? downloadedURL(track: track, surah: surah, ayah: ayah)
+            : cachedURL(track: track, surah: surah, ayah: ayah)
+        if let existing = localURL(track: track, surah: surah, ayah: ayah) {
             guard persistent, existing != destination else { return existing }
             // Promote a cache hit into permanent storage instead of re-downloading.
             guard prepare(destination), (try? FileManager.default.moveItem(at: existing, to: destination)) != nil
             else { return existing }
             return destination
         }
-        for remote in reciter.urls(surah: surah, ayah: ayah) {
+        for remote in track.urls {
             guard let (temp, response) = try? await URLSession.shared.download(from: remote),
                   (response as? HTTPURLResponse)?.statusCode == 200
             else { continue }

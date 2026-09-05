@@ -17,26 +17,35 @@ public final class SurahDownloader {
 
     public init() {}
 
-    public static func isDownloaded(reciter: Reciter, surah: Int, ayahCount: Int) -> Bool {
-        (1...ayahCount).allSatisfy {
-            FileManager.default.fileExists(
-                atPath: AudioCache.downloadedURL(reciter: reciter, surah: surah, ayah: $0).path)
-        }
+    /// True when every Arabic file — and, with a translation voice on, every
+    /// translated reading — is in permanent storage.
+    public static func isDownloaded(reciter: Reciter, surah: Int, ayahCount: Int,
+                                    translation: TranslationVoice = .none) -> Bool {
+        tracks(reciter: reciter, translation: translation, surah: surah, ayahCount: ayahCount)
+            .allSatisfy {
+                FileManager.default.fileExists(
+                    atPath: AudioCache.downloadedURL(track: $0.track, surah: surah, ayah: $0.ayah).path)
+            }
     }
 
-    public func download(reciter: Reciter, surah: Int, ayahCount: Int) async {
+    /// Downloads the surah's Arabic files plus the translated readings when
+    /// a voice is selected, so offline playback stays gapless.
+    public func download(reciter: Reciter, surah: Int, ayahCount: Int,
+                         translation: TranslationVoice = .none) async {
         if case .downloading = state { return }
-        state = .downloading(completed: 0, total: ayahCount)
+        let jobs = Self.tracks(reciter: reciter, translation: translation,
+                               surah: surah, ayahCount: ayahCount)
+        state = .downloading(completed: 0, total: jobs.count)
         var completed = 0
         do {
             try await withThrowingTaskGroup(of: Void.self) { group in
-                var pending = Array(1...ayahCount).makeIterator()
+                var pending = jobs.makeIterator()
                 var inFlight = 0
                 func addNext(_ group: inout ThrowingTaskGroup<Void, Error>) {
-                    guard let ayah = pending.next() else { return }
+                    guard let job = pending.next() else { return }
                     inFlight += 1
                     group.addTask {
-                        try await Self.fetch(reciter: reciter, surah: surah, ayah: ayah)
+                        try await Self.fetch(track: job.track, surah: surah, ayah: job.ayah)
                     }
                 }
                 // Modest concurrency — EveryAyah is a charity service.
@@ -45,7 +54,7 @@ public final class SurahDownloader {
                     try await group.next()
                     inFlight -= 1
                     completed += 1
-                    state = .downloading(completed: completed, total: ayahCount)
+                    state = .downloading(completed: completed, total: jobs.count)
                     addNext(&group)
                 }
             }
@@ -55,9 +64,21 @@ public final class SurahDownloader {
         }
     }
 
-    private static func fetch(reciter: Reciter, surah: Int, ayah: Int) async throws {
+    /// Every file the surah needs, in playback order (Arabic then its translation).
+    nonisolated static func tracks(reciter: Reciter, translation: TranslationVoice,
+                       surah: Int, ayahCount: Int) -> [(track: AudioCache.Track, ayah: Int)] {
+        (1...max(1, ayahCount)).flatMap { ayah -> [(track: AudioCache.Track, ayah: Int)] in
+            var list = [(AudioCache.Track(reciter: reciter, surah: surah, ayah: ayah), ayah)]
+            if let voiceTrack = AudioCache.Track(voice: translation, surah: surah, ayah: ayah) {
+                list.append((voiceTrack, ayah))
+            }
+            return list
+        }
+    }
+
+    private static func fetch(track: AudioCache.Track, surah: Int, ayah: Int) async throws {
         guard await AudioCache.ensureLocal(
-            reciter: reciter, surah: surah, ayah: ayah, persistent: true) != nil else {
+            track: track, surah: surah, ayah: ayah, persistent: true) != nil else {
             throw URLError(.badServerResponse)
         }
     }

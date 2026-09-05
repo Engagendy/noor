@@ -42,7 +42,16 @@ Attributions are displayed in Settings → About.
 
 ### Recitations — EveryAyah.com (streamed/cached on demand)
 - **Reciters:** Mishary Alafasy, Mahmoud Khalil Al-Husary, Mohamed Siddiq
-  Al-Minshawi (128 kbps ayah-by-ayah sets).
+  Al-Minshawi and the other ayah-by-ayah sets listed in `Reciter.swift`,
+  including two Warsh 'an Nafi' readers (folders `warsh/warsh_ibrahim_aldosary_128kbps`,
+  `warsh/warsh_yassin_al_jazaery_64kbps`; Hafs-numbered files).
+- **Translated readings (optional, after each ayah):** English — Saheeh
+  International read by Ibrahim Walk (`English/Sahih_Intnl_Ibrahim_Walk_192kbps`);
+  Urdu — Shamshad Ali Khan (`translations/urdu_shamshad_ali_khan_46kbps`);
+  Persian — Fooladvand read by Hedayatfar (`translations/Fooladvand_Hedayatfar_40Kbps`);
+  Bosnian — Besim Korkut (`translations/besim_korkut_ajet_po_ajet`);
+  Azerbaijani — Balayev (`translations/azerbaijani/balayev`). Same source
+  and terms as the recitations.
 - **Source:** https://everyayah.com (community-hosted recitation archive).
 - **Access:** streamed at listen time, cached to the device Caches directory.
 - **Attribution:** "Recitations courtesy of EveryAyah.com."

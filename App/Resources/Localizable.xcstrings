@@ -3149,6 +3149,86 @@
         }
       }
     },
+    "Translation audio": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قراءة الترجمة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translation audio"
+          }
+        }
+      }
+    },
+    "Warsh riwayah": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رواية ورش عن نافع"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warsh riwayah"
+          }
+        }
+      }
+    },
+    "The mushaf text shown follows Hafs; the recitation follows Warsh.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "النص المعروض برواية حفص، والتلاوة برواية ورش عن نافع."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The mushaf text shown follows Hafs; the recitation follows Warsh."
+          }
+        }
+      }
+    },
+    "Reads each ayah in the chosen language right after the Arabic.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تُقرأ كل آية باللغة المختارة بعد التلاوة العربية مباشرة."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reads each ayah in the chosen language right after the Arabic."
+          }
+        }
+      }
+    },
+    "Translation audio: %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قراءة الترجمة: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translation audio: %@"
+          }
+        }
+      }
+    },
     "Translation": {
       "localizations": {
         "ar": {

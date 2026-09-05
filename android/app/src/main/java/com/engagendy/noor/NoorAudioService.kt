@@ -128,7 +128,7 @@ class NoorAudioService : Service() {
                            getString(R.string.g2_ayah_ref, NoorPlayer.surahName,
                                      NoorPlayer.currentAyah.localizedDigits()))
                 .putString(android.media.MediaMetadata.METADATA_KEY_ARTIST,
-                           NoorPlayer.reciter.localizedName)
+                           NoorPlayer.nowPlayingName)
                 .build())
     }
 
@@ -156,7 +156,7 @@ class NoorAudioService : Service() {
             .setSmallIcon(R.drawable.ic_book)
             .setContentTitle(getString(R.string.g2_ayah_ref, NoorPlayer.surahName,
                                        NoorPlayer.currentAyah.localizedDigits()))
-            .setContentText(NoorPlayer.reciter.localizedName)
+            .setContentText(NoorPlayer.nowPlayingName)
             .setContentIntent(PendingIntent.getActivity(
                 this, 0, Intent(this, MainActivity::class.java),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))

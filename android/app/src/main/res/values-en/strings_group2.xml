@@ -59,6 +59,11 @@
     <string name="g2_cancel">Cancel</string>
     <string name="g2_choose_reciter">Choose a reciter</string>
     <string name="g2_search_reciters">Search reciters…</string>
+    <string name="g2_section_hafs">Hafs riwayah</string>
+    <string name="g2_section_warsh">Warsh riwayah</string>
+    <string name="g2_warsh_note">The mushaf text shown follows Hafs; the recitation follows Warsh.</string>
+    <string name="g2_translation_audio">Translation audio</string>
+    <string name="g2_translation_audio_note">Each ayah\'s translation is read after its Arabic recitation.</string>
 
     <!-- Hadith -->
     <string name="g2_hadith_title">Hadith</string>

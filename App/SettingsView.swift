@@ -17,6 +17,7 @@ struct SettingsView: View {
     @AppStorage("reader.fontSize") private var quranFontSize = 26.0
     @AppStorage("reader.mode") private var readerMode = "mushaf"
     @AppStorage("audio.reciter") private var reciterRaw = Reciter.alafasy.rawValue
+    @AppStorage(TranslationVoice.defaultsKey) private var translationVoiceRaw = TranslationVoice.none.rawValue
     @AppStorage("translation.id") private var translationId = "en.sahih"
     @State private var showReciterPicker = false
     @State private var showAdhanSounds = false
@@ -171,9 +172,17 @@ struct SettingsView: View {
                 }
                 .buttonStyle(.borderless)
                 .sheet(isPresented: $showReciterPicker) {
-                    ReciterPickerSheet(selection: $reciterRaw, isArabicUI: isArabicUI)
+                    ReciterPickerSheet(selection: $reciterRaw, translationSelection: $translationVoiceRaw,
+                                       isArabicUI: isArabicUI)
                         .environment(\.locale, locale)
                         .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                }
+                Picker(selection: $translationVoiceRaw) {
+                    ForEach(TranslationVoice.allCases) { voice in
+                        Text(verbatim: voice.displayName(arabicUI: isArabicUI)).tag(voice.rawValue)
+                    }
+                } label: {
+                    Text("Translation audio")
                 }
                 NavigationLink {
                     TajweedGuideView()

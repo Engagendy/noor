@@ -84,7 +84,7 @@ fun AudioPillView() {
             }
             Column {
                 Text(
-                    NoorPlayer.reciter.localizedName,
+                    NoorPlayer.nowPlayingName,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = NoorColor.inkPrimary,
