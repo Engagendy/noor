@@ -56,6 +56,16 @@ object Reciters {
         ReciterA("banna", "Mahmoud Ali Al-Banna", "محمود علي البنا", "🇪🇬", "mahmoud_ali_al_banna_32kbps"),
         ReciterA("matroud", "Abdullah Al-Matroud", "عبد الله المطرود", "🇸🇦", "Abdullah_Matroud_128kbps"),
         ReciterA("abdulKareem", "Muhammad Abdul-Kareem", "محمد عبد الكريم", "", "Muhammad_AbdulKareem_128kbps"),
+        ReciterA("husaryMuallim", "Al-Husary (Muallim)", "الحصري (المعلّم)", "🇪🇬", "Husary_Muallim_128kbps"),
+        ReciterA("mustafaIsmail", "Mustafa Ismail", "مصطفى إسماعيل", "🇪🇬", "Mustafa_Ismail_48kbps"),
+        ReciterA("khalidQahtani", "Khalid Al-Qahtani", "خالد القحطاني", "🇸🇦", "Khaalid_Abdullaah_al-Qahtaanee_192kbps"),
+        ReciterA("sahlYassin", "Sahl Yassin", "سهل ياسين", "🇸🇦", "Sahl_Yassin_128kbps"),
+        ReciterA("suesy", "Ali Hajjaj Al-Suesy", "علي حجاج السويسي", "🇪🇬", "Ali_Hajjaj_AlSuesy_128kbps"),
+        ReciterA("neana", "Ahmed Neana", "أحمد نعينع", "🇪🇬", "Ahmed_Neana_128kbps"),
+        ReciterA("alaqimy", "Akram Al-Alaqimy", "أكرم العلاقمي", "🇾🇪", "Akram_AlAlaqimy_128kbps"),
+        ReciterA("tunaiji", "Khalifa Al-Tunaiji", "خليفة الطنيجي", "🇦🇪", "khalefa_al_tunaiji_64kbps"),
+        ReciterA("akhdar", "Ibrahim Al-Akhdar", "إبراهيم الأخضر", "🇸🇦", "Ibrahim_Akhdar_32kbps"),
+        ReciterA("alili", "Aziz Alili", "عزيز عليلي", "🇧🇦", "aziz_alili_128kbps"),
     )
 
     fun byId(id: String): ReciterA = all.firstOrNull { it.id == id } ?: all[0]

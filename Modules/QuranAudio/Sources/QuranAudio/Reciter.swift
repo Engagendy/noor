@@ -34,6 +34,7 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
     case matroud
     case abdulKareem
 
+    case husaryMuallim, mustafaIsmail, khalidQahtani, sahlYassin, suesy, neana, alaqimy, tunaiji, akhdar, alili
     public var id: String { rawValue }
 
     public var englishName: String {
@@ -69,6 +70,16 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .banna: "Mahmoud Ali Al-Banna"
         case .matroud: "Abdullah Al-Matroud"
         case .abdulKareem: "Muhammad Abdul-Kareem"
+        case .husaryMuallim: "Al-Husary (Muallim)"
+        case .mustafaIsmail: "Mustafa Ismail"
+        case .khalidQahtani: "Khalid Al-Qahtani"
+        case .sahlYassin: "Sahl Yassin"
+        case .suesy: "Ali Hajjaj Al-Suesy"
+        case .neana: "Ahmed Neana"
+        case .alaqimy: "Akram Al-Alaqimy"
+        case .tunaiji: "Khalifa Al-Tunaiji"
+        case .akhdar: "Ibrahim Al-Akhdar"
+        case .alili: "Aziz Alili"
         }
     }
 
@@ -105,6 +116,16 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .banna: "محمود علي البنا"
         case .matroud: "عبد الله المطرود"
         case .abdulKareem: "محمد عبد الكريم"
+        case .husaryMuallim: "الحصري (المعلّم)"
+        case .mustafaIsmail: "مصطفى إسماعيل"
+        case .khalidQahtani: "خالد القحطاني"
+        case .sahlYassin: "سهل ياسين"
+        case .suesy: "علي حجاج السويسي"
+        case .neana: "أحمد نعينع"
+        case .alaqimy: "أكرم العلاقمي"
+        case .tunaiji: "خليفة الطنيجي"
+        case .akhdar: "إبراهيم الأخضر"
+        case .alili: "عزيز عليلي"
         }
     }
 
@@ -121,6 +142,16 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .faresAbbad: "🇾🇪"
         case .bukhatir: "🇦🇪"
         case .abdulKareem: ""
+        case .husaryMuallim: "🇪🇬"
+        case .mustafaIsmail: "🇪🇬"
+        case .khalidQahtani: "🇸🇦"
+        case .sahlYassin: "🇸🇦"
+        case .suesy: "🇪🇬"
+        case .neana: "🇪🇬"
+        case .alaqimy: "🇾🇪"
+        case .tunaiji: "🇦🇪"
+        case .akhdar: "🇸🇦"
+        case .alili: "🇧🇦"
         }
     }
 
@@ -185,6 +216,16 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
         case .banna: "mahmoud_ali_al_banna_32kbps"
         case .matroud: "Abdullah_Matroud_128kbps"
         case .abdulKareem: "Muhammad_AbdulKareem_128kbps"
+        case .husaryMuallim: "Husary_Muallim_128kbps"
+        case .mustafaIsmail: "Mustafa_Ismail_48kbps"
+        case .khalidQahtani: "Khaalid_Abdullaah_al-Qahtaanee_192kbps"
+        case .sahlYassin: "Sahl_Yassin_128kbps"
+        case .suesy: "Ali_Hajjaj_AlSuesy_128kbps"
+        case .neana: "Ahmed_Neana_128kbps"
+        case .alaqimy: "Akram_AlAlaqimy_128kbps"
+        case .tunaiji: "khalefa_al_tunaiji_64kbps"
+        case .akhdar: "Ibrahim_Akhdar_32kbps"
+        case .alili: "aziz_alili_128kbps"
         }
     }
 
