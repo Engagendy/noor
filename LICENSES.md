@@ -93,6 +93,18 @@ Attributions are displayed in Settings → About.
   github.com/rn0x/Adhkar-json (no explicit license; text itself is waqf).
 - **Attribution:** "Adhkar from Hisn al-Muslim by Sa'id al-Qahtani."
 
+### Athkar audio — Hisn al-Muslim read by Hamad Al-Duraihim (downloaded on demand)
+- **Source:** the audio edition of Hisn al-Muslim narrated by Sheikh Hamad
+  Al-Duraihim, published free for da'wah by IslamHouse and hisnmuslim.com,
+  and mirrored per dhikr/chapter in github.com/rn0x/Adhkar-json (the same
+  repository the athkar text comes from; its author states the files carry
+  no licence restriction). Fetched one file at a time from
+  `https://www.hisnmuslim.com/audio/ar/<file>` with the GitHub mirror as
+  fallback; cached on device after first play.
+- **License:** distributed free for use, as with the book (waqf); no formal
+  open licence — same standing as the bundled text.
+- **Attribution:** "Athkar audio read by Hamad Al-Duraihim, courtesy of IslamHouse / hisnmuslim.com."
+
 ## Software dependencies
 
 | Package | License | URL |
