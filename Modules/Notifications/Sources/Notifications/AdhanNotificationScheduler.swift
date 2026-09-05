@@ -9,6 +9,8 @@ public struct AdhanNotificationScheduler: Sendable {
 
     /// Requests authorization if needed. Returns whether notifications are allowed.
     public func requestAuthorization() async -> Bool {
+        // Screenshot/UI-test hook: never raise the system permission alert.
+        if ProcessInfo.processInfo.environment["NOOR_NO_PERMISSION_PROMPT"] == "1" { return false }
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
         switch settings.authorizationStatus {

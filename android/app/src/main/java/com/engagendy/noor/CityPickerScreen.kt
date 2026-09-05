@@ -169,7 +169,10 @@ fun CityPickerContent(
     Column(modifier.fillMaxSize()) {
         TextField(
             value = query,
-            onValueChange = { query = it; if (level != PickerLevel.Root) level = PickerLevel.Root },
+            // Typing never throws the user out of where they are: inside a
+            // country it filters that country, in the country list it filters
+            // countries, at the root it searches everywhere.
+            onValueChange = { query = it },
             placeholder = {
                 Text(stringResource(R.string.g1_search_city),
                      color = NoorColor.inkSecondary.copy(alpha = 0.7f))
@@ -204,8 +207,36 @@ fun CityPickerContent(
                 .focusRequester(focusRequester))
 
         val searching = query.isNotBlank()
+        val q = query.trim()
+        val qNorm = CityDb.normalize(q)
+        val qArabic = q.any { it in '\u0600'..'\u06FF' }
+        fun matches(c: City) = if (qArabic) c.nameArabic?.contains(q) == true
+            else CityDb.normalize(c.name).contains(qNorm)
         LazyColumn(Modifier.fillMaxSize().padding(top = 8.dp)) {
             when {
+                level is PickerLevel.InCountry -> {
+                    val country = (level as PickerLevel.InCountry).country
+                    item { PickerHeader(country.name, onBack = { level = PickerLevel.Countries }) }
+                    val shown = if (searching) countryCities.filter(::matches) else countryCities
+                    if (searching && shown.isEmpty()) {
+                        item {
+                            Text(stringResource(R.string.feat_no_results), fontSize = 14.sp,
+                                 color = NoorColor.inkSecondary,
+                                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp))
+                        }
+                    }
+                    cityRows(shown, selectedCityId, arabicUi, locale, onPick, showCountry = false)
+                }
+                level == PickerLevel.Countries -> {
+                    item { PickerHeader(stringResource(R.string.feat_countries),
+                                        onBack = { level = PickerLevel.Root }) }
+                    val shown = if (searching) countries.filter {
+                        CityDb.normalize(it.name).contains(qNorm) || it.name.contains(q)
+                    } else countries
+                    items(shown, key = { it.code }) { country ->
+                        NavPickerRow(country.name) { level = PickerLevel.InCountry(country) }
+                    }
+                }
                 searching -> {
                     if (results.isEmpty()) {
                         item {
@@ -215,19 +246,6 @@ fun CityPickerContent(
                         }
                     }
                     cityRows(results, selectedCityId, arabicUi, locale, onPick)
-                }
-                level is PickerLevel.InCountry -> {
-                    item { PickerHeader((level as PickerLevel.InCountry).country.name,
-                                        onBack = { level = PickerLevel.Countries }) }
-                    cityRows(countryCities, selectedCityId, arabicUi, locale, onPick,
-                             showCountry = false)
-                }
-                level == PickerLevel.Countries -> {
-                    item { PickerHeader(stringResource(R.string.feat_countries),
-                                        onBack = { level = PickerLevel.Root }) }
-                    items(countries, key = { it.code }) { country ->
-                        NavPickerRow(country.name) { level = PickerLevel.InCountry(country) }
-                    }
                 }
                 else -> {
                     if (nearby.isNotEmpty()) {

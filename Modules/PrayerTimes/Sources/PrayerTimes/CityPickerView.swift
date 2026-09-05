@@ -274,15 +274,28 @@ struct CityListView: View {
     let select: (City) -> Void
     let isSelected: (City) -> Bool
     @State private var cities: [City] = []
+    @State private var query = ""
     @Environment(\.locale) private var locale
+
+    /// Search stays available inside a country, filtering that country's cities.
+    private var shown: [City] {
+        let q = CityDatabase.fold(query)
+        guard !q.isEmpty else { return cities }
+        let arabic = CityDatabase.containsArabic(query)
+        return cities.filter {
+            arabic ? ($0.nameArabic?.contains(query.trimmingCharacters(in: .whitespaces)) ?? false)
+                   : CityDatabase.fold($0.name).contains(q)
+        }
+    }
 
     var body: some View {
         List {
-            CityRows(cities: cities, select: select, isSelected: isSelected)
+            CityRows(cities: shown, select: select, isSelected: isSelected)
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
+        .searchable(text: $query, prompt: Text("Search city"))
         .navigationTitle(Text(verbatim: country.localizedName(locale: locale)))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)

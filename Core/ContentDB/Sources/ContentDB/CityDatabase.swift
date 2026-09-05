@@ -126,7 +126,7 @@ public final class CityDatabase: Sendable {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    static func containsArabic(_ text: String) -> Bool {
+    public static func containsArabic(_ text: String) -> Bool {
         text.unicodeScalars.contains { (0x0600...0x06FF).contains($0.value) }
     }
 

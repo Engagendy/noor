@@ -26,6 +26,9 @@ public struct PrayerTimesView: View {
 
     @State private var dayOffset = 0
     @State private var showSettings = false
+    /// Screenshot/UI-test hook: NOOR_SHOW_CITY=1 presents the city picker.
+    @State private var showCityPicker =
+        ProcessInfo.processInfo.environment["NOOR_SHOW_CITY"] == "1"
     @State private var showNawafil = false
     @State private var showAdhanSounds = false
     @AppStorage("prayer.prealert") private var preAlertMinutes = 0
@@ -110,6 +113,11 @@ public struct PrayerTimesView: View {
             }
             .background(NoorColor.bgPrimary)
             .navigationTitle(Text("Prayer Times"))
+        }
+        .sheet(isPresented: $showCityPicker) {
+            NavigationStack { CityPickerView() }
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, appDirection)
         }
         .sheet(isPresented: $showSettings) {
             // Presentations don't inherit layout direction — re-apply.

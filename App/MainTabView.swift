@@ -22,6 +22,7 @@ struct MainTabView: View {
         case "quran": .quran
         case "prayer": .prayer
         case "athkar": .athkar
+        case "hadith": .hadith
         default: .today
     }
     @State private var player = QuranAudioPlayer()
