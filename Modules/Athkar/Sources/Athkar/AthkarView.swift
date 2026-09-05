@@ -165,14 +165,27 @@ struct DhikrListView: View {
     @State private var progress: [String: Int] = [:]
     @State private var sharing: Dhikr?
     @Environment(\.locale) private var locale
+    private let audio = AthkarAudioPlayer.shared
+
+    /// Player id for the whole-chapter recording (distinct from any dhikr id).
+    private var chapterAudioId: String { "chapter:" + category.category }
+    private var isChapterActive: Bool { audio.nowPlaying == chapterAudioId }
 
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
+                if let chapterFile = category.chapterAudio {
+                    chapterPill(file: chapterFile)
+                }
                 ForEach(category.items) { dhikr in
                     DhikrCard(
                         dhikr: dhikr,
                         done: progress[dhikr.id] ?? 0,
+                        audioState: dhikr.audio == nil ? nil : DhikrCard.AudioState(
+                            isActive: audio.nowPlaying == dhikr.id,
+                            isPlaying: audio.nowPlaying == dhikr.id && audio.isPlaying,
+                            isLoading: audio.nowPlaying == dhikr.id && audio.isLoading,
+                            failed: audio.failed == dhikr.id),
                         onTap: {
                             let current = progress[dhikr.id] ?? 0
                             if current < dhikr.count {
@@ -186,11 +199,16 @@ struct DhikrListView: View {
                                 #endif
                             }
                         },
-                        onShare: { sharing = dhikr })
+                        onShare: { sharing = dhikr },
+                        onPlay: dhikr.audio.map { file in
+                            { audio.play(file: file, id: dhikr.id) }
+                        })
                 }
             }
             .padding(16)
         }
+        // Leaving the chapter silences it — no voice from an unseen screen.
+        .onDisappear { audio.stop() }
         .sheet(item: $sharing) { dhikr in
             NoorShareSheet(
                 arabicText: dhikr.text,
@@ -217,15 +235,74 @@ struct DhikrListView: View {
             }
         }
     }
+
+    /// "Play chapter" pill: one recording of the whole chapter; toggles to
+    /// pause while it plays, spinner while the file downloads.
+    private func chapterPill(file: String) -> some View {
+        let playing = isChapterActive && audio.isPlaying
+        let loading = isChapterActive && audio.isLoading
+        return VStack(spacing: 6) {
+            Button {
+                audio.play(file: file, id: chapterAudioId)
+            } label: {
+                HStack(spacing: 8) {
+                    if loading {
+                        ProgressView()
+                            .tint(NoorColor.bgPrimary)
+                            .frame(width: 16, height: 16)
+                    } else {
+                        Image(systemName: playing ? "pause.fill" : "play.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    (playing ? Text("Pause") : Text("Play chapter"))
+                        .font(.system(size: 15, weight: .semibold))
+                }
+                .foregroundStyle(NoorColor.bgPrimary)
+                .padding(.horizontal, 18)
+                .frame(minHeight: 44)
+                .background(Capsule().fill(NoorColor.accentPrimary))
+                .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(loading)
+            .accessibilityLabel(playing ? Text("Pause") : Text("Play chapter"))
+            if isChapterActive, audio.progress > 0 {
+                ProgressView(value: audio.progress)
+                    .tint(NoorColor.accentPrimary)
+                    .frame(maxWidth: 220)
+                    .accessibilityHidden(true)
+            }
+            if audio.failed == chapterAudioId {
+                Text("Connect once to download this dhikr")
+                    .font(NoorFont.caption)
+                    .foregroundStyle(NoorColor.inkSecondary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.bottom, 4)
+        .animation(.easeInOut(duration: 0.2), value: playing)
+    }
 }
 
 struct DhikrCard: View {
+    /// Playback state of this card's own recording (nil → no recording).
+    struct AudioState: Equatable {
+        var isActive = false
+        var isPlaying = false
+        var isLoading = false
+        var failed = false
+    }
+
     let dhikr: Dhikr
     let done: Int
+    var audioState: AudioState?
     let onTap: () -> Void
     var onShare: (() -> Void)?
+    /// Play/pause this dhikr's recording; nil hides the button.
+    var onPlay: (() -> Void)?
 
     private var isComplete: Bool { done >= dhikr.count }
+    private var isReciting: Bool { audioState?.isActive ?? false }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -267,26 +344,62 @@ struct DhikrCard: View {
                     .buttonStyle(.borderless)
                     .accessibilityLabel("Share")
                 }
+                if let onPlay, let audioState {
+                    playButton(audioState, action: onPlay)
+                }
             }
             .environment(\.layoutDirection, .leftToRight)
+            if audioState?.failed == true {
+                Text("Connect once to download this dhikr")
+                    .font(NoorFont.caption)
+                    .foregroundStyle(NoorColor.inkSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(isComplete ? NoorColor.stateReciting : NoorColor.bgElevated)
+                .fill(isComplete || isReciting ? NoorColor.stateReciting : NoorColor.bgElevated)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(isComplete ? NoorColor.accentPrimary.opacity(0.4) : NoorColor.inkPrimary.opacity(0.06),
+                .stroke(isComplete || isReciting ? NoorColor.accentPrimary.opacity(0.4) : NoorColor.inkPrimary.opacity(0.06),
                         lineWidth: 1)
         )
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
         .animation(.easeInOut(duration: 0.2), value: done)
+        .animation(.easeInOut(duration: 0.2), value: isReciting)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(dhikr.text)
         .accessibilityValue("\(done) of \(dhikr.count)")
         .accessibilityAddTraits(.isButton)
+    }
+
+    /// Small round play/pause control; spinner while the recording downloads.
+    /// Sits inside the card but is its own button so it never counts a tap.
+    private func playButton(_ state: AudioState, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            ZStack {
+                Circle()
+                    .fill(state.isActive ? NoorColor.accentPrimary : NoorColor.accentPrimary.opacity(0.12))
+                    .frame(width: 32, height: 32)
+                if state.isLoading {
+                    ProgressView()
+                        .tint(NoorColor.bgPrimary)
+                        .scaleEffect(0.7)
+                } else {
+                    Image(systemName: state.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(state.isActive ? NoorColor.bgPrimary : NoorColor.accentPrimary)
+                }
+            }
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .disabled(state.isLoading)
+        .accessibilityLabel(state.isPlaying ? Text("Pause") : Text("Play"))
     }
 }
 

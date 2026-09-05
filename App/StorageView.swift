@@ -40,6 +40,7 @@ struct StorageView: View {
               support.appendingPathComponent("timings")]),
             ("Tafsir packs", "Offline tafsir texts", [support.appendingPathComponent("tafsir")]),
             ("Hadith packs", "Sahih al-Bukhari and Muslim", [support.appendingPathComponent("hadith")]),
+            ("Athkar audio", "Hisn al-Muslim recordings", [support.appendingPathComponent("athkar-audio")]),
         ]
         return candidates.map { title, subtitle, urls in
             Item(title: title, subtitle: subtitle,

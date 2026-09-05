@@ -159,6 +159,16 @@ struct MainTabView: View {
             }
                 .tabItem { Label("Athkar", systemImage: "sparkles") }
                 .tag(Tab.athkar)
+                // Never two voices: athkar recordings pause the reciter, and
+                // starting the reciter silences any athkar recording.
+                .onAppear {
+                    AthkarAudioPlayer.shared.pauseOthers = { [player] in
+                        if player.isPlaying { player.togglePlayPause() }
+                    }
+                }
+                .onChange(of: player.isPlaying) { _, playing in
+                    if playing { AthkarAudioPlayer.shared.stop() }
+                }
 
             NavigationStack {
                 HadithTab()

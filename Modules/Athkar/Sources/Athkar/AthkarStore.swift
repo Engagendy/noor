@@ -7,11 +7,15 @@ public struct DhikrCategory: Codable, Identifiable, Hashable, Sendable {
     /// English chapter title for the English interface; nil on rows without one.
     public let categoryEn: String?
     public let items: [Dhikr]
+    /// Recording of the whole chapter (Hamad Al-Duraihim), file name only —
+    /// resolved by `AthkarAudioStore`. Nil when no recording exists.
+    public let chapterAudio: String?
     public var id: String { category }
 
     enum CodingKeys: String, CodingKey {
         case category, items
         case categoryEn = "category_en"
+        case chapterAudio = "chapter_audio"
     }
 
     public func displayTitle(arabicUI: Bool) -> String {
@@ -23,6 +27,8 @@ public struct Dhikr: Codable, Hashable, Sendable, Identifiable {
     public let text: String
     /// How many times this dhikr is repeated (e.g. 3, 33, 100).
     public let count: Int
+    /// Recording of this dhikr alone, file name only (see `chapterAudio`).
+    public let audio: String?
 
     public var id: String { text }
 }

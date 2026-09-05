@@ -3516,6 +3516,74 @@
           }
         }
       }
+    },
+    "Play chapter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play chapter"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تشغيل الفصل"
+          }
+        }
+      }
+    },
+    "Connect once to download this dhikr": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect once to download this dhikr"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اتصل بالإنترنت مرة واحدة لتنزيل هذا الذكر"
+          }
+        }
+      }
+    },
+    "Athkar audio": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Athkar audio"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صوتيات الأذكار"
+          }
+        }
+      }
+    },
+    "Hisn al-Muslim recordings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hisn al-Muslim recordings"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تسجيلات حصن المسلم"
+          }
+        }
+      }
     }
   },
   "version": "1.1"
