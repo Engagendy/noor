@@ -125,4 +125,5 @@ The About row renders `versionName (versionCode)`, e.g. `1.0.1 (6)`.
   channel, inexact Doze-exempt alarm, tap opens the athkar), and the offline
   GeoNames city picker (34k cities, search-first, browse by country;
   `prayer.cityId` + cached fields, legacy `prayer.city` still honoured).
-- vc9 (1.0.3) — two Makkah adhan recordings (Masjid al-Haram, CC BY 3.0, see LICENSES.md); adhan on the ALARM stream so it sounds through silent mode; Settings sound sheet previews; Madani order under English; direction-aware arrows.
+- vc9 (1.0.3) — uploaded.  two Makkah adhan recordings (Masjid al-Haram, CC BY 3.0, see LICENSES.md); adhan on the ALARM stream so it sounds through silent mode; Settings sound sheet previews; Madani order under English; direction-aware arrows.
+- vc10 (1.0.4) — share an ayah as a video (card + recitation + gold equaliser), recorded athkar audio per dhikr and per chapter (Hisn al-Muslim, Hamad Al-Duraihim, cached on demand), Share Noor poster from Settings, after-salah athkar reminder, offline city picker (34k cities, search within a country), Madani glyph clipping fix, direction-aware arrows.

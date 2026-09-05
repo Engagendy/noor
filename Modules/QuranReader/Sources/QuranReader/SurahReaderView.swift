@@ -247,6 +247,14 @@ public struct SurahReaderView: View {
                 .environment(\.locale, locale)
                 .environment(\.layoutDirection, appDirection)
         }
+        // Screenshot/UI-test hook: NOOR_SHARE_AYAH=<n> opens the share sheet
+        // for that ayah once the surah has loaded.
+        .task {
+            guard let n = ProcessInfo.processInfo.environment["NOOR_SHARE_AYAH"].flatMap(Int.init) else { return }
+            for _ in 0..<40 where viewModel.verses.isEmpty { try? await Task.sleep(for: .milliseconds(100)) }
+            try? await Task.sleep(for: .seconds(1))
+            shareVerse = viewModel.verses.first { $0.ayah == n }
+        }
         .sheet(item: $shareVerse) { verse in
             ShareAyahSheet(
                 verse: verse,
