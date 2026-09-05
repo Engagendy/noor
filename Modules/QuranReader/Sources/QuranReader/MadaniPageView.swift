@@ -63,23 +63,26 @@ struct MadaniPageView: View {
             let justify = total * scale >= width * 0.55
             let slack = max(target - total * scale, 0)
             let gap = justify && words.count > 1 ? slack / CGFloat(words.count - 1) : 0
-            HStack(spacing: 0) {
-                ForEach(Array(words.enumerated()), id: \.offset) { index, word in
-                    if index > 0 && gap > 0 {
-                        Spacer().frame(width: gap)
-                    }
-                    Text(verbatim: word)
-                        // fixedSize: see the fallback above — Dynamic Type
-                        // must not re-scale what we just measured and fitted.
-                        .font(.custom(fontName, fixedSize: fontSize * scale))
-                        .foregroundStyle(NoorColor.inkPrimary)
-                        .lineLimit(1)
-                        .fixedSize()
+            // Drawn as glyph outlines, not Text views: a QCF glyph can reach
+            // past its own advance (the final letter of الرحمن on page 1), and
+            // both Text and its Compose counterpart clip that overhang.
+            // Outlines fill wherever the ink is, and Dynamic Type never
+            // enters into it.
+            let outlines = GlyphMetrics.outlines(words, page: page, size: fontSize)
+            let metrics = GlyphMetrics.vertical(page: page, size: fontSize)
+            Canvas { context, canvasSize in
+                let blockWidth = total * scale + gap * CGFloat(max(words.count - 1, 0))
+                var x = (canvasSize.width + blockWidth) / 2           // right edge, RTL
+                let baseline = (canvasSize.height - (metrics.ascent + metrics.descent) * scale) / 2
+                    + metrics.ascent * scale
+                for word in outlines {
+                    x -= word.advance * scale
+                    // Font units are y-up; the canvas is y-down.
+                    let transform = CGAffineTransform(a: scale, b: 0, c: 0, d: -scale, tx: x, ty: baseline)
+                    context.fill(Path(word.path).applying(transform), with: .color(NoorColor.inkPrimary))
+                    x -= gap
                 }
             }
-            // Words arrive in reading order, so the first must sit at the
-            // right edge whatever the interface language.
-            .environment(\.layoutDirection, .rightToLeft)
         }
     }
 
@@ -229,29 +232,65 @@ struct MadaniPageView: View {
 
 }
 
-/// Word advances, measured once per line/size and kept.
+/// Word glyph outlines and advances, built once per word/size and kept.
 ///
 /// The reader re-renders on every animation frame (page turns, the recitation
-/// highlight), and measuring every word with CoreText each frame would show.
+/// highlight); building outlines with CoreText each frame would show.
 @MainActor
 private enum GlyphMetrics {
-    private static var cache: [String: CGFloat] = [:]
+    struct Outline {
+        let path: CGPath
+        let advance: CGFloat
+    }
+    private static var cache: [String: Outline] = [:]
 
     /// Total advance of a line's words, or 0 when the page font is not
     /// available yet — never a system-font substitute's width, which would be
     /// a fraction of the truth and defeat the whole point of measuring.
     static func total(_ words: [String], page: Int, size: CGFloat) -> CGFloat {
-        let key = "\(page)|\(Int(size * 10))|\(words.count)|\(words.first ?? "")"
-        if let hit = cache[key] { return hit }
-        guard let font = PageFontStore.measurementFont(page: page, size: size) else { return 0 }
-        let attributes = [kCTFontAttributeName as NSAttributedString.Key: font]
-        let measured = words.reduce(CGFloat.zero) { running, word in
-            let line = CTLineCreateWithAttributedString(
-                NSAttributedString(string: word, attributes: attributes))
-            return running + CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+        outlines(words, page: page, size: size).reduce(0) { $0 + $1.advance }
+    }
+
+    /// One outline per word, in reading order; empty if the font is missing.
+    static func outlines(_ words: [String], page: Int, size: CGFloat) -> [Outline] {
+        guard let font = PageFontStore.measurementFont(page: page, size: size) else { return [] }
+        let fontKey = "\(page)|\(Int(size * 10))|\(PageFontStore.variant)"
+        return words.map { word in
+            let key = fontKey + "|" + word
+            if let hit = cache[key] { return hit }
+            let built = build(word, font: font)
+            cache[key] = built
+            return built
         }
-        // Only a real measurement is worth keeping.
-        if measured > 0 { cache[key] = measured }
-        return measured
+    }
+
+    /// Ascent and descent of the page font at `size`, for baseline placement.
+    static func vertical(page: Int, size: CGFloat) -> (ascent: CGFloat, descent: CGFloat) {
+        guard let font = PageFontStore.measurementFont(page: page, size: size) else { return (size * 0.8, size * 0.2) }
+        return (CTFontGetAscent(font), CTFontGetDescent(font))
+    }
+
+    private static func build(_ word: String, font: CTFont) -> Outline {
+        let attributed = NSAttributedString(string: word, attributes: [kCTFontAttributeName as NSAttributedString.Key: font])
+        let line = CTLineCreateWithAttributedString(attributed)
+        let advance = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+        let path = CGMutablePath()
+        for run in (CTLineGetGlyphRuns(line) as? [CTRun]) ?? [] {
+            let count = CTRunGetGlyphCount(run)
+            guard count > 0 else { continue }
+            let attrs = CTRunGetAttributes(run) as NSDictionary
+            let runFont = (attrs[kCTFontAttributeName as String] as! CTFont)
+            var glyphs = [CGGlyph](repeating: 0, count: count)
+            var positions = [CGPoint](repeating: .zero, count: count)
+            CTRunGetGlyphs(run, CFRange(location: 0, length: 0), &glyphs)
+            CTRunGetPositions(run, CFRange(location: 0, length: 0), &positions)
+            for i in 0..<count {
+                var t = CGAffineTransform(translationX: positions[i].x, y: positions[i].y)
+                if let glyphPath = CTFontCreatePathForGlyph(runFont, glyphs[i], &t) {
+                    path.addPath(glyphPath)
+                }
+            }
+        }
+        return Outline(path: path, advance: advance)
     }
 }
