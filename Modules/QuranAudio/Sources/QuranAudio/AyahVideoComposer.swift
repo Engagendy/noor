@@ -407,7 +407,9 @@ public extension AyahVideoComposer {
     static func shareOption(surah: Int, ayah: Int, arabicUI: Bool) -> NoorShareVideoOption {
         let reciter = Reciter(rawValue: UserDefaults.standard.string(forKey: "audio.reciter") ?? "") ?? .alafasy
         let name = reciter.displayName(arabicUI: arabicUI)
-        let caption = String(localized: "with \(name)'s recitation")
+        // Not String(localized:): it resolves in the PROCESS language, while the
+        // app switches language through the environment — pick by arabicUI.
+        let caption = arabicUI ? "بصوت \(name)" : "with \(name)'s recitation"
         return NoorShareVideoOption(caption: caption) { card in
             guard let audio = await AudioCache.ensureLocal(reciter: reciter, surah: surah, ayah: ayah)
             else { throw AyahVideoError.audioUnavailable }
