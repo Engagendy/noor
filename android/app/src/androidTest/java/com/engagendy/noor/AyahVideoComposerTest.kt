@@ -26,7 +26,7 @@ class AyahVideoComposerTest {
 
     private suspend fun checkComposer() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val mp3 = File(context.cacheDir, "test-audio.mp3")
+        val mp3 = File(context.cacheDir.apply { mkdirs() }, "test-audio.mp3")
         context.resources.openRawResource(R.raw.adhan_azeez).use { input ->
             mp3.outputStream().use { input.copyTo(it) }
         }
@@ -56,8 +56,30 @@ class AyahVideoComposerTest {
         val extractor = MediaExtractor().apply { setDataSource(out.path) }
         val mimes = (0 until extractor.trackCount)
             .map { extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)!! }.sorted()
-        extractor.release()
         assertEquals(listOf("audio/mp4a-latm", "video/avc"), mimes)
+        // 24 fps: one sample per frame on the video track.
+        val videoTrack = (0 until extractor.trackCount).first {
+            extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME) == "video/avc"
+        }
+        extractor.selectTrack(videoTrack)
+        var frames = 0
+        while (extractor.sampleTrackIndex >= 0) { frames++; extractor.advance() }
+        extractor.release()
+        val expectedFrames = Math.ceil((audioMs + 500) * AyahVideoComposer.FPS / 1000.0).toInt()
+        assertEquals(24, AyahVideoComposer.FPS)
+        assertTrue("frames $frames vs expected $expectedFrames", abs(frames - expectedFrames) <= 2)
+
+        // The equaliser moves: a mid-video frame differs from the first one.
+        val frameReader = MediaMetadataRetriever().apply { setDataSource(out.path) }
+        val first = frameReader.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST)!!
+        val middle = frameReader.getFrameAtTime(duration * 500, MediaMetadataRetriever.OPTION_CLOSEST)!!
+        frameReader.release()
+        assertEquals(1080, first.width)
+        assertTrue("bars did not move between frame 0 and mid-video", !first.sameAs(middle))
+        // Left behind for eyeballing (adb run-as … cat cache/test-mid-frame.png).
+        File(context.cacheDir, "test-mid-frame.png").outputStream().use {
+            middle.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
         out.delete()
     }
 }

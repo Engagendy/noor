@@ -18,7 +18,14 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.util.ArrayDeque
 import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.exp
+import kotlin.math.floor
+import kotlin.math.log10
 import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 /// Why a video could not be produced — surfaced as one short toast.
 class AyahVideoException(val kind: Kind, message: String, cause: Throwable? = null) :
@@ -26,35 +33,56 @@ class AyahVideoException(val kind: Kind, message: String, cause: Throwable? = nu
     enum class Kind { AUDIO_UNREADABLE, CODEC_UNAVAILABLE, ENCODE_FAILED, MUX_FAILED }
 }
 
-/// "Share as video": the ayah share card held still on paper for the
-/// length of its recitation, muxed into a 1080×1920 H.264 + AAC MP4.
+/// "Share as video": the ayah share card on paper with a gold equaliser
+/// under it that moves with the reciter's voice, muxed into a 1080×1920
+/// H.264 + AAC MP4 — 1:1 with the iOS AyahVideoComposer (numbers mirrored
+/// from Modules/QuranAudio/Sources/QuranAudio/AyahVideoComposer.swift).
 /// Platform codecs only (MediaCodec / MediaExtractor / MediaMuxer) — no
 /// ffmpeg, no third-party code. Runs entirely off-main.
 ///
-/// Assembly: the card is drawn once onto a portrait paper frame, converted
-/// once to the encoder's flexible YUV420 layout, and that same frame is
-/// queued at 15 fps with rising timestamps for (audio duration + 0.5 s).
-/// The MP3 is decoded to PCM and re-encoded to AAC first (buffered, a few
-/// hundred KB), so the muxer can start as soon as the video encoder
-/// reports its output format, with audio samples interleaved by timestamp.
+/// Assembly: the MP3 is decoded to PCM, re-encoded to AAC (buffered, a few
+/// hundred KB) and reduced to a per-frame loudness envelope on the way. The
+/// paper + card base is drawn once and converted once to YUV420; per frame
+/// only the bar-row strip is redrawn (small ARGB bitmap) and its rows
+/// re-converted in place before the frame is queued at 24 fps for (audio
+/// duration + 0.5 s). The muxer starts when the video encoder reports its
+/// output format, with audio samples interleaved by timestamp.
 object AyahVideoComposer {
 
     const val WIDTH = 1080
     const val HEIGHT = 1920
-    const val FPS = 15
+    const val FPS = 24
     private const val VIDEO_BIT_RATE = 4_000_000
     private const val AUDIO_BIT_RATE = 128_000
     private const val I_FRAME_INTERVAL_S = 1
     private const val TAIL_US = 500_000L
-    private const val MARGIN = 72f
+    /// Horizontal breathing room on each side of the card (fraction of width).
+    private const val MARGIN_FRACTION = 0.06f
     private val paper = Color.parseColor("#FAF6EE")
+    /// Equaliser geometry — iOS barCount / barAreaHeightFraction /
+    /// barRowWidthFraction / barGapAfterCardFraction, gold = NoorColor.accentGold.
+    private const val BAR_COUNT = 25
+    private const val BAR_AREA_HEIGHT_FRACTION = 0.075f
+    private const val BAR_ROW_WIDTH_FRACTION = 0.62f
+    private const val BAR_GAP_AFTER_CARD_FRACTION = 0.03f
+    private val gold = Color.parseColor("#B98A2F")
     private const val TIMEOUT_US = 10_000L
     /// Consecutive empty dequeues before we give up on a stalled codec (~10 s).
     private const val MAX_STALLS = 1_000
     private const val STALE_SHARE_MS = 60 * 60 * 1000L
 
     private class EncodedSample(val data: ByteArray, val presentationUs: Long, val flags: Int)
-    private class AudioResult(val format: MediaFormat, val samples: List<EncodedSample>, val durationUs: Long)
+    private class AudioResult(
+        val format: MediaFormat,
+        val samples: List<EncodedSample>,
+        val durationUs: Long,
+        /// Per-video-frame loudness 0…1 (see [loudnessEnvelope]).
+        val envelope: FloatArray,
+    )
+
+    /// Where the card and the bar row sit: the card scaled to fit the width
+    /// (minus margins) and card + gap + bar area centred vertically as one block.
+    private class Layout(val card: RectF, val barArea: RectF)
 
     /// Produces the MP4 in cacheDir/shared (fresh name each time, old
     /// share files pruned like ShareCard). Throws [AyahVideoException].
@@ -67,14 +95,15 @@ object AyahVideoComposer {
             dir.listFiles()?.forEach { if (it.lastModified() < cutoff) it.delete() }
             val out = File(dir, "noor-share-%d.mp4".format(Locale.ROOT, System.currentTimeMillis()))
 
-            val frame = renderFrame(card)
-            val yuv = toYuv420(frame)
-            frame.recycle()
+            val layout = layout(card.width, card.height)
+            val base = renderBase(card, layout)
+            val yuv = toYuv420(base)
+            base.recycle()
             check()
             val audioResult = transcodeAudio(audio, check)
             check()
             try {
-                encodeAndMux(yuv, audioResult, out, check)
+                encodeAndMux(yuv, layout, audioResult, out, check)
             } catch (e: AyahVideoException) {
                 out.delete(); throw e
             } catch (e: Throwable) {
@@ -85,57 +114,137 @@ object AyahVideoComposer {
 
     // MARK: - frame
 
-    /// Card scaled to the frame width (minus margins), centred on paper.
-    private fun renderFrame(card: Bitmap): Bitmap {
+    private fun layout(cardW: Int, cardH: Int): Layout {
+        val margin = WIDTH * MARGIN_FRACTION
+        val barAreaH = HEIGHT * BAR_AREA_HEIGHT_FRACTION
+        val gap = HEIGHT * BAR_GAP_AFTER_CARD_FRACTION
+        val maxW = WIDTH - 2 * margin
+        val maxH = HEIGHT - 2 * margin - barAreaH - gap
+        val scale = min(maxW / cardW, maxH / cardH)
+        val w = cardW * scale
+        val h = cardH * scale
+        val blockH = h + gap + barAreaH
+        val blockTop = (HEIGHT - blockH) / 2f
+        val cardLeft = (WIDTH - w) / 2f
+        val rowW = WIDTH * BAR_ROW_WIDTH_FRACTION
+        val rowLeft = (WIDTH - rowW) / 2f
+        val barTop = blockTop + h + gap
+        return Layout(
+            card = RectF(cardLeft, blockTop, cardLeft + w, blockTop + h),
+            barArea = RectF(rowLeft, barTop, rowLeft + rowW, barTop + barAreaH))
+    }
+
+    /// Paper + the card; the bar area below it stays plain paper here.
+    private fun renderBase(card: Bitmap, layout: Layout): Bitmap {
         val frame = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(frame)
         canvas.drawColor(paper)
-        val maxW = WIDTH - 2 * MARGIN
-        val maxH = HEIGHT - 2 * MARGIN
-        val scale = min(maxW / card.width, maxH / card.height)
-        val w = card.width * scale
-        val h = card.height * scale
-        val left = (WIDTH - w) / 2f
-        val top = (HEIGHT - h) / 2f
-        canvas.drawBitmap(card, null, RectF(left, top, left + w, top + h),
+        canvas.drawBitmap(card, null, layout.card,
             Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG))
         return frame
     }
 
+    /// Bar heights for one frame (iOS barLevels): the loudness at this frame
+    /// rippling outwards from the centre (outer bars lag a few frames) under
+    /// a bell-shaped cap, never fully flat.
+    private fun barLevels(envelope: FloatArray, frameIndex: Int, out: FloatArray) {
+        val centre = (BAR_COUNT - 1) / 2.0
+        for (i in 0 until BAR_COUNT) {
+            val distance = abs(i - centre)
+            val lagged = maxOf(0, frameIndex - (distance * 1.5).toInt())
+            val level = if (envelope.isEmpty()) 0.0
+                else envelope[min(lagged, envelope.size - 1)].toDouble()
+            val bell = exp(-((distance / (centre * 0.75)).pow(2)))
+            val floor = 0.10
+            out[i] = (floor + (1 - floor) * level * (0.35 + 0.65 * bell)).toFloat()
+        }
+    }
+
+    /// The strip of the frame the bars live in, even-aligned so it maps onto
+    /// whole 2×2 chroma blocks. Redrawn per frame on the paper colour.
+    private class BarRegion(val x: Int, val y: Int, val w: Int, val h: Int) {
+        val bitmap: Bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val pixels = IntArray(w * h)
+        val levels = FloatArray(BAR_COUNT)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gold }
+        val rect = RectF()
+    }
+
+    private fun barRegion(layout: Layout): BarRegion {
+        val a = layout.barArea
+        val x0 = (floor(a.left).toInt()).coerceAtLeast(0) and 1.inv()
+        val y0 = (floor(a.top).toInt()).coerceAtLeast(0) and 1.inv()
+        val x1 = ((ceil(a.right).toInt() + 1) and 1.inv()).coerceAtMost(WIDTH)
+        val y1 = ((ceil(a.bottom).toInt() + 1) and 1.inv()).coerceAtMost(HEIGHT)
+        return BarRegion(x0, y0, x1 - x0, y1 - y0)
+    }
+
+    /// Draws this frame's bars into the region bitmap and re-converts just
+    /// those rows into the base YUV planes (in place: the region is plain
+    /// paper in the base, so nothing underneath needs restoring).
+    private fun drawBars(region: BarRegion, layout: Layout, envelope: FloatArray, frameIndex: Int, yuv: Yuv) {
+        val area = layout.barArea
+        barLevels(envelope, frameIndex, region.levels)
+        region.canvas.drawColor(paper)
+        val slot = area.width() / BAR_COUNT
+        val barW = slot * 0.55f
+        val centre = (BAR_COUNT - 1) / 2f
+        for (i in 0 until BAR_COUNT) {
+            val h = maxOf(barW, area.height() * region.levels[i])
+            val x = area.left + slot * i + (slot - barW) / 2 - region.x
+            val y = area.centerY() - h / 2 - region.y
+            val edge = 1 - abs(i - centre) / centre
+            region.paint.alpha = ((0.35f + 0.65f * edge) * 255).toInt().coerceIn(0, 255)
+            region.rect.set(x, y, x + barW, y + h)
+            region.canvas.drawRoundRect(region.rect, barW / 2, barW / 2, region.paint)
+        }
+        region.bitmap.getPixels(region.pixels, 0, region.w, 0, 0, region.w, region.h)
+        convertRegion(region.pixels, region.w, region.h, yuv, region.x, region.y)
+    }
+
     private class Yuv(val y: ByteArray, val u: ByteArray, val v: ByteArray)
 
-    /// BT.601 limited-range planar conversion, chroma averaged over 2×2.
+    /// BT.601 limited-range planar conversion of the whole frame.
     private fun toYuv420(bitmap: Bitmap): Yuv {
         val w = bitmap.width
         val h = bitmap.height
         val argb = IntArray(w * h)
         bitmap.getPixels(argb, 0, w, 0, 0, w, h)
-        val y = ByteArray(w * h)
-        val u = ByteArray(w * h / 4)
-        val v = ByteArray(w * h / 4)
+        val yuv = Yuv(ByteArray(w * h), ByteArray(w * h / 4), ByteArray(w * h / 4))
+        convertRegion(argb, w, h, yuv, 0, 0)
+        return yuv
+    }
+
+    /// Converts a w×h ARGB block into the frame-sized planes at (dstX, dstY);
+    /// all four must be even. Chroma is averaged over each 2×2 block.
+    private fun convertRegion(argb: IntArray, w: Int, h: Int, yuv: Yuv, dstX: Int, dstY: Int) {
+        val fw = WIDTH
+        val cw = fw / 2
         for (row in 0 until h) {
+            val dstRow = (dstY + row) * fw + dstX
+            val srcRow = row * w
             for (col in 0 until w) {
-                val p = argb[row * w + col]
+                val p = argb[srcRow + col]
                 val r = (p shr 16) and 0xFF
                 val g = (p shr 8) and 0xFF
                 val b = p and 0xFF
-                y[row * w + col] = ((66 * r + 129 * g + 25 * b + 128) shr 8).plus(16).coerceIn(16, 235).toByte()
+                yuv.y[dstRow + col] = ((66 * r + 129 * g + 25 * b + 128) shr 8).plus(16).coerceIn(16, 235).toByte()
             }
         }
-        val cw = w / 2
         for (row in 0 until h / 2) {
-            for (col in 0 until cw) {
+            val dstRow = (dstY / 2 + row) * cw + dstX / 2
+            for (col in 0 until w / 2) {
                 var rs = 0; var gs = 0; var bs = 0
                 for (dy in 0..1) for (dx in 0..1) {
                     val p = argb[(row * 2 + dy) * w + col * 2 + dx]
                     rs += (p shr 16) and 0xFF; gs += (p shr 8) and 0xFF; bs += p and 0xFF
                 }
                 val r = rs / 4; val g = gs / 4; val b = bs / 4
-                u[row * cw + col] = ((-38 * r - 74 * g + 112 * b + 128) shr 8).plus(128).coerceIn(16, 240).toByte()
-                v[row * cw + col] = ((112 * r - 94 * g - 18 * b + 128) shr 8).plus(128).coerceIn(16, 240).toByte()
+                yuv.u[dstRow + col] = ((-38 * r - 74 * g + 112 * b + 128) shr 8).plus(128).coerceIn(16, 240).toByte()
+                yuv.v[dstRow + col] = ((112 * r - 94 * g - 18 * b + 128) shr 8).plus(128).coerceIn(16, 240).toByte()
             }
         }
-        return Yuv(y, u, v)
     }
 
     /// Copies the planes into the codec's Image honouring row/pixel strides
@@ -222,6 +331,10 @@ object AyahVideoComposer {
             var encodedFormat: MediaFormat? = null
             val samples = ArrayList<EncodedSample>()
             var stalls = 0
+            // Loudness accumulators, one bucket per video frame (grown as needed).
+            var sums = DoubleArray(256)
+            var counts = IntArray(256)
+            var sampleIndex = 0L
 
             fun startEncoder(outputFormat: MediaFormat) {
                 if (encoder != null) return
@@ -277,6 +390,26 @@ object AyahVideoComposer {
                                 val chunk = ByteArray(info.size)
                                 buf.get(chunk)
                                 pcm.addLast(chunk)
+                                // Mono-averaged squared samples into this frame's bucket.
+                                val window = maxOf(1, sampleRate / FPS)
+                                val frameBytes = 2 * channels
+                                var off = 0
+                                while (off + frameBytes <= chunk.size) {
+                                    var acc = 0
+                                    for (c in 0 until channels) {
+                                        val lo = chunk[off + 2 * c].toInt() and 0xFF
+                                        val hi = chunk[off + 2 * c + 1].toInt()
+                                        acc += (hi shl 8) or lo
+                                    }
+                                    val v = acc.toDouble() / channels / 32768.0
+                                    val frame = (sampleIndex / window).toInt()
+                                    if (frame >= sums.size) {
+                                        sums = sums.copyOf(sums.size * 2); counts = counts.copyOf(counts.size * 2)
+                                    }
+                                    sums[frame] += v * v; counts[frame]++
+                                    sampleIndex++
+                                    off += frameBytes
+                                }
                             }
                             if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) decoderOutputDone = true
                             dec.releaseOutputBuffer(idx, false)
@@ -358,7 +491,8 @@ object AyahVideoComposer {
                 throw AyahVideoException(AyahVideoException.Kind.AUDIO_UNREADABLE, "recitation decoded to silence")
             }
             val durationUs = presentationUs(fedBytes, sampleRate, channels)
-            return AudioResult(format, samples, durationUs)
+            val frameCount = frameCount(durationUs)
+            return AudioResult(format, samples, durationUs, loudnessEnvelope(sums, counts, frameCount))
         } catch (e: AyahVideoException) {
             throw e
         } catch (e: Exception) {
@@ -370,13 +504,41 @@ object AyahVideoComposer {
         }
     }
 
+    /// Frames for (audio + tail) at [FPS], rounded up.
+    private fun frameCount(audioUs: Long): Int {
+        val frameUs = 1_000_000L / FPS
+        return ((audioUs + TAIL_US + frameUs - 1) / frameUs).toInt().coerceAtLeast(1)
+    }
+
+    /// iOS loudnessEnvelope: per-frame RMS, log-scaled relative to the
+    /// loudest frame (-40 dB floor), then fast attack / slow release. The
+    /// tail frames have no samples and read as silence.
+    private fun loudnessEnvelope(sums: DoubleArray, counts: IntArray, frameCount: Int): FloatArray {
+        val raw = FloatArray(frameCount) { i ->
+            if (i < counts.size && counts[i] > 0) sqrt(sums[i] / counts[i]).toFloat() else 0f
+        }
+        val peak = maxOf(raw.maxOrNull() ?: 0f, 0.0001f)
+        for (i in raw.indices) {
+            val db = 20 * log10(maxOf(raw[i] / peak, 0.0001f))
+            raw[i] = ((db + 40) / 40).coerceIn(0f, 1f)
+        }
+        val smoothed = FloatArray(frameCount)
+        var current = 0f
+        for (i in 0 until frameCount) {
+            val target = raw[i]
+            current += (target - current) * (if (target > current) 0.6f else 0.18f)
+            smoothed[i] = current
+        }
+        return smoothed
+    }
+
     private fun presentationUs(bytes: Long, sampleRate: Int, channels: Int): Long =
         if (sampleRate <= 0 || channels <= 0) 0L
         else bytes * 1_000_000L / (2L * channels * sampleRate)
 
     // MARK: - video + mux
 
-    private fun encodeAndMux(yuv: Yuv, audio: AudioResult, out: File, check: () -> Unit) {
+    private fun encodeAndMux(yuv: Yuv, layout: Layout, audio: AudioResult, out: File, check: () -> Unit) {
         val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, WIDTH, HEIGHT).apply {
             setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible)
             setInteger(MediaFormat.KEY_BIT_RATE, VIDEO_BIT_RATE)
@@ -399,8 +561,8 @@ object AyahVideoComposer {
         val inputColor = runCatching { encoder.inputFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT) }
             .getOrDefault(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar)
         val frameUs = 1_000_000L / FPS
-        val totalUs = audio.durationUs + TAIL_US
-        val frameCount = ((totalUs + frameUs - 1) / frameUs).toInt().coerceAtLeast(1)
+        val frameCount = frameCount(audio.durationUs)
+        val region = barRegion(layout)
         val info = MediaCodec.BufferInfo()
         var videoTrack = -1
         var audioTrack = -1
@@ -435,6 +597,7 @@ object AyahVideoComposer {
                             encoder.queueInputBuffer(idx, 0, 0, pts, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                             inputDone = true
                         } else {
+                            drawBars(region, layout, audio.envelope, frame, yuv)
                             val image = encoder.getInputImage(idx)
                             if (image != null) {
                                 fillImage(image, yuv)
@@ -492,6 +655,7 @@ object AyahVideoComposer {
         } catch (e: Exception) {
             throw AyahVideoException(AyahVideoException.Kind.ENCODE_FAILED, "video encode failed", e)
         } finally {
+            region.bitmap.recycle()
             runCatching { encoder.stop() }; runCatching { encoder.release() }
             runCatching { muxer.release() }
         }
