@@ -27,6 +27,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -113,18 +114,21 @@ private fun SettingsMain(
 
     var showReciterPicker by remember { mutableStateOf(false) }
     var showAdhanSounds by remember { mutableStateOf(false) }
+    DisposableEffect(Unit) { onDispose { AdhanPreview.stop() } }
     if (showReciterPicker) {
         ReciterPickerSheet(onDismiss = { showReciterPicker = false })
     }
     if (showAdhanSounds) {
+        // Same as the Prayer tab's sheet: a tap stores the choice AND plays a
+        // preview, and the sheet stays open so sounds can be compared by ear.
         AdhanSoundSheet(
             selected = sound,
             onSelect = { choice ->
                 PrayerPrefs(context).sound = choice
                 version++
-                showAdhanSounds = false
+                AdhanPreview.play(context, choice)
             },
-            onDismiss = { showAdhanSounds = false })
+            onDismiss = { AdhanPreview.stop(); showAdhanSounds = false })
     }
 
     Column(
