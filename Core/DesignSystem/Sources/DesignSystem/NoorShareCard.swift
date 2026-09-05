@@ -60,6 +60,22 @@ public struct NoorShareCard: View {
     }
 }
 
+/// Optional "Share as video" action for `NoorShareSheet`. DesignSystem stays
+/// audio-free: the caller (QuranAudio) supplies the composer; the sheet only
+/// hands over the rendered card and shows progress / errors / the share UI.
+public struct NoorShareVideoOption {
+    /// Sub-line under the button, e.g. "with Mishary Alafasy's recitation".
+    public let caption: String
+    /// Produces a local MP4 from the rendered card. Errors should be
+    /// `LocalizedError`s — `errorDescription` is shown inline.
+    public let make: (CGImage) async throws -> URL
+
+    public init(caption: String, make: @escaping (CGImage) async throws -> URL) {
+        self.caption = caption
+        self.make = make
+    }
+}
+
 /// Renders the card at 3× and offers the system share sheet.
 public struct NoorShareSheet: View {
     let arabicText: String
@@ -67,17 +83,28 @@ public struct NoorShareSheet: View {
     let reference: String
     let attribution: String
     let useQuranFont: Bool
+    let videoOption: NoorShareVideoOption?
+
+    private enum VideoState: Equatable {
+        case idle, working, ready(URL), failed(String)
+    }
 
     @State private var fileURL: URL?
+    @State private var cardImage: CGImage?
+    @State private var videoState: VideoState = .idle
+    @State private var videoTask: Task<Void, Never>?
+    @State private var presentVideoShare = false
     @Environment(\.dismiss) private var dismiss
 
     public init(arabicText: String, translation: String? = nil, reference: String,
-                attribution: String, useQuranFont: Bool) {
+                attribution: String, useQuranFont: Bool,
+                videoOption: NoorShareVideoOption? = nil) {
         self.arabicText = arabicText
         self.translation = translation
         self.reference = reference
         self.attribution = attribution
         self.useQuranFont = useQuranFont
+        self.videoOption = videoOption
     }
 
     private var card: NoorShareCard {
@@ -104,12 +131,96 @@ public struct NoorShareSheet: View {
             } else {
                 ProgressView()
             }
+            if let videoOption {
+                videoButton(videoOption)
+            }
             Button("Done") { dismiss() }
                 .foregroundStyle(NoorColor.inkSecondary)
         }
         .padding(.vertical, 24)
         .background(NoorColor.bgPrimary)
         .task { render() }
+        .onDisappear { videoTask?.cancel() }
+        #if os(iOS)
+        .sheet(isPresented: $presentVideoShare) {
+            if case .ready(let url) = videoState {
+                ActivityShareView(items: [url])
+                    .presentationDetents([.medium, .large])
+            }
+        }
+        #endif
+    }
+
+    // MARK: - Share as video
+
+    @ViewBuilder
+    private func videoButton(_ option: NoorShareVideoOption) -> some View {
+        VStack(spacing: 6) {
+            switch videoState {
+            case .working:
+                HStack(spacing: 10) {
+                    ProgressView().tint(NoorColor.accentPrimary)
+                    Text("Preparing video…")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
+                .padding(.vertical, 12)
+                .accessibilityElement(children: .combine)
+            case .ready(let url):
+                #if os(iOS)
+                Button { presentVideoShare = true } label: { videoLabel }
+                    .buttonStyle(.plain)
+                #else
+                ShareLink(item: url) { videoLabel }
+                    .buttonStyle(.plain)
+                #endif
+            case .idle, .failed:
+                Button { startVideo(option) } label: { videoLabel }
+                    .buttonStyle(.plain)
+                    .disabled(cardImage == nil)
+            }
+            Text(verbatim: option.caption)
+                .font(.system(size: 12))
+                .foregroundStyle(NoorColor.inkSecondary)
+            if case .failed(let message) = videoState {
+                Text(verbatim: message)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(NoorColor.accentPrimary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+        }
+    }
+
+    private var videoLabel: some View {
+        Label("Share as video", systemImage: "video")
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(NoorColor.accentPrimary)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 12)
+            .background(Capsule().stroke(NoorColor.accentPrimary, lineWidth: 1.5))
+            .contentShape(Capsule())
+            .frame(minHeight: 44)
+    }
+
+    private func startVideo(_ option: NoorShareVideoOption) {
+        guard let cardImage, videoState != .working else { return }
+        videoState = .working
+        videoTask = Task {
+            do {
+                let url = try await option.make(cardImage)
+                guard !Task.isCancelled else { return }
+                videoState = .ready(url)
+                #if os(iOS)
+                presentVideoShare = true
+                #endif
+            } catch is CancellationError {
+                videoState = .idle
+            } catch {
+                guard !Task.isCancelled else { return }
+                videoState = .failed(error.localizedDescription)
+            }
+        }
     }
 
     @MainActor
@@ -118,6 +229,7 @@ public struct NoorShareSheet: View {
         renderer.scale = 3
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("noor-share-\(abs(reference.hashValue)).png")
+        cardImage = renderer.cgImage
         #if os(iOS)
         guard let image = renderer.uiImage, let data = image.pngData() else { return }
         #else
@@ -130,3 +242,17 @@ public struct NoorShareSheet: View {
         fileURL = url
     }
 }
+
+#if os(iOS)
+/// System share sheet wrapper so a freshly composed file can be offered
+/// without a second tap (ShareLink can't be triggered programmatically).
+private struct ActivityShareView: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+#endif

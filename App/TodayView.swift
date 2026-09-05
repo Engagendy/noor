@@ -3,6 +3,7 @@ import ContentDB
 import QuranReader
 import DesignSystem
 import PrayerTimes
+import QuranAudio
 import SwiftUI
 
 /// Home / Today per design 1e — quick-glance posture, max 4 cards.
@@ -216,7 +217,9 @@ struct TodayView: View {
                     arabicText: verse.text,
                     reference: "\(surah.displayName(arabicUI: isArabicUI)) · \(verse.surahId):\(verse.ayah)",
                     attribution: "نور Noor · Quran text: Tanzil.net",
-                    useQuranFont: true)
+                    useQuranFont: true,
+                    videoOption: AyahVideoComposer.shareOption(
+                        surah: verse.surahId, ayah: verse.ayah, arabicUI: isArabicUI))
                     .presentationDetents([.medium, .large])
             case .dhikr(let dhikr):
                 NoorShareSheet(
