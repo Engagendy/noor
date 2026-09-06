@@ -29,12 +29,12 @@ struct HadithBookmarksView: View {
             } label: {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(verbatim: entry.arabic)
-                        .font(.system(size: 15))
+                        .noorFont(size: 15)
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(2)
                         .arabicBlock()
                     Text(verbatim: entry.title)
-                        .font(NoorFont.caption)
+                        .noorFont(size: 13, relativeTo: .footnote)
                         .foregroundStyle(NoorColor.accentGold)
                 }
                 .padding(.vertical, 4)

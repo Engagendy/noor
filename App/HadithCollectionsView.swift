@@ -45,11 +45,11 @@ struct HadithCollectionsView: View {
                 .frame(width: 30)
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: isArabicUI ? collection.arabicName : collection.englishName)
-                    .font(.system(size: 16, weight: .semibold))
+                    .noorFont(size: 16, weight: .semibold)
                     .foregroundStyle(NoorColor.inkPrimary)
                 if state != .ready {
                     Text(verbatim: collection.sizeLabel)
-                        .font(NoorFont.caption)
+                        .noorFont(size: 13, relativeTo: .footnote)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
             }
@@ -101,18 +101,18 @@ struct HadithBooksView: View {
             } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text(verbatim: isArabicUI ? book.index.arabicIndic : "\(book.index)")
-                        .font(.system(size: 13, weight: .bold).monospacedDigit())
+                        .noorFont(size: 13, weight: .bold, monospacedDigits: true)
                         .foregroundStyle(NoorColor.accentGold)
                         .frame(width: 30)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(verbatim: isArabicUI ? book.arabicTitle : book.englishTitle)
-                            .font(.system(size: 15, weight: .semibold))
+                            .noorFont(size: 15, weight: .semibold)
                             .foregroundStyle(NoorColor.inkPrimary)
                             .multilineTextAlignment(.leading)
                         Text(verbatim: isArabicUI
                              ? "\(book.count.arabicIndic) حديثًا"
                              : "\(book.count) hadiths")
-                            .font(NoorFont.caption)
+                            .noorFont(size: 13, relativeTo: .footnote)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                 }
@@ -168,11 +168,11 @@ struct HadithBookView: View {
                     Text(verbatim: isArabicUI
                          ? (Int(hadith.number).map(\.arabicIndic) ?? hadith.number)
                          : hadith.number)
-                        .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                        .noorFont(size: 12, weight: .semibold, monospacedDigits: true)
                         .foregroundStyle(NoorColor.accentGold)
                         .frame(minWidth: 30, alignment: .center)
                     Text(verbatim: hadith.arabic)
-                        .font(.system(size: 15))
+                        .noorFont(size: 15)
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(3)
                         .arabicBlock()
@@ -241,7 +241,7 @@ struct LibraryHadithDetail: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
                             Text(verbatim: item.arabic)
-                                .font(.noorScaled(18))
+                                .noorFont(size: 18, relativeTo: .body)
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .lineSpacing(10)
                                 .arabicBlock()
@@ -250,14 +250,14 @@ struct LibraryHadithDetail: View {
                                     .fill(NoorColor.accentGold.opacity(0.3))
                                     .frame(height: 0.7)
                                 Text(verbatim: item.english)
-                                    .font(.noorScaled(15.5))
+                                    .noorFont(size: 15.5, relativeTo: .body)
                                     .foregroundStyle(NoorColor.inkPrimary.opacity(0.9))
                                     .lineSpacing(7)
                             }
                             Text(verbatim: isArabicUI
                                  ? "\(collection.arabicName) · \(item.number) · \(bookTitle)"
                                  : "\(collection.englishName) · \(item.number) · \(bookTitle)")
-                                .font(.system(size: 13, weight: .semibold))
+                                .noorFont(size: 13, weight: .semibold)
                                 .foregroundStyle(NoorColor.accentGold)
                         }
                         .padding(20)

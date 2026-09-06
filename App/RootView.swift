@@ -64,6 +64,7 @@ struct RootView: View {
         // process/environment direction mismatch mirrors the rendering).
         // .id forces a full re-layout so the direction flip is immediate.
         .id(language)
+        .noorFont(size: 17, relativeTo: .body)
         .environment(\.locale, language == "system" ? .current : Locale(identifier: language))
         .environment(\.layoutDirection, effectiveDirection)
         .preferredColorScheme(theme == "light" ? .light : theme == "dark" ? .dark : nil)

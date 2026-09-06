@@ -24,22 +24,26 @@ public struct NoorShareCard: View {
                 archColor: Color(red: 0.055, green: 0.420, blue: 0.361),
                 lampColor: Color(red: 0.73, green: 0.54, blue: 0.18))
             Text(arabicText)
-                .font(useQuranFont ? NoorFont.quran(size: 30) : .system(size: 24))
+                .font(
+                    useQuranFont
+                        ? NoorFont.quran(size: 30)
+                        : NoorFont.arabicText(size: 24)
+                )
                 .foregroundStyle(Color(red: 0.12, green: 0.16, blue: 0.20))
                 .lineSpacing(useQuranFont ? 22 : 14)
                 .arabicBlock(alignment: .center)
             if let translation {
                 Text(translation)
-                    .font(.system(size: 17, design: .serif))
+                    .noorFont(size: 17, design: .serif)
                     .foregroundStyle(Color(red: 0.36, green: 0.40, blue: 0.44))
                     .multilineTextAlignment(.center)
             }
             VStack(spacing: 3) {
                 Text(verbatim: reference)
-                    .font(.system(size: 14, weight: .semibold))
+                    .noorFont(size: 14, weight: .semibold)
                     .foregroundStyle(Color(red: 0.05, green: 0.42, blue: 0.36))
                 Text(verbatim: attribution)
-                    .font(.system(size: 11, weight: .medium))
+                    .noorFont(size: 11, weight: .medium)
                     .foregroundStyle(Color(red: 0.36, green: 0.40, blue: 0.44).opacity(0.8))
             }
         }
@@ -121,7 +125,7 @@ public struct NoorShareSheet: View {
             if let fileURL {
                 ShareLink(item: fileURL) {
                     Label("Share image", systemImage: "square.and.arrow.up")
-                        .font(.system(size: 16, weight: .semibold))
+                        .noorFont(size: 16, weight: .semibold)
                         .foregroundStyle(NoorColor.bgPrimary)
                         .padding(.horizontal, 22)
                         .padding(.vertical, 12)
@@ -160,7 +164,7 @@ public struct NoorShareSheet: View {
                 HStack(spacing: 10) {
                     ProgressView().tint(NoorColor.accentPrimary)
                     Text("Preparing video…")
-                        .font(.system(size: 15, weight: .medium))
+                        .noorFont(size: 15, weight: .medium)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
                 .padding(.vertical, 12)
@@ -179,11 +183,11 @@ public struct NoorShareSheet: View {
                     .disabled(cardImage == nil)
             }
             Text(verbatim: option.caption)
-                .font(.system(size: 12))
+                .noorFont(size: 12)
                 .foregroundStyle(NoorColor.inkSecondary)
             if case .failed(let message) = videoState {
                 Text(verbatim: message)
-                    .font(.system(size: 12, weight: .medium))
+                    .noorFont(size: 12, weight: .medium)
                     .foregroundStyle(NoorColor.accentPrimary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
@@ -193,7 +197,7 @@ public struct NoorShareSheet: View {
 
     private var videoLabel: some View {
         Label("Share as video", systemImage: "video")
-            .font(.system(size: 16, weight: .semibold))
+            .noorFont(size: 16, weight: .semibold)
             .foregroundStyle(NoorColor.accentPrimary)
             .padding(.horizontal, 22)
             .padding(.vertical, 12)

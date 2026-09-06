@@ -143,7 +143,7 @@ public struct AsmaulHusnaView: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.5)
                             Text(verbatim: isArabicUI ? name.number.arabicIndic : name.transliteration)
-                                .font(NoorFont.caption)
+                                .noorFont(size: 13, relativeTo: .footnote)
                                 .foregroundStyle(NoorColor.inkSecondary)
                                 .lineLimit(1)
                         }
@@ -185,10 +185,10 @@ struct DivineNameDetail: View {
                 .font(NoorFont.quran(size: 46))
                 .foregroundStyle(NoorColor.accentPrimary)
             Text(verbatim: name.transliteration)
-                .font(.system(size: 16, weight: .semibold))
+                .noorFont(size: 16, weight: .semibold)
                 .foregroundStyle(NoorColor.accentGold)
             Text(verbatim: isArabicUI ? name.meaningArabic : name.meaningEnglish)
-                .font(.system(size: 17))
+                .noorFont(size: 17)
                 .foregroundStyle(NoorColor.inkPrimary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 28)
@@ -197,7 +197,7 @@ struct DivineNameDetail: View {
                 sharing = true
             } label: {
                 Label("Share", systemImage: "square.and.arrow.up")
-                    .font(.system(size: 15, weight: .semibold))
+                    .noorFont(size: 15, weight: .semibold)
                     .foregroundStyle(NoorColor.bgPrimary)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)

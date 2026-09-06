@@ -93,7 +93,7 @@
     <string name="g1_section_about">About</string>
     <string name="g1_noor_version">Noor — version %1$s</string>
     <string name="g1_attr_quran">Quran text: Tanzil.net (Uthmani script)</string>
-    <string name="g1_attr_fonts">Fonts: KFGQPC Uthmanic Hafs and Amiri Quran</string>
+    <string name="g1_attr_fonts">Fonts: Cairo (SIL OFL), Amiri Quran, and KFGQPC Uthmanic Hafs</string>
     <string name="g1_attr_page_fonts">Mushaf page fonts: King Fahd Complex (QCF v2)</string>
     <string name="g1_attr_translation">Translation: Saheeh International and Tanzil translations</string>
     <string name="g1_attr_tafsir">Tafsir: Ibn Kathir and Muyassar (spa5k/tafsir_api)</string>

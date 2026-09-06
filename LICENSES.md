@@ -93,6 +93,20 @@ Attributions are displayed in Settings → About.
   100% KFGQPC via the QCF page fonts.
 - **Attribution:** "Amiri Quran font by Khaled Hosny (SIL OFL)."
 
+### Cairo variable font (bundled — Arabic interface text)
+- **Files:** `Core/DesignSystem/Sources/DesignSystem/Resources/Cairo.ttf` and
+  `android/app/src/main/res/font/cairo.ttf` (identical bytes).
+- **Source:** Google Fonts `ofl/cairo` at pinned commit
+  [`d2528f6d1f43e7d9d0d2e1794afe2ad6fd7d56ba`](https://github.com/google/fonts/commit/d2528f6d1f43e7d9d0d2e1794afe2ad6fd7d56ba),
+  Cairo version 3.130 by the Cairo Project Authors.
+- **SHA-256:** `667c987182391c91f4e57a2f455b1794fb5e3ee6ca4ef3383e86bb690fa9c964`.
+- **License:** SIL Open Font License 1.1. The complete license is bundled at
+  `Core/DesignSystem/Sources/DesignSystem/Resources/Cairo-OFL.txt` and
+  `android/app/src/main/res/raw/cairo_ofl.txt`.
+- **Use:** Arabic UI and non-Quran Arabic text only. Quran text continues to
+  use Amiri Quran or the KFGQPC/QCF fonts described above.
+- **Attribution:** "Cairo font by the Cairo Project Authors (SIL OFL 1.1)."
+
 ### Athkar — Hisn al-Muslim (bundled)
 - **File:** `Modules/Athkar/Sources/Athkar/Resources/athkar.json`
   (132 categories, 267 adhkar).

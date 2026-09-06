@@ -79,7 +79,7 @@ struct SelectedDuasView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 14) {
                 Text(isArabicUI ? "أدعية من القرآن" : "Duas from the Quran")
-                    .font(.system(size: 15, weight: .semibold))
+                    .noorFont(size: 15, weight: .semibold)
                     .foregroundStyle(NoorColor.accentPrimary)
                 ForEach(quranic, id: \.dua.id) { item in
                     VStack(alignment: .leading, spacing: 8) {
@@ -105,7 +105,7 @@ struct SelectedDuasView: View {
                             .lineSpacing(12)
                             .arabicBlock()
                         Text(verbatim: item.reference)
-                            .font(NoorFont.caption)
+                            .noorFont(size: 13, relativeTo: .footnote)
                             .foregroundStyle(NoorColor.accentGold)
                     }
                     .padding(16)
@@ -113,14 +113,14 @@ struct SelectedDuasView: View {
                 }
 
                 Text(isArabicUI ? "أدعية من السنة" : "Duas from the Sunnah")
-                    .font(.system(size: 15, weight: .semibold))
+                    .noorFont(size: 15, weight: .semibold)
                     .foregroundStyle(NoorColor.accentPrimary)
                     .padding(.top, 6)
                 ForEach(PropheticDua.all) { dua in
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text(verbatim: dua.title)
-                                .font(.system(size: 15, weight: .bold))
+                                .noorFont(size: 15, weight: .bold)
                                 .foregroundStyle(NoorColor.accentGold)
                             Spacer()
                             Button {
@@ -138,12 +138,12 @@ struct SelectedDuasView: View {
                             .accessibilityLabel("Share")
                         }
                         Text(verbatim: dua.text)
-                            .font(.system(size: 17))
+                            .noorFont(size: 17)
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineSpacing(8)
                             .arabicBlock()
                         Text(verbatim: dua.source)
-                            .font(NoorFont.caption)
+                            .noorFont(size: 13, relativeTo: .footnote)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                     .padding(16)

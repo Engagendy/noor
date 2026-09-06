@@ -45,11 +45,11 @@ public struct AudioPillView: View {
                             Text(verbatim: player.isPlayingTranslation
                                  ? player.translationVoice.displayName(arabicUI: isArabicUI)
                                  : player.reciter.displayName(arabicUI: isArabicUI))
-                                .font(.system(size: 14, weight: .semibold))
+                                .noorFont(size: 14, weight: .semibold)
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .lineLimit(1)
                             Text("\(player.surahTitle) · \(String(localized: "Ayah \(current.ayah)", locale: locale))")
-                                .font(.system(size: 11.5))
+                                .noorFont(size: 11.5)
                                 .foregroundStyle(NoorColor.inkSecondary)
                                 .lineLimit(1)
                         }
@@ -62,7 +62,7 @@ public struct AudioPillView: View {
                 Spacer(minLength: 4)
 
                 Button { player.previous() } label: {
-                    Image(systemName: "backward.fill").font(.system(size: 14))
+                    Image(systemName: "backward.fill").noorFont(size: 14)
                         .frame(width: 38, height: 44)
                         .contentShape(Rectangle())
                 }
@@ -78,7 +78,7 @@ public struct AudioPillView: View {
                 .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
 
                 Button { player.next() } label: {
-                    Image(systemName: "forward.fill").font(.system(size: 14))
+                    Image(systemName: "forward.fill").noorFont(size: 14)
                         .frame(width: 38, height: 44)
                         .contentShape(Rectangle())
                 }
@@ -94,7 +94,7 @@ public struct AudioPillView: View {
                 .accessibilityLabel("Playback mode")
 
                 Button { player.stop() } label: {
-                    Image(systemName: "xmark").font(.system(size: 13, weight: .semibold))
+                    Image(systemName: "xmark").noorFont(size: 13, weight: .semibold)
                         .frame(width: 36, height: 44)
                         .contentShape(Rectangle())
                 }
@@ -212,13 +212,13 @@ public struct ReciterPickerSheet: View {
                     // environment and anchors to the process language.
                     TextField("", text: $searchText)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 15))
+                        .noorFont(size: 15)
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .overlay(alignment: .leading) {
                             if searchText.isEmpty {
                                 Text("Search reciters")
-                                    .font(.system(size: 15))
+                                    .noorFont(size: 15)
                                     .foregroundStyle(NoorColor.inkSecondary.opacity(0.8))
                                     .allowsHitTesting(false)
                             }
@@ -266,15 +266,15 @@ extension ReciterPickerSheet {
             HStack(spacing: 12) {
                 if !reciter.flag.isEmpty {
                     Text(verbatim: reciter.flag)
-                        .font(.system(size: 18))
+                        .noorFont(size: 18)
                 }
                 Text(verbatim: reciter.displayName(arabicUI: isArabicUI))
-                    .font(.system(size: 16, weight: selection == reciter.rawValue ? .semibold : .regular))
+                    .noorFont(size: 16, weight: selection == reciter.rawValue ? .semibold : .regular)
                     .foregroundStyle(NoorColor.inkPrimary)
                 if reciter.qfTimingId != nil {
                     // Supports word-by-word follow-along.
                     Text(isArabicUI ? "تتبع الكلمات" : "word tracking")
-                        .font(.system(size: 10, weight: .semibold))
+                        .noorFont(size: 10, weight: .semibold)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
                         .background(Capsule().fill(NoorColor.accentPrimary.opacity(0.12)))
@@ -307,7 +307,7 @@ extension ReciterPickerSheet {
                     .foregroundStyle(NoorColor.accentPrimary)
                     .frame(width: 24)
                 Text(verbatim: voice.displayName(arabicUI: isArabicUI))
-                    .font(.system(size: 16, weight: isOn ? .semibold : .regular))
+                    .noorFont(size: 16, weight: isOn ? .semibold : .regular)
                     .foregroundStyle(NoorColor.inkPrimary)
                 Spacer(minLength: 4)
                 if isOn {
@@ -354,7 +354,7 @@ struct PlaybackModeSheet: View {
                                 .foregroundStyle(NoorColor.accentPrimary)
                                 .frame(width: 26)
                             Text(option.1)
-                                .font(.system(size: 16, weight: player.mode == option.0 ? .semibold : .regular))
+                                .noorFont(size: 16, weight: player.mode == option.0 ? .semibold : .regular)
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             if player.mode == option.0 {
@@ -382,7 +382,7 @@ struct PlaybackModeSheet: View {
                             player.persistRate()
                         } label: {
                             Text(verbatim: speed == 1.0 ? "1×" : String(format: "%g×", speed))
-                                .font(.system(size: 13, weight: .semibold))
+                                .noorFont(size: 13, weight: .semibold)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
                                 .background(Capsule().fill(isOn ? NoorColor.accentPrimary : NoorColor.bgElevated))
@@ -402,7 +402,7 @@ struct PlaybackModeSheet: View {
                             player.setSleepTimer(minutes: minutes)
                         } label: {
                             Text(verbatim: "\(minutes)")
-                                .font(.system(size: 13, weight: .semibold))
+                                .noorFont(size: 13, weight: .semibold)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
                                 .background(Capsule().fill(NoorColor.bgElevated))
@@ -414,7 +414,7 @@ struct PlaybackModeSheet: View {
                         player.stopAfterSurah.toggle()
                     } label: {
                         Text("End of surah")
-                            .font(.system(size: 13, weight: .semibold))
+                            .noorFont(size: 13, weight: .semibold)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
                             .background(Capsule().fill(player.stopAfterSurah ? NoorColor.accentPrimary : NoorColor.bgElevated))
@@ -427,7 +427,7 @@ struct PlaybackModeSheet: View {
                         } label: {
                             HStack(spacing: 3) {
                                 Text(deadline, style: .timer)
-                                    .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                                    .noorFont(size: 12, weight: .semibold, monospacedDigits: true)
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 12))
                             }
@@ -444,7 +444,7 @@ struct PlaybackModeSheet: View {
                         Image(systemName: "brain.head.profile")
                             .font(.system(size: 16))
                         Text("Memorize a range")
-                            .font(.system(size: 15, weight: .semibold))
+                            .noorFont(size: 15, weight: .semibold)
                         Spacer()
                         if player.mode == .memorize {
                             Image(systemName: "checkmark")
@@ -517,7 +517,7 @@ struct MemorizeRangeSheet: View {
                     dismiss()
                 } label: {
                     Text("Start memorizing")
-                        .font(.system(size: 16, weight: .semibold))
+                        .noorFont(size: 16, weight: .semibold)
                         .frame(maxWidth: .infinity)
                 }
             }

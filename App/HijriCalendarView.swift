@@ -86,7 +86,7 @@ struct HijriCalendarView: View {
                         .accessibilityLabel("Previous month")
                         Spacer()
                         Text(verbatim: month.title)
-                            .font(.system(size: 17, weight: .semibold))
+                            .noorFont(size: 17, weight: .semibold)
                             .foregroundStyle(NoorColor.inkPrimary)
                         Spacer()
                         Button { monthOffset += 1 } label: {
@@ -102,7 +102,7 @@ struct HijriCalendarView: View {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 6) {
                         ForEach(weekdaySymbols, id: \.self) { symbol in
                             Text(verbatim: symbol)
-                                .font(.system(size: 11, weight: .semibold))
+                                .noorFont(size: 11, weight: .semibold)
                                 .foregroundStyle(NoorColor.inkSecondary)
                         }
                         ForEach(0..<month.leading, id: \.self) { _ in Color.clear.frame(height: 44) }
@@ -112,7 +112,7 @@ struct HijriCalendarView: View {
                             } label: {
                                 VStack(spacing: 2) {
                                     Text(verbatim: isArabicUI ? day.id.arabicIndic : "\(day.id)")
-                                        .font(.system(size: 15, weight: day.isToday ? .bold : .regular).monospacedDigit())
+                                        .noorFont(size: 15, weight: day.isToday ? .bold : .regular, monospacedDigits: true)
                                         .foregroundStyle(day.isToday ? NoorColor.bgPrimary : NoorColor.inkPrimary)
                                     Circle()
                                         .fill(day.events.isEmpty ? Color.clear : NoorColor.accentGold)
@@ -142,7 +142,7 @@ struct HijriCalendarView: View {
                             Circle().fill(NoorColor.accentGold).frame(width: 7, height: 7)
                             Text(isArabicUI ? "يوم فيه حدث من التاريخ الإسلامي — اضغط عليه"
                                             : "Islamic-history event — tap the day")
-                                .font(.system(size: 13))
+                                .noorFont(size: 13)
                                 .foregroundStyle(NoorColor.inkSecondary)
                         }
                     }
@@ -161,11 +161,11 @@ struct HijriCalendarView: View {
                                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                                         Text(verbatim: isArabicUI
                                              ? event.day.arabicIndic : "\(event.day)")
-                                            .font(.system(size: 14, weight: .bold).monospacedDigit())
+                                            .noorFont(size: 14, weight: .bold, monospacedDigits: true)
                                             .foregroundStyle(NoorColor.accentGold)
                                             .frame(width: 26)
                                         Text(verbatim: isArabicUI ? event.arabic : event.english)
-                                            .font(.system(size: 14))
+                                            .noorFont(size: 14)
                                             .foregroundStyle(NoorColor.inkPrimary)
                                             .multilineTextAlignment(.leading)
                                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -208,7 +208,7 @@ struct HijriCalendarView: View {
         HStack(spacing: 8) {
             RoundedRectangle(cornerRadius: 4).fill(color).frame(width: 16, height: 16)
             Text(verbatim: text)
-                .font(.system(size: 13))
+                .noorFont(size: 13)
                 .foregroundStyle(NoorColor.inkSecondary)
         }
     }

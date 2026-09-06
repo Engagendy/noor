@@ -48,10 +48,10 @@ public struct AthkarView: View {
                     RubElHizbMark(size: 30)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Tasbih")
-                            .font(.system(size: 16, weight: .semibold))
+                            .noorFont(size: 16, weight: .semibold)
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: "سبحان الله · الحمد لله · الله أكبر")
-                            .font(NoorFont.caption)
+                            .noorFont(size: 13, relativeTo: .footnote)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                 }
@@ -69,10 +69,10 @@ public struct AthkarView: View {
                         .frame(width: 30)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Ruqyah")
-                            .font(.system(size: 16, weight: .semibold))
+                            .noorFont(size: 16, weight: .semibold)
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: "الرقية الشرعية من الكتاب والسنة")
-                            .font(NoorFont.caption)
+                            .noorFont(size: 13, relativeTo: .footnote)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                 }
@@ -90,10 +90,10 @@ public struct AthkarView: View {
                         .frame(width: 30)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Selected duas")
-                            .font(.system(size: 16, weight: .semibold))
+                            .noorFont(size: 16, weight: .semibold)
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: "أدعية قرآنية ونبوية والاستخارة")
-                            .font(NoorFont.caption)
+                            .noorFont(size: 13, relativeTo: .footnote)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                 }
@@ -111,10 +111,10 @@ public struct AthkarView: View {
                         .frame(width: 30)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Names of Allah")
-                            .font(.system(size: 16, weight: .semibold))
+                            .noorFont(size: 16, weight: .semibold)
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: "أسماء الله الحسنى · ٩٩")
-                            .font(NoorFont.caption)
+                            .noorFont(size: 13, relativeTo: .footnote)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                 }
@@ -128,11 +128,11 @@ public struct AthkarView: View {
                 } label: {
                     HStack {
                         Text(verbatim: category.displayTitle(arabicUI: isArabicUI))
-                            .font(.system(size: 16))
+                            .noorFont(size: 16)
                             .foregroundStyle(NoorColor.inkPrimary)
                         Spacer()
                         Text(verbatim: "\(category.items.count)")
-                            .font(NoorFont.caption)
+                            .noorFont(size: 13, relativeTo: .footnote)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                     .padding(.vertical, 2)
@@ -255,7 +255,7 @@ struct DhikrListView: View {
                             .font(.system(size: 13, weight: .semibold))
                     }
                     (playing ? Text("Pause") : Text("Play chapter"))
-                        .font(.system(size: 15, weight: .semibold))
+                        .noorFont(size: 15, weight: .semibold)
                 }
                 .foregroundStyle(NoorColor.bgPrimary)
                 .padding(.horizontal, 18)
@@ -274,7 +274,7 @@ struct DhikrListView: View {
             }
             if audio.failed == chapterAudioId {
                 Text("Connect once to download this dhikr")
-                    .font(NoorFont.caption)
+                    .noorFont(size: 13, relativeTo: .footnote)
                     .foregroundStyle(NoorColor.inkSecondary)
             }
         }
@@ -307,7 +307,7 @@ struct DhikrCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(dhikr.text)
-                .font(.noorScaled(19))
+                .noorFont(size: 19, relativeTo: .body)
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineSpacing(8)
                 .arabicBlock()
@@ -318,17 +318,17 @@ struct DhikrCard: View {
                     } icon: {
                         Image(systemName: "checkmark.circle.fill")
                     }
-                    .font(.system(size: 13, weight: .semibold))
+                    .noorFont(size: 13, weight: .semibold)
                     .foregroundStyle(NoorColor.accentPrimary)
                 } else {
                     Text(verbatim: "\(done) / \(dhikr.count)")
-                        .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                        .noorFont(size: 13, weight: .semibold, monospacedDigits: true)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
                 Spacer()
                 if dhikr.count > 1 {
                     Text("Repeat \(dhikr.count)×")
-                        .font(NoorFont.caption)
+                        .noorFont(size: 13, relativeTo: .footnote)
                         .foregroundStyle(NoorColor.accentGold)
                 }
                 if let onShare {
@@ -349,7 +349,7 @@ struct DhikrCard: View {
             .environment(\.layoutDirection, .leftToRight)
             if audioState?.failed == true {
                 Text("Connect once to download this dhikr")
-                    .font(NoorFont.caption)
+                    .noorFont(size: 13, relativeTo: .footnote)
                     .foregroundStyle(NoorColor.inkSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -428,7 +428,7 @@ struct TasbihView: View {
                             }
                         } label: {
                             Text(verbatim: text)
-                                .font(.system(size: 14, weight: phraseIndex == index ? .semibold : .regular))
+                                .noorFont(size: 14, weight: phraseIndex == index ? .semibold : .regular)
                                 .foregroundStyle(phraseIndex == index ? NoorColor.bgPrimary : NoorColor.inkPrimary)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 9)
@@ -463,16 +463,16 @@ struct TasbihView: View {
                         .rotationEffect(.degrees(-90))
                     VStack(spacing: 6) {
                         Text(verbatim: phrase)
-                            .font(.system(size: 20, weight: .semibold))
+                            .noorFont(size: 20, weight: .semibold)
                             .foregroundStyle(NoorColor.accentPrimary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.6)
                             .padding(.horizontal, 24)
                         Text(verbatim: "\(count)")
-                            .font(.system(size: 58, weight: .semibold).monospacedDigit())
+                            .noorFont(size: 58, weight: .semibold, monospacedDigits: true)
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: "\(count / 33) × ٣٣")
-                            .font(NoorFont.caption)
+                            .noorFont(size: 13, relativeTo: .footnote)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                 }
@@ -487,7 +487,7 @@ struct TasbihView: View {
                 count = 0
             } label: {
                 Label("Reset", systemImage: "arrow.counterclockwise")
-                    .font(.system(size: 15, weight: .semibold))
+                    .noorFont(size: 15, weight: .semibold)
                     .foregroundStyle(NoorColor.inkSecondary)
             }
             .buttonStyle(.plain)

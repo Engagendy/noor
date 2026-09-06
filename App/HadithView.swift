@@ -61,10 +61,10 @@ struct HadithListView: View {
                                 .frame(width: 30)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Hadith library")
-                                    .font(.system(size: 16, weight: .semibold))
+                                    .noorFont(size: 16, weight: .semibold)
                                     .foregroundStyle(NoorColor.inkPrimary)
                                 Text(verbatim: "صحيح البخاري · صحيح مسلم")
-                                    .font(NoorFont.caption)
+                                    .noorFont(size: 13, relativeTo: .footnote)
                                     .foregroundStyle(NoorColor.inkSecondary)
                             }
                         }
@@ -82,11 +82,11 @@ struct HadithListView: View {
                                 // badge sits on the right, text starts there.
                                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                                     Text(verbatim: isArabicUI ? hadith.number.arabicIndic : "\(hadith.number)")
-                                        .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                                        .noorFont(size: 13, weight: .semibold, monospacedDigits: true)
                                         .foregroundStyle(NoorColor.accentGold)
                                         .frame(width: 30, alignment: .center)
                                     Text(verbatim: hadith.arabic)
-                                        .font(.noorScaled(15))
+                                        .noorFont(size: 15, relativeTo: .body)
                                         .foregroundStyle(NoorColor.inkPrimary)
                                         .lineLimit(2)
                                         .arabicBlock()
@@ -100,7 +100,7 @@ struct HadithListView: View {
                         }
                     } header: {
                         Text(verbatim: collection.title)
-                            .font(.system(size: 14, weight: .semibold))
+                            .noorFont(size: 14, weight: .semibold)
                             .foregroundStyle(NoorColor.accentPrimary)
                     }
                 }
@@ -159,7 +159,7 @@ struct HadithDetailView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
                             Text(verbatim: item.arabic)
-                                .font(.noorScaled(18))
+                                .noorFont(size: 18, relativeTo: .body)
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .lineSpacing(10)
                                 .arabicBlock()
@@ -168,14 +168,14 @@ struct HadithDetailView: View {
                                     .fill(NoorColor.accentGold.opacity(0.3))
                                     .frame(height: 0.7)
                                 Text(verbatim: item.english)
-                                    .font(.noorScaled(15.5))
+                                    .noorFont(size: 15.5, relativeTo: .body)
                                     .foregroundStyle(NoorColor.inkPrimary.opacity(0.9))
                                     .lineSpacing(7)
                             }
                             Text(verbatim: isArabicUI
                                  ? "\(item.collectionArabic) · الحديث \(item.number.arabicIndic)"
                                  : "\(item.collectionEnglish) · Hadith \(item.number)")
-                                .font(.system(size: 13, weight: .semibold))
+                                .noorFont(size: 13, weight: .semibold)
                                 .foregroundStyle(NoorColor.accentGold)
                         }
                         .padding(20)

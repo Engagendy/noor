@@ -37,6 +37,9 @@ plan section 4 exactly (iOS).
 - Arabic Quran rendering only with bundled, verified Quran fonts: QCF page
   fonts (page mode) and Amiri Quran (flow mode — the KFGQPC text fonts
   break Quranic marks like U+06DF under Apple's shaper; verified 2026-08-31).
+- Arabic interface text uses bundled Cairo through `NoorTheme` (Android) and
+  the locale-aware `noorFont` design token (Apple platforms). English remains
+  on the platform system font. Never use Cairo for Quran text.
 - Accessibility non-negotiable: labels, Dynamic Type, 44pt targets on every PR.
 
 ## Android conventions (`android/`)

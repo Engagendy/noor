@@ -26,30 +26,30 @@ public struct TafsirSheetView: View {
         case .downloading(let surah):
             VStack(alignment: .leading, spacing: 5) {
                 Text("Downloading tafsir \(surah)/114…")
-                    .font(NoorFont.caption)
+                    .noorFont(size: 13, relativeTo: .footnote)
                     .foregroundStyle(NoorColor.inkSecondary)
                 ProgressView(value: Double(surah), total: 114)
                     .tint(NoorColor.accentPrimary)
             }
         case .done:
             Label("Available offline", systemImage: "checkmark.circle")
-                .font(NoorFont.caption)
+                .noorFont(size: 13, relativeTo: .footnote)
                 .foregroundStyle(NoorColor.accentPrimary)
         case .failed(let message):
             Text(verbatim: message)
-                .font(NoorFont.caption)
+                .noorFont(size: 13, relativeTo: .footnote)
                 .foregroundStyle(.red)
         case .idle:
             if TafsirService.isPackDownloaded(edition: edition) {
                 Label("Available offline", systemImage: "checkmark.circle")
-                    .font(NoorFont.caption)
+                    .noorFont(size: 13, relativeTo: .footnote)
                     .foregroundStyle(NoorColor.accentPrimary)
             } else {
                 Button {
                     Task { await service.downloadPack(edition: edition) }
                 } label: {
                     Label("Download for offline", systemImage: "arrow.down.circle")
-                        .font(NoorFont.caption)
+                        .noorFont(size: 13, relativeTo: .footnote)
                 }
                 .buttonStyle(.borderless)
                 .tint(NoorColor.accentPrimary)
@@ -63,7 +63,7 @@ public struct TafsirSheetView: View {
     private func tafsirParagraph(_ paragraph: String) -> some View {
         if edition.isArabic {
             Text(paragraph)
-                .font(.system(size: 18))
+                .font(NoorFont.arabicText(size: 18, relativeTo: .body))
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineSpacing(10)
                 .textSelection(.enabled)
@@ -108,7 +108,7 @@ public struct TafsirSheetView: View {
                             ForEach(TafsirEdition.all) { candidate in
                                 let isOn = candidate.slug == editionSlug
                                 Text(candidate.displayName)
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .noorFont(size: 13, weight: .semibold)
                                     .lineLimit(1)
                                     .fixedSize(horizontal: true, vertical: false)
                                     .padding(.horizontal, 14)

@@ -52,7 +52,7 @@ struct DailyAyahWidgetView: View {
 
     init(entry: DailyAyahEntry) {
         self.entry = entry
-        FontRegistrar.registerQuranFont()
+        FontRegistrar.registerBundledFonts()
     }
 
     var body: some View {
@@ -64,7 +64,7 @@ struct DailyAyahWidgetView: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(entry.isArabicUI ? "آية اليوم" : "DAILY AYAH")
-                .font(.system(size: 10, weight: .bold))
+                .noorFont(size: 10, weight: .bold)
                 .tracking(1.1)
                 .foregroundStyle(WidgetTheme.gold)
             Spacer(minLength: 0)
@@ -76,7 +76,7 @@ struct DailyAyahWidgetView: View {
                 .arabicBlock()
             Spacer(minLength: 0)
             Text(entry.reference)
-                .font(.system(size: 10))
+                .noorFont(size: 10)
                 .foregroundStyle(WidgetTheme.inkSecondary)
         }
     }

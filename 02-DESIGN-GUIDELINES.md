@@ -65,7 +65,7 @@ Rules:
 | Role | Font | Notes |
 |---|---|---|
 | Quran Arabic | **KFGQPC Uthmanic Hafs** (bundled) | Only this (or QCF page fonts) for ayat. Never render Quran in system Arabic fonts. |
-| Arabic UI / hadith Arabic | SF Arabic | System font — free, excellent, Dynamic Type |
+| Arabic UI / hadith Arabic | **Cairo** (bundled) | SIL OFL 1.1 variable font; use the locale-aware design-system typography path so English remains on the platform system font. |
 | Latin UI & translations | SF Pro / New York | SF Pro for UI; **New York (serif) for translation & tafsir body** — gives a "sacred book" reading feel |
 | Numerals | Localized (Arabic-Indic in Arabic UI) | Follow locale |
 
@@ -74,7 +74,7 @@ Scale (Dynamic Type–relative, base @ Large):
   (Arabic script with harakat needs tall lines — never clip diacritics!)
 - Translation body: 17pt New York, line-height 1.5
 - Tafsir body: 16pt, line-height 1.6
-- Screen titles: SF Pro 28pt semibold; section headers 20pt semibold
+- Screen titles: Cairo/SF Pro 28pt semibold; section headers 20pt semibold
 - Metadata/captions: 13pt
 
 Rules:

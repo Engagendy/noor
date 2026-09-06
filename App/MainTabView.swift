@@ -75,6 +75,7 @@ struct MainTabView: View {
 
     var body: some View {
         mainTabs
+            .noorPlatformChromeTypography()
             .tint(NoorColor.accentPrimary)
             .onChange(of: translationId) { _, _ in
                 // Swap the loaded edition and fetch it right away.

@@ -182,14 +182,14 @@ struct NextPrayerSmallView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(entry.nextName.uppercased())
-                .font(.system(size: 11, weight: .bold))
+                .noorFont(size: 11, weight: .bold)
                 .tracking(1.2)
                 .foregroundStyle(WidgetTheme.green)
             Text(entry.nextTime, style: .timer)
-                .font(.system(size: 26, weight: .bold).monospacedDigit())
+                .noorFont(size: 26, weight: .bold, monospacedDigits: true)
                 .foregroundStyle(WidgetTheme.ink)
             Text(entry.nextTime, style: .time)
-                .font(.system(size: 12))
+                .noorFont(size: 12)
                 .foregroundStyle(WidgetTheme.inkSecondary)
             Spacer(minLength: 0)
             HStack(spacing: 4) {
@@ -215,25 +215,29 @@ struct TodayPrayersMediumView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
                 Text(entry.isArabic ? "اليوم" : "TODAY")
-                    .font(.system(size: 12, weight: .bold))
+                    .noorFont(size: 12, weight: .bold)
                     .tracking(1)
                     .foregroundStyle(WidgetTheme.teal)
                 Text(entry.nextTime, style: .timer)
-                    .font(.system(size: 12, weight: .bold).monospacedDigit())
+                    .noorFont(size: 12, weight: .bold, monospacedDigits: true)
                     .foregroundStyle(WidgetTheme.teal)
                 Spacer()
                 Text(entry.cityName)
-                    .font(.system(size: 11))
+                    .noorFont(size: 11)
                     .foregroundStyle(WidgetTheme.darkSecondary)
             }
             HStack {
                 ForEach(entry.times, id: \.name) { item in
                     VStack(spacing: 2) {
                         Text(item.name)
-                            .font(.system(size: 11, weight: item.isNext ? .bold : .regular))
+                            .noorFont(size: 11, weight: item.isNext ? .bold : .regular)
                             .foregroundStyle(item.isNext ? WidgetTheme.teal : WidgetTheme.darkSecondary)
                         Text(item.time, style: .time)
-                            .font(.system(size: 13, weight: item.isNext ? .bold : .semibold).monospacedDigit())
+                            .noorFont(
+                                size: 13,
+                                weight: item.isNext ? .bold : .semibold,
+                                monospacedDigits: true
+                            )
                             .foregroundStyle(WidgetTheme.darkInk)
                     }
                     .padding(.vertical, 4)
@@ -321,17 +325,17 @@ struct LockRectangularView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(verbatim: entry.isArabic ? "الصلاة القادمة" : "NEXT PRAYER")
-                .font(.system(size: 11, weight: .semibold))
+                .noorFont(size: 11, weight: .semibold)
                 .opacity(0.75)
             HStack(spacing: 6) {
                 Text(verbatim: entry.nextName)
-                    .font(.system(size: 16, weight: .bold))
+                    .noorFont(size: 16, weight: .bold)
                 Text(entry.nextTime, style: .time)
-                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                    .noorFont(size: 15, weight: .semibold, monospacedDigits: true)
                     .opacity(0.9)
             }
             Text(entry.nextTime, style: .timer)
-                .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                .noorFont(size: 13, weight: .semibold, monospacedDigits: true)
                 .opacity(0.8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -349,10 +353,10 @@ struct LockCircularView: View {
         } currentValueLabel: {
             VStack(spacing: 0) {
                 Text(verbatim: String(entry.nextName.prefix(6)))
-                    .font(.system(size: 11, weight: .bold))
+                    .noorFont(size: 11, weight: .bold)
                     .minimumScaleFactor(0.6)
                 Text(entry.nextTime, style: .time)
-                    .font(.system(size: 10, weight: .semibold).monospacedDigit())
+                    .noorFont(size: 10, weight: .semibold, monospacedDigits: true)
                     .minimumScaleFactor(0.6)
             }
         }

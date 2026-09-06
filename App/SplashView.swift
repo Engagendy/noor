@@ -39,7 +39,7 @@ struct SplashView: View {
                         .font(NoorFont.quran(size: 40))
                         .foregroundStyle(gold)
                     Text(verbatim: "Noor")
-                        .font(.system(size: 22, weight: .semibold))
+                        .noorFont(size: 22, weight: .semibold)
                         .tracking(3)
                         .foregroundStyle(paper)
                 }

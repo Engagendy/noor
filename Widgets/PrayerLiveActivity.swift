@@ -1,4 +1,5 @@
 import ActivityKit
+import DesignSystem
 import SwiftUI
 import WidgetKit
 
@@ -13,9 +14,9 @@ struct PrayerLiveActivity: Widget {
                     .foregroundStyle(WidgetTheme.gold)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: context.state.prayerName)
-                        .font(.system(size: 17, weight: .bold))
+                        .noorFont(size: 17, weight: .bold)
                     Text(verbatim: context.attributes.city)
-                        .font(.system(size: 12))
+                        .noorFont(size: 12)
                         .opacity(0.7)
                 }
                 Spacer()
@@ -23,10 +24,10 @@ struct PrayerLiveActivity: Widget {
                     // Lock screen stays calm: minute-level countdown (the
                     // Dynamic Island keeps the precise seconds timer).
                     Text(context.state.time, style: .relative)
-                        .font(.system(size: 22, weight: .bold).monospacedDigit())
+                        .noorFont(size: 22, weight: .bold, monospacedDigits: true)
                         .multilineTextAlignment(.trailing)
                     Text(context.state.time, style: .time)
-                        .font(.system(size: 12).monospacedDigit())
+                        .noorFont(size: 12, monospacedDigits: true)
                         .opacity(0.7)
                 }
             }
@@ -42,18 +43,23 @@ struct PrayerLiveActivity: Widget {
                         Image(systemName: "moon.stars.fill")
                             .foregroundStyle(WidgetTheme.gold)
                         Text(verbatim: context.state.prayerName)
-                            .font(.system(size: 16, weight: .bold))
+                            .noorFont(size: 16, weight: .bold)
+                            .environment(
+                                \.locale,
+                                context.attributes.isArabic
+                                    ? Locale(identifier: "ar") : .current
+                            )
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Text(timerInterval: countdownRange(to: context.state.time), countsDown: true)
-                        .font(.system(size: 20, weight: .bold).monospacedDigit())
+                        .noorFont(size: 20, weight: .bold, monospacedDigits: true)
                         .frame(maxWidth: 90)
                         .environment(\.locale, context.attributes.isArabic ? Locale(identifier: "ar") : .current)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     Text(context.state.time, style: .time)
-                        .font(.system(size: 12).monospacedDigit())
+                        .noorFont(size: 12, monospacedDigits: true)
                         .opacity(0.7)
                         .environment(\.locale, context.attributes.isArabic ? Locale(identifier: "ar") : .current)
                 }
@@ -62,7 +68,7 @@ struct PrayerLiveActivity: Widget {
                     .foregroundStyle(WidgetTheme.gold)
             } compactTrailing: {
                 Text(timerInterval: countdownRange(to: context.state.time), countsDown: true)
-                    .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                    .noorFont(size: 13, weight: .semibold, monospacedDigits: true)
                     .frame(maxWidth: 52)
                     .environment(\.locale, context.attributes.isArabic ? Locale(identifier: "ar") : .current)
             } minimal: {

@@ -35,7 +35,7 @@ public struct MushafDownloadRow: View {
                     Text(verbatim: isComplete
                          ? String(localized: "All 604 pages are offline")
                          : "\(cached) / 604 · \(sizeLabel)")
-                        .font(NoorFont.caption)
+                        .noorFont(size: 13, relativeTo: .footnote)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
                 Spacer()

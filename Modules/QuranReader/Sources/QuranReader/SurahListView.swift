@@ -106,7 +106,7 @@ public struct SurahListView: View {
                                             .lineLimit(2)
                                             .arabicBlock()
                                         Text(verbatim: "\u{200F}\(surahName(hit.surahId)) · \(hit.surahId):\(hit.ayah)")
-                                            .font(NoorFont.caption)
+                                            .noorFont(size: 13, relativeTo: .footnote)
                                             .foregroundStyle(NoorColor.inkSecondary)
                                     }
                                     .arabicBlock()
@@ -141,10 +141,10 @@ public struct SurahListView: View {
                                         .foregroundStyle(NoorColor.accentGold)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(verbatim: "\(surahName(bookmark.surahId)) · \(bookmark.surahId):\(bookmark.ayah)")
-                                            .font(.system(size: 15, weight: .semibold))
+                                            .noorFont(size: 15, weight: .semibold)
                                             .foregroundStyle(NoorColor.inkPrimary)
                                         Text(bookmark.createdAt.formatted(date: .abbreviated, time: .omitted))
-                                            .font(NoorFont.caption)
+                                            .noorFont(size: 13, relativeTo: .footnote)
                                             .foregroundStyle(NoorColor.inkSecondary)
                                     }
                                     Spacer()
@@ -167,7 +167,7 @@ public struct SurahListView: View {
             // Custom heading: the system large title never renders above a
             // top safe-area inset in a compact stack.
             Text("Quran")
-                .font(NoorFont.screenTitle)
+                .noorFont(size: 28, weight: .semibold, relativeTo: .title)
                 .foregroundStyle(NoorColor.inkPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
@@ -264,10 +264,10 @@ public struct SurahListView: View {
                     SurahNumberBadge(juz.idx)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Juz \(juz.idx)")
-                            .font(.system(size: 16, weight: .semibold))
+                            .noorFont(size: 16, weight: .semibold)
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(referenceLabel(juz))
-                            .font(NoorFont.caption)
+                            .noorFont(size: 13, relativeTo: .footnote)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                     Spacer()
@@ -303,17 +303,17 @@ public struct SurahListView: View {
         } label: {
             HStack(spacing: 10) {
                 Text(verbatim: "۞")
-                    .font(.system(size: 15))
+                    .noorFont(size: 15)
                     .foregroundStyle(NoorColor.accentGold)
                 Text(quarterName(position.quarterInHizb))
-                    .font(.system(size: 14))
+                    .noorFont(size: 14)
                     .foregroundStyle(NoorColor.inkPrimary)
                 Text("Hizb \(position.hizb)")
-                    .font(NoorFont.caption)
+                    .noorFont(size: 13, relativeTo: .footnote)
                     .foregroundStyle(NoorColor.inkSecondary)
                 Spacer()
                 Text(referenceLabel(quarter))
-                    .font(NoorFont.caption)
+                    .noorFont(size: 13, relativeTo: .footnote)
                     .foregroundStyle(NoorColor.inkSecondary)
             }
             .padding(.vertical, 2)
@@ -356,14 +356,14 @@ struct SurahRow: View {
                         .font(NoorFont.quran(size: 18))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text(verbatim: "\(surah.ayahCount.arabicIndic) آية · \(surah.isMeccan ? "مكية" : "مدنية")")
-                        .font(NoorFont.caption)
+                        .noorFont(size: 13, relativeTo: .footnote)
                         .foregroundStyle(NoorColor.inkSecondary)
                 } else {
                     Text(surah.nameTransliterated)
-                        .font(.system(size: 16, weight: .semibold))
+                        .noorFont(size: 16, weight: .semibold)
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text("\(surah.nameEnglish) · \(surah.ayahCount) ayat · \(surah.isMeccan ? String(localized: "Makki", locale: locale) : String(localized: "Madani", locale: locale))")
-                        .font(NoorFont.caption)
+                        .noorFont(size: 13, relativeTo: .footnote)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
             }

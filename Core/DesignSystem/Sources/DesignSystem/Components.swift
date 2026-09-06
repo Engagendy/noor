@@ -60,7 +60,7 @@ public struct SurahNumberBadge: View {
 
     public var body: some View {
         Text("\(number)")
-            .font(.system(size: 12, weight: .semibold).monospacedDigit())
+            .noorFont(size: 12, weight: .semibold, monospacedDigits: true)
             .foregroundStyle(NoorColor.accentGold)
             .frame(width: 30, height: 30)
             .background(
@@ -84,7 +84,7 @@ public struct AyahEndMarker: View {
 
     public var body: some View {
         Text(ayah.arabicIndic)
-            .font(.system(size: size * 0.5))
+            .noorFont(size: size * 0.5)
             .foregroundStyle(NoorColor.accentGold)
             .frame(width: size, height: size)
             .overlay(Circle().stroke(NoorColor.accentGold, lineWidth: 1.2))

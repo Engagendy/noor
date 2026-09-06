@@ -12,8 +12,14 @@ let package = Package(
             name: "DesignSystem",
             resources: [
                 .copy("Resources/UthmanicHafs.ttf"),
-                .copy("Resources/AmiriQuran.ttf")
+                .copy("Resources/AmiriQuran.ttf"),
+                .copy("Resources/Cairo.ttf"),
+                .copy("Resources/Cairo-OFL.txt")
             ]
+        ),
+        .testTarget(
+            name: "DesignSystemTests",
+            dependencies: ["DesignSystem"]
         )
     ]
 )

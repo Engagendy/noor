@@ -28,7 +28,7 @@ python3 Tools/build_quran_db.py
 Feature modules are local Swift Packages (see plan §4):
 
 - `App/` — app entry, root navigation
-- `Core/DesignSystem` — color/typography tokens, bundled KFGQPC Hafs font
+- `Core/DesignSystem` — color/typography tokens, bundled Cairo UI and Quran fonts
 - `Core/ContentDB` — read-only GRDB access to the bundled Quran SQLite,
   startup checksum verification
 - `Modules/QuranReader` — mushaf reading (flow mode)

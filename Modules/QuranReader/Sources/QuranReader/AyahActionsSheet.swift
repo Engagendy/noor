@@ -130,7 +130,7 @@ struct AyahActionsSheet: View {
                     .font(.system(size: 19))
                     .frame(width: 30)
                 Text(title)
-                    .font(.system(size: 17, weight: .semibold))
+                    .noorFont(size: 17, weight: .semibold)
                 Spacer()
             }
             .foregroundStyle(prominent ? NoorColor.bgPrimary
