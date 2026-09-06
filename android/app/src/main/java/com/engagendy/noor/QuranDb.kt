@@ -128,6 +128,70 @@ class QuranDb private constructor(private val db: SQLiteDatabase) {
             if (c.moveToFirst()) c.getString(0) else null
         }
 
+    /// Cached once: the basmala exactly as stored in the verified DB (1:1).
+    /// Used only to RECOGNISE the prefix below — never to produce text.
+    private val storedBasmala: String? by lazy { basmala() }
+
+    /// DISPLAY-ONLY helper for readers that already draw a separate basmala
+    /// line above ayah 1.
+    ///
+    /// Data quirk of the bundled Tanzil DB (verified, never to be "fixed"):
+    /// for the 111 surahs that open with it, the basmala is stored as a
+    /// LEADING prefix inside the text of ayah 1, followed by one space and
+    /// then that ayah's own words. Rendering the injected basmala header AND
+    /// the stored text therefore shows it twice. This returns the same stored
+    /// characters minus that leading prefix — nothing is rewritten, joined or
+    /// normalised; the row in the DB is never modified.
+    ///
+    /// Deliberately does nothing for:
+    /// - Surah 1 (Al-Fatiha): in the Hafs count the basmala IS ayah 1, so it
+    ///   must render in full as an ordinary numbered ayah (readers skip the
+    ///   injected header for surah 1 instead).
+    /// - Surah 9 (At-Tawbah): no basmala in the data, nothing to strip.
+    /// - Any ayah other than ayah 1 — notably 27:30, where the basmala
+    ///   appears MID-VERSE inside Sulayman's letter and must never be touched.
+    ///   Only a leading prefix on ayah 1 is ever in scope.
+    ///
+    /// Every other consumer (share card, share video, widgets, bookmarks,
+    /// tafsir, search, copy) presents ayah 1 on its own and must keep the
+    /// stored text as-is — do not call this there.
+    fun textWithoutLeadingBasmala(verse: Verse): String {
+        if (verse.ayah != 1 || verse.surahId == 1) return verse.text
+        val prefix = storedBasmala ?: return verse.text
+        val end = leadingBasmalaEnd(verse.text, prefix) ?: return verse.text
+        var rest = verse.text.substring(end)
+        if (rest.startsWith(" ")) rest = rest.substring(1)
+        // Defensive: never render an empty ayah if the data ever changes.
+        return if (rest.isBlank()) verse.text else rest
+    }
+
+    /// Index just past the leading basmala in [text], or null if it does not
+    /// open with one. Compares base letters only, skipping Arabic combining
+    /// marks on BOTH sides: surahs 95 and 97 store the same basmala with one
+    /// extra shadda on its first letter, so an exact prefix match would miss
+    /// them and leave a second basmala on screen. Nothing is rewritten — the
+    /// caller only ever slices the stored string at the returned index.
+    private fun leadingBasmalaEnd(text: String, prefix: String): Int? {
+        var i = 0
+        var j = 0
+        while (j < prefix.length) {
+            while (j < prefix.length && isArabicMark(prefix[j])) j++
+            if (j >= prefix.length) break
+            while (i < text.length && isArabicMark(text[i])) i++
+            if (i >= text.length || text[i] != prefix[j]) return null
+            i++
+            j++
+        }
+        // Consume any marks trailing the final matched letter.
+        while (i < text.length && isArabicMark(text[i])) i++
+        return i
+    }
+
+    /// Arabic combining marks and tatweel: diacritics that may differ between
+    /// the stored basmala variants without changing the letters themselves.
+    private fun isArabicMark(c: Char): Boolean =
+        c == '\u0640' || c in '\u064B'..'\u065F' || c == '\u0670' || c in '\u06D6'..'\u06ED'
+
     /// Word search over the normalized index (same LIKE query as iOS);
     /// returns the untouched display text of matching ayat. Call on IO.
     fun searchVerses(query: String, limit: Int = 80): List<SearchHit> {

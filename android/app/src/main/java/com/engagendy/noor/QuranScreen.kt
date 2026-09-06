@@ -627,12 +627,16 @@ fun ReaderScreen(
                 if (key in quarterKeys) {
                     withStyle(SpanStyle(color = NoorColor.accentGold)) { append("۞ ") }
                 }
+                // Ayah 1 of surahs 2..114 stores the basmala as a leading
+                // prefix; the reader draws its own basmala line above, so
+                // render only the ayah's own words (see QuranDb KDoc).
+                val body = db.textWithoutLeadingBasmala(verse)
                 if (highlightAyah == verse.ayah) {
                     withStyle(SpanStyle(background = NoorColor.stateReciting)) {
-                        append(verse.text)
+                        append(body)
                     }
                 } else {
-                    append(verse.text)
+                    append(body)
                 }
                 if (key in sajdaKeys) {
                     withStyle(SpanStyle(color = NoorColor.accentGold)) { append(" ۩") }
@@ -893,7 +897,9 @@ fun ReaderScreen(
                                             append("۞ ")
                                         }
                                     }
-                                    append(verse.text)
+                                    // Same basmala de-duplication as the
+                                    // flow layout (QuranDb KDoc).
+                                    append(db.textWithoutLeadingBasmala(verse))
                                     if (key in sajdaKeys) {
                                         withStyle(SpanStyle(color = NoorColor.accentGold)) {
                                             append(" ۩")

@@ -578,6 +578,16 @@ public struct SurahReaderView: View {
         }
     }
 
+    /// Text to RENDER for an ayah in the list. The ayah-list header already
+    /// draws its own basmala line (surahs 2…114 except 9), and the DB keeps
+    /// that basmala inside ayah 1's text — strip the leading copy so it does
+    /// not appear twice. See BasmalaPrefix; sharing/copy/tafsir keep the
+    /// stored text as-is.
+    private func displayText(_ verse: Verse) -> String {
+        guard verse.ayah == 1, let basmala = viewModel.basmala else { return verse.text }
+        return BasmalaPrefix.strippingLeadingBasmala(from: verse.text, basmala: basmala)
+    }
+
     private func ayahBlock(_ verse: Verse) -> some View {
         let key = verse.surahId * 1000 + verse.ayah
         let isSelected = selectedKey == key
@@ -591,7 +601,7 @@ public struct SurahReaderView: View {
             } else {
                 // The sajdah sign ۩ is already part of the Tanzil text for
                 // sajdah ayat — never append a second one.
-                (Text(verse.text)
+                (Text(displayText(verse))
                     + Text(verbatim: "  \u{2067}﴿\(verse.ayah.arabicIndic)﴾\u{2069}")
                         .font(NoorFont.quran(size: liveFontSize * 0.62))
                         .foregroundStyle(NoorColor.accentGold))
@@ -632,7 +642,7 @@ public struct SurahReaderView: View {
         .contextMenu { contextActions(for: verse) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Ayah \(verse.ayah)")
-        .accessibilityValue(verse.text)
+        .accessibilityValue(displayText(verse))
     }
 
     /// Direct defaults writes: the reader must NOT observe these via

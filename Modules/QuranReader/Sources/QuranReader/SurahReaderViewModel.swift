@@ -181,7 +181,16 @@ public final class SurahReaderViewModel {
             if quarterStarts[key] != nil {
                 add(verse.surahId, verse.ayah, "۞", .quarter)
             }
-            for word in verse.text.split(separator: " ") {
+            // The section already draws a basmala line above ayah 1, and the
+            // DB stores that basmala inside ayah 1's text — drop the leading
+            // copy so it is not rendered twice. See BasmalaPrefix.
+            let body: String
+            if verse.ayah == 1, let basmala = section.basmala {
+                body = BasmalaPrefix.strippingLeadingBasmala(from: verse.text, basmala: basmala)
+            } else {
+                body = verse.text
+            }
+            for word in body.split(separator: " ") {
                 add(verse.surahId, verse.ayah, String(word), .word)
             }
             // No synthetic sajdah sign: the Tanzil text of every sajdah ayah
