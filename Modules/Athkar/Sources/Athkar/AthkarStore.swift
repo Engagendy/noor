@@ -29,6 +29,10 @@ public struct Dhikr: Codable, Hashable, Sendable, Identifiable {
     public let count: Int
     /// Recording of this dhikr alone, file name only (see `chapterAudio`).
     public let audio: String?
+    /// Source line ("رواه مسلم …") when the data carries one. Optional: the
+    /// bundled Hisn al-Muslim rows have none today, but search and the card
+    /// honour it the moment a row gains one.
+    public let reference: String?
 
     public var id: String { text }
 }

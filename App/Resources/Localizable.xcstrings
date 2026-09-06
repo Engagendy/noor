@@ -785,6 +785,16 @@
         }
       }
     },
+    "Chapters": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأبواب"
+          }
+        }
+      }
+    },
     "Check your connection and try again. (%@)": {
       "extractionState": "stale",
       "localizations": {
@@ -1490,6 +1500,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Go"
+          }
+        }
+      }
+    },
+    "Go to ayah": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الانتقال إلى الآية"
           }
         }
       }
@@ -2341,6 +2361,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No cities found"
+          }
+        }
+      }
+    },
+    "No matching athkar": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا توجد أذكار مطابقة"
           }
         }
       }
@@ -3279,6 +3309,16 @@
         }
       }
     },
+    "Show more results": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عرض المزيد من النتائج"
+          }
+        }
+      }
+    },
     "Show translation": {
       "extractionState": "stale",
       "localizations": {
@@ -3286,6 +3326,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "عرض الترجمة"
+          }
+        }
+      }
+    },
+    "Showing the first %lld matches — refine your search.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تُعرض أول %lld نتيجة — حدِّد بحثك أكثر."
           }
         }
       }

@@ -216,23 +216,42 @@ fun QuranScreen(
         openSerial++
     }
 
-    // Word search runs off-main over the normalized index (LIKE, like iOS).
+    // Word search runs off-main over the normalized index (LIKE, like iOS),
+    // then ranked; a short debounce keeps fast typing from re-querying per
+    // keystroke (produceState cancels the previous run on every new query).
     val query = searchText.trim()
-    val hits by produceState(emptyList<SearchHit>(), query) {
+    val normalizedQuery = remember(query) { SearchText.normalizeForSearch(query) }
+    val results by produceState(VerseSearchResults(emptyList(), false), query) {
         value = if (query.length >= 2) {
+            kotlinx.coroutines.delay(180)
             withContext(Dispatchers.IO) { db.searchVerses(query) }
-        } else emptyList()
+        } else VerseSearchResults(emptyList(), false)
     }
+    val hits = results.hits
     // "2:255"-style reference (Arabic-Indic digits welcome): jump by number.
     val westernQuery = query.map { c -> if (c in '٠'..'٩') ('0' + (c - '٠')) else c }
         .joinToString("")
-    val referenceSurah = westernQuery.split(":").firstOrNull()?.toIntOrNull()
+    // Accepted reference forms: "2:255", "2 255", "2-255", "2.255", "2/255"
+    // — in either digit system, since westernQuery already folded the digits.
+    val reference = remember(westernQuery) {
+        Regex("""^(\d{1,3})\s*[:\s./-]\s*(\d{1,3})$""").find(westernQuery.trim())?.let { m ->
+            m.groupValues[1].toInt() to m.groupValues[2].toInt()
+        }
+    }
+    val referenceHit = reference?.let { (sid, a) ->
+        surahs.firstOrNull { it.id == sid && a in 1..it.ayahCount }?.let { it to a }
+    }
+    val referenceSurah = reference?.first
+        ?: westernQuery.substringBefore(':').trim().toIntOrNull()
     val filteredSurahs =
         if (query.isEmpty()) surahs
         else if (referenceSurah != null) surahs.filter { it.id == referenceSurah }
+        // Surah names match in all three forms the DB carries: Arabic
+        // (diacritic-insensitive), transliteration, and English meaning.
         else surahs.filter {
-            it.nameArabic.contains(query) ||
-                it.nameTransliterated.contains(query, ignoreCase = true)
+            SearchText.contains(it.nameArabic, normalizedQuery) ||
+                SearchText.contains(it.nameTransliterated, normalizedQuery) ||
+                SearchText.contains(it.nameEnglish, normalizedQuery)
         }
 
     Column(modifier.fillMaxSize()) {
@@ -258,46 +277,12 @@ fun QuranScreen(
             )
         }
         // Custom search field, RTL placeholder — like the iOS index header.
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .height(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(NoorColor.bgElevated)
-                .border(1.dp, NoorColor.inkPrimary.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
-                .padding(horizontal = 12.dp)
-        ) {
-            Box(Modifier.weight(1f)) {
-                if (searchText.isEmpty()) {
-                    Text(
-                        stringResource(R.string.g2_search_quran_hint),
-                        fontSize = 15.sp,
-                        color = NoorColor.inkSecondary.copy(alpha = 0.8f)
-                    )
-                }
-                BasicTextField(
-                    value = searchText,
-                    onValueChange = { searchText = it },
-                    singleLine = true,
-                    textStyle = TextStyle(fontSize = 15.sp, color = NoorColor.inkPrimary),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            if (searchText.isNotEmpty()) {
-                Icon(
-                    painterResource(R.drawable.ic_close),
-                    contentDescription = stringResource(R.string.g2_clear_search),
-                    tint = NoorColor.inkSecondary,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .clickable { searchText = "" }
-                        .padding(6.dp)
-                )
-            }
-        }
+        NoorSearchField(
+            value = searchText,
+            onValueChange = { searchText = it },
+            hint = stringResource(R.string.g2_search_quran_hint),
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
         // Segmented السور / الأجزاء / المحفوظات (iOS index tabs).
         Row(
             Modifier
@@ -460,6 +445,36 @@ fun QuranScreen(
                 }
             }
             else -> LazyColumn(Modifier.fillMaxSize()) {
+                // Exact reference typed ("2:255" / Arabic-Indic): open it directly.
+                if (referenceHit != null) {
+                    val (refSurah, refAyah) = referenceHit
+                    item(key = "reference") {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { openReference(refSurah.id, refAyah) }
+                                .padding(horizontal = 20.dp, vertical = 14.dp)
+                        ) {
+                            Text("۝", fontSize = 18.sp, color = NoorColor.accentGold)
+                            Text(
+                                refSurah.displayName() + " · " +
+                                    refSurah.id.localizedDigits() + ":" + refAyah.localizedDigits(),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = NoorColor.inkPrimary,
+                                modifier = Modifier.weight(1f).padding(horizontal = 12.dp)
+                            )
+                            Icon(
+                                painterResource(NoorIcons.chevronForward()),
+                                contentDescription = null,
+                                tint = NoorColor.inkSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
+                    }
+                }
                 items(filteredSurahs, key = { it.id }) { surah ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -509,6 +524,17 @@ fun QuranScreen(
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                         )
                     }
+                    if (results.truncated) {
+                        item(key = "truncated") {
+                            Text(
+                                stringResource(R.string.g2_search_truncated,
+                                               hits.size.localizedDigits()),
+                                fontSize = 12.sp,
+                                color = NoorColor.inkSecondary,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
                     items(hits, key = { "h${it.surahId}:${it.ayah}" }) { hit ->
                         Column(
                             Modifier
@@ -517,7 +543,8 @@ fun QuranScreen(
                                 .padding(horizontal = 20.dp, vertical = 8.dp)
                         ) {
                             Text(
-                                hit.text,
+                                // Snippet centred on the match, term emphasised.
+                                searchSnippet(hit.text, normalizedQuery),
                                 fontFamily = QuranFont,
                                 fontSize = 17.sp,
                                 maxLines = 2,
@@ -537,6 +564,57 @@ fun QuranScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+/// The app's search field (Quran index, athkar list): rounded, bordered,
+/// placeholder in the UI direction, with a 28dp clipped clear button.
+@Composable
+internal fun NoorSearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    hint: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(40.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(NoorColor.bgElevated)
+            .border(1.dp, NoorColor.inkPrimary.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp)
+    ) {
+        Box(Modifier.weight(1f)) {
+            if (value.isEmpty()) {
+                Text(
+                    hint,
+                    fontSize = 15.sp,
+                    color = NoorColor.inkSecondary.copy(alpha = 0.8f)
+                )
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 15.sp, color = NoorColor.inkPrimary),
+                cursorBrush = androidx.compose.ui.graphics.SolidColor(NoorColor.accentPrimary),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        if (value.isNotEmpty()) {
+            Icon(
+                painterResource(R.drawable.ic_close),
+                contentDescription = stringResource(R.string.g2_clear_search),
+                tint = NoorColor.inkSecondary,
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .clickable { onValueChange("") }
+                    .padding(6.dp)
+            )
         }
     }
 }
@@ -562,6 +640,33 @@ private fun IndexSegment(
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             color = if (selected) NoorColor.bgPrimary else NoorColor.inkPrimary
         )
+    }
+}
+
+/// A search-result snippet: the ORIGINAL verified text windowed around the
+/// match (never edited — only cut, with ellipses added), with the matched
+/// term in the accent colour. Falls back to the plain text when the match
+/// cannot be located.
+internal fun searchSnippet(
+    text: String,
+    normalizedQuery: String,
+    radius: Int = 45,
+): androidx.compose.ui.text.AnnotatedString {
+    val range = SearchText.matchRange(text, normalizedQuery)
+        ?: return androidx.compose.ui.text.AnnotatedString(text)
+    var start = (range.first - radius).coerceAtLeast(0)
+    var end = (range.last + 1 + radius).coerceAtMost(text.length)
+    // Never cut a word in half.
+    while (start > 0 && !text[start - 1].isWhitespace()) start--
+    while (end < text.length && !text[end].isWhitespace()) end++
+    return buildAnnotatedString {
+        if (start > 0) append("… ")
+        append(text.substring(start, range.first))
+        withStyle(SpanStyle(color = NoorColor.accentPrimary, fontWeight = FontWeight.Bold)) {
+            append(text.substring(range.first, range.last + 1))
+        }
+        append(text.substring(range.last + 1, end))
+        if (end < text.length) append(" …")
     }
 }
 

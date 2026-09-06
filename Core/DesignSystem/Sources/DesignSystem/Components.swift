@@ -261,3 +261,47 @@ public struct IslamicLattice: View {
         .allowsHitTesting(false)
     }
 }
+
+// MARK: - Search snippets
+
+/// A window of text with the matched run emphasised — the shared way every
+/// search screen (Quran ayat, athkar) shows *why* a row matched.
+///
+/// The three parts are slices of one original string, so concatenating them
+/// as `Text` runs keeps a single bidi paragraph: Arabic still shapes and
+/// orders correctly, and the ellipses land on the visual outside.
+public struct HighlightedSnippet: View {
+    let before: String
+    let match: String
+    let after: String
+    var truncatedStart = false
+    var truncatedEnd = false
+    var font: Font = .system(size: 15)
+    var tint: Color = NoorColor.accentPrimary
+
+    public init(before: String, match: String, after: String,
+                truncatedStart: Bool = false, truncatedEnd: Bool = false,
+                font: Font = .system(size: 15), tint: Color = NoorColor.accentPrimary) {
+        self.before = before
+        self.match = match
+        self.after = after
+        self.truncatedStart = truncatedStart
+        self.truncatedEnd = truncatedEnd
+        self.font = font
+        self.tint = tint
+    }
+
+    /// Plain reading of the whole snippet, for the accessibility label.
+    private var spoken: String {
+        (truncatedStart ? "… " : "") + before + match + after + (truncatedEnd ? " …" : "")
+    }
+
+    public var body: some View {
+        (Text(verbatim: truncatedStart ? "…" + before : before)
+            + Text(verbatim: match).bold().foregroundStyle(tint)
+            + Text(verbatim: truncatedEnd ? after + "…" : after))
+            .font(font)
+            .foregroundStyle(NoorColor.inkPrimary)
+            .accessibilityLabel(Text(verbatim: spoken))
+    }
+}

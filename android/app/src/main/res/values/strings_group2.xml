@@ -132,4 +132,10 @@
     <!-- Reader chrome: surah drawer -->
     <string name="g2_surah_list">فهرس السور</string>
     <string name="g2_back_to_quran">الرجوع إلى القرآن</string>
+    <!-- Search: Quran truncation notice + athkar search -->
+    <string name="g2_search_truncated">عرض أول %1$s نتيجة</string>
+    <string name="g2_search_athkar_hint">ابحث في الأذكار</string>
+    <string name="g2_search_chapters">الأبواب</string>
+    <string name="g2_search_athkar_results">الأذكار</string>
+    <string name="g2_search_no_results">لا توجد نتائج</string>
 </resources>

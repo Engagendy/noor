@@ -1,3 +1,4 @@
+import ContentDB
 import DesignSystem
 import SwiftUI
 
@@ -8,8 +9,22 @@ public struct AthkarView: View {
     public static let afterSalahCategory = "الأذكار بعد السلام من الصلاة"
 
     @State private var categories: [DhikrCategory] = []
-    @State private var searchText = ""
-    @State private var pushedCategory: DhikrCategory?
+    /// Pre-folded search index over titles AND dhikr text; built once with
+    /// the categories (see `AthkarSearchIndex` for the cost note).
+    @State private var searchIndex = AthkarSearchIndex(categories: [])
+    /// Screenshot/UI-test hook: NOOR_ATHKAR_SEARCH=<query> fills the field.
+    @State private var searchText = ProcessInfo.processInfo.environment["NOOR_ATHKAR_SEARCH"] ?? ""
+    /// The chapter being pushed, and (from a text hit) the dhikr to scroll to
+    /// and flash. Both travel together: `navigationDestination` builds its
+    /// destination from the closure captured with the state update that set
+    /// the item, so a second, separate @State would arrive stale (nil).
+    @State private var pushedChapter: ChapterTarget?
+
+    private struct ChapterTarget: Identifiable, Hashable {
+        let category: DhikrCategory
+        var highlightIndex: Int?
+        var id: String { "\(category.id)#\(highlightIndex ?? -1)" }
+    }
     /// Set by the app to push a category (notification tap); cleared once
     /// consumed. Kept as a binding so a request made while this tab is
     /// off-screen is honored when it appears.
@@ -21,26 +36,82 @@ public struct AthkarView: View {
         _openCategory = openCategory
     }
 
+    /// Preview seam: opens with the search field already filled.
+    init(query: String) {
+        _openCategory = .constant(nil)
+        _searchText = State(initialValue: query)
+    }
+
     private func consumeOpenRequest() {
         guard let title = openCategory, !categories.isEmpty,
               let category = categories.first(where: { $0.category == title })
         else { return }
         openCategory = nil
-        pushedCategory = category
+        pushedChapter = ChapterTarget(category: category)
     }
 
-    private var filtered: [DhikrCategory] {
-        let query = searchText.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return categories }
-        return categories.filter {
-            $0.category.contains(query)
-                || ($0.categoryEn?.localizedCaseInsensitiveContains(query) ?? false)
-                || $0.items.contains { $0.text.contains(query) }
-        }
+    private var isSearching: Bool {
+        !searchText.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     public var body: some View {
-        List {
+        // Chapter-title matches and dhikr-text matches for the current query.
+        let results = searchIndex.search(searchText)
+        return List {
+            if !isSearching {
+                toolRows
+            }
+            categorySection(results.categories)
+            if isSearching {
+                athkarSection(results.items)
+                if results.isEmpty {
+                    Text("No matching athkar")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 24)
+                        .listRowBackground(Color.clear)
+                }
+            }
+        }
+        .listStyle(.plain)
+        // The chapter list follows the interface direction; only the Arabic
+        // dhikr pages themselves stay right-to-left.
+        .searchable(text: $searchText, prompt: Text("Search athkar"))
+        .scrollContentBackground(.hidden)
+        .background(NoorColor.bgPrimary)
+        .navigationTitle(Text("Athkar"))
+        .navigationDestination(item: $pushedChapter) { target in
+            DhikrListView(category: target.category, highlightIndex: target.highlightIndex)
+        }
+        .task {
+            if categories.isEmpty {
+                categories = AthkarStore.load()
+                searchIndex = AthkarSearchIndex(categories: categories)
+            }
+            consumeOpenRequest()
+            await openFirstHitHook()
+        }
+        .onAppear(perform: consumeOpenRequest)
+        .onChange(of: openCategory) { _, _ in consumeOpenRequest() }
+    }
+
+    /// Screenshot/UI-test hook, same family as NOOR_TAB / NOOR_OPEN:
+    /// NOOR_ATHKAR_HIT=1 opens the first dhikr-text match of
+    /// NOOR_ATHKAR_SEARCH, so the scroll-and-flash can be captured.
+    private func openFirstHitHook() async {
+        guard ProcessInfo.processInfo.environment["NOOR_ATHKAR_HIT"] == "1",
+              let first = searchIndex.search(searchText).items.first
+        else { return }
+        // Let the splash finish first, so the flash is on a visible screen.
+        try? await Task.sleep(nanoseconds: 3_500_000_000)
+        pushedChapter = ChapterTarget(category: first.category, highlightIndex: first.itemIndex)
+    }
+
+    /// The fixed tools above the chapter list (hidden while searching:
+    /// a query should return matches, not furniture).
+    @ViewBuilder
+    private var toolRows: some View {
             NavigationLink {
                 TasbihView()
             } label: {
@@ -121,48 +192,90 @@ public struct AthkarView: View {
                 .padding(.vertical, 4)
             }
             .listRowBackground(Color.clear)
+    }
 
-            ForEach(filtered) { category in
-                NavigationLink {
-                    DhikrListView(category: category)
-                } label: {
-                    HStack {
-                        Text(verbatim: category.displayTitle(arabicUI: isArabicUI))
-                            .font(.system(size: 16))
-                            .foregroundStyle(NoorColor.inkPrimary)
-                        Spacer()
-                        Text(verbatim: "\(category.items.count)")
-                            .font(NoorFont.caption)
-                            .foregroundStyle(NoorColor.inkSecondary)
-                    }
-                    .padding(.vertical, 2)
+    /// Chapter rows — the whole list when idle, the title matches when
+    /// searching (then under a header, so the two kinds of hit stay distinct).
+    @ViewBuilder
+    private func categorySection(_ matches: [DhikrCategory]) -> some View {
+        if isSearching {
+            if !matches.isEmpty {
+                Section {
+                    ForEach(matches) { categoryRow($0) }
+                } header: {
+                    Text("Chapters").foregroundStyle(NoorColor.inkSecondary)
                 }
-                .listRowBackground(Color.clear)
+            }
+        } else {
+            ForEach(matches) { categoryRow($0) }
+        }
+    }
+
+    private func categoryRow(_ category: DhikrCategory) -> some View {
+        NavigationLink {
+            DhikrListView(category: category)
+        } label: {
+            HStack {
+                Text(verbatim: category.displayTitle(arabicUI: isArabicUI))
+                    .font(.system(size: 16))
+                    .foregroundStyle(NoorColor.inkPrimary)
+                Spacer()
+                Text(verbatim: "\(category.items.count)")
+                    .font(NoorFont.caption)
+                    .foregroundStyle(NoorColor.inkSecondary)
+            }
+            .padding(.vertical, 2)
+        }
+        .listRowBackground(Color.clear)
+    }
+
+    /// Individual athkar whose text matched: the matching snippet, with its
+    /// chapter underneath. Tapping opens the chapter at that dhikr.
+    @ViewBuilder
+    private func athkarSection(_ matches: [AthkarSearchIndex.ItemMatch]) -> some View {
+        if !matches.isEmpty {
+            Section {
+                ForEach(matches) { match in
+                    Button {
+                        pushedChapter = ChapterTarget(category: match.category,
+                                                      highlightIndex: match.itemIndex)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HighlightedSnippet(
+                                before: match.snippet.before,
+                                match: match.snippet.match,
+                                after: match.snippet.after,
+                                truncatedStart: match.snippet.truncatedStart,
+                                truncatedEnd: match.snippet.truncatedEnd,
+                                font: .noorScaled(17))
+                                .lineLimit(2)
+                                .arabicBlock()
+                            Text(verbatim: match.category.displayTitle(arabicUI: isArabicUI))
+                                .font(NoorFont.caption)
+                                .foregroundStyle(NoorColor.inkSecondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 4)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .listRowBackground(Color.clear)
+                }
+            } header: {
+                Text("Athkar").foregroundStyle(NoorColor.inkSecondary)
             }
         }
-        .listStyle(.plain)
-        // The chapter list follows the interface direction; only the Arabic
-        // dhikr pages themselves stay right-to-left.
-        .searchable(text: $searchText, prompt: Text("Search athkar"))
-        .scrollContentBackground(.hidden)
-        .background(NoorColor.bgPrimary)
-        .navigationTitle(Text("Athkar"))
-        .navigationDestination(item: $pushedCategory) { category in
-            DhikrListView(category: category)
-        }
-        .task {
-            if categories.isEmpty { categories = AthkarStore.load() }
-            consumeOpenRequest()
-        }
-        .onAppear(perform: consumeOpenRequest)
-        .onChange(of: openCategory) { _, _ in consumeOpenRequest() }
     }
 }
 
 /// One category: tappable dhikr cards that count down their repetitions.
 struct DhikrListView: View {
     let category: DhikrCategory
+    /// Item to scroll to and flash when arriving from a search text match.
+    var highlightIndex: Int?
     @State private var progress: [String: Int] = [:]
+    /// Position of the flashing item; cleared after a beat so the tint fades.
+    @State private var flashing: Int?
     @State private var sharing: Dhikr?
     @Environment(\.locale) private var locale
     private let audio = AthkarAudioPlayer.shared
@@ -172,15 +285,17 @@ struct DhikrListView: View {
     private var isChapterActive: Bool { audio.nowPlaying == chapterAudioId }
 
     var body: some View {
+        ScrollViewReader { proxy in
         ScrollView {
             LazyVStack(spacing: 12) {
                 if let chapterFile = category.chapterAudio {
                     chapterPill(file: chapterFile)
                 }
-                ForEach(category.items) { dhikr in
+                ForEach(Array(category.items.enumerated()), id: \.element.id) { index, dhikr in
                     DhikrCard(
                         dhikr: dhikr,
                         done: progress[dhikr.id] ?? 0,
+                        highlighted: flashing == index,
                         audioState: dhikr.audio == nil ? nil : DhikrCard.AudioState(
                             isActive: audio.nowPlaying == dhikr.id,
                             isPlaying: audio.nowPlaying == dhikr.id && audio.isPlaying,
@@ -203,9 +318,23 @@ struct DhikrListView: View {
                         onPlay: dhikr.audio.map { file in
                             { audio.play(file: file, id: dhikr.id) }
                         })
+                        .id(index)
                 }
             }
             .padding(16)
+        }
+        // Arriving from a search hit: bring the matched dhikr into view and
+        // tint it briefly so it is obvious which one matched.
+        .task {
+            guard let highlightIndex, category.items.indices.contains(highlightIndex) else { return }
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            withAnimation(.easeInOut(duration: 0.3)) {
+                proxy.scrollTo(highlightIndex, anchor: .center)
+                flashing = highlightIndex
+            }
+            try? await Task.sleep(nanoseconds: 1_800_000_000)
+            withAnimation(.easeInOut(duration: 0.4)) { flashing = nil }
+        }
         }
         // Leaving the chapter silences it — no voice from an unseen screen.
         .onDisappear { audio.stop() }
@@ -295,6 +424,8 @@ struct DhikrCard: View {
 
     let dhikr: Dhikr
     let done: Int
+    /// Brief tint after a search hit opened this chapter at this dhikr.
+    var highlighted = false
     var audioState: AudioState?
     let onTap: () -> Void
     var onShare: (() -> Void)?
@@ -347,6 +478,12 @@ struct DhikrCard: View {
                 }
             }
             .environment(\.layoutDirection, .leftToRight)
+            if let reference = dhikr.reference, !reference.isEmpty {
+                Text(verbatim: reference)
+                    .font(NoorFont.caption)
+                    .foregroundStyle(NoorColor.inkSecondary)
+                    .arabicBlock()
+            }
             if audioState?.failed == true {
                 Text("Connect once to download this dhikr")
                     .font(NoorFont.caption)
@@ -358,16 +495,23 @@ struct DhikrCard: View {
         .background(
             RoundedRectangle(cornerRadius: 14)
                 .fill(isComplete || isReciting ? NoorColor.stateReciting : NoorColor.bgElevated)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(NoorColor.accentGold.opacity(highlighted ? 0.18 : 0))
+                )
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(isComplete || isReciting ? NoorColor.accentPrimary.opacity(0.4) : NoorColor.inkPrimary.opacity(0.06),
-                        lineWidth: 1)
+                .stroke(highlighted ? NoorColor.accentGold
+                        : (isComplete || isReciting ? NoorColor.accentPrimary.opacity(0.4)
+                           : NoorColor.inkPrimary.opacity(0.06)),
+                        lineWidth: highlighted ? 2 : 1)
         )
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
         .animation(.easeInOut(duration: 0.2), value: done)
         .animation(.easeInOut(duration: 0.2), value: isReciting)
+        .animation(.easeInOut(duration: 0.35), value: highlighted)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(dhikr.text)
         .accessibilityValue("\(done) of \(dhikr.count)")
@@ -501,6 +645,24 @@ struct TasbihView: View {
 
 #Preview {
     NavigationStack { AthkarView() }
+}
+
+#Preview("Athkar search AR-RTL") {
+    NavigationStack { AthkarView(query: "الرزق") }
+        .environment(\.locale, Locale(identifier: "ar"))
+        .environment(\.layoutDirection, .rightToLeft)
+}
+
+#Preview("Athkar search EN-LTR") {
+    NavigationStack { AthkarView(query: "sleep") }
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
+}
+
+#Preview("Dhikr list, search highlight") {
+    if let category = AthkarStore.load().first(where: { $0.items.count > 3 }) {
+        NavigationStack { DhikrListView(category: category, highlightIndex: 2) }
+    }
 }
 
 #Preview("Dhikr list EN-LTR") {

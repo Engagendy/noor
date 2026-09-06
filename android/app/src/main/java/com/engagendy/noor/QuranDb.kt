@@ -45,6 +45,8 @@ data class Surah(
     val id: Int,
     val nameArabic: String,
     val nameTransliterated: String,
+    /// Translated meaning ("The Cow") — searchable in the English UI.
+    val nameEnglish: String,
     val ayahCount: Int,
     val revelation: String,
 )
@@ -52,7 +54,11 @@ data class Surah(
 data class Verse(val surahId: Int, val ayah: Int, val text: String)
 
 /// A word-search match: untouched display text from the verified DB.
-data class SearchHit(val surahId: Int, val ayah: Int, val text: String)
+/// `tier` is the ranking tier (see SearchText.matchTier), 0 = best.
+data class SearchHit(val surahId: Int, val ayah: Int, val text: String, val tier: Int = 3)
+
+/// Ranked verse hits plus whether the DB had more matches than were read.
+data class VerseSearchResults(val hits: List<SearchHit>, val truncated: Boolean)
 
 /// Start of a juz / hizb quarter (indexing metadata, not Quran text).
 data class DivisionStart(val idx: Int, val surahId: Int, val ayah: Int)
@@ -75,31 +81,22 @@ class QuranDb private constructor(private val db: SQLiteDatabase) {
             return QuranDb(db)
         }
 
-        /// Search normalization ONLY (mirrors iOS QuranSearch /
-        /// Tools/build_quran_db.py): strips tashkeel/quranic marks/tatweel,
-        /// unifies alef/ya variants. Never touches the display text.
-        fun normalizeForSearch(query: String): String = buildString {
-            for (ch in query) {
-                val v = ch.code
-                if (v in 0x064B..0x065F || v in 0x06D6..0x06ED ||
-                    v == 0x0670 || v == 0x0640) continue
-                when (v) {
-                    0x0622, 0x0623, 0x0625, 0x0671 -> append('ا') // alef variants
-                    0x0649 -> append('ي')                          // alef maqsura → ya
-                    else -> append(ch)
-                }
-            }
-        }
+        /// Search normalization — the shared implementation lives in
+        /// `SearchText` so every screen (Quran, athkar) folds text the same
+        /// way. Kept here as the historical entry point.
+        fun normalizeForSearch(query: String): String = SearchText.normalizeForSearch(query)
     }
 
     fun surahs(): List<Surah> =
         db.rawQuery(
-            "SELECT id, name_arabic, name_transliterated, ayah_count, revelation_type FROM surah ORDER BY id",
+            "SELECT id, name_arabic, name_transliterated, name_english, ayah_count, revelation_type " +
+                "FROM surah ORDER BY id",
             null
         ).use { c ->
             buildList {
                 while (c.moveToNext()) {
-                    add(Surah(c.getInt(0), c.getString(1), c.getString(2), c.getInt(3), c.getString(4)))
+                    add(Surah(c.getInt(0), c.getString(1), c.getString(2), c.getString(3),
+                              c.getInt(4), c.getString(5)))
                 }
             }
         }
@@ -192,25 +189,34 @@ class QuranDb private constructor(private val db: SQLiteDatabase) {
     private fun isArabicMark(c: Char): Boolean =
         c == '\u0640' || c in '\u064B'..'\u065F' || c == '\u0670' || c in '\u06D6'..'\u06ED'
 
-    /// Word search over the normalized index (same LIKE query as iOS);
-    /// returns the untouched display text of matching ayat. Call on IO.
-    fun searchVerses(query: String, limit: Int = 80): List<SearchHit> {
+    /// Word search over the normalized index (same LIKE query as iOS),
+    /// then RANKED in Kotlin: whole-word matches first, then word-start
+    /// matches (also after the ال/و/ف… proclitics), then mid-word ones;
+    /// within a tier, mushaf order. Ranking needs the whole candidate set,
+    /// so up to [fetchLimit] rows are read — when that cap is reached the
+    /// UI says so instead of silently dropping matches.
+    /// Returns the untouched display text of matching ayat. Call on IO.
+    fun searchVerses(query: String, fetchLimit: Int = 300): VerseSearchResults {
         val normalized = normalizeForSearch(query).trim()
-        if (normalized.length < 2) return emptyList()
+        if (normalized.length < 2) return VerseSearchResults(emptyList(), false)
         val escaped = normalized.replace("%", "\\%").replace("_", "\\_")
-        return db.rawQuery(
+        val rows = db.rawQuery(
             "SELECT v.surah_id, v.ayah, v.text FROM verse_search s " +
                 "JOIN verse v ON v.surah_id = s.surah_id AND v.ayah = s.ayah " +
                 "WHERE s.text_normalized LIKE ? ESCAPE '\\' " +
                 "ORDER BY v.surah_id, v.ayah LIMIT ?",
-            arrayOf("%$escaped%", limit.toString())
+            arrayOf("%$escaped%", fetchLimit.toString())
         ).use { c ->
             buildList {
                 while (c.moveToNext()) {
-                    add(SearchHit(c.getInt(0), c.getInt(1), c.getString(2)))
+                    val text = c.getString(2)
+                    add(SearchHit(c.getInt(0), c.getInt(1), text,
+                                  SearchText.matchTier(text, normalized)))
                 }
             }
         }
+        val ranked = rows.sortedWith(compareBy({ it.tier }, { it.surahId }, { it.ayah }))
+        return VerseSearchResults(ranked, rows.size >= fetchLimit)
     }
 
     /// The 30 juz starting references (indexing metadata).

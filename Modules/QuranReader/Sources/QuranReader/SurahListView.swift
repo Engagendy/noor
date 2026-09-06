@@ -30,14 +30,22 @@ public struct SurahListView: View {
     @Binding var selection: Int?
     /// Opens the reader at an exact reference (Juz tab + word search).
     let openReference: (_ surahId: Int, _ ayah: Int?) -> Void
-    /// Word search over the Quran text (diacritic-insensitive).
-    let searchVerses: (_ query: String) -> [SearchHit]
+    /// Word search over the Quran text (diacritic-insensitive, ranked).
+    let searchVerses: (_ query: String) -> VerseSearchResults
     /// Saved bookmarks (provided by the app layer from the Library store).
     let bookmarks: [BookmarkRef]
     let onRemoveBookmark: ((BookmarkRef) -> Void)?
 
-    @State private var searchText = ""
+    /// Screenshot/UI-test hook: NOOR_SEARCH=<query> opens with the field filled.
+    @State private var searchText = ProcessInfo.processInfo.environment["NOOR_SEARCH"] ?? ""
     @State private var tab: IndexTab = .surah
+    /// Ranked ayah hits for the current query (recomputed off the keystroke
+    /// path by the debounced `.task` below, never inside `body`).
+    @State private var verseResults = VerseSearchResults.empty
+    /// How many hits are on screen; "Show more" reveals the next page rather
+    /// than dropping the rest on the floor.
+    @State private var shownHits = Self.hitPage
+    private static let hitPage = 40
     @Environment(\.locale) private var locale
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
@@ -47,7 +55,7 @@ public struct SurahListView: View {
         structure: QuranStructure?,
         selection: Binding<Int?>,
         openReference: @escaping (_ surahId: Int, _ ayah: Int?) -> Void,
-        searchVerses: @escaping (_ query: String) -> [SearchHit] = { _ in [] },
+        searchVerses: @escaping (_ query: String) -> VerseSearchResults = { _ in .empty },
         bookmarks: [BookmarkRef] = [],
         onRemoveBookmark: ((BookmarkRef) -> Void)? = nil
     ) {
@@ -60,19 +68,31 @@ public struct SurahListView: View {
         self.onRemoveBookmark = onRemoveBookmark
     }
 
+    /// Preview seam: opens with the search field already filled.
+    init(surahs: [Surah], structure: QuranStructure?,
+         searchVerses: @escaping (_ query: String) -> VerseSearchResults,
+         query: String) {
+        self.init(surahs: surahs, structure: structure, selection: .constant(nil),
+                  openReference: { _, _ in }, searchVerses: searchVerses)
+        _searchText = State(initialValue: query)
+    }
+
+    private var query: String { searchText.trimmingCharacters(in: .whitespaces) }
+
+    /// "2:255", "2 255", "٢:٢٥٥"… — a reference, not a name search.
+    private var reference: QuranReference? {
+        guard let parsed = QuranReference.parse(query, surahCount: surahs.count),
+              let surah = surahs.first(where: { $0.id == parsed.surahId })
+        else { return nil }
+        guard let ayah = parsed.ayah else { return parsed }
+        // An out-of-range ayah still opens the surah.
+        return ayah <= surah.ayahCount ? parsed : QuranReference(surahId: parsed.surahId, ayah: nil)
+    }
+
+    /// Surahs matching the query by Arabic name, transliteration, English
+    /// meaning or number — best matches first (see `SurahSearch`).
     private var filtered: [Surah] {
-        let query = searchText.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return surahs }
-        // "2:255"-style reference: jump by surah number.
-        let reference = query.split(separator: ":")
-        if let first = reference.first, let number = Int(first) {
-            return surahs.filter { $0.id == number }
-        }
-        return surahs.filter {
-            $0.nameTransliterated.localizedCaseInsensitiveContains(query)
-                || $0.nameEnglish.localizedCaseInsensitiveContains(query)
-                || $0.nameArabic.contains(query)
-        }
+        SurahSearch.matches(surahs, query: query)
     }
 
     public var body: some View {
@@ -80,6 +100,31 @@ public struct SurahListView: View {
             switch tab {
             case .surah:
                 List(selection: $selection) {
+                    // "2:255" typed in full: one row that opens that ayah.
+                    if let reference, let ayah = reference.ayah {
+                        Button {
+                            openReference(reference.surahId, ayah)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "arrow.turn.down.right")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(NoorColor.accentPrimary)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Go to ayah")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(NoorColor.inkPrimary)
+                                    Text(verbatim: "\(surahName(reference.surahId)) · \(reference.surahId):\(ayah)")
+                                        .font(NoorFont.caption)
+                                        .foregroundStyle(NoorColor.inkSecondary)
+                                }
+                                Spacer()
+                            }
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.borderless)
+                        .listRowBackground(Color.clear)
+                    }
                     ForEach(filtered) { surah in
                         Button {
                             openReference(surah.id, nil)
@@ -91,32 +136,7 @@ public struct SurahListView: View {
                         .tag(surah.id)
                         .listRowBackground(Color.clear)
                     }
-                    // Word search: matching ayat below the surah matches.
-                    let hits = searchText.count >= 2 ? searchVerses(searchText) : []
-                    if !hits.isEmpty {
-                        Section(header: Text("Ayat").foregroundStyle(NoorColor.inkSecondary)) {
-                            ForEach(hits) { hit in
-                                Button {
-                                    openReference(hit.surahId, hit.ayah)
-                                } label: {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(hit.text)
-                                            .font(NoorFont.quran(size: 17))
-                                            .foregroundStyle(NoorColor.inkPrimary)
-                                            .lineLimit(2)
-                                            .arabicBlock()
-                                        Text(verbatim: "\u{200F}\(surahName(hit.surahId)) · \(hit.surahId):\(hit.ayah)")
-                                            .font(NoorFont.caption)
-                                            .foregroundStyle(NoorColor.inkSecondary)
-                                    }
-                                    .arabicBlock()
-                                    .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.borderless)
-                                .listRowBackground(Color.clear)
-                            }
-                        }
-                    }
+                    ayatSection
                 }
                 .listStyle(.plain)
             case .juz:
@@ -226,6 +246,89 @@ public struct SurahListView: View {
         }
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
+        // Debounced so a fast typist runs one query, not one per keystroke.
+        .task(id: searchText) {
+            shownHits = Self.hitPage
+            guard query.count >= 2, reference == nil else {
+                verseResults = .empty
+                return
+            }
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            guard !Task.isCancelled else { return }
+            verseResults = searchVerses(query)
+        }
+    }
+
+    /// Ranked ayah hits: whole-word matches first, then word-prefix, then
+    /// mid-word, mushaf order inside each tier. Each row shows the ayah
+    /// windowed on the match with the matched run emphasised.
+    @ViewBuilder
+    private var ayatSection: some View {
+        if !verseResults.hits.isEmpty {
+            Section {
+                ForEach(verseResults.hits.prefix(shownHits)) { hit in
+                    Button {
+                        openReference(hit.surahId, hit.ayah)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            if let snippet = hit.snippet {
+                                HighlightedSnippet(
+                                    before: snippet.before,
+                                    match: snippet.match,
+                                    after: snippet.after,
+                                    truncatedStart: snippet.truncatedStart,
+                                    truncatedEnd: snippet.truncatedEnd,
+                                    font: NoorFont.quran(size: 17))
+                                    .lineLimit(2)
+                                    .arabicBlock()
+                            } else {
+                                Text(hit.text)
+                                    .font(NoorFont.quran(size: 17))
+                                    .foregroundStyle(NoorColor.inkPrimary)
+                                    .lineLimit(2)
+                                    .arabicBlock()
+                            }
+                            Text(verbatim: "\u{200F}\(surahName(hit.surahId)) · \(hit.surahId):\(hit.ayah)")
+                                .font(NoorFont.caption)
+                                .foregroundStyle(NoorColor.inkSecondary)
+                        }
+                        .arabicBlock()
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless)
+                    .listRowBackground(Color.clear)
+                }
+                // Nothing is dropped silently: the rest is one tap away, and
+                // if the DB cap was reached we say so.
+                if verseResults.hits.count > shownHits {
+                    Button {
+                        shownHits += Self.hitPage
+                    } label: {
+                        Text("Show more results")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless)
+                    .listRowBackground(Color.clear)
+                } else if verseResults.truncated {
+                    Text("Showing the first \(verseResults.cap) matches — refine your search.")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 8)
+                        .listRowBackground(Color.clear)
+                }
+            } header: {
+                HStack {
+                    Text("Ayat").foregroundStyle(NoorColor.inkSecondary)
+                    Spacer()
+                    Text(verbatim: "\(verseResults.hits.count)\(verseResults.truncated ? "+" : "")")
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
+            }
+        }
     }
 
     @State private var expandedJuz: Set<Int> = []
@@ -405,6 +508,34 @@ struct SurahRow: View {
         }
         .environment(\.locale, Locale(identifier: "en"))
         .environment(\.layoutDirection, .leftToRight)
+    }
+}
+
+#Preview("Surah search — EN LTR, ranked word hits") {
+    if let db = try? QuranDatabase(), let surahs = try? db.allSurahs() {
+        NavigationStack {
+            SurahListView(
+                surahs: surahs,
+                structure: try? db.structure(),
+                searchVerses: { (try? db.searchVerseResults($0)) ?? .empty },
+                query: "Cow")
+        }
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
+    }
+}
+
+#Preview("Surah search — AR RTL, reference") {
+    if let db = try? QuranDatabase(), let surahs = try? db.allSurahs() {
+        NavigationStack {
+            SurahListView(
+                surahs: surahs,
+                structure: try? db.structure(),
+                searchVerses: { (try? db.searchVerseResults($0)) ?? .empty },
+                query: "٢:٢٥٥")
+        }
+        .environment(\.locale, Locale(identifier: "ar"))
+        .environment(\.layoutDirection, .rightToLeft)
     }
 }
 

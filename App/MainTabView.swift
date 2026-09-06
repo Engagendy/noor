@@ -407,7 +407,7 @@ struct QuranTab: View {
             selection: $selection,
             openReference: open,
             searchVerses: { query in
-                (try? database.searchVerses(query)) ?? []
+                (try? database.searchVerseResults(query)) ?? .empty
             },
             bookmarks: (library?.bookmarks ?? []).map {
                 BookmarkRef(surahId: $0.surahId, ayah: $0.ayah, createdAt: $0.createdAt)
