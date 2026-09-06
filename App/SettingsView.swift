@@ -28,12 +28,36 @@ struct SettingsView: View {
     @AppStorage(AthkarReminderScheduler.minutesKey) private var athkarAfterSalahMinutes
         = AthkarReminderScheduler.defaultMinutes
     @AppStorage("prayer.sound") private var soundRaw = AdhanSound.adhanMadinah.rawValue
+    // Kids mode: the toggle never writes `kids.enabled` itself — turning it
+    // on goes through the age sheet, turning it off through the gate.
+    @AppStorage(KidsMode.enabledKey) private var kidsEnabled = false
+    @AppStorage(KidsMode.ageKey) private var kidsAge = KidsMode.defaultAge
+    /// Screenshot/UI-test hooks: NOOR_KIDS_AGE_SHEET=1 / NOOR_KIDS_GATE=1
+    /// present the two kids-mode sheets at launch.
+    @State private var showKidsAge =
+        ProcessInfo.processInfo.environment["NOOR_KIDS_AGE_SHEET"] == "1"
+    @State private var showKidsGate =
+        ProcessInfo.processInfo.environment["NOOR_KIDS_GATE"] == "1"
     @Environment(\.locale) private var locale
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
     var body: some View {
         Form {
+            Section {
+                Toggle(isOn: Binding(
+                    get: { kidsEnabled },
+                    // Both directions are gated, so the switch only moves
+                    // once the sheet below has confirmed.
+                    set: { wants in
+                        if wants { showKidsAge = true } else { showKidsGate = true }
+                    })) {
+                    Text("Kids mode")
+                }
+            } footer: {
+                Text("A simpler Quran for children, with a grown-up lock.")
+            }
+
             Section {
                 Picker(selection: $language) {
                     Text("System").tag("system")
@@ -232,6 +256,33 @@ struct SettingsView: View {
         }
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
+        .sheet(isPresented: $showKidsAge) {
+            KidsAgeSheet(
+                age: kidsAge,
+                onStart: { age in
+                    kidsAge = KidsMode.clampAge(age)
+                    // The recitation children learn from — applied on the
+                    // FIRST enable only (kids.reciterApplied latches), so a
+                    // parent's later choice survives disable/re-enable.
+                    reciterRaw = KidsMode.reciterOnEnable(
+                        current: reciterRaw, teaching: Reciter.husaryMuallim.rawValue)
+                    kidsEnabled = true
+                    showKidsAge = false
+                },
+                onCancel: { showKidsAge = false })
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+        }
+        .sheet(isPresented: $showKidsGate) {
+            ParentalGateView(
+                onSuccess: {
+                    kidsEnabled = false
+                    showKidsGate = false
+                },
+                onCancel: { showKidsGate = false })
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+        }
         .navigationTitle(Text("Settings"))
         // Language is applied entirely via the SwiftUI environment in
         // RootView. Never touch AppleLanguages: a process launched in one

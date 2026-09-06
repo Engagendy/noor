@@ -21,6 +21,7 @@ struct RootView: View {
         ProcessInfo.processInfo.environment["NOOR_LANG"] ?? storedLanguage
     }
     @AppStorage("app.theme") private var theme = "system"
+    @AppStorage(KidsMode.enabledKey) private var kidsEnabled = false
 
     private var effectiveDirection: LayoutDirection {
         switch language {
@@ -36,7 +37,13 @@ struct RootView: View {
             case .loading:
                 NoorColor.bgPrimary.ignoresSafeArea()
             case .ready(let database):
-                MainTabView(database: database)
+                // Kids mode replaces the whole app shell: no tabs, no
+                // Settings, nothing to wander into.
+                if kidsEnabled {
+                    KidsShellView(database: database, exitKids: { kidsEnabled = false })
+                } else {
+                    MainTabView(database: database)
+                }
             case .failed(let message):
                 ContentUnavailableView(
                     "Content unavailable",

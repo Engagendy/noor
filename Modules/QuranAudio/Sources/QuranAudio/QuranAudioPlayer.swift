@@ -34,6 +34,12 @@ public final class QuranAudioPlayer {
     public var memorizeEnd = 5
     public var memorizePerAyah = 3
     private var memorizeRepeatsDone = 0
+    /// 1-based repetition of `current` playing in `.memorize` mode — what
+    /// the kids reader shows as "2 of 3". Observable: the private stored
+    /// counter behind it is instrumented by @Observable like any other.
+    public var memorizeRepeat: Int {
+        min(memorizeRepeatsDone + 1, max(memorizePerAyah, 1))
+    }
 
     public private(set) var current: Reference?
     public private(set) var isPlaying = false

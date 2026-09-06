@@ -173,8 +173,17 @@ fun AthkarScreen(
     }
 }
 
+/// [textScale] enlarges the dhikr text (kids mode passes its age band's
+/// scale); [showShare] hides the share button where sharing must not be
+/// reachable (kids mode).
 @Composable
-fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun DhikrListScreen(
+    category: DhikrCategory,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    textScale: Float = 1f,
+    showShare: Boolean = true,
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val progress = remember { mutableStateMapOf<Int, Int>() }
@@ -275,7 +284,8 @@ fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modif
                         }
                         .padding(16.dp)
                 ) {
-                    Text(dhikr.text, fontSize = 18.sp, lineHeight = 32.sp,
+                    Text(dhikr.text, fontSize = (18f * textScale).sp,
+                         lineHeight = (32f * textScale).sp,
                          color = NoorColor.inkPrimary, style = arabicText(),
                          modifier = Modifier.fillMaxWidth())
                     Row(
@@ -298,9 +308,11 @@ fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modif
                                     onClick = { playOrToggle(id, audio) })
                             }
                             // Branded image card, like the iOS AthkarView share.
-                            ShareIconButton {
-                                shareRendered(context, dhikr.text, category.title,
-                                              attribution = "نور Noor · حصن المسلم")
+                            if (showShare) {
+                                ShareIconButton {
+                                    shareRendered(context, dhikr.text, category.title,
+                                                  attribution = "نور Noor · حصن المسلم")
+                                }
                             }
                         }
                     }

@@ -116,6 +116,26 @@ private fun SettingsMain(
     val sound = remember(version) { PrayerPrefs(context).sound }
     val translationId = remember(version) { prefs.getString("translation.id", "en.sahih") ?: "en.sahih" }
 
+    // Kids mode: the toggle reflects KidsStore's live state (never a prefs
+    // read from composition). ON opens the age sheet; OFF asks a grown-up.
+    var showKidsAge by remember { mutableStateOf(false) }
+    var showKidsGate by remember { mutableStateOf(false) }
+    if (showKidsAge) {
+        KidsAgeDialog(
+            initialAge = KidsStore.age,
+            onConfirm = { chosenAge ->
+                showKidsAge = false
+                // Writes kids.age + kids.enabled and enters the shell.
+                KidsStore.enable(context, chosenAge)
+            },
+            onDismiss = { showKidsAge = false })  // cancelled → stays OFF
+    }
+    if (showKidsGate) {
+        ParentalGate(
+            onPass = { KidsStore.disable(context) },
+            onDismiss = { showKidsGate = false })
+    }
+
     var showReciterPicker by remember { mutableStateOf(false) }
     var showAdhanSounds by remember { mutableStateOf(false) }
     DisposableEffect(Unit) { onDispose { AdhanPreview.stop() } }
@@ -153,6 +173,17 @@ private fun SettingsMain(
                  modifier = Modifier
                      .clickable(onClick = onBack)
                      .padding(horizontal = 10.dp, vertical = 6.dp))
+        }
+
+        // Kids mode — its own section at the top, like iOS.
+        SettingsCard {
+            ToggleRow(
+                title = stringResource(R.string.kids_title),
+                subtitle = stringResource(R.string.kids_subtitle),
+                checked = KidsStore.enabled,
+            ) { on ->
+                if (on) showKidsAge = true else showKidsGate = true
+            }
         }
 
         // General — language & appearance, like the top iOS section.
@@ -366,13 +397,24 @@ private fun SettingsCard(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun ToggleRow(title: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun ToggleRow(
+    title: String,
+    checked: Boolean,
+    subtitle: String? = null,
+    onChange: (Boolean) -> Unit,
+) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
     ) {
-        Text(title, fontSize = 15.sp, color = NoorColor.inkPrimary)
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(title, fontSize = 15.sp, color = NoorColor.inkPrimary)
+            if (subtitle != null) {
+                Text(subtitle, fontSize = 12.5.sp, lineHeight = 17.sp,
+                     color = NoorColor.inkSecondary)
+            }
+        }
         Switch(
             checked = checked,
             onCheckedChange = onChange,

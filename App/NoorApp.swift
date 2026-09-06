@@ -15,6 +15,16 @@ struct NoorApp: App {
         // Adhan must sound even when the app is frontmost.
         UNUserNotificationCenter.current().delegate = NoorNotificationDelegate.shared
         PageFontStore.purgeStaleCaches()
+        // Screenshot/UI-test hook, same family as NOOR_TAB / NOOR_OPEN:
+        // NOOR_KIDS=<age 4…12> enters kids mode, NOOR_KIDS=off leaves it.
+        if let raw = ProcessInfo.processInfo.environment["NOOR_KIDS"] {
+            if let age = Int(raw) {
+                UserDefaults.standard.set(KidsMode.clampAge(age), forKey: KidsMode.ageKey)
+                UserDefaults.standard.set(true, forKey: KidsMode.enabledKey)
+            } else {
+                UserDefaults.standard.set(false, forKey: KidsMode.enabledKey)
+            }
+        }
     }
 
     var body: some Scene {

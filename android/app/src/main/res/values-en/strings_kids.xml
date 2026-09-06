@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings entry -->
+    <string name="kids_title">Kids mode</string>
+    <string name="kids_subtitle">A simpler Quran for children, with a grown-up lock.</string>
+
+    <!-- Age sheet -->
+    <string name="kids_age_question">How old is your child?</string>
+    <string name="kids_age_years">%1$s years</string>
+    <string name="kids_start">Start</string>
+
+    <!-- Parental gate -->
+    <string name="kids_gate_title">Ask a grown-up</string>
+    <string name="kids_gate_question">%1$s × %2$s = ?</string>
+    <string name="kids_gate_hint">Not quite — here is another one.</string>
+    <string name="kids_gate_check">Check</string>
+    <string name="kids_gate_answer">Answer</string>
+
+    <!-- Shell -->
+    <string name="kids_tab_read">Read</string>
+    <string name="kids_tab_athkar">My athkar</string>
+    <string name="kids_total_stars">Your stars: %1$s</string>
+    <string name="kids_grownup">Grown-ups</string>
+    <string name="kids_stars_of_three">%1$s of 3 stars</string>
+    <string name="kids_ayah_count">%1$s ayahs</string>
+    <string name="kids_listen">Listen</string>
+    <string name="kids_pause">Pause</string>
+    <string name="kids_repeat">Repeat %1$s of %2$s</string>
+    <string name="kids_well_done">Well done! A new star</string>
+    <!-- Sound sheet (listen vs memorise + reciter) -->
+    <string name="kids_sound">Sound</string>
+    <string name="kids_mode_listen">Listen</string>
+    <string name="kids_mode_listen_note">Each ayah once</string>
+    <string name="kids_mode_memorise">Memorise</string>
+    <string name="kids_mode_memorise_note">Each ayah repeats %1$s times</string>
+    <string name="kids_mode_memorise_note_none">Each ayah once</string>
+    <string name="kids_reciter">Reciter</string>
+    <string name="kids_muallim_note">Reads slowly, for learning</string>
+    <!-- Kids settings sheet: language section -->
+    <string name="kids_settings">Settings</string>
+    <string name="kids_language">Language</string>
+</resources>

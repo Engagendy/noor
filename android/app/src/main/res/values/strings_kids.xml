@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kids mode (وضع الأطفال). Arabic is the DEFAULT locale; English lives in
+     values-en/strings_kids.xml. Keep both files in sync. -->
+<resources>
+    <!-- Settings entry -->
+    <string name="kids_title">وضع الأطفال</string>
+    <string name="kids_subtitle">قرآن أبسط للأطفال، مع قفل لولي الأمر.</string>
+
+    <!-- Age sheet -->
+    <string name="kids_age_question">كم عمر طفلك؟</string>
+    <string name="kids_age_years">%1$s سنة</string>
+    <string name="kids_start">ابدأ</string>
+
+    <!-- Parental gate -->
+    <string name="kids_gate_title">اسأل شخصًا بالغًا</string>
+    <string name="kids_gate_question">%1$s × %2$s = ؟</string>
+    <string name="kids_gate_hint">ليست الإجابة الصحيحة — جرّب هذا السؤال.</string>
+    <string name="kids_gate_check">تحقق</string>
+    <string name="kids_gate_answer">الإجابة</string>
+
+    <!-- Shell -->
+    <string name="kids_tab_read">اقرأ</string>
+    <string name="kids_tab_athkar">أذكاري</string>
+    <string name="kids_total_stars">نجومك: %1$s</string>
+    <string name="kids_grownup">لولي الأمر</string>
+    <string name="kids_stars_of_three">%1$s من ٣ نجوم</string>
+    <string name="kids_ayah_count">%1$s آية</string>
+    <string name="kids_listen">استمع</string>
+    <string name="kids_pause">إيقاف مؤقت</string>
+    <string name="kids_repeat">التكرار %1$s / %2$s</string>
+    <string name="kids_well_done">أحسنت! نجمة جديدة</string>
+    <!-- Sound sheet (listen vs memorise + reciter) -->
+    <string name="kids_sound">الصوت</string>
+    <string name="kids_mode_listen">أستمع</string>
+    <string name="kids_mode_listen_note">كل آية مرة واحدة</string>
+    <string name="kids_mode_memorise">أحفظ</string>
+    <string name="kids_mode_memorise_note">تتكرر كل آية %1$s مرات</string>
+    <string name="kids_mode_memorise_note_none">كل آية مرة واحدة</string>
+    <string name="kids_reciter">الشيخ</string>
+    <string name="kids_muallim_note">قراءة بطيئة للتعلّم</string>
+    <!-- Kids settings sheet: language section -->
+    <string name="kids_settings">الإعدادات</string>
+    <string name="kids_language">اللغة</string>
+</resources>

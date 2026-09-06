@@ -85,6 +85,9 @@ class MainActivity : AppCompatActivity() {
         NoorColor.apply(
             KhatmahPlan.prefs(this).getString("app.theme", "system") ?: "system",
             systemDark)
+        // Kids mode: the stored flag decides which shell the app opens in,
+        // resolved before the first frame (never read from composition).
+        KidsStore.load(this)
         val onboarded = KhatmahPlan.prefs(this).getBoolean("onboarding.done", false)
         if (onboarded) {
             requestNotificationPermission()
@@ -129,6 +132,10 @@ class MainActivity : AppCompatActivity() {
                             NoorWidgets.refresh(this)
                             showOnboarding = false
                         })
+                    } else if (KidsStore.enabled) {
+                        // Kids mode replaces the whole tab bar: no Settings,
+                        // no search, no share. The grown-up gate leaves it.
+                        KidsShell(onExit = {})
                     } else {
                         NoorApp(openRequest = openRequest)
                     }

@@ -153,7 +153,15 @@ object NoorPlayer {
         private set
     var memorizePerAyah by mutableStateOf(3)
         private set
-    private var memorizeDone = 0
+    /// Repeats of the current ayah already played in MEMORIZE mode — Compose
+    /// state so the kids reader can show "repeat 2 of 3" live.
+    var memorizeDone by mutableStateOf(0)
+        private set
+
+    /// Called (on the main thread) when playback stops because it reached the
+    /// end of what the current mode plays with `stopAfterSurah` set. Kids mode
+    /// awards its star here; null everywhere else.
+    var onSurahFinished: ((Int) -> Unit)? = null
 
     /// Last ayah of the page playback started on ("this page only" mode).
     private var pageEndAyah = 0
@@ -389,6 +397,24 @@ object NoorPlayer {
         if (currentSurah != 0) startService()  // focus denied → nothing to keep alive
     }
 
+    /// Kids mode: play a whole surah from its first ayah, repeating every
+    /// ayah [repeat] times, and STOP at the end instead of rolling into the
+    /// next surah (the reader awards a star on `onSurahFinished`). The mode
+    /// is armed before the first request, so nothing is fetched twice.
+    fun playForKids(surah: Int, ayahCount: Int, name: String, repeat: Int) {
+        stopAfterSurah = true
+        if (repeat > 1) {
+            memorizeStart = 1
+            memorizeEnd = ayahCount.coerceAtLeast(1)
+            memorizePerAyah = repeat
+            memorizeDone = 0
+            mode = PlaybackMode.MEMORIZE
+        } else {
+            mode = PlaybackMode.CONTINUOUS
+        }
+        play(surah, ayahCount, 1, name)
+    }
+
     /// `skipCache` ignores any cached copy for this attempt — set after a
     /// cached file failed to play, so a delete that did not take (read-only
     /// or busy file) cannot bounce playAyah back onto the same bad file.
@@ -494,7 +520,10 @@ object NoorPlayer {
         // "End of surah" chip: stop once the current mode reaches the
         // end of what it plays, instead of repeating/looping again.
         if (stopAfterSurah && atModeEnd()) {
-            stop(); return  // stop() clears the chip
+            val finished = surah
+            stop()  // clears the chip
+            onSurahFinished?.invoke(finished)
+            return
         }
         when (mode) {
             PlaybackMode.REPEAT_AYAH -> playAyah(surah, ayah)

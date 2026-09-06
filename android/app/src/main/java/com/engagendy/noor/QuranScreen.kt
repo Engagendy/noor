@@ -572,7 +572,7 @@ private fun IndexSegment(
 ///
 /// Pure and deterministic: the highlight only adds a span style, so the
 /// character offsets do not depend on it.
-private fun buildSurahFlow(
+internal fun buildSurahFlow(
     context: Context,
     db: QuranDb,
     surahId: Int,

@@ -1,6 +1,27 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@  %@%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@  %2$@%3$@"
+          }
+        }
+      }
+    },
+    "%@ min": {},
+    "%@ · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ · %2$@"
+          }
+        }
+      }
+    },
     "%@ · manual": {
       "extractionState": "stale",
       "localizations": {
@@ -8,6 +29,32 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ · يدوي"
+          }
+        }
+      }
+    },
+    "%@ −%@:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ −%2$@:%3$@"
+          }
+        }
+      }
+    },
+    "%lld ayat": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld آية"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld ayat"
           }
         }
       }
@@ -24,6 +71,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld min"
+          }
+        }
+      }
+    },
+    "%lld of %lld stars": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld من %2$lld نجوم"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld of %2$lld stars"
           }
         }
       }
@@ -58,6 +121,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "A gentle reminder before each adhan — time for wudu and the walk to the masjid."
+          }
+        }
+      }
+    },
+    "A simpler Quran for children, with a grown-up lock.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قرآن أبسط للأطفال، مع قفل لولي الأمر."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A simpler Quran for children, with a grown-up lock."
           }
         }
       }
@@ -126,16 +205,16 @@
     "Adhan (Makkah)": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adhan (Makkah)"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "أذان الحرم المكي"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adhan (Makkah)"
           }
         }
       }
@@ -143,16 +222,16 @@
     "Adhan (Makkah, Maghrib)": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adhan (Makkah, Maghrib)"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "أذان الحرم المكي (المغرب)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adhan (Makkah, Maghrib)"
           }
         }
       }
@@ -244,6 +323,22 @@
         }
       }
     },
+    "Age %lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "العمر %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Age %lld"
+          }
+        }
+      }
+    },
     "Alert before prayer (minutes)": {
       "extractionState": "stale",
       "localizations": {
@@ -299,6 +394,22 @@
         }
       }
     },
+    "Answer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإجابة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Answer"
+          }
+        }
+      }
+    },
     "Appearance": {
       "localizations": {
         "ar": {
@@ -315,6 +426,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "السلام عليكم"
+          }
+        }
+      }
+    },
+    "Ask a grown-up": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسأل شخصًا بالغًا"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask a grown-up"
           }
         }
       }
@@ -347,6 +474,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "الأذكار"
+          }
+        }
+      }
+    },
+    "Athkar audio": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "صوتيات الأذكار"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Athkar audio"
           }
         }
       }
@@ -436,16 +580,16 @@
     "Back": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Back"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "رجوع"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
           }
         }
       }
@@ -511,6 +655,7 @@
       }
     },
     "Browse by country": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -591,6 +736,39 @@
         }
       }
     },
+    "Cancel": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إلغاء"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Cancelled": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أُلغي"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelled"
+          }
+        }
+      }
+    },
     "Cash (in hand and bank)": {
       "localizations": {
         "ar": {
@@ -619,6 +797,7 @@
       }
     },
     "City": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -646,6 +825,7 @@
       }
     },
     "Clear": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -664,16 +844,16 @@
     "Clear search": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clear search"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "مسح البحث"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear search"
           }
         }
       }
@@ -698,16 +878,50 @@
     "Compass uses magnetic north — may differ slightly": {
       "extractionState": "manual",
       "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "البوصلة تستخدم الشمال المغناطيسي — قد يختلف الاتجاه قليلًا"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Compass uses magnetic north — may differ slightly"
           }
-        },
+        }
+      }
+    },
+    "Connect once to download this ayah's recitation": {
+      "extractionState": "manual",
+      "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "البوصلة تستخدم الشمال المغناطيسي — قد يختلف الاتجاه قليلًا"
+            "value": "اتصل بالإنترنت مرة واحدة لتنزيل تلاوة هذه الآية"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect once to download this ayah's recitation"
+          }
+        }
+      }
+    },
+    "Connect once to download this dhikr": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اتصل بالإنترنت مرة واحدة لتنزيل هذا الذكر"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect once to download this dhikr"
           }
         }
       }
@@ -745,6 +959,23 @@
         }
       }
     },
+    "Couldn't create the video. Please try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر إنشاء الفيديو. حاول مرة أخرى."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't create the video. Please try again."
+          }
+        }
+      }
+    },
     "Couldn't get your location": {
       "extractionState": "stale",
       "localizations": {
@@ -759,21 +990,22 @@
     "Count": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Count"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "العدد"
           }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Count"
+          }
         }
       }
     },
     "Countries": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -790,6 +1022,7 @@
       }
     },
     "Country": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -871,16 +1104,16 @@
     "Delete": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "حذف"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
           }
         }
       }
@@ -926,16 +1159,16 @@
     "Download": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Download"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "تنزيل"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download"
           }
         }
       }
@@ -1055,6 +1288,22 @@
         }
       }
     },
+    "Each ayah %lld times": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كل آية %lld مرات"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each ayah %lld times"
+          }
+        }
+      }
+    },
     "Edit plan": {
       "localizations": {
         "ar": {
@@ -1169,6 +1418,22 @@
         }
       }
     },
+    "Flowing text": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نص متصل"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flowing text"
+          }
+        }
+      }
+    },
     "Follow-along audio": {
       "localizations": {
         "ar": {
@@ -1278,6 +1543,22 @@
         }
       }
     },
+    "Grown-ups": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لولي الأمر"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grown-ups"
+          }
+        }
+      }
+    },
     "Hadith": {
       "localizations": {
         "ar": {
@@ -1370,6 +1651,23 @@
         }
       }
     },
+    "Hisn al-Muslim recordings": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تسجيلات حصن المسلم"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hisn al-Muslim recordings"
+          }
+        }
+      }
+    },
     "Hizb %lld": {
       "extractionState": "stale",
       "localizations": {
@@ -1399,6 +1697,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "بداية الحزب"
+          }
+        }
+      }
+    },
+    "How old is your child?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كم عمر طفلك؟"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How old is your child?"
           }
         }
       }
@@ -1510,6 +1824,22 @@
         }
       }
     },
+    "Kids mode": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "وضع الأطفال"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kids mode"
+          }
+        }
+      }
+    },
     "Language": {
       "localizations": {
         "ar": {
@@ -1541,6 +1871,22 @@
         }
       }
     },
+    "Listen": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أستمع"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen"
+          }
+        }
+      }
+    },
     "Live countdown": {
       "extractionState": "stale",
       "localizations": {
@@ -1561,16 +1907,16 @@
     "Live countdown to the next prayer": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Live countdown to the next prayer"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "عدّ تنازلي مباشر للصلاة التالية"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live countdown to the next prayer"
           }
         }
       }
@@ -1681,6 +2027,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Match your local masjid exactly. Applies everywhere: timeline, widgets, and notifications."
+          }
+        }
+      }
+    },
+    "Memorise": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أحفظ"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memorise"
           }
         }
       }
@@ -1805,6 +2167,22 @@
         }
       }
     },
+    "My athkar": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أذكاري"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My athkar"
+          }
+        }
+      }
+    },
     "My location": {
       "extractionState": "stale",
       "localizations": {
@@ -1851,6 +2229,7 @@
       }
     },
     "Near %@": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -1867,6 +2246,7 @@
       }
     },
     "Nearby": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -1901,16 +2281,16 @@
     "Next ayah": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Next ayah"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الآية التالية"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next ayah"
           }
         }
       }
@@ -1918,16 +2298,16 @@
     "Next month": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Next month"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الشهر التالي"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next month"
           }
         }
       }
@@ -1949,6 +2329,7 @@
       }
     },
     "No cities found": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -1967,16 +2348,16 @@
     "Noor": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Noor"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "نور"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noor"
           }
         }
       }
@@ -2136,16 +2517,16 @@
     "Pause": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pause"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "إيقاف مؤقت"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
           }
         }
       }
@@ -2164,16 +2545,33 @@
     "Play": {
       "extractionState": "manual",
       "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تشغيل"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Play"
           }
-        },
+        }
+      }
+    },
+    "Play chapter": {
+      "extractionState": "manual",
+      "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تشغيل"
+            "value": "تشغيل الفصل"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play chapter"
           }
         }
       }
@@ -2222,6 +2620,22 @@
         }
       }
     },
+    "Plays straight through": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يقرأ السورة كاملة بلا تكرار"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plays straight through"
+          }
+        }
+      }
+    },
     "Point the arrow at the Kaaba": {
       "extractionState": "stale",
       "localizations": {
@@ -2234,6 +2648,7 @@
       }
     },
     "Popular": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -2309,19 +2724,36 @@
         }
       }
     },
-    "Previous ayah": {
+    "Preparing video…": {
       "extractionState": "manual",
       "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ تجهيز الفيديو…"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Previous ayah"
+            "value": "Preparing video…"
           }
-        },
+        }
+      }
+    },
+    "Previous ayah": {
+      "extractionState": "manual",
+      "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الآية السابقة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous ayah"
           }
         }
       }
@@ -2329,16 +2761,16 @@
     "Previous month": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Previous month"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "الشهر السابق"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous month"
           }
         }
       }
@@ -2390,19 +2822,35 @@
         }
       }
     },
-    "Reader options": {
-      "extractionState": "manual",
+    "Read": {
       "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اقرأ"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reader options"
+            "value": "Read"
           }
-        },
+        }
+      }
+    },
+    "Reader options": {
+      "extractionState": "manual",
+      "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "خيارات القارئ"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reader options"
           }
         }
       }
@@ -2413,6 +2861,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "وضع القراءة"
+          }
+        }
+      }
+    },
+    "Reads each ayah in the chosen language right after the Arabic.": {
+      "extractionState": "stale",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تُقرأ كل آية باللغة المختارة بعد التلاوة العربية مباشرة."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reads each ayah in the chosen language right after the Arabic."
+          }
+        }
+      }
+    },
+    "Reads slowly, for learning": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قراءة بطيئة للتعلّم"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reads slowly, for learning"
           }
         }
       }
@@ -2443,6 +2924,7 @@
         }
       }
     },
+    "Repeat %@×": {},
     "Repeat %lld×": {
       "extractionState": "stale",
       "localizations": {
@@ -2478,6 +2960,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Repeat each ayah"
+          }
+        }
+      }
+    },
+    "Repetition %lld of %lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التكرار %1$lld من %2$lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repetition %1$lld of %2$lld"
           }
         }
       }
@@ -2523,16 +3021,16 @@
     "Retry": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Retry"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "إعادة المحاولة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
           }
         }
       }
@@ -2540,16 +3038,16 @@
     "Roughly facing the qibla": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Roughly facing the qibla"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "في اتجاه القبلة تقريبًا"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roughly facing the qibla"
           }
         }
       }
@@ -2600,16 +3098,16 @@
     "Search": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "بحث"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
           }
         }
       }
@@ -2626,6 +3124,7 @@
       }
     },
     "Search city": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -2689,16 +3188,16 @@
     "Send the app to family and friends — a poster with the store links, ready for a status.": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Send the app to family and friends — a poster with the store links, ready for a status."
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "أرسل التطبيق للأهل والأصدقاء: صورة فيها روابط المتجر، جاهزة للحالة."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send the app to family and friends — a poster with the store links, ready for a status."
           }
         }
       }
@@ -2738,16 +3237,33 @@
     "Share Noor": {
       "extractionState": "manual",
       "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شارك التطبيق"
+          }
+        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Share Noor"
           }
-        },
+        }
+      }
+    },
+    "Share as video": {
+      "extractionState": "manual",
+      "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "شارك التطبيق"
+            "value": "مشاركة كفيديو"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share as video"
           }
         }
       }
@@ -2812,6 +3328,22 @@
         }
       }
     },
+    "Start": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ابدأ"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        }
+      }
+    },
     "Start a khatmah plan": {
       "localizations": {
         "ar": {
@@ -2864,16 +3396,16 @@
     "Stop": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "إيقاف"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
           }
         }
       }
@@ -2881,16 +3413,16 @@
     "Stop download": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop download"
-          }
-        },
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "إيقاف التنزيل"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop download"
           }
         }
       }
@@ -3095,6 +3627,39 @@
         }
       }
     },
+    "That's not it — here's a new one.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ليست هذه الإجابة — إليك سؤالًا جديدًا."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That's not it — here's a new one."
+          }
+        }
+      }
+    },
+    "The mushaf text shown follows Hafs; the recitation follows Warsh.": {
+      "extractionState": "stale",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "النص المعروض برواية حفص، والتلاوة برواية ورش عن نافع."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The mushaf text shown follows Hafs; the recitation follows Warsh."
+          }
+        }
+      }
+    },
     "This page only": {
       "extractionState": "stale",
       "localizations": {
@@ -3149,6 +3714,16 @@
         }
       }
     },
+    "Translation": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الترجمة"
+          }
+        }
+      }
+    },
     "Translation audio": {
       "localizations": {
         "ar": {
@@ -3165,55 +3740,8 @@
         }
       }
     },
-    "Warsh riwayah": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "رواية ورش عن نافع"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Warsh riwayah"
-          }
-        }
-      }
-    },
-    "The mushaf text shown follows Hafs; the recitation follows Warsh.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "النص المعروض برواية حفص، والتلاوة برواية ورش عن نافع."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The mushaf text shown follows Hafs; the recitation follows Warsh."
-          }
-        }
-      }
-    },
-    "Reads each ayah in the chosen language right after the Arabic.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تُقرأ كل آية باللغة المختارة بعد التلاوة العربية مباشرة."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reads each ayah in the chosen language right after the Arabic."
-          }
-        }
-      }
-    },
     "Translation audio: %@": {
+      "extractionState": "stale",
       "localizations": {
         "ar": {
           "stringUnit": {
@@ -3225,16 +3753,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Translation audio: %@"
-          }
-        }
-      }
-    },
-    "Translation": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الترجمة"
           }
         }
       }
@@ -3294,6 +3812,22 @@
         }
       }
     },
+    "Unlock": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "افتح"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock"
+          }
+        }
+      }
+    },
     "Use my current location": {
       "extractionState": "stale",
       "localizations": {
@@ -3329,6 +3863,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Voluntary prayers and their times"
+          }
+        }
+      }
+    },
+    "Warsh riwayah": {
+      "extractionState": "stale",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رواية ورش عن نافع"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warsh riwayah"
+          }
+        }
+      }
+    },
+    "Well done!": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أحسنت!"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Well done!"
           }
         }
       }
@@ -3383,6 +3950,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Your currency"
+          }
+        }
+      }
+    },
+    "Your stars": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نجومك"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your stars"
           }
         }
       }
@@ -3462,6 +4045,23 @@
         }
       }
     },
+    "with %@'s recitation": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "بصوت %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "with %@'s recitation"
+          }
+        }
+      }
+    },
     "¼ Hizb": {
       "extractionState": "stale",
       "localizations": {
@@ -3491,176 +4091,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "ثلاثة أرباع الحزب"
-          }
-        }
-      }
-    },
-    "Share as video": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Share as video"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مشاركة كفيديو"
-          }
-        }
-      }
-    },
-    "with %@'s recitation": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "with %@'s recitation"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "بصوت %@"
-          }
-        }
-      }
-    },
-    "Preparing video…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Preparing video…"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "جارٍ تجهيز الفيديو…"
-          }
-        }
-      }
-    },
-    "Connect once to download this ayah's recitation": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Connect once to download this ayah's recitation"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اتصل بالإنترنت مرة واحدة لتنزيل تلاوة هذه الآية"
-          }
-        }
-      }
-    },
-    "Couldn't create the video. Please try again.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't create the video. Please try again."
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تعذّر إنشاء الفيديو. حاول مرة أخرى."
-          }
-        }
-      }
-    },
-    "Cancelled": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancelled"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أُلغي"
-          }
-        }
-      }
-    },
-    "Play chapter": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play chapter"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تشغيل الفصل"
-          }
-        }
-      }
-    },
-    "Connect once to download this dhikr": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Connect once to download this dhikr"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اتصل بالإنترنت مرة واحدة لتنزيل هذا الذكر"
-          }
-        }
-      }
-    },
-    "Athkar audio": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Athkar audio"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "صوتيات الأذكار"
-          }
-        }
-      }
-    },
-    "Hisn al-Muslim recordings": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hisn al-Muslim recordings"
-          }
-        },
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تسجيلات حصن المسلم"
           }
         }
       }
