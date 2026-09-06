@@ -19,8 +19,15 @@ final class NoorTypographyTests: XCTestCase {
     func testBundledCairoRegistersWithExpectedNames() {
         FontRegistrar.registerBundledFonts()
 
-        let font = CTFontCreateWithName("Cairo-Regular" as CFString, 17, nil)
-        XCTAssertEqual(CTFontCopyPostScriptName(font) as String, "Cairo-Regular")
-        XCTAssertEqual(CTFontCopyFamilyName(font) as String, "Cairo")
+        let expectedNames = [
+            "Cairo-Regular",
+            "Cairo-Regular_SemiBold",
+            "Cairo-Regular_Bold",
+        ]
+        for expectedName in expectedNames {
+            let font = CTFontCreateWithName(expectedName as CFString, 17, nil)
+            XCTAssertEqual(CTFontCopyPostScriptName(font) as String, expectedName)
+            XCTAssertEqual(CTFontCopyFamilyName(font) as String, "Cairo")
+        }
     }
 }

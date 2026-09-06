@@ -212,7 +212,7 @@ struct MadaniPageView: View {
                     VStack(spacing: 10) {
                         ProgressView()
                         Text("Preparing page \(page)…")
-                            .noorFont(size: 13, relativeTo: .footnote)
+                            .noorFont(.caption)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -62,7 +62,7 @@ public struct AudioPillView: View {
                 Spacer(minLength: 4)
 
                 Button { player.previous() } label: {
-                    Image(systemName: "backward.fill").noorFont(size: 14)
+                    Image(systemName: "backward.fill").font(.system(size: 14))
                         .frame(width: 38, height: 44)
                         .contentShape(Rectangle())
                 }
@@ -78,7 +78,7 @@ public struct AudioPillView: View {
                 .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
 
                 Button { player.next() } label: {
-                    Image(systemName: "forward.fill").noorFont(size: 14)
+                    Image(systemName: "forward.fill").font(.system(size: 14))
                         .frame(width: 38, height: 44)
                         .contentShape(Rectangle())
                 }
@@ -94,7 +94,8 @@ public struct AudioPillView: View {
                 .accessibilityLabel("Playback mode")
 
                 Button { player.stop() } label: {
-                    Image(systemName: "xmark").noorFont(size: 13, weight: .semibold)
+                    Image(systemName: "xmark")
+                        .font(.system(size: 13, weight: .semibold))
                         .frame(width: 36, height: 44)
                         .contentShape(Rectangle())
                 }

@@ -20,7 +20,7 @@ struct WordByWordView: View {
                         .font(NoorFont.quran(size: fontSize * 0.92))
                         .foregroundStyle(isCurrent ? NoorColor.accentPrimary : NoorColor.inkPrimary)
                     Text(word.translation)
-                        .noorFont(size: 11, design: .serif)
+                        .font(.system(size: 11, design: .serif))
                         .foregroundStyle(NoorColor.inkSecondary)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 90)

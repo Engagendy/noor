@@ -61,7 +61,7 @@ object ShareCard {
             textSize = if (useQuranFont) 60f else 48f
             typeface = if (useQuranFont)
                 ResourcesCompat.getFont(context, R.font.amiri_quran) ?: Typeface.DEFAULT
-            else Typeface.DEFAULT
+            else ResourcesCompat.getFont(context, R.font.cairo) ?: Typeface.DEFAULT
         }
         val translationPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             color = gray

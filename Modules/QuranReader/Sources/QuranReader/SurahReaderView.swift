@@ -327,7 +327,7 @@ public struct SurahReaderView: View {
                     } label: {
                         Image(systemName: player.current != nil && player.isPlaying
                               ? "pause.fill" : "play.fill")
-                            .noorFont(size: 16)
+                            .font(.system(size: 16))
                             .foregroundStyle(NoorColor.accentPrimary)
                             .frame(width: 36, height: 40)
                             .contentShape(Rectangle())
@@ -613,7 +613,7 @@ public struct SurahReaderView: View {
             if showTranslation,
                let translation = translations?.translation(surah: verse.surahId, ayah: verse.ayah) {
                 Text(translation)
-                    .noorFont(size: 17, design: .serif, relativeTo: .body)
+                    .font(NoorFont.translation)
                     .foregroundStyle(NoorColor.inkSecondary)
                     .lineSpacing(4)
                     .environment(\.layoutDirection, .leftToRight)

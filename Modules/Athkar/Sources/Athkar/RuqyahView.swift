@@ -86,7 +86,7 @@ struct RuqyahView: View {
                             Text(verbatim: item.passage.range.count == 1
                                  ? "\(item.surahName) · \(item.passage.range.lowerBound.arabicIndic)"
                                  : "\(item.surahName) · \(item.passage.range.lowerBound.arabicIndic)–\(item.passage.range.upperBound.arabicIndic)")
-                                .noorFont(size: 13, weight: .semibold)
+                                .noorArabicFont(size: 13, weight: .semibold)
                                 .foregroundStyle(NoorColor.accentGold)
                             Spacer()
                             Button {
@@ -141,12 +141,12 @@ struct RuqyahView: View {
                         }
                         .frame(height: 20)
                         Text(verbatim: dua.text)
-                            .noorFont(size: 17)
+                            .noorArabicFont(size: 17)
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineSpacing(8)
                             .arabicBlock()
                         Text(verbatim: dua.source)
-                            .noorFont(size: 13, relativeTo: .footnote)
+                            .noorArabicFont(.caption)
                             .foregroundStyle(NoorColor.accentGold)
                     }
                     .padding(16)

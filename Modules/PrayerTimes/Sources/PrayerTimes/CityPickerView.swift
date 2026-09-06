@@ -63,7 +63,7 @@ public struct CityPickerView: View {
                 }
             } else if results.isEmpty {
                 Text("No cities found")
-                    .noorFont(size: 13, relativeTo: .footnote)
+                    .noorFont(.caption)
                     .foregroundStyle(NoorColor.inkSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .listRowBackground(Color.clear)
@@ -204,7 +204,7 @@ struct CityRows: View {
                         Text(verbatim: city.displayName(arabicUI: isArabicUI))
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: subtitle(city, duplicates: duplicates))
-                            .noorFont(size: 13, relativeTo: .footnote)
+                            .noorFont(.caption)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                     Spacer()

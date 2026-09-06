@@ -39,7 +39,9 @@ plan section 4 exactly (iOS).
   break Quranic marks like U+06DF under Apple's shaper; verified 2026-08-31).
 - Arabic interface text uses bundled Cairo through `NoorTheme` (Android) and
   the locale-aware `noorFont` design token (Apple platforms). English remains
-  on the platform system font. Never use Cairo for Quran text.
+  on the platform system font. Arabic-only non-Quran content uses
+  `arabicText()` (Android) / `noorArabicFont` (Apple platforms), even under an
+  English UI. Never use Cairo for Quran text or translations.
 - Accessibility non-negotiable: labels, Dynamic Type, 44pt targets on every PR.
 
 ## Android conventions (`android/`)

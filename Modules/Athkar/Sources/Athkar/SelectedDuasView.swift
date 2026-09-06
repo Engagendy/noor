@@ -105,7 +105,7 @@ struct SelectedDuasView: View {
                             .lineSpacing(12)
                             .arabicBlock()
                         Text(verbatim: item.reference)
-                            .noorFont(size: 13, relativeTo: .footnote)
+                            .noorArabicFont(.caption)
                             .foregroundStyle(NoorColor.accentGold)
                     }
                     .padding(16)
@@ -120,7 +120,7 @@ struct SelectedDuasView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text(verbatim: dua.title)
-                                .noorFont(size: 15, weight: .bold)
+                                .noorArabicFont(size: 15, weight: .bold)
                                 .foregroundStyle(NoorColor.accentGold)
                             Spacer()
                             Button {
@@ -138,12 +138,12 @@ struct SelectedDuasView: View {
                             .accessibilityLabel("Share")
                         }
                         Text(verbatim: dua.text)
-                            .noorFont(size: 17)
+                            .noorArabicFont(size: 17)
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineSpacing(8)
                             .arabicBlock()
                         Text(verbatim: dua.source)
-                            .noorFont(size: 13, relativeTo: .footnote)
+                            .noorArabicFont(.caption)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                     .padding(16)

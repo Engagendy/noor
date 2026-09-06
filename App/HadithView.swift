@@ -64,7 +64,7 @@ struct HadithListView: View {
                                     .noorFont(size: 16, weight: .semibold)
                                     .foregroundStyle(NoorColor.inkPrimary)
                                 Text(verbatim: "صحيح البخاري · صحيح مسلم")
-                                    .noorFont(size: 13, relativeTo: .footnote)
+                                    .noorArabicFont(.caption)
                                     .foregroundStyle(NoorColor.inkSecondary)
                             }
                         }
@@ -86,7 +86,7 @@ struct HadithListView: View {
                                         .foregroundStyle(NoorColor.accentGold)
                                         .frame(width: 30, alignment: .center)
                                     Text(verbatim: hadith.arabic)
-                                        .noorFont(size: 15, relativeTo: .body)
+                                        .noorArabicFont(size: 15, relativeTo: .body)
                                         .foregroundStyle(NoorColor.inkPrimary)
                                         .lineLimit(2)
                                         .arabicBlock()
@@ -159,7 +159,7 @@ struct HadithDetailView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
                             Text(verbatim: item.arabic)
-                                .noorFont(size: 18, relativeTo: .body)
+                                .noorArabicFont(size: 18, relativeTo: .body)
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .lineSpacing(10)
                                 .arabicBlock()

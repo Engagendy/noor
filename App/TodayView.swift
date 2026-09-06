@@ -300,14 +300,14 @@ struct TodayView: View {
             }
             if let dhikr {
                 Text(dhikr.text)
-                    .noorFont(size: 16)
+                    .noorArabicFont(size: 16)
                     .foregroundStyle(NoorColor.inkPrimary)
                     .lineSpacing(6)
                     .lineLimit(4)
                     .arabicBlock()
                 if dhikr.count > 1 {
                     Text("Repeat \(dhikr.count)×")
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(NoorColor.accentGold)
                 }
             }
@@ -337,7 +337,7 @@ struct TodayView: View {
                         Spacer()
                         Text(verbatim: isArabicUI
                              ? daily.collection.arabicName : daily.collection.englishName)
-                            .noorFont(size: 13, relativeTo: .footnote)
+                            .noorFont(.caption)
                             .foregroundStyle(NoorColor.accentGold)
                         Button {
                             shareItem = .sahihHadith(daily.hadith, daily.collection)
@@ -353,7 +353,7 @@ struct TodayView: View {
                     }
                     Spacer(minLength: 0)
                     Text(verbatim: daily.hadith.arabic)
-                        .noorFont(size: 16, relativeTo: .body)
+                        .noorArabicFont(size: 16, relativeTo: .body)
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(7)
                         .lineLimit(4)
@@ -382,7 +382,7 @@ struct TodayView: View {
                             .foregroundStyle(NoorColor.inkSecondary)
                         Spacer()
                         Text(verbatim: isArabicUI ? hadith.collectionArabic : hadith.collectionEnglish)
-                            .noorFont(size: 13, relativeTo: .footnote)
+                            .noorFont(.caption)
                             .foregroundStyle(NoorColor.accentGold)
                         Button {
                             shareItem = .hadith(hadith)
@@ -398,7 +398,7 @@ struct TodayView: View {
                     }
                     Spacer(minLength: 0)
                     Text(verbatim: hadith.arabic)
-                        .noorFont(size: 16, relativeTo: .body)
+                        .noorArabicFont(size: 16, relativeTo: .body)
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(7)
                         .lineLimit(4)
@@ -510,7 +510,7 @@ struct TodayView: View {
                                      : "in about \(upcoming.inDays) days")
                             }
                         }
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(NoorColor.accentGold)
                     }
                     .contentShape(Rectangle())
@@ -560,7 +560,7 @@ struct TodayView: View {
             let _ = gregStyle.locale = locale
             HStack {
                 Text("\(now.formatted(hijriStyle)) · \(now.formatted(gregStyle))")
-                    .noorFont(size: 13, relativeTo: .footnote)
+                    .noorFont(.caption)
                     .foregroundStyle(NoorColor.inkSecondary)
                 Spacer()
                 Button { showHijriCalendar = true } label: {
@@ -585,7 +585,7 @@ struct TodayView: View {
                 .accessibilityLabel("Settings")
             }
             Text("As-salamu alaykum")
-                .noorFont(size: 28, weight: .semibold, relativeTo: .title)
+                .noorFont(.screenTitle)
                 .foregroundStyle(NoorColor.inkPrimary)
         }
         .padding(.bottom, 4)
@@ -812,7 +812,7 @@ struct TodayView: View {
                             return isArabicUI ? "\(base) · ختمة \((done + 1).arabicIndic)"
                                               : "\(base) · khatmah #\(done + 1)"
                         }())
-                            .noorFont(size: 13, relativeTo: .footnote)
+                            .noorFont(.caption)
                             .foregroundStyle(NoorColor.accentGold)
                         Button {
                             showKhatmahGoal = true
@@ -834,7 +834,7 @@ struct TodayView: View {
                             Text(verbatim: isArabicUI
                                  ? "تقبّل الله — هذه ختمتك رقم \((KhatmahPlan.completions() + 1).arabicIndic)"
                                  : "May Allah accept — khatmah #\(KhatmahPlan.completions() + 1)")
-                                .noorFont(size: 13, relativeTo: .footnote)
+                                .noorFont(.caption)
                                 .foregroundStyle(NoorColor.accentGold)
                             Button {
                                 KhatmahPlan.recordCompletion()
@@ -864,7 +864,7 @@ struct TodayView: View {
                             Text(verbatim: isArabicUI
                                  ? "متأخر بـ \(behind.arabicIndic) صفحات عن الخطة"
                                  : "\(behind) pages behind schedule")
-                                .noorFont(size: 13, relativeTo: .footnote)
+                                .noorFont(.caption)
                                 .foregroundStyle(NoorColor.accentGold)
                         }
                     }
@@ -879,7 +879,7 @@ struct TodayView: View {
                     Text(verbatim: isArabicUI
                          ? "تابع من صفحة \(KhatmahPlan.frontier().arabicIndic) ←"
                          : "Continue from page \(KhatmahPlan.frontier()) →")
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(NoorColor.accentPrimary)
                 }
                 .padding(16)
@@ -1032,7 +1032,7 @@ struct TodayView: View {
                     .lineSpacing(12)
                     .arabicBlock()
                 Text(verbatim: "\u{200F}\(daily.surah.displayName(arabicUI: isArabicUI)) \(daily.verse.surahId):\(daily.verse.ayah)")
-                    .noorFont(size: 13, relativeTo: .footnote)
+                    .noorFont(.caption)
                     .foregroundStyle(NoorColor.inkSecondary)
             }
         }

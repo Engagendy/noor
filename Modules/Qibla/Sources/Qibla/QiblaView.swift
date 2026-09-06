@@ -40,7 +40,7 @@ public struct QiblaView: View {
     public var body: some View {
         VStack(spacing: 22) {
             Text(verbatim: locationLabel)
-                .noorFont(size: 13, relativeTo: .footnote)
+                .noorFont(.caption)
                 .foregroundStyle(NoorColor.inkSecondary)
 
             ZStack {
@@ -97,7 +97,7 @@ public struct QiblaView: View {
                         .noorFont(size: 22, weight: .semibold)
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text("Compass uses magnetic north — may differ slightly")
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                         .multilineTextAlignment(.center)
                 } else if hasCompass {
@@ -112,7 +112,7 @@ public struct QiblaView: View {
                         .noorFont(size: 34, weight: .semibold, monospacedDigits: true)
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text("Bearing from true north")
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
             }

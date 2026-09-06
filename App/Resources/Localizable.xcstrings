@@ -1185,6 +1185,22 @@
         }
       }
     },
+    "Fonts: Cairo (SIL OFL), Amiri Quran, KFGQPC Uthmanic Hafs": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الخطوط: Cairo (ترخيص SIL OFL) وAmiri Quran وKFGQPC حفص العثماني"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fonts: Cairo (SIL OFL), Amiri Quran, KFGQPC Uthmanic Hafs"
+          }
+        }
+      }
+    },
     "Free forever — fi sabilillah. No ads, no tracking.": {
       "localizations": {
         "ar": {

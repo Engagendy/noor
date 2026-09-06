@@ -152,7 +152,7 @@ struct SettingsView: View {
                         Text("Quran text size")
                     }
                     Text(verbatim: "\(Int(quranFontSize)) pt")
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
                 Button {
@@ -216,7 +216,7 @@ struct SettingsView: View {
             }
             Section {
                 Text(verbatim: "Quran text: Tanzil.net (Uthmani)")
-                Text(verbatim: "Fonts: Cairo (SIL OFL), Amiri Quran, KFGQPC Uthmanic Hafs")
+                Text("Fonts: Cairo (SIL OFL), Amiri Quran, KFGQPC Uthmanic Hafs")
                 Text(verbatim: "Translation: Saheeh International (Tanzil)")
                 Text(verbatim: "Tafsir: Ibn Kathir, Al-Muyassar (spa5k/tafsir_api)")
                 Text(verbatim: "Recitations: EveryAyah.com")
@@ -227,7 +227,7 @@ struct SettingsView: View {
             } footer: {
                 Text("Free forever — fi sabilillah. No ads, no tracking.")
             }
-            .noorFont(size: 13, relativeTo: .footnote)
+            .noorFont(.caption)
             .foregroundStyle(NoorColor.inkSecondary)
         }
         .scrollContentBackground(.hidden)

@@ -65,7 +65,7 @@ Rules:
 | Role | Font | Notes |
 |---|---|---|
 | Quran Arabic | **KFGQPC Uthmanic Hafs** (bundled) | Only this (or QCF page fonts) for ayat. Never render Quran in system Arabic fonts. |
-| Arabic UI / hadith Arabic | **Cairo** (bundled) | SIL OFL 1.1 variable font; use the locale-aware design-system typography path so English remains on the platform system font. |
+| Arabic UI / hadith Arabic | **Cairo** (bundled) | SIL OFL 1.1 variable font; use the locale-aware path for interface text and the Arabic-content path for hadith/dhikr shown under any UI language. |
 | Latin UI & translations | SF Pro / New York | SF Pro for UI; **New York (serif) for translation & tafsir body** — gives a "sacred book" reading feel |
 | Numerals | Localized (Arabic-Indic in Arabic UI) | Follow locale |
 
@@ -145,7 +145,7 @@ frame). Tafsir source picker (chips). Serif body, comfortable measure
 
 ### 6.6 Hadith
 Collections grid → book list → hadith reader. Hadith card anatomy: narrator
-line (secondary), Arabic matn (SF Arabic, larger), translation (serif),
+line (secondary), Arabic matn (Cairo, larger), translation (serif),
 grade badge (Sahih = green outline chip), reference. Share-as-image action.
 
 ### 6.7 Daily Hadith notification & widgets

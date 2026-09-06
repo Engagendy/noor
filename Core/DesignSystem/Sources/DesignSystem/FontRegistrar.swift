@@ -25,4 +25,10 @@ public enum FontRegistrar {
     public static func registerBundledFonts() {
         _ = registerBundledFontsOnce
     }
+
+    /// Source-compatible entry point retained for existing package clients.
+    @available(*, deprecated, renamed: "registerBundledFonts")
+    public static func registerQuranFont() {
+        registerBundledFonts()
+    }
 }

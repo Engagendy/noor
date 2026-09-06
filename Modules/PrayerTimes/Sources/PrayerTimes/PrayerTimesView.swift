@@ -153,7 +153,7 @@ public struct PrayerTimesView: View {
                     Text(verbatim: location.displayName(arabicUI: isArabicUI))
                 }
             }
-            .noorFont(size: 13, relativeTo: .footnote)
+            .noorFont(.caption)
         }
         .foregroundStyle(NoorColor.inkSecondary)
     }
@@ -310,7 +310,7 @@ public struct PrayerTimesView: View {
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text(liveActivityOn ? "Active — tap to turn off"
                                         : "Live countdown to the next prayer")
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(liveActivityOn ? NoorColor.accentGold : NoorColor.inkSecondary)
                 }
                 Spacer()
@@ -340,7 +340,7 @@ public struct PrayerTimesView: View {
                         .noorFont(size: 15, weight: .semibold)
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text((AdhanSound(rawValue: soundRaw) ?? .adhanMadinah).displayName)
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
                 Spacer()
@@ -369,7 +369,7 @@ public struct PrayerTimesView: View {
                         .noorFont(size: 15, weight: .semibold)
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text("Voluntary prayers and their times")
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
                 Spacer()
@@ -397,7 +397,7 @@ public struct PrayerTimesView: View {
                         .noorFont(size: 15, weight: .semibold)
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text("\(appLocalized(method.displayName)) · \(appLocalized(madhab.displayName))")
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
                 Spacer()
@@ -642,7 +642,7 @@ public struct AdhanSoundPickerView: View {
                     HStack(spacing: 12) {
                         Image(systemName: sound.fileName != nil ? "play.circle.fill"
                               : sound == .bell ? "bell" : "bell.slash")
-                            .noorFont(size: 22)
+                            .font(.system(size: 22))
                             .foregroundStyle(sound.fileName != nil
                                              ? NoorColor.accentPrimary : NoorColor.inkSecondary)
                         Text(sound.displayName)
@@ -666,7 +666,7 @@ public struct AdhanSoundPickerView: View {
             .background(NoorColor.bgPrimary)
             .safeAreaInset(edge: .top) {
                 Text("Tap a sound to hear it")
-                    .noorFont(size: 13, relativeTo: .footnote)
+                    .noorFont(.caption)
                     .foregroundStyle(NoorColor.inkSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20)

@@ -34,7 +34,7 @@ public struct NoorShareCard: View {
                 .arabicBlock(alignment: .center)
             if let translation {
                 Text(translation)
-                    .noorFont(size: 17, design: .serif)
+                    .font(.system(size: 17, design: .serif))
                     .foregroundStyle(Color(red: 0.36, green: 0.40, blue: 0.44))
                     .multilineTextAlignment(.center)
             }

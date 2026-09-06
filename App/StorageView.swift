@@ -57,7 +57,7 @@ struct StorageView: View {
                             Text(item.title)
                                 .foregroundStyle(NoorColor.inkPrimary)
                             Text(item.subtitle)
-                                .noorFont(size: 13, relativeTo: .footnote)
+                                .noorFont(.caption)
                                 .foregroundStyle(NoorColor.inkSecondary)
                         }
                         Spacer()

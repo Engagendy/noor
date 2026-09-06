@@ -51,9 +51,10 @@ fun Int.localizedDigits(): String = if (isArabicLocale()) arabicIndic() else toS
 //    subtree, so Rows put badges/share buttons on the right and Columns
 //    start-align to the right (row structure that is UI chrome — card
 //    titles, back/share bars — stays in the UI direction).
-//  - `arabicText()` is the TextStyle for every Arabic `Text`: Rtl paragraph
-//    direction + Start alignment (= right edge). Pass `TextAlign.Center`
-//    / `Justify` where the design already centres or justifies.
+//  - `arabicText()` is the TextStyle for every non-Quran Arabic `Text`: Cairo,
+//    Rtl paragraph direction, and Start alignment (= right edge). Explicit
+//    Quran font parameters take precedence. Pass `TextAlign.Center` / `Justify`
+//    where the design already centres or justifies.
 //
 // In the Arabic UI both are no-ops in effect (direction is already RTL).
 
@@ -76,7 +77,11 @@ fun ArabicBlock(modifier: Modifier = Modifier, content: @Composable ColumnScope.
 /// paragraph start (the right edge). Give the Text `fillMaxWidth()` so the
 /// alignment has room to act.
 fun arabicText(align: TextAlign = TextAlign.Start): TextStyle =
-    TextStyle(textDirection = TextDirection.Rtl, textAlign = align)
+    TextStyle(
+        fontFamily = ArabicUiFont,
+        textDirection = TextDirection.Rtl,
+        textAlign = align,
+    )
 
 // MARK: - direction-aware arrows
 //

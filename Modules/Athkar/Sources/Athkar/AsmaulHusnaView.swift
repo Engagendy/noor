@@ -143,7 +143,7 @@ public struct AsmaulHusnaView: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.5)
                             Text(verbatim: isArabicUI ? name.number.arabicIndic : name.transliteration)
-                                .noorFont(size: 13, relativeTo: .footnote)
+                                .noorFont(.caption)
                                 .foregroundStyle(NoorColor.inkSecondary)
                                 .lineLimit(1)
                         }

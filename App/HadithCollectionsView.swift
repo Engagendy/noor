@@ -49,7 +49,7 @@ struct HadithCollectionsView: View {
                     .foregroundStyle(NoorColor.inkPrimary)
                 if state != .ready {
                     Text(verbatim: collection.sizeLabel)
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
             }
@@ -112,7 +112,7 @@ struct HadithBooksView: View {
                         Text(verbatim: isArabicUI
                              ? "\(book.count.arabicIndic) حديثًا"
                              : "\(book.count) hadiths")
-                            .noorFont(size: 13, relativeTo: .footnote)
+                            .noorFont(.caption)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                 }
@@ -172,7 +172,7 @@ struct HadithBookView: View {
                         .foregroundStyle(NoorColor.accentGold)
                         .frame(minWidth: 30, alignment: .center)
                     Text(verbatim: hadith.arabic)
-                        .noorFont(size: 15)
+                        .noorArabicFont(size: 15)
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(3)
                         .arabicBlock()
@@ -241,7 +241,7 @@ struct LibraryHadithDetail: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
                             Text(verbatim: item.arabic)
-                                .noorFont(size: 18, relativeTo: .body)
+                                .noorArabicFont(size: 18, relativeTo: .body)
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .lineSpacing(10)
                                 .arabicBlock()

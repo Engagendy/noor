@@ -57,7 +57,7 @@ struct HadithTab: View {
                                 Text(verbatim: isArabicUI
                                      ? "\(group.items.count.arabicIndic) حديثًا"
                                      : "\(group.items.count) hadiths")
-                                    .noorFont(size: 13, relativeTo: .footnote)
+                                    .noorFont(.caption)
                                     .foregroundStyle(NoorColor.inkSecondary)
                             }
                         }
@@ -116,14 +116,14 @@ struct HadithTab: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(verbatim: hit.hadith.arabic)
-                            .noorFont(size: 15)
+                            .noorArabicFont(size: 15)
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineLimit(2)
                             .arabicBlock()
                         Text(verbatim: isArabicUI
                              ? "\(hit.collection.arabicName) · \(hit.bookTitle) · \(hit.hadith.number)"
                              : "\(hit.collection.englishName) · \(hit.bookTitle) · \(hit.hadith.number)")
-                            .noorFont(size: 13, relativeTo: .footnote)
+                            .noorFont(.caption)
                             .foregroundStyle(NoorColor.accentGold)
                     }
                     .padding(.vertical, 4)
@@ -154,7 +154,7 @@ struct HadithTab: View {
                         Spacer()
                         Text(verbatim: isArabicUI
                              ? bookmarks.keys.count.arabicIndic : "\(bookmarks.keys.count)")
-                            .noorFont(size: 13, relativeTo: .footnote)
+                            .noorFont(.caption)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                     .padding(.vertical, 4)
@@ -191,7 +191,7 @@ struct HadithTab: View {
                     .foregroundStyle(NoorColor.inkPrimary)
                 if state != .ready {
                     Text(verbatim: collection.sizeLabel)
-                        .noorFont(size: 13, relativeTo: .footnote)
+                        .noorFont(.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
             }
@@ -240,7 +240,7 @@ struct FortyList: View {
                         .foregroundStyle(NoorColor.accentGold)
                         .frame(width: 30, alignment: .center)
                     Text(verbatim: hadith.arabic)
-                        .noorFont(size: 15)
+                        .noorArabicFont(size: 15)
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(2)
                         .arabicBlock()
