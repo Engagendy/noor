@@ -93,6 +93,35 @@ Attributions are displayed in Settings → About.
   100% KFGQPC via the QCF page fonts.
 - **Attribution:** "Amiri Quran font by Khaled Hosny (SIL OFL)."
 
+### Interface fonts (bundled — Settings → App font)
+The five families the user can choose for the app's *interface* text. They
+never touch Quran rendering, which stays on the verified Quran fonts above.
+
+- **Files:** iOS `Core/DesignSystem/Sources/DesignSystem/Resources/UIFonts/`;
+  Android `android/app/src/main/res/font/` (`readex_pro.ttf`, `cairo.ttf`,
+  `ibm_plex_sans_arabic_{regular,medium,semibold,bold}.ttf`,
+  `tajawal_{regular,medium,bold}.ttf`, `almarai_{regular,bold}.ttf` —
+  Android's resource system only allows lowercase file names, so the
+  files are renamed on disk; their contents and the fonts' internal
+  Reserved Font Names are untouched).
+- **Source:** google/fonts (`ofl/readexpro`, `ofl/ibmplexsansarabic`,
+  `ofl/tajawal`, `ofl/almarai`, `ofl/cairo`), fetched from the `main` branch.
+- **License:** SIL Open Font License 1.1 (all five).
+- **Bundled unmodified.** The files are the upstream binaries byte for byte —
+  not subset, not renamed, not re-generated. The OFL forbids a modified
+  version from using a Reserved Font Name (IBM reserves "Plex"), so shipping
+  the originals is what keeps the names usable. Readex Pro and Cairo are the
+  upstream *variable* files; their weights are addressed through the fonts'
+  own named instances (iOS) and `fontVariationSettings` (Android), which
+  needs no change to the files.
+- **Copyright / attribution:**
+  - IBM Plex Sans Arabic — Copyright © 2017 IBM Corp. with Reserved Font
+    Name "Plex". SIL OFL 1.1.
+  - Tajawal — Copyright 2018 Boutros International. SIL OFL 1.1.
+  - Almarai — Copyright 2019 The Almarai Project Authors. SIL OFL 1.1.
+  - Readex Pro — Copyright 2018 The Readex Pro Project Authors. SIL OFL 1.1.
+  - Cairo — Copyright 2009 The Cairo Project Authors. SIL OFL 1.1.
+
 ### Athkar — Hisn al-Muslim (bundled)
 - **File:** `Modules/Athkar/Sources/Athkar/Resources/athkar.json`
   (132 categories, 267 adhkar).

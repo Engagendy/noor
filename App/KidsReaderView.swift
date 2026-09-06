@@ -23,7 +23,9 @@ struct KidsReaderView: View {
     @State private var verses: [Verse] = []
     /// Basmala straight from the DB (surah 1 ayah 1) — never a literal.
     @State private var basmala: String?
-    @State private var useFlowLayout = false
+    /// Screenshot/UI-test hook: NOOR_KIDS_FLOW=1 opens in flowing layout.
+    @State private var useFlowLayout =
+        ProcessInfo.processInfo.environment["NOOR_KIDS_FLOW"] == "1"
     @State private var sawLastAyah = false
     @State private var celebrate = false
     @AppStorage("reader.fontSize") private var baseFontSize = 26.0
@@ -80,7 +82,7 @@ struct KidsReaderView: View {
                 } else {
                     LazyVStack(alignment: .leading, spacing: 10) {
                         if let basmala, surahId != 1 {
-                            Text(basmala)
+                            Text(verbatim: basmala)
                                 .font(NoorFont.quran(size: fontSize * 0.9))
                                 .foregroundStyle(NoorColor.accentPrimary)
                                 .arabicBlock(alignment: .center)
@@ -104,41 +106,44 @@ struct KidsReaderView: View {
     }
 
     /// Flowing layout — offered only to the oldest band (10–12).
+    ///
+    /// Uses the main reader's known-good per-word RTL flow (`QuranFlowText`)
+    /// rather than concatenating `Text` runs: the concatenated form produced
+    /// a wrong base writing direction and mangled Arabic (2026-09).
     private var flowText: some View {
-        let joined = verses.reduce(Text(verbatim: "")) { partial, verse in
-            partial
-                + Text(displayText(verse))
-                + Text(verbatim: "  \u{2067}﴿\(verse.ayah.arabicIndic)﴾\u{2069}  ")
-                    .foregroundStyle(NoorColor.accentGold)
-        }
-        return VStack(spacing: 14) {
+        VStack(spacing: 14) {
             if let basmala, surahId != 1 {
-                Text(basmala)
+                Text(verbatim: basmala)
                     .font(NoorFont.quran(size: fontSize * 0.9))
                     .foregroundStyle(NoorColor.accentPrimary)
                     .arabicBlock(alignment: .center)
             }
-            joined
-                .font(NoorFont.quran(size: fontSize))
-                .foregroundStyle(NoorColor.inkPrimary)
-                .lineSpacing(fontSize * NoorMetrics.quranLineSpacingFactor)
-                .arabicBlock()
+            QuranFlowText(items: flowItems,
+                          fontSize: fontSize,
+                          highlightKey: currentAyah.map { surahId * 1000 + $0 })
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 18)
+        // No tap, no long press: the ayah actions sheet must be unreachable.
+    }
+
+    /// Flow fragments for the whole surah (the basmala line is drawn
+    /// separately, so its copy inside ayah 1 is stripped for display).
+    private var flowItems: [QuranFlowItem] {
+        QuranFlow.items(verses: verses,
+                        basmalaToStrip: surahId == 1 ? nil : basmala)
     }
 
     private func ayahCard(_ verse: Verse) -> some View {
         let isReciting = currentAyah == verse.ayah
         return VStack(alignment: .leading, spacing: 8) {
-            (Text(displayText(verse))
-                + Text(verbatim: "  \u{2067}﴿\(verse.ayah.arabicIndic)﴾\u{2069}")
-                    .font(NoorFont.quran(size: fontSize * 0.6))
-                    .foregroundStyle(NoorColor.accentGold))
-                .font(NoorFont.quran(size: fontSize))
-                .foregroundStyle(isReciting ? NoorColor.accentPrimary : NoorColor.inkPrimary)
-                .lineSpacing(fontSize * NoorMetrics.quranLineSpacingFactor)
-                .arabicBlock()
+            // Same per-word RTL flow as the flowing layout and the main
+            // reader — never `Text + Text` concatenation on Quranic text.
+            QuranFlowText(items: QuranFlow.items(
+                            verses: [verse],
+                            basmalaToStrip: surahId == 1 ? nil : basmala),
+                          fontSize: fontSize,
+                          highlightKey: isReciting ? verse.surahId * 1000 + verse.ayah : nil)
             if isReciting, showsRepeatIndicator {
                 repetitionDots
             }
@@ -152,6 +157,7 @@ struct KidsReaderView: View {
         .animation(.easeInOut(duration: 0.25), value: isReciting)
         // No tap, no long press: the ayah actions sheet must be unreachable.
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(verbatim: displayText(verse)))
     }
 
     /// Which repetition of the current ayah is playing, as dots + words.

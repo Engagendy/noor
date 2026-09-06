@@ -61,7 +61,7 @@ struct HadithListView: View {
                                 .frame(width: 30)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Hadith library")
-                                    .font(.system(size: 16, weight: .semibold))
+                                    .font(.noorScaled(16, weight: .semibold))
                                     .foregroundStyle(NoorColor.inkPrimary)
                                 Text(verbatim: "صحيح البخاري · صحيح مسلم")
                                     .font(NoorFont.caption)
@@ -82,7 +82,7 @@ struct HadithListView: View {
                                 // badge sits on the right, text starts there.
                                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                                     Text(verbatim: isArabicUI ? hadith.number.arabicIndic : "\(hadith.number)")
-                                        .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                                        .font(.noorScaled(13, weight: .semibold).monospacedDigit())
                                         .foregroundStyle(NoorColor.accentGold)
                                         .frame(width: 30, alignment: .center)
                                     Text(verbatim: hadith.arabic)
@@ -100,7 +100,7 @@ struct HadithListView: View {
                         }
                     } header: {
                         Text(verbatim: collection.title)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.noorScaled(14, weight: .semibold))
                             .foregroundStyle(NoorColor.accentPrimary)
                     }
                 }
@@ -175,7 +175,7 @@ struct HadithDetailView: View {
                             Text(verbatim: isArabicUI
                                  ? "\(item.collectionArabic) · الحديث \(item.number.arabicIndic)"
                                  : "\(item.collectionEnglish) · Hadith \(item.number)")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.noorScaled(13, weight: .semibold))
                                 .foregroundStyle(NoorColor.accentGold)
                         }
                         .padding(20)

@@ -75,8 +75,13 @@ fun ArabicBlock(modifier: Modifier = Modifier, content: @Composable ColumnScope.
 /// TextStyle for Arabic-only text: RTL paragraph direction, aligned to the
 /// paragraph start (the right edge). Give the Text `fillMaxWidth()` so the
 /// alignment has room to act.
+// Passing `style =` to Text REPLACES LocalTextStyle, so the interface font
+// has to be carried explicitly here or these call sites fall back to the
+// platform default. Call sites that render Quran text pass an explicit
+// `fontFamily =` param, which still wins over the style.
 fun arabicText(align: TextAlign = TextAlign.Start): TextStyle =
-    TextStyle(textDirection = TextDirection.Rtl, textAlign = align)
+    TextStyle(textDirection = TextDirection.Rtl, textAlign = align,
+              fontFamily = NoorFont.family)
 
 // MARK: - direction-aware arrows
 //

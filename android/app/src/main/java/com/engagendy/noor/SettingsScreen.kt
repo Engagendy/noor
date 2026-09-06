@@ -107,6 +107,7 @@ private fun SettingsMain(
     var version by remember { mutableIntStateOf(0) }
     val language = remember(version) { prefs.getString("app.language", "system") ?: "system" }
     val theme = remember(version) { prefs.getString("app.theme", "system") ?: "system" }
+    val appFont = remember(version) { NoorFontChoice.from(prefs.getString("ui.font", null)) }
     // Captured in composition for use inside the theme click handler.
     val systemDark = androidx.compose.foundation.isSystemInDarkTheme()
     val notificationsEnabled = remember(version) { prefs.getBoolean("notifications.enabled", true) }
@@ -138,6 +139,18 @@ private fun SettingsMain(
 
     var showReciterPicker by remember { mutableStateOf(false) }
     var showAdhanSounds by remember { mutableStateOf(false) }
+    var showAppFont by remember { mutableStateOf(false) }
+    if (showAppFont) {
+        AppFontSheet(
+            selected = appFont,
+            onSelect = { choice ->
+                prefs.edit().putString("ui.font", choice.id).apply()
+                // Instant switch — every NoorFont reader recomposes.
+                NoorFont.apply(choice.id)
+                version++
+            },
+            onDismiss = { showAppFont = false })
+    }
     DisposableEffect(Unit) { onDispose { AdhanPreview.stop() } }
     if (showReciterPicker) {
         ReciterPickerSheet(onDismiss = { showReciterPicker = false })
@@ -217,6 +230,11 @@ private fun SettingsMain(
                     NoorColor.apply(it, systemDark)
                     version++
                 })
+            HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
+            // Interface font only — Quran text keeps its own verified fonts.
+            NavRow(title = stringResource(R.string.feat_app_font),
+                   value = appFont.displayName,
+                   onClick = { showAppFont = true })
         }
         Footer(stringResource(R.string.g1_general_footer))
 
@@ -648,6 +666,63 @@ private fun AdhanSoundSheet(
                     }
                 }
                 item { Spacer(Modifier.padding(bottom = 20.dp)) }
+            }
+        }
+    }
+}
+
+/// Interface-font picker. Every row renders its own family name AND a short
+/// sample IN that family, so the difference is visible before choosing.
+/// Quran fonts are untouched by this setting.
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AppFontSheet(
+    selected: NoorFontChoice,
+    onSelect: (NoorFontChoice) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
+        Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
+            Text(stringResource(R.string.feat_app_font), fontSize = 17.sp,
+                 fontWeight = FontWeight.Bold, color = NoorColor.inkPrimary,
+                 modifier = Modifier.padding(bottom = 10.dp))
+            NoorFontChoice.entries.forEach { choice ->
+                val isSelected = choice == selected
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 3.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (isSelected) NoorColor.stateReciting else NoorColor.bgElevated,
+                            RoundedCornerShape(12.dp))
+                        .clickable { onSelect(choice) }
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(choice.displayName,
+                             fontFamily = choice.family,
+                             fontSize = 16.sp,
+                             fontWeight = FontWeight.SemiBold,
+                             color = if (isSelected) NoorColor.accentPrimary
+                                     else NoorColor.inkPrimary)
+                        // Left as the ambient paragraph direction: the string
+                        // is a pure Arabic run, so it shapes RTL either way and
+                        // stays aligned with the Latin name above it.
+                        Text(choice.arabicSample,
+                             fontFamily = choice.family,
+                             fontSize = 13.sp,
+                             color = NoorColor.inkSecondary)
+                    }
+                    if (isSelected) {
+                        Icon(painterResource(R.drawable.ic_check),
+                             contentDescription = null,
+                             tint = NoorColor.accentPrimary,
+                             modifier = Modifier.size(16.dp))
+                    }
+                }
             }
         }
     }

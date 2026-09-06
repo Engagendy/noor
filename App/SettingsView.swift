@@ -14,6 +14,8 @@ struct SettingsView: View {
     @AppStorage("app.language") private var language = "system"
     /// "system" | "light" | "dark"
     @AppStorage("app.theme") private var theme = "system"
+    /// Interface font family — shared key/values with Android (`ui.font`).
+    @AppStorage(NoorAppFont.defaultsKey) private var uiFontRaw = NoorAppFont.fallback.rawValue
     @AppStorage("reader.fontSize") private var quranFontSize = 26.0
     @AppStorage("reader.mode") private var readerMode = "mushaf"
     @AppStorage("audio.reciter") private var reciterRaw = Reciter.alafasy.rawValue
@@ -73,6 +75,15 @@ struct SettingsView: View {
                 } label: {
                     Text("Appearance")
                 }
+                Picker(selection: $uiFontRaw) {
+                    ForEach(NoorAppFont.allCases, id: \.rawValue) { family in
+                        AppFontRow(family: family)
+                            .tag(family.rawValue)
+                    }
+                } label: {
+                    Text("App font")
+                }
+                .pickerStyle(.navigationLink)
             }
 
             Section {
@@ -290,6 +301,44 @@ struct SettingsView: View {
     }
 }
 
+/// One row of the App-font picker, drawn in the family it offers so the
+/// choice can be judged before it is made — in both scripts, since the app
+/// is bilingual and several of these families are Arabic-first.
+struct AppFontRow: View {
+    let family: NoorAppFont
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            // Font names are proper nouns: `verbatim`, never localised.
+            Text(verbatim: family.displayName)
+                .font(family.scaled(17, weight: .medium))
+            Text(verbatim: family.arabicSample)
+                .font(family.scaled(15))
+                .foregroundStyle(NoorColor.inkSecondary)
+                .environment(\.layoutDirection, .rightToLeft)
+        }
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: family.displayName))
+    }
+}
+
 #Preview {
     NavigationStack { SettingsView() }
+}
+
+#Preview("App font rows — EN LTR") {
+    List {
+        ForEach(NoorAppFont.allCases, id: \.rawValue) { AppFontRow(family: $0) }
+    }
+    .environment(\.locale, Locale(identifier: "en"))
+    .environment(\.layoutDirection, .leftToRight)
+}
+
+#Preview("App font rows — AR RTL") {
+    List {
+        ForEach(NoorAppFont.allCases, id: \.rawValue) { AppFontRow(family: $0) }
+    }
+    .environment(\.locale, Locale(identifier: "ar"))
+    .environment(\.layoutDirection, .rightToLeft)
 }

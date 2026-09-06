@@ -111,7 +111,7 @@ public struct SurahListView: View {
                                     .foregroundStyle(NoorColor.accentPrimary)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Go to ayah")
-                                        .font(.system(size: 15, weight: .semibold))
+                                        .font(.noorScaled(15, weight: .semibold))
                                         .foregroundStyle(NoorColor.inkPrimary)
                                     Text(verbatim: "\(surahName(reference.surahId)) · \(reference.surahId):\(ayah)")
                                         .font(NoorFont.caption)
@@ -161,7 +161,7 @@ public struct SurahListView: View {
                                         .foregroundStyle(NoorColor.accentGold)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(verbatim: "\(surahName(bookmark.surahId)) · \(bookmark.surahId):\(bookmark.ayah)")
-                                            .font(.system(size: 15, weight: .semibold))
+                                            .font(.noorScaled(15, weight: .semibold))
                                             .foregroundStyle(NoorColor.inkPrimary)
                                         Text(bookmark.createdAt.formatted(date: .abbreviated, time: .omitted))
                                             .font(NoorFont.caption)
@@ -305,7 +305,7 @@ public struct SurahListView: View {
                         shownHits += Self.hitPage
                     } label: {
                         Text("Show more results")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.noorScaled(15, weight: .semibold))
                             .foregroundStyle(NoorColor.accentPrimary)
                             .frame(maxWidth: .infinity, minHeight: 44)
                             .contentShape(Rectangle())
@@ -367,7 +367,7 @@ public struct SurahListView: View {
                     SurahNumberBadge(juz.idx)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Juz \(juz.idx)")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.noorScaled(16, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(referenceLabel(juz))
                             .font(NoorFont.caption)
@@ -406,10 +406,10 @@ public struct SurahListView: View {
         } label: {
             HStack(spacing: 10) {
                 Text(verbatim: "۞")
-                    .font(.system(size: 15))
+                    .font(.noorScaled(15))
                     .foregroundStyle(NoorColor.accentGold)
                 Text(quarterName(position.quarterInHizb))
-                    .font(.system(size: 14))
+                    .font(.noorScaled(14))
                     .foregroundStyle(NoorColor.inkPrimary)
                 Text("Hizb \(position.hizb)")
                     .font(NoorFont.caption)
@@ -463,7 +463,7 @@ struct SurahRow: View {
                         .foregroundStyle(NoorColor.inkSecondary)
                 } else {
                     Text(surah.nameTransliterated)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.noorScaled(16, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text("\(surah.nameEnglish) · \(surah.ayahCount) ayat · \(surah.isMeccan ? String(localized: "Makki", locale: locale) : String(localized: "Madani", locale: locale))")
                         .font(NoorFont.caption)

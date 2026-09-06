@@ -119,7 +119,7 @@ public struct AthkarView: View {
                     RubElHizbMark(size: 30)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Tasbih")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.noorScaled(16, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: "سبحان الله · الحمد لله · الله أكبر")
                             .font(NoorFont.caption)
@@ -140,7 +140,7 @@ public struct AthkarView: View {
                         .frame(width: 30)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Ruqyah")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.noorScaled(16, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: "الرقية الشرعية من الكتاب والسنة")
                             .font(NoorFont.caption)
@@ -161,7 +161,7 @@ public struct AthkarView: View {
                         .frame(width: 30)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Selected duas")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.noorScaled(16, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: "أدعية قرآنية ونبوية والاستخارة")
                             .font(NoorFont.caption)
@@ -182,7 +182,7 @@ public struct AthkarView: View {
                         .frame(width: 30)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Names of Allah")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.noorScaled(16, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: "أسماء الله الحسنى · ٩٩")
                             .font(NoorFont.caption)
@@ -217,7 +217,7 @@ public struct AthkarView: View {
         } label: {
             HStack {
                 Text(verbatim: category.displayTitle(arabicUI: isArabicUI))
-                    .font(.system(size: 16))
+                    .font(.noorScaled(16))
                     .foregroundStyle(NoorColor.inkPrimary)
                 Spacer()
                 Text(verbatim: "\(category.items.count)")
@@ -384,7 +384,7 @@ struct DhikrListView: View {
                             .font(.system(size: 13, weight: .semibold))
                     }
                     (playing ? Text("Pause") : Text("Play chapter"))
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.noorScaled(15, weight: .semibold))
                 }
                 .foregroundStyle(NoorColor.bgPrimary)
                 .padding(.horizontal, 18)
@@ -449,11 +449,11 @@ struct DhikrCard: View {
                     } icon: {
                         Image(systemName: "checkmark.circle.fill")
                     }
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.noorScaled(13, weight: .semibold))
                     .foregroundStyle(NoorColor.accentPrimary)
                 } else {
                     Text(verbatim: "\(done) / \(dhikr.count)")
-                        .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                        .font(.noorScaled(13, weight: .semibold).monospacedDigit())
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
                 Spacer()
@@ -572,7 +572,7 @@ struct TasbihView: View {
                             }
                         } label: {
                             Text(verbatim: text)
-                                .font(.system(size: 14, weight: phraseIndex == index ? .semibold : .regular))
+                                .font(.noorScaled(14, weight: phraseIndex == index ? .semibold : .regular))
                                 .foregroundStyle(phraseIndex == index ? NoorColor.bgPrimary : NoorColor.inkPrimary)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 9)
@@ -607,13 +607,13 @@ struct TasbihView: View {
                         .rotationEffect(.degrees(-90))
                     VStack(spacing: 6) {
                         Text(verbatim: phrase)
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.noorScaled(20, weight: .semibold))
                             .foregroundStyle(NoorColor.accentPrimary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.6)
                             .padding(.horizontal, 24)
                         Text(verbatim: "\(count)")
-                            .font(.system(size: 58, weight: .semibold).monospacedDigit())
+                            .font(.noorScaled(58, weight: .semibold).monospacedDigit())
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(verbatim: "\(count / 33) × ٣٣")
                             .font(NoorFont.caption)

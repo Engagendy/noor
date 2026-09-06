@@ -45,11 +45,11 @@ public struct AudioPillView: View {
                             Text(verbatim: player.isPlayingTranslation
                                  ? player.translationVoice.displayName(arabicUI: isArabicUI)
                                  : player.reciter.displayName(arabicUI: isArabicUI))
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.noorScaled(14, weight: .semibold))
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .lineLimit(1)
                             Text("\(player.surahTitle) · \(String(localized: "Ayah \(current.ayah)", locale: locale))")
-                                .font(.system(size: 11.5))
+                                .font(.noorScaled(11.5))
                                 .foregroundStyle(NoorColor.inkSecondary)
                                 .lineLimit(1)
                         }
@@ -225,13 +225,13 @@ public struct ReciterPickerSheet: View {
                 .foregroundStyle(NoorColor.inkSecondary)
             TextField("", text: $searchText)
                 .textFieldStyle(.plain)
-                .font(.system(size: 15))
+                .font(.noorScaled(15))
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .overlay(alignment: .leading) {
                     if searchText.isEmpty {
                         Text("Search reciters")
-                            .font(.system(size: 15))
+                            .font(.noorScaled(15))
                             .foregroundStyle(NoorColor.inkSecondary.opacity(0.8))
                             .allowsHitTesting(false)
                     }
@@ -266,15 +266,15 @@ extension ReciterPickerSheet {
             HStack(spacing: 12) {
                 if !reciter.flag.isEmpty {
                     Text(verbatim: reciter.flag)
-                        .font(.system(size: 18))
+                        .font(.noorScaled(18))
                 }
                 Text(verbatim: reciter.displayName(arabicUI: isArabicUI))
-                    .font(.system(size: 16, weight: selection == reciter.rawValue ? .semibold : .regular))
+                    .font(.noorScaled(16, weight: selection == reciter.rawValue ? .semibold : .regular))
                     .foregroundStyle(NoorColor.inkPrimary)
                 if reciter.qfTimingId != nil {
                     // Supports word-by-word follow-along.
                     Text(isArabicUI ? "تتبع الكلمات" : "word tracking")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.noorScaled(10, weight: .semibold))
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
                         .background(Capsule().fill(NoorColor.accentPrimary.opacity(0.12)))
@@ -308,7 +308,7 @@ extension ReciterPickerSheet {
                     .foregroundStyle(tint)
                     .frame(width: 24)
                 Text("Translation audio")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.noorScaled(16, weight: .semibold))
                     .foregroundStyle(NoorColor.inkPrimary)
                     .lineLimit(1)
                     .layoutPriority(1)
@@ -316,7 +316,7 @@ extension ReciterPickerSheet {
                 // Language only — the full "language · voice" pair is shown
                 // in the pushed list and would truncate the label here.
                 Text(verbatim: voice.shortName(arabicUI: isArabicUI))
-                    .font(.system(size: 14, weight: voice == .none ? .regular : .semibold))
+                    .font(.noorScaled(14, weight: voice == .none ? .regular : .semibold))
                     .foregroundStyle(tint)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -376,7 +376,7 @@ extension ReciterPickerSheet {
                     .foregroundStyle(voice == .none ? NoorColor.inkSecondary : NoorColor.accentPrimary)
                     .frame(width: 24)
                 Text(verbatim: voice.displayName(arabicUI: isArabicUI))
-                    .font(.system(size: 16, weight: isOn ? .semibold : .regular))
+                    .font(.noorScaled(16, weight: isOn ? .semibold : .regular))
                     .foregroundStyle(NoorColor.inkPrimary)
                 Spacer(minLength: 4)
                 if isOn {
@@ -455,7 +455,7 @@ struct PlaybackModeSheet: View {
                                 .foregroundStyle(NoorColor.accentPrimary)
                                 .frame(width: 26)
                             Text(option.1)
-                                .font(.system(size: 16, weight: player.mode == option.0 ? .semibold : .regular))
+                                .font(.noorScaled(16, weight: player.mode == option.0 ? .semibold : .regular))
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             if player.mode == option.0 {
@@ -483,7 +483,7 @@ struct PlaybackModeSheet: View {
                             player.persistRate()
                         } label: {
                             Text(verbatim: speed == 1.0 ? "1×" : String(format: "%g×", speed))
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.noorScaled(13, weight: .semibold))
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
                                 .background(Capsule().fill(isOn ? NoorColor.accentPrimary : NoorColor.bgElevated))
@@ -503,7 +503,7 @@ struct PlaybackModeSheet: View {
                             player.setSleepTimer(minutes: minutes)
                         } label: {
                             Text(verbatim: "\(minutes)")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.noorScaled(13, weight: .semibold))
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
                                 .background(Capsule().fill(NoorColor.bgElevated))
@@ -515,7 +515,7 @@ struct PlaybackModeSheet: View {
                         player.stopAfterSurah.toggle()
                     } label: {
                         Text("End of surah")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.noorScaled(13, weight: .semibold))
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
                             .background(Capsule().fill(player.stopAfterSurah ? NoorColor.accentPrimary : NoorColor.bgElevated))
@@ -528,7 +528,7 @@ struct PlaybackModeSheet: View {
                         } label: {
                             HStack(spacing: 3) {
                                 Text(deadline, style: .timer)
-                                    .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                                    .font(.noorScaled(12, weight: .semibold).monospacedDigit())
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 12))
                             }
@@ -545,7 +545,7 @@ struct PlaybackModeSheet: View {
                         Image(systemName: "brain.head.profile")
                             .font(.system(size: 16))
                         Text("Memorize a range")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.noorScaled(15, weight: .semibold))
                         Spacer()
                         if player.mode == .memorize {
                             Image(systemName: "checkmark")
@@ -618,7 +618,7 @@ struct MemorizeRangeSheet: View {
                     dismiss()
                 } label: {
                     Text("Start memorizing")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.noorScaled(16, weight: .semibold))
                         .frame(maxWidth: .infinity)
                 }
             }

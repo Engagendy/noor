@@ -410,6 +410,16 @@
         }
       }
     },
+    "App font": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خط التطبيق"
+          }
+        }
+      }
+    },
     "Appearance": {
       "localizations": {
         "ar": {

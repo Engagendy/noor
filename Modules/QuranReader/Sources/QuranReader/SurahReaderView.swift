@@ -301,7 +301,7 @@ public struct SurahReaderView: View {
                             Text(mode != .ayah && currentPage > 0
                                  ? "Juz \(viewModel.juz(forPage: currentPage)) · Page \(currentPage)"
                                  : "Juz \(viewModel.juz)")
-                                .font(.system(size: 11))
+                                .font(.noorScaled(11))
                             if mode != .ayah {
                                 Image(systemName: "chevron.up.chevron.down")
                                     .font(.system(size: 8, weight: .semibold))
@@ -327,7 +327,7 @@ public struct SurahReaderView: View {
                     } label: {
                         Image(systemName: player.current != nil && player.isPlaying
                               ? "pause.fill" : "play.fill")
-                            .font(.system(size: 16))
+                            .font(.noorScaled(16))
                             .foregroundStyle(NoorColor.accentPrimary)
                             .frame(width: 36, height: 40)
                             .contentShape(Rectangle())
@@ -348,12 +348,12 @@ public struct SurahReaderView: View {
                         .font(NoorFont.quran(size: 15))
                     Spacer()
                     Text(context.date, format: .dateTime.hour().minute())
-                        .font(.system(size: 12).monospacedDigit())
+                        .font(.noorScaled(12).monospacedDigit())
                     Spacer()
                     Text(mode != .ayah && currentPage > 0
                          ? "Juz \(viewModel.juz(forPage: currentPage)) · Page \(currentPage)"
                          : "Juz \(viewModel.juz)")
-                        .font(.system(size: 12))
+                        .font(.noorScaled(12))
                 }
                 .foregroundStyle(NoorColor.inkSecondary)
             }
@@ -452,7 +452,7 @@ public struct SurahReaderView: View {
                 HStack(spacing: 10) {
                     Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
                     Text(page.arabicIndic)
-                        .font(.system(size: 12))
+                        .font(.noorScaled(12))
                         .foregroundStyle(NoorColor.accentGold)
                     Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
                 }
@@ -473,7 +473,7 @@ public struct SurahReaderView: View {
             ForEach(viewModel.flowItems(section: section, page: page)) { item in
                 let key = item.surahId * 1000 + item.ayah
                 let isSelected = selectedKey == key
-                Text(item.text)
+                Text(verbatim: item.text)
                     .font(NoorFont.quran(size: item.kind == .marker ? liveFontSize * 0.62 : liveFontSize))
                     .foregroundStyle(
                         item.kind == .word
@@ -738,7 +738,7 @@ public struct SurahReaderView: View {
             withAnimation(.easeInOut(duration: 0.2)) { showOptions.toggle() }
         } label: {
             Text(verbatim: "Aa")
-                .font(.system(size: 17, weight: .semibold))
+                .font(.noorScaled(17, weight: .semibold))
                 .foregroundStyle(showOptions ? NoorColor.accentGold : NoorColor.accentPrimary)
                 .frame(width: 40, height: 40)
                 .contentShape(Rectangle())
@@ -822,7 +822,7 @@ public struct SurahReaderView: View {
                             }
                         }
                     }
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.noorScaled(14, weight: .medium))
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(NoorColor.accentPrimary)
@@ -833,7 +833,7 @@ public struct SurahReaderView: View {
             if mode != .page {
                         HStack(spacing: 12) {
                 Text("Quran text size")
-                    .font(.system(size: 14))
+                    .font(.noorScaled(14))
                     .foregroundStyle(NoorColor.inkSecondary)
                 Spacer()
                 Button {
@@ -845,7 +845,7 @@ public struct SurahReaderView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Smaller")
                 Text(verbatim: "\(Int(quranFontSize))")
-                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                    .font(.noorScaled(15, weight: .semibold).monospacedDigit())
                     .frame(minWidth: 30)
                 Button {
                     quranFontSize = min(NoorMetrics.quranSizeRange.upperBound, quranFontSize + 2)
@@ -955,7 +955,7 @@ struct GoToPageSheet: View {
                     .keyboardType(.numberPad)
                     #endif
                     .focused($focused)
-                    .font(.system(size: 22, weight: .semibold).monospacedDigit())
+                    .font(.noorScaled(22, weight: .semibold).monospacedDigit())
                     .multilineTextAlignment(.leading)
                     .padding(14)
                     .background(RoundedRectangle(cornerRadius: 12).fill(NoorColor.bgElevated))
@@ -966,7 +966,7 @@ struct GoToPageSheet: View {
                         }
                     } label: {
                         Text("Go")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.noorScaled(16, weight: .semibold))
                             .foregroundStyle(NoorColor.bgPrimary)
                             .padding(.horizontal, 22)
                             .frame(height: 50)
@@ -978,7 +978,7 @@ struct GoToPageSheet: View {
                     .disabled(typedPage == nil)
                 }
                 Text("Or jump to a juz")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.noorScaled(13, weight: .semibold))
                     .foregroundStyle(NoorColor.inkSecondary)
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 8) {
                     ForEach(1...30, id: \.self) { juz in
@@ -989,7 +989,7 @@ struct GoToPageSheet: View {
                             }
                         } label: {
                             Text(verbatim: isArabicUI ? juz.arabicIndic : "\(juz)")
-                                .font(.system(size: 15, weight: .semibold).monospacedDigit())
+                                .font(.noorScaled(15, weight: .semibold).monospacedDigit())
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 42)
                                 .background(RoundedRectangle(cornerRadius: 10).fill(NoorColor.bgElevated))

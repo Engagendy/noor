@@ -92,7 +92,7 @@ public struct ParentalGateView: View {
             VStack(spacing: 10) {
                 Button(action: check) {
                     Text("Unlock")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.noorScaled(17, weight: .semibold))
                         .foregroundStyle(NoorColor.bgPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: NoorMetrics.minTapTarget)
@@ -103,7 +103,7 @@ public struct ParentalGateView: View {
 
                 Button(action: onCancel) {
                     Text("Cancel")
-                        .font(.system(size: 17))
+                        .font(.noorScaled(17))
                         .foregroundStyle(NoorColor.inkSecondary)
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: NoorMetrics.minTapTarget)

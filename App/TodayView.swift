@@ -284,7 +284,7 @@ struct TodayView: View {
         return VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(slot.title)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.noorScaled(12, weight: .semibold))
                     .tracking(0.8)
                     .foregroundStyle(NoorColor.inkSecondary)
                 Spacer()
@@ -304,7 +304,7 @@ struct TodayView: View {
             }
             if let dhikr {
                 Text(dhikr.text)
-                    .font(.system(size: 16))
+                    .font(.noorScaled(16))
                     .foregroundStyle(NoorColor.inkPrimary)
                     .lineSpacing(6)
                     .lineLimit(4)
@@ -335,7 +335,7 @@ struct TodayView: View {
                 VStack(spacing: 10) {
                     HStack {
                         Text("DAILY HADITH")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.noorScaled(12, weight: .semibold))
                             .tracking(0.8)
                             .foregroundStyle(NoorColor.inkSecondary)
                         Spacer()
@@ -364,7 +364,7 @@ struct TodayView: View {
                         .arabicBlock()
                     Spacer(minLength: 0)
                     Text(isArabicUI ? "اقرأ الحديث كاملًا" : "Read the full hadith")
-                        .font(.system(size: 12.5, weight: .semibold))
+                        .font(.noorScaled(12.5, weight: .semibold))
                         .foregroundStyle(NoorColor.bgPrimary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 6)
@@ -381,7 +381,7 @@ struct TodayView: View {
                 VStack(spacing: 10) {
                     HStack {
                         Text("DAILY HADITH")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.noorScaled(12, weight: .semibold))
                             .tracking(0.8)
                             .foregroundStyle(NoorColor.inkSecondary)
                         Spacer()
@@ -410,7 +410,7 @@ struct TodayView: View {
                     Spacer(minLength: 0)
                     HStack(spacing: 14) {
                         Text(isArabicUI ? "اقرأ الحديث كاملًا" : "Read the full hadith")
-                            .font(.system(size: 12.5, weight: .semibold))
+                            .font(.noorScaled(12.5, weight: .semibold))
                             .foregroundStyle(NoorColor.bgPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 6)
@@ -419,7 +419,7 @@ struct TodayView: View {
                             showHadithList = true
                         } label: {
                             Text(isArabicUI ? "كل الأحاديث" : "All hadith")
-                                .font(.system(size: 12.5, weight: .semibold))
+                                .font(.noorScaled(12.5, weight: .semibold))
                                 .foregroundStyle(NoorColor.accentPrimary)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 6)
@@ -475,7 +475,7 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text(upcoming == nil ? "ON THIS DAY" : "COMING UP IN ISLAMIC HISTORY")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.noorScaled(12, weight: .semibold))
                         .tracking(0.8)
                         .foregroundStyle(NoorColor.inkSecondary)
                     Spacer()
@@ -498,7 +498,7 @@ struct TodayView: View {
                     } label: {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(verbatim: isArabicUI ? event.arabic : event.english)
-                            .font(.system(size: 15))
+                            .font(.noorScaled(15))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineSpacing(5)
                             .multilineTextAlignment(.leading)
@@ -527,7 +527,7 @@ struct TodayView: View {
                         detailEvent = events[0]
                     } label: {
                         Text(isArabicUI ? "التفاصيل" : "Details")
-                            .font(.system(size: 12.5, weight: .semibold))
+                            .font(.noorScaled(12.5, weight: .semibold))
                             .foregroundStyle(NoorColor.bgPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 6)
@@ -539,7 +539,7 @@ struct TodayView: View {
                         showAllEvents = true
                     } label: {
                         Text(isArabicUI ? "كل الأحداث" : "All events")
-                            .font(.system(size: 12.5, weight: .semibold))
+                            .font(.noorScaled(12.5, weight: .semibold))
                             .foregroundStyle(NoorColor.accentPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 6)
@@ -629,27 +629,27 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(next.map { localizedName($0.name).uppercased() } ?? localizedName("Isha").uppercased())
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.noorScaled(13, weight: .semibold))
                     .tracking(1.5)
                     .opacity(0.85)
                 if isTomorrow {
                     Text(isArabicUI ? "غدًا" : "Tomorrow")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.noorScaled(11, weight: .semibold))
                         .opacity(0.75)
                 }
                 Spacer()
                 if let next {
                     Text(next.time, format: cityTimeFormat)
-                        .font(.system(size: 13).monospacedDigit())
+                        .font(.noorScaled(13).monospacedDigit())
                         .opacity(0.85)
                 }
             }
             if let next {
                 Text(next.time, format: .relative(presentation: .numeric))
-                    .font(.system(size: 34, weight: .semibold))
+                    .font(.noorScaled(34, weight: .semibold))
             } else {
                 Text("All prayers done for today")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.noorScaled(22, weight: .semibold))
             }
             HStack(spacing: 6) {
                 ForEach(0..<5, id: \.self) { index in
@@ -662,7 +662,7 @@ struct TodayView: View {
             HStack {
                 ForEach(day.entries) { entry in
                     Text(entry.name)
-                        .font(.system(size: 10.5))
+                        .font(.noorScaled(10.5))
                         .opacity(0.8)
                     if entry.prayer != .isha { Spacer() }
                 }
@@ -703,7 +703,7 @@ struct TodayView: View {
                 Image(systemName: "flame.fill")
                     .font(.system(size: 11))
                 Text(verbatim: isArabicUI ? streak.arabicIndic : "\(streak)")
-                    .font(.system(size: 12, weight: .bold).monospacedDigit())
+                    .font(.noorScaled(12, weight: .bold).monospacedDigit())
             }
             .foregroundStyle(NoorColor.accentGold)
             .padding(.horizontal, 8)
@@ -726,17 +726,17 @@ struct TodayView: View {
                         .foregroundStyle(NoorColor.accentGold)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(verbatim: isArabicUI ? "جمعة مباركة" : "Blessed Jumu'ah")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.noorScaled(14, weight: .bold))
                             .foregroundStyle(NoorColor.accentGold)
                         Text(verbatim: isArabicUI
                              ? "سورة الكهف وكثرة الصلاة على النبي ﷺ"
                              : "Surat al-Kahf and abundant salawat upon the Prophet ﷺ")
-                            .font(.system(size: 13.5))
+                            .font(.noorScaled(13.5))
                             .foregroundStyle(NoorColor.inkPrimary)
                     }
                     Spacer()
                     Text(isArabicUI ? "اقرأ الكهف" : "Read al-Kahf")
-                        .font(.system(size: 12.5, weight: .semibold))
+                        .font(.noorScaled(12.5, weight: .semibold))
                         .foregroundStyle(NoorColor.bgPrimary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
@@ -765,7 +765,7 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Text(verbatim: isArabicUI ? "رمضان كريم 🌙" : "Ramadan Kareem 🌙")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.noorScaled(14, weight: .bold))
                             .foregroundStyle(NoorColor.accentGold)
                         Spacer()
                     }
@@ -773,10 +773,10 @@ struct TodayView: View {
                         Text(verbatim: beforeIftar
                              ? (isArabicUI ? "الإفطار بعد" : "Iftar in")
                              : (isArabicUI ? "السحور ينتهي بعد" : "Suhoor ends in"))
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.noorScaled(15, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(target, style: .timer)
-                            .font(.system(size: 20, weight: .bold).monospacedDigit())
+                            .font(.noorScaled(20, weight: .bold).monospacedDigit())
                             .foregroundStyle(NoorColor.accentPrimary)
                     }
                 }
@@ -802,7 +802,7 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("KHATMAH PLAN")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.noorScaled(12, weight: .semibold))
                             .tracking(0.8)
                             .foregroundStyle(NoorColor.inkSecondary)
                         streakBadge(now: now)
@@ -833,7 +833,7 @@ struct TodayView: View {
                     if plan.isFinished(currentPage: lastRead) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(isArabicUI ? "ما شاء الله، أتممت الختمة 🎉" : "Masha'Allah — khatmah complete 🎉")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.noorScaled(16, weight: .semibold))
                                 .foregroundStyle(NoorColor.accentPrimary)
                             Text(verbatim: isArabicUI
                                  ? "تقبّل الله — هذه ختمتك رقم \((KhatmahPlan.completions() + 1).arabicIndic)"
@@ -846,7 +846,7 @@ struct TodayView: View {
                                 khatmahPlanVersion += 1
                             } label: {
                                 Text(isArabicUI ? "ابدأ ختمة جديدة" : "Start a new khatmah")
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .font(.noorScaled(13, weight: .semibold))
                                     .foregroundStyle(NoorColor.bgPrimary)
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 7)
@@ -856,13 +856,13 @@ struct TodayView: View {
                         }
                     } else if left == 0 {
                         Text(isArabicUI ? "أنجزت وِرد اليوم، تقبّل الله" : "Today's portion done — may Allah accept")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.noorScaled(15, weight: .semibold))
                             .foregroundStyle(NoorColor.accentPrimary)
                     } else {
                         Text(verbatim: isArabicUI
                              ? "اقرأ إلى صفحة \(target.arabicIndic) · بقيت \(left.arabicIndic) صفحات اليوم"
                              : "Read to page \(target) · \(left) pages left today")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.noorScaled(15, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
                         if behind > 0 {
                             Text(verbatim: isArabicUI
@@ -898,7 +898,7 @@ struct TodayView: View {
                         .font(.system(size: 15))
                         .foregroundStyle(NoorColor.accentPrimary)
                     Text("Start a khatmah plan")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.noorScaled(15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                     streakBadge(now: now)
                     Spacer()
@@ -933,13 +933,13 @@ struct TodayView: View {
                         .background(RoundedRectangle(cornerRadius: 12).fill(NoorColor.accentPrimary.opacity(0.1)))
                     VStack(alignment: .leading, spacing: 2) {
                         Text("CONTINUE LISTENING")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.noorScaled(12, weight: .semibold))
                             .tracking(0.8)
                             .foregroundStyle(NoorColor.inkSecondary)
                         Text(verbatim: isArabicUI
                              ? "\(surah.displayName(arabicUI: true)) · آية \(ayah.arabicIndic)"
                              : "\(surah.displayName(arabicUI: false)) · Ayah \(ayah)")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.noorScaled(15, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
                     }
                     Spacer()
@@ -966,7 +966,7 @@ struct TodayView: View {
                     .background(RoundedRectangle(cornerRadius: 12).fill(NoorColor.accentGold.opacity(0.12)))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("CONTINUE READING")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.noorScaled(12, weight: .semibold))
                         .tracking(0.8)
                         .foregroundStyle(NoorColor.inkSecondary)
                     Text(surah?.displayName(arabicUI: isArabicUI) ?? "")
@@ -985,7 +985,7 @@ struct TodayView: View {
                         Text(verbatim: isArabicUI
                              ? "الختمة · صفحة \(khatmahMaxPage.arabicIndic) من ٦٠٤"
                              : "Khatmah · page \(khatmahMaxPage) of 604")
-                            .font(.system(size: 11))
+                            .font(.noorScaled(11))
                             .foregroundStyle(NoorColor.inkSecondary)
                             .padding(.top, 2)
                     }
@@ -1011,7 +1011,7 @@ struct TodayView: View {
         return VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("DAILY AYAH")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.noorScaled(12, weight: .semibold))
                     .tracking(0.8)
                     .foregroundStyle(NoorColor.inkSecondary)
                 Spacer()
@@ -1076,7 +1076,7 @@ struct EventDetailSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(verbatim: isArabicUI ? event.arabic : event.english)
-                        .font(.system(size: 19, weight: .semibold))
+                        .font(.noorScaled(19, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(6)
                         .multilineTextAlignment(.leading)
@@ -1085,7 +1085,7 @@ struct EventDetailSheet: View {
                         Image(systemName: "calendar")
                             .font(.system(size: 13))
                         Text(verbatim: dateLine)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.noorScaled(14, weight: .semibold))
                     }
                     .foregroundStyle(NoorColor.accentGold)
                     Rectangle()
@@ -1103,7 +1103,7 @@ struct EventDetailSheet: View {
                         Text(verbatim: isArabicUI
                              ? "المصدر: \(event.sourceArabic)"
                              : "Source: \(event.sourceEnglish)")
-                            .font(.system(size: 13))
+                            .font(.noorScaled(13))
                             .multilineTextAlignment(.leading)
                     }
                     .foregroundStyle(NoorColor.inkSecondary)
@@ -1162,7 +1162,7 @@ struct KhatmahGoalSheet: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Finish the Quran in")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.noorScaled(15, weight: .semibold))
                     .foregroundStyle(NoorColor.inkSecondary)
                 HStack(spacing: 8) {
                     ForEach([15, 30, 60, 90], id: \.self) { preset in
@@ -1170,7 +1170,7 @@ struct KhatmahGoalSheet: View {
                             days = preset
                         } label: {
                             Text(verbatim: isArabicUI ? preset.arabicIndic : "\(preset)")
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(.noorScaled(15, weight: .semibold))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
                                 .background(
@@ -1183,14 +1183,14 @@ struct KhatmahGoalSheet: View {
                 }
                 Stepper(value: $days, in: 3...365) {
                     Text(verbatim: isArabicUI ? "\(days.arabicIndic) يومًا" : "\(days) days")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.noorScaled(16, weight: .semibold))
                 }
                 if KhatmahPlan.load() != nil {
                     Stepper(value: $reachedPage, in: 0...604) {
                         Text(verbatim: isArabicUI
                              ? "وصلت إلى صفحة \(reachedPage.arabicIndic)"
                              : "I reached page \(reachedPage)")
-                            .font(.system(size: 15))
+                            .font(.noorScaled(15))
                     }
                     .onChange(of: reachedPage) { _, new in
                         UserDefaults.standard.set(min(new + 1, 604), forKey: "khatmah.page")
@@ -1200,7 +1200,7 @@ struct KhatmahGoalSheet: View {
                 Text(verbatim: isArabicUI
                      ? "وِردك اليومي: نحو \(pagesPerDay.arabicIndic) صفحات"
                      : "Daily portion: about \(pagesPerDay) pages")
-                    .font(.system(size: 14))
+                    .font(.noorScaled(14))
                     .foregroundStyle(NoorColor.accentGold)
                 Button {
                     KhatmahPlan.start(days: days)
@@ -1208,7 +1208,7 @@ struct KhatmahGoalSheet: View {
                     dismiss()
                 } label: {
                     Text("Start plan")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.noorScaled(16, weight: .semibold))
                         .foregroundStyle(NoorColor.bgPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
@@ -1222,7 +1222,7 @@ struct KhatmahGoalSheet: View {
                         dismiss()
                     } label: {
                         Text("Stop plan")
-                            .font(.system(size: 15))
+                            .font(.noorScaled(15))
                             .foregroundStyle(.red.opacity(0.85))
                             .frame(maxWidth: .infinity)
                     }
@@ -1274,11 +1274,11 @@ struct AllEventsView: View {
                             } label: {
                                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                                     Text(verbatim: isArabicUI ? event.day.arabicIndic : "\(event.day)")
-                                        .font(.system(size: 14, weight: .bold).monospacedDigit())
+                                        .font(.noorScaled(14, weight: .bold).monospacedDigit())
                                         .foregroundStyle(NoorColor.accentGold)
                                         .frame(width: 28)
                                     Text(verbatim: isArabicUI ? event.arabic : event.english)
-                                        .font(.system(size: 15))
+                                        .font(.noorScaled(15))
                                         .foregroundStyle(NoorColor.inkPrimary)
                                         .multilineTextAlignment(.leading)
                                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1294,7 +1294,7 @@ struct AllEventsView: View {
                              ? (isArabicUI ? IslamicEvent.hijriMonthsArabic
                                            : IslamicEvent.hijriMonthsEnglish)[group.month - 1]
                              : "")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.noorScaled(14, weight: .semibold))
                             .foregroundStyle(NoorColor.accentPrimary)
                     }
                 }

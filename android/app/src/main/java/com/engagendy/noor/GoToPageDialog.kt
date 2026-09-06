@@ -82,7 +82,8 @@ fun GoToPageDialog(
                         textStyle = TextStyle(
                             fontSize = 22.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = NoorColor.inkPrimary),
+                            color = NoorColor.inkPrimary,
+                            fontFamily = NoorFont.family),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,

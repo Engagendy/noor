@@ -63,7 +63,7 @@ struct StorageView: View {
                         Spacer()
                         Text(verbatim: ByteCountFormatter.string(
                             fromByteCount: item.bytes, countStyle: .file))
-                            .font(.system(size: 14).monospacedDigit())
+                            .font(.noorScaled(14).monospacedDigit())
                             .foregroundStyle(NoorColor.inkSecondary)
                         if item.bytes > 0 {
                             Button {

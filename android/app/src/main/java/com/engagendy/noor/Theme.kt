@@ -9,6 +9,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.font.FontWeight
 
 /// One resolved set of design tokens (light "Mushaf" or dark "Tahajjud").
 private data class Palette(
@@ -77,6 +80,125 @@ object NoorColor {
 val QuranFont = FontFamily(Font(R.font.amiri_quran))
 val HafsFont = FontFamily(Font(R.font.uthmanic_hafs))
 
+// MARK: - Interface font
+//
+// The five families the user can pick for the INTERFACE. They never touch
+// Quran rendering: QuranFont (Amiri Quran), HafsFont (KFGQPC Uthmanic Hafs)
+// and the downloaded QCF page fonts stay exactly as they are.
+//
+// All five files are bundled UNMODIFIED from google/fonts (SIL OFL 1.1) —
+// see LICENSES.md. Do NOT subset or re-hint them: the OFL forbids a modified
+// build from keeping a Reserved Font Name (IBM Plex reserves "Plex"), so any
+// subsetting would force a rename.
+
+/// The four weights the design actually uses (SemiBold and Bold carry almost
+/// all of it), resolved from whatever weights a family ships.
+private val UI_WEIGHTS = listOf(
+    FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold)
+
+/// One variable file covers every weight — no per-weight statics needed.
+/// `fontVariationSettings` is API 26+, which is our minSdk.
+@OptIn(ExperimentalTextApi::class)
+private fun variableFamily(res: Int): FontFamily = FontFamily(
+    UI_WEIGHTS.map { w ->
+        Font(res, w, variationSettings = FontVariation.Settings(FontVariation.weight(w.weight)))
+    })
+
+/// Interface font families, shared 1:1 with iOS via the `ui.font` pref.
+enum class NoorFontChoice(
+    val id: String,
+    /// Font names are proper nouns: never localised, never translated.
+    /// Rendered in its own family in the picker so the choice is visible.
+    val displayName: String,
+    /// The family's own name written in Arabic — the picker's second line,
+    /// so the Arabic shaping can be judged too. Deliberately NOT Quranic
+    /// text (hard rule 1). Same strings as iOS `NoorAppFont.arabicSample`.
+    val arabicSample: String,
+) {
+    READEX_PRO("readexPro", "Readex Pro", "ريدكس برو"),
+    IBM_PLEX_SANS_ARABIC("ibmPlexSansArabic", "IBM Plex Sans Arabic", "آي بي إم بلكس"),
+    TAJAWAL("tajawal", "Tajawal", "تجوال"),
+    ALMARAI("almarai", "Almarai", "المراعي"),
+    CAIRO("cairo", "Cairo", "القاهرة");
+
+    /// Built lazily so only the chosen family (plus any previewed in the
+    /// picker) is ever parsed.
+    val family: FontFamily by lazy {
+        when (this) {
+            // Variable files: one unmodified TTF, every weight exact.
+            READEX_PRO -> variableFamily(R.font.readex_pro)
+            CAIRO -> variableFamily(R.font.cairo)
+            // Statics, one file per weight — exact match for all four.
+            IBM_PLEX_SANS_ARABIC -> FontFamily(
+                Font(R.font.ibm_plex_sans_arabic_regular, FontWeight.Normal),
+                Font(R.font.ibm_plex_sans_arabic_medium, FontWeight.Medium),
+                Font(R.font.ibm_plex_sans_arabic_semibold, FontWeight.SemiBold),
+                Font(R.font.ibm_plex_sans_arabic_bold, FontWeight.Bold))
+            // Tajawal has no SemiBold: SemiBold -> Bold (700), which is what
+            // Compose's own weight matcher picks for 600 anyway, and keeps
+            // the design's main emphasis weight actually emphatic.
+            TAJAWAL -> FontFamily(
+                Font(R.font.tajawal_regular, FontWeight.Normal),
+                Font(R.font.tajawal_medium, FontWeight.Medium),
+                Font(R.font.tajawal_bold, FontWeight.SemiBold),
+                Font(R.font.tajawal_bold, FontWeight.Bold))
+            // Almarai ships only Light/Regular/Bold/ExtraBold: Medium ->
+            // Regular and SemiBold -> Bold (again the default matcher's
+            // choice); ExtraBold is left out, it is heavier than the design.
+            ALMARAI -> FontFamily(
+                Font(R.font.almarai_regular, FontWeight.Normal),
+                Font(R.font.almarai_regular, FontWeight.Medium),
+                Font(R.font.almarai_bold, FontWeight.SemiBold),
+                Font(R.font.almarai_bold, FontWeight.Bold))
+        }
+    }
+
+    companion object {
+        val DEFAULT = READEX_PRO
+        fun from(id: String?): NoorFontChoice =
+            entries.firstOrNull { it.id == id } ?: DEFAULT
+    }
+}
+
+/// Interface font token — reactive in exactly the same way as `NoorColor`:
+/// every composable that reads `NoorFont.family` recomposes when `apply`
+/// switches it, so the picker restyles the app with no restart.
+object NoorFont {
+    private val current = mutableStateOf(NoorFontChoice.DEFAULT)
+
+    val choice: NoorFontChoice get() = current.value
+    val family: FontFamily get() = current.value.family
+
+    /// Resolve the stored `ui.font` value and switch the family.
+    fun apply(id: String?) {
+        current.value = NoorFontChoice.from(id)
+    }
+}
+
+/// Material's default type scale with every style moved onto [family].
+/// (Material3's MaterialTheme provides `bodyLarge` as LocalTextStyle, so this
+/// is what plain `Text(...)` calls inherit.)
+private fun typographyFor(family: FontFamily): Typography {
+    val d = Typography()
+    return Typography(
+        displayLarge = d.displayLarge.copy(fontFamily = family),
+        displayMedium = d.displayMedium.copy(fontFamily = family),
+        displaySmall = d.displaySmall.copy(fontFamily = family),
+        headlineLarge = d.headlineLarge.copy(fontFamily = family),
+        headlineMedium = d.headlineMedium.copy(fontFamily = family),
+        headlineSmall = d.headlineSmall.copy(fontFamily = family),
+        titleLarge = d.titleLarge.copy(fontFamily = family),
+        titleMedium = d.titleMedium.copy(fontFamily = family),
+        titleSmall = d.titleSmall.copy(fontFamily = family),
+        bodyLarge = d.bodyLarge.copy(fontFamily = family),
+        bodyMedium = d.bodyMedium.copy(fontFamily = family),
+        bodySmall = d.bodySmall.copy(fontFamily = family),
+        labelLarge = d.labelLarge.copy(fontFamily = family),
+        labelMedium = d.labelMedium.copy(fontFamily = family),
+        labelSmall = d.labelSmall.copy(fontFamily = family),
+    )
+}
+
 @Composable
 fun NoorTheme(content: @Composable () -> Unit) {
     // Built inside composition so it tracks NoorColor's palette state.
@@ -105,7 +227,10 @@ fun NoorTheme(content: @Composable () -> Unit) {
             onSurfaceVariant = NoorColor.inkSecondary,
         )
     }
-    MaterialTheme(colorScheme = scheme, typography = Typography(), content = content)
+    // Reads NoorFont.family inside composition, so a font change
+    // rebuilds the type scale and restyles the app instantly.
+    MaterialTheme(colorScheme = scheme, typography = typographyFor(NoorFont.family),
+                  content = content)
 }
 
 /// ٠١٢٣٤٥٦٧٨٩

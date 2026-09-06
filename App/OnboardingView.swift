@@ -25,12 +25,12 @@ struct OnboardingView: View {
                                archColor: NoorColor.accentPrimary,
                                lampColor: NoorColor.accentGold)
                 Text(verbatim: isArabicUI ? "أهلًا بك في نور" : "Welcome to Noor")
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.noorScaled(24, weight: .bold))
                     .foregroundStyle(NoorColor.inkPrimary)
                 Text(verbatim: isArabicUI
                      ? "القرآن ومواقيت الصلاة والأذكار — خاص ومجاني للأبد"
                      : "Quran, prayer times, and athkar — private and free forever")
-                    .font(.system(size: 14))
+                    .font(.noorScaled(14))
                     .foregroundStyle(NoorColor.inkSecondary)
                     .multilineTextAlignment(.center)
             }
@@ -86,7 +86,7 @@ struct OnboardingView: View {
             language = value
         } label: {
             Text(verbatim: title)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.noorScaled(18, weight: .semibold))
                 .frame(maxWidth: .infinity)
                 .frame(height: 62)
                 .background(RoundedRectangle(cornerRadius: 14)
@@ -121,7 +121,7 @@ struct OnboardingView: View {
             Text(verbatim: isArabicUI
                  ? "أذان جميل عند كل صلاة. يمكنك تغيير الصوت أو إيقافه لاحقًا."
                  : "A beautiful adhan at every prayer. You can change or silence it anytime.")
-                .font(.system(size: 14))
+                .font(.noorScaled(14))
                 .foregroundStyle(NoorColor.inkSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 12)
@@ -137,7 +137,7 @@ struct OnboardingView: View {
                 done = true
             } label: {
                 Text(verbatim: isArabicUI ? "لاحقًا" : "Maybe later")
-                    .font(.system(size: 15))
+                    .font(.noorScaled(15))
                     .foregroundStyle(NoorColor.inkSecondary)
                     .frame(height: 40)
             }
@@ -148,14 +148,14 @@ struct OnboardingView: View {
 
     private func stepTitle(_ title: String) -> some View {
         Text(verbatim: title)
-            .font(.system(size: 18, weight: .semibold))
+            .font(.noorScaled(18, weight: .semibold))
             .foregroundStyle(NoorColor.inkPrimary)
     }
 
     private func primaryButton(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(verbatim: title)
-                .font(.system(size: 16, weight: .semibold))
+                .font(.noorScaled(16, weight: .semibold))
                 .foregroundStyle(NoorColor.bgPrimary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)

@@ -46,7 +46,7 @@ public struct QiblaView: View {
             ZStack {
                 // The Kaaba — the target, fixed at the top.
                 Text(verbatim: "🕋")
-                    .font(.system(size: 44))
+                    .font(.noorScaled(44))
                     .offset(y: -150)
                     .scaleEffect(pulse ? 1.15 : 1)
                     .animation(.easeInOut(duration: 0.35), value: pulse)
@@ -90,11 +90,11 @@ public struct QiblaView: View {
             VStack(spacing: 5) {
                 if isConfirmed {
                     Text("Facing the qibla")
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(.noorScaled(24, weight: .semibold))
                         .foregroundStyle(NoorColor.accentPrimary)
                 } else if isAligned {
                     Text("Roughly facing the qibla")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.noorScaled(22, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text("Compass uses magnetic north — may differ slightly")
                         .font(NoorFont.caption)
@@ -102,14 +102,14 @@ public struct QiblaView: View {
                         .multilineTextAlignment(.center)
                 } else if hasCompass {
                     Text(turn >= 0 ? "Turn right" : "Turn left")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.noorScaled(22, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text(verbatim: "\(Int(abs(turn).rounded()))°")
-                        .font(.system(size: 16).monospacedDigit())
+                        .font(.noorScaled(16).monospacedDigit())
                         .foregroundStyle(NoorColor.inkSecondary)
                 } else {
                     Text(verbatim: "\(Int(bearing.rounded()))°")
-                        .font(.system(size: 34, weight: .semibold).monospacedDigit())
+                        .font(.noorScaled(34, weight: .semibold).monospacedDigit())
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text("Bearing from true north")
                         .font(NoorFont.caption)

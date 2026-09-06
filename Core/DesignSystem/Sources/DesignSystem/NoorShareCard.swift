@@ -36,10 +36,10 @@ public struct NoorShareCard: View {
             }
             VStack(spacing: 3) {
                 Text(verbatim: reference)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.noorScaled(14, weight: .semibold))
                     .foregroundStyle(Color(red: 0.05, green: 0.42, blue: 0.36))
                 Text(verbatim: attribution)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.noorScaled(11, weight: .medium))
                     .foregroundStyle(Color(red: 0.36, green: 0.40, blue: 0.44).opacity(0.8))
             }
         }
@@ -160,7 +160,7 @@ public struct NoorShareSheet: View {
                 HStack(spacing: 10) {
                     ProgressView().tint(NoorColor.accentPrimary)
                     Text("Preparing video…")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.noorScaled(15, weight: .medium))
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
                 .padding(.vertical, 12)
@@ -179,11 +179,11 @@ public struct NoorShareSheet: View {
                     .disabled(cardImage == nil)
             }
             Text(verbatim: option.caption)
-                .font(.system(size: 12))
+                .font(.noorScaled(12))
                 .foregroundStyle(NoorColor.inkSecondary)
             if case .failed(let message) = videoState {
                 Text(verbatim: message)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.noorScaled(12, weight: .medium))
                     .foregroundStyle(NoorColor.accentPrimary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)

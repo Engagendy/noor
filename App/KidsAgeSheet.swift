@@ -41,7 +41,7 @@ struct KidsAgeSheet: View {
                     onStart(age)
                 } label: {
                     Text("Start")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.noorScaled(18, weight: .semibold))
                         .foregroundStyle(NoorColor.bgPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: 54)
@@ -52,7 +52,7 @@ struct KidsAgeSheet: View {
 
                 Button(action: onCancel) {
                     Text("Cancel")
-                        .font(.system(size: 17))
+                        .font(.noorScaled(17))
                         .foregroundStyle(NoorColor.inkSecondary)
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: NoorMetrics.minTapTarget)

@@ -21,6 +21,8 @@ struct RootView: View {
         ProcessInfo.processInfo.environment["NOOR_LANG"] ?? storedLanguage
     }
     @AppStorage("app.theme") private var theme = "system"
+    /// Interface font family (Settings → App font). Shared key with Android.
+    @AppStorage(NoorAppFont.defaultsKey) private var uiFontRaw = NoorAppFont.fallback.rawValue
     @AppStorage(KidsMode.enabledKey) private var kidsEnabled = false
 
     private var effectiveDirection: LayoutDirection {
@@ -70,8 +72,18 @@ struct RootView: View {
         // Live language switch via environment only (never AppleLanguages —
         // process/environment direction mismatch mirrors the rendering).
         // .id forces a full re-layout so the direction flip is immediate.
-        .id(language)
+        // The font family is part of the identity for the same reason as the
+        // language: NoorFont's tokens are read imperatively, so only a full
+        // re-layout makes a change land everywhere at once.
+        .id("\(language)|\(uiFontRaw)")
         .environment(\.locale, language == "system" ? .current : Locale(identifier: language))
+        // App-wide default face — text that sets no font of its own (and
+        // there is plenty) follows the setting through this.
+        .environment(\.font, NoorFont.body)
+        .onChange(of: uiFontRaw, initial: true) { _, _ in
+            NoorAppFont.invalidateCache()
+            NoorAppFont.applyChromeAppearance()
+        }
         .environment(\.layoutDirection, effectiveDirection)
         .preferredColorScheme(theme == "light" ? .light : theme == "dark" ? .dark : nil)
         .task {

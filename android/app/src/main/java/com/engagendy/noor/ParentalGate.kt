@@ -108,6 +108,7 @@ fun ParentalGate(onPass: () -> Unit, onDismiss: () -> Unit) {
                         fontSize = 24.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = NoorColor.inkPrimary,
+                        fontFamily = NoorFont.family,
                         textAlign = TextAlign.Center),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(

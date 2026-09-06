@@ -155,49 +155,19 @@ public final class SurahReaderViewModel {
 
     // MARK: Tappable mushaf flow
 
-    /// One tappable fragment of the continuous mushaf flow. Words come from
-    /// splitting the checksummed Tanzil text on spaces — layout only, the
-    /// text itself is never altered.
-    public struct FlowItem: Identifiable, Hashable {
-        public enum Kind { case word, marker, quarter }
-        public let id: Int
-        public let surahId: Int
-        public let ayah: Int
-        public let text: String
-        public let kind: Kind
-    }
+    /// One tappable fragment of the continuous mushaf flow.
+    /// See `QuranFlowItem` — shared with the kids reader.
+    public typealias FlowItem = QuranFlowItem
 
     public func flowItems(section: PageSection, page: Int) -> [FlowItem] {
         let cacheKey = page * 1000 + section.id
         if let cached = flowCache[cacheKey] { return cached }
-        var items: [FlowItem] = []
-        var index = 0
-        func add(_ surahId: Int, _ ayah: Int, _ text: String, _ kind: FlowItem.Kind) {
-            items.append(FlowItem(id: index, surahId: surahId, ayah: ayah, text: text, kind: kind))
-            index += 1
-        }
-        for verse in section.verses {
-            let key = verse.surahId * 1000 + verse.ayah
-            if quarterStarts[key] != nil {
-                add(verse.surahId, verse.ayah, "۞", .quarter)
-            }
-            // The section already draws a basmala line above ayah 1, and the
-            // DB stores that basmala inside ayah 1's text — drop the leading
-            // copy so it is not rendered twice. See BasmalaPrefix.
-            let body: String
-            if verse.ayah == 1, let basmala = section.basmala {
-                body = BasmalaPrefix.strippingLeadingBasmala(from: verse.text, basmala: basmala)
-            } else {
-                body = verse.text
-            }
-            for word in body.split(separator: " ") {
-                add(verse.surahId, verse.ayah, String(word), .word)
-            }
-            // No synthetic sajdah sign: the Tanzil text of every sajdah ayah
-            // already ends with ۩ (U+06E9), so appending one would double it.
-            add(verse.surahId, verse.ayah,
-                "\u{2067}﴿\(verse.ayah.arabicIndic)﴾\u{2069}", .marker)
-        }
+        // The section already draws a basmala line above ayah 1, and the DB
+        // stores that basmala inside ayah 1's text — strip the leading copy
+        // so it is not rendered twice. See BasmalaPrefix.
+        let items = QuranFlow.items(verses: section.verses,
+                                    basmalaToStrip: section.basmala,
+                                    isQuarterStart: { [quarterStarts] in quarterStarts[$0] != nil })
         flowCache[cacheKey] = items
         return items
     }

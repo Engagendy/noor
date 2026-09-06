@@ -79,7 +79,7 @@ struct SelectedDuasView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 14) {
                 Text(isArabicUI ? "أدعية من القرآن" : "Duas from the Quran")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.noorScaled(15, weight: .semibold))
                     .foregroundStyle(NoorColor.accentPrimary)
                 ForEach(quranic, id: \.dua.id) { item in
                     VStack(alignment: .leading, spacing: 8) {
@@ -113,14 +113,14 @@ struct SelectedDuasView: View {
                 }
 
                 Text(isArabicUI ? "أدعية من السنة" : "Duas from the Sunnah")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.noorScaled(15, weight: .semibold))
                     .foregroundStyle(NoorColor.accentPrimary)
                     .padding(.top, 6)
                 ForEach(PropheticDua.all) { dua in
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text(verbatim: dua.title)
-                                .font(.system(size: 15, weight: .bold))
+                                .font(.noorScaled(15, weight: .bold))
                                 .foregroundStyle(NoorColor.accentGold)
                             Spacer()
                             Button {
@@ -138,7 +138,7 @@ struct SelectedDuasView: View {
                             .accessibilityLabel("Share")
                         }
                         Text(verbatim: dua.text)
-                            .font(.system(size: 17))
+                            .font(.noorScaled(17))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineSpacing(8)
                             .arabicBlock()

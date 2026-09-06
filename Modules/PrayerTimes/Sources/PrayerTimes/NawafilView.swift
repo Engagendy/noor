@@ -81,11 +81,11 @@ struct NawafilView: View {
                                     .foregroundStyle(NoorColor.accentGold)
                                     .frame(width: 26)
                                 Text(verbatim: isArabicUI ? item.nameArabic : item.nameEnglish)
-                                    .font(.system(size: 17, weight: .semibold))
+                                    .font(.noorScaled(17, weight: .semibold))
                                     .foregroundStyle(NoorColor.inkPrimary)
                                 Spacer()
                                 Text(verbatim: isArabicUI ? item.rakahsArabic : item.rakahsEnglish)
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .font(.noorScaled(13, weight: .semibold))
                                     .foregroundStyle(NoorColor.accentPrimary)
                             }
                             HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -111,7 +111,7 @@ struct NawafilView: View {
                             .font(.system(size: 13))
                             .foregroundStyle(NoorColor.accentGold)
                         Text(verbatim: isArabicUI ? NawafilItem.avoidArabic : NawafilItem.avoidEnglish)
-                            .font(.system(size: 13.5))
+                            .font(.noorScaled(13.5))
                             .foregroundStyle(NoorColor.inkSecondary)
                             .lineSpacing(5)
                             .multilineTextAlignment(.leading)

@@ -103,10 +103,10 @@ struct ZakatView: View {
                         if isDue {
                             HStack {
                                 Text("Zakat due (2.5%)")
-                                    .font(.system(size: 16, weight: .semibold))
+                                    .font(.noorScaled(16, weight: .semibold))
                                 Spacer()
                                 Text(verbatim: zakatAmount.formatted(.number.precision(.fractionLength(0...2))))
-                                    .font(.system(size: 17, weight: .bold).monospacedDigit())
+                                    .font(.noorScaled(17, weight: .bold).monospacedDigit())
                                     .foregroundStyle(NoorColor.accentPrimary)
                             }
                         } else {

@@ -38,4 +38,6 @@
     <string name="feat_athkar_audio_failed">Could not play this recording</string>
     <string name="feat_storage_athkar_audio">Athkar audio</string>
     <string name="feat_storage_athkar_audio_sub">Recordings downloaded for offline listening</string>
+    <!-- Interface font picker (pref "ui.font") -->
+    <string name="feat_app_font">App font</string>
 </resources>

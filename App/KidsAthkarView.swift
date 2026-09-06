@@ -63,7 +63,7 @@ struct KidsAthkarView: View {
     private func card(_ dhikr: Dhikr, id: String) -> some View {
         let isActive = audio.nowPlaying == id
         return VStack(alignment: .leading, spacing: 12) {
-            Text(dhikr.text)
+            Text(verbatim: dhikr.text)
                 .font(.noorScaled(23))
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineSpacing(10)

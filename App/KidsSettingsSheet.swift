@@ -40,7 +40,7 @@ struct KidsSettingsSheet: View {
                 Spacer()
                 Button(action: onDone) {
                     Text("Done")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.noorScaled(17, weight: .semibold))
                         .foregroundStyle(NoorColor.accentPrimary)
                         .frame(minWidth: NoorMetrics.minTapTarget,
                                minHeight: NoorMetrics.minTapTarget)
@@ -151,7 +151,7 @@ struct KidsSettingsSheet: View {
                 Image(systemName: symbol)
                     .font(.system(size: 26, weight: .semibold))
                 title
-                    .font(.system(size: 19, weight: .semibold))
+                    .font(.noorScaled(19, weight: .semibold))
                 detail
                     .font(NoorFont.caption)
                     .multilineTextAlignment(.center)

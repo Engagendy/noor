@@ -165,9 +165,9 @@ public struct PrayerTimesView: View {
                 let isSelected = offset == dayOffset
                 VStack(spacing: 2) {
                     Text(date.formatted(.dateTime.weekday(.abbreviated).locale(locale)))
-                        .font(.system(size: 12))
+                        .font(.noorScaled(12))
                     Text(date.formatted(.dateTime.day().locale(locale)))
-                        .font(.system(size: 14, weight: isSelected ? .bold : .semibold))
+                        .font(.noorScaled(14, weight: isSelected ? .bold : .semibold))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -203,11 +203,11 @@ public struct PrayerTimesView: View {
                         }
                         .frame(width: 10, height: 10)
                         Text(entry.name)
-                            .font(.system(size: 16))
+                            .font(.noorScaled(16))
                             .foregroundStyle(NoorColor.inkPrimary)
                         Spacer()
                         Text(entry.time, format: timeFormat)
-                            .font(.system(size: 15).monospacedDigit())
+                            .font(.noorScaled(15).monospacedDigit())
                             .foregroundStyle(NoorColor.inkSecondary)
                         bellToggle(for: entry.prayer)
                     }
@@ -231,14 +231,14 @@ public struct PrayerTimesView: View {
                     .frame(width: 10, height: 10)
                     .shadow(color: NoorColor.accentPrimary.opacity(0.4), radius: 4)
                 Text(entry.name)
-                    .font(.system(size: 19, weight: .semibold))
+                    .font(.noorScaled(19, weight: .semibold))
                     .foregroundStyle(NoorColor.inkPrimary)
                 Text("next · \(entry.time, format: .relative(presentation: .numeric))")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.noorScaled(13, weight: .semibold))
                     .foregroundStyle(NoorColor.accentPrimary)
                 Spacer()
                 Text(entry.time, format: timeFormat)
-                    .font(.system(size: 19, weight: .semibold).monospacedDigit())
+                    .font(.noorScaled(19, weight: .semibold).monospacedDigit())
                     .foregroundStyle(NoorColor.inkPrimary)
                 bellToggle(for: entry.prayer)
             }
@@ -266,7 +266,7 @@ public struct PrayerTimesView: View {
                         }
                         Text(sound.displayName)
                     }
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.noorScaled(12, weight: .semibold))
                     .padding(.horizontal, 13)
                     .padding(.vertical, 7)
                     .background(
@@ -306,7 +306,7 @@ public struct PrayerTimesView: View {
                     .foregroundStyle(liveActivityOn ? NoorColor.accentGold : NoorColor.accentPrimary)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Live countdown")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.noorScaled(15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text(liveActivityOn ? "Active — tap to turn off"
                                         : "Live countdown to the next prayer")
@@ -337,7 +337,7 @@ public struct PrayerTimesView: View {
                     .foregroundStyle(NoorColor.accentPrimary)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Adhan sound")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.noorScaled(15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text((AdhanSound(rawValue: soundRaw) ?? .adhanMadinah).displayName)
                         .font(NoorFont.caption)
@@ -366,7 +366,7 @@ public struct PrayerTimesView: View {
                     .foregroundStyle(NoorColor.accentGold)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Nawafil")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.noorScaled(15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text("Voluntary prayers and their times")
                         .font(NoorFont.caption)
@@ -394,7 +394,7 @@ public struct PrayerTimesView: View {
                     .foregroundStyle(NoorColor.accentPrimary)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Prayer settings")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.noorScaled(15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text("\(appLocalized(method.displayName)) · \(appLocalized(madhab.displayName))")
                         .font(NoorFont.caption)
@@ -642,11 +642,11 @@ public struct AdhanSoundPickerView: View {
                     HStack(spacing: 12) {
                         Image(systemName: sound.fileName != nil ? "play.circle.fill"
                               : sound == .bell ? "bell" : "bell.slash")
-                            .font(.system(size: 22))
+                            .font(.noorScaled(22))
                             .foregroundStyle(sound.fileName != nil
                                              ? NoorColor.accentPrimary : NoorColor.inkSecondary)
                         Text(sound.displayName)
-                            .font(.system(size: 16, weight: isOn ? .semibold : .regular))
+                            .font(.noorScaled(16, weight: isOn ? .semibold : .regular))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         if isOn {

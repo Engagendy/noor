@@ -158,7 +158,8 @@ fun SurahDrawer(
                             value = query,
                             onValueChange = { query = it },
                             singleLine = true,
-                            textStyle = TextStyle(fontSize = 14.sp, color = NoorColor.inkPrimary),
+                            textStyle = TextStyle(fontSize = 14.sp, color = NoorColor.inkPrimary,
+                                                  fontFamily = NoorFont.family),
                             modifier = Modifier.fillMaxWidth())
                     }
                     LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {

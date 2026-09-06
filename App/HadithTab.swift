@@ -36,7 +36,7 @@ struct HadithTab: View {
                 }
             } header: {
                 Text(verbatim: isArabicUI ? "الصحيحان" : "The two Sahihs")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.noorScaled(14, weight: .semibold))
                     .foregroundStyle(NoorColor.accentPrimary)
             }
 
@@ -52,7 +52,7 @@ struct HadithTab: View {
                                 .frame(width: 30)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(verbatim: group.title)
-                                    .font(.system(size: 16, weight: .semibold))
+                                    .font(.noorScaled(16, weight: .semibold))
                                     .foregroundStyle(NoorColor.inkPrimary)
                                 Text(verbatim: isArabicUI
                                      ? "\(group.items.count.arabicIndic) حديثًا"
@@ -67,7 +67,7 @@ struct HadithTab: View {
                 }
             } header: {
                 Text(verbatim: isArabicUI ? "الأربعينات" : "The Forty collections")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.noorScaled(14, weight: .semibold))
                     .foregroundStyle(NoorColor.accentPrimary)
             }
             }
@@ -106,7 +106,7 @@ struct HadithTab: View {
                 Text(verbatim: isArabicUI
                      ? "لا نتائج — نزّل الصحيحين للبحث فيهما"
                      : "No results — download the Sahihs to search them")
-                    .font(.system(size: 14))
+                    .font(.noorScaled(14))
                     .foregroundStyle(NoorColor.inkSecondary)
                     .listRowBackground(Color.clear)
             }
@@ -116,7 +116,7 @@ struct HadithTab: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(verbatim: hit.hadith.arabic)
-                            .font(.system(size: 15))
+                            .font(.noorScaled(15))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineLimit(2)
                             .arabicBlock()
@@ -149,7 +149,7 @@ struct HadithTab: View {
                             .foregroundStyle(NoorColor.accentGold)
                             .frame(width: 30)
                         Text(verbatim: isArabicUI ? "المحفوظات" : "Bookmarked")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.noorScaled(16, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
                         Spacer()
                         Text(verbatim: isArabicUI
@@ -187,7 +187,7 @@ struct HadithTab: View {
                 .frame(width: 30)
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: isArabicUI ? collection.arabicName : collection.englishName)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.noorScaled(16, weight: .semibold))
                     .foregroundStyle(NoorColor.inkPrimary)
                 if state != .ready {
                     Text(verbatim: collection.sizeLabel)
@@ -236,11 +236,11 @@ struct FortyList: View {
                 // hadith text starting from the right edge.
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text(verbatim: isArabicUI ? hadith.number.arabicIndic : "\(hadith.number)")
-                        .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                        .font(.noorScaled(13, weight: .semibold).monospacedDigit())
                         .foregroundStyle(NoorColor.accentGold)
                         .frame(width: 30, alignment: .center)
                     Text(verbatim: hadith.arabic)
-                        .font(.system(size: 15))
+                        .font(.noorScaled(15))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(2)
                         .arabicBlock()

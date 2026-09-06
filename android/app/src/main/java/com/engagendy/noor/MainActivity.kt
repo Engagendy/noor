@@ -85,6 +85,9 @@ class MainActivity : AppCompatActivity() {
         NoorColor.apply(
             KhatmahPlan.prefs(this).getString("app.theme", "system") ?: "system",
             systemDark)
+        // Same for the interface font ("ui.font") — resolved before the first
+        // frame so nothing renders in the wrong family.
+        NoorFont.apply(KhatmahPlan.prefs(this).getString("ui.font", null))
         // Kids mode: the stored flag decides which shell the app opens in,
         // resolved before the first frame (never read from composition).
         KidsStore.load(this)

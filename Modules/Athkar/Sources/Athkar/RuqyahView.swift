@@ -75,7 +75,7 @@ struct RuqyahView: View {
                 Text(isArabicUI
                      ? "آيات الرقية تُقرأ بتدبر مع النفث، ثلاثًا أو أكثر. النصوص من المصحف المعتمد."
                      : "The ruqyah ayat are recited with reflection. Texts come from the verified mushaf database.")
-                    .font(.system(size: 13.5))
+                    .font(.noorScaled(13.5))
                     .foregroundStyle(NoorColor.inkSecondary)
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -86,7 +86,7 @@ struct RuqyahView: View {
                             Text(verbatim: item.passage.range.count == 1
                                  ? "\(item.surahName) · \(item.passage.range.lowerBound.arabicIndic)"
                                  : "\(item.surahName) · \(item.passage.range.lowerBound.arabicIndic)–\(item.passage.range.upperBound.arabicIndic)")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.noorScaled(13, weight: .semibold))
                                 .foregroundStyle(NoorColor.accentGold)
                             Spacer()
                             Button {
@@ -119,7 +119,7 @@ struct RuqyahView: View {
                 }
 
                 Text(isArabicUI ? "الأدعية النبوية" : "Prophetic supplications")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.noorScaled(15, weight: .semibold))
                     .foregroundStyle(NoorColor.accentPrimary)
                     .padding(.top, 6)
                 ForEach(RuqyahProphetic.all) { dua in
@@ -141,7 +141,7 @@ struct RuqyahView: View {
                         }
                         .frame(height: 20)
                         Text(verbatim: dua.text)
-                            .font(.system(size: 17))
+                            .font(.noorScaled(17))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineSpacing(8)
                             .arabicBlock()

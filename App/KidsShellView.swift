@@ -125,7 +125,7 @@ struct KidsShellView: View {
                     Image(systemName: "slider.horizontal.3")
                         .font(.system(size: 13, weight: .semibold))
                     Text("Settings")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.noorScaled(14, weight: .semibold))
                 }
                 .foregroundStyle(NoorColor.accentGold)
                 .padding(.horizontal, 14)
@@ -143,7 +143,7 @@ struct KidsShellView: View {
                     Image(systemName: "lock")
                         .font(.system(size: 13, weight: .semibold))
                     Text("Grown-ups")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.noorScaled(14, weight: .semibold))
                 }
                 .foregroundStyle(NoorColor.accentPrimary)
                 .padding(.horizontal, 14)
@@ -224,7 +224,7 @@ struct KidsSurahCard: View {
             // Centred so the card reads the same in both directions: the
             // Arabic name is the child's anchor, the meta line sits under it.
             VStack(spacing: 6) {
-                Text(surah.nameArabic)
+                Text(verbatim: surah.nameArabic)
                     .font(NoorFont.quran(size: 30))
                     .foregroundStyle(NoorColor.inkPrimary)
                     .lineLimit(1)
@@ -233,7 +233,7 @@ struct KidsSurahCard: View {
                 HStack(spacing: 10) {
                     if !isArabicUI {
                         Text(verbatim: surah.nameTransliterated)
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.noorScaled(15, weight: .semibold))
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                     // Arabic-Indic numerals in the Arabic UI, as everywhere

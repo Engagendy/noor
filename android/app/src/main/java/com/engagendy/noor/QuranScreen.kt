@@ -599,7 +599,8 @@ internal fun NoorSearchField(
                 value = value,
                 onValueChange = onValueChange,
                 singleLine = true,
-                textStyle = TextStyle(fontSize = 15.sp, color = NoorColor.inkPrimary),
+                textStyle = TextStyle(fontSize = 15.sp, color = NoorColor.inkPrimary,
+                                      fontFamily = NoorFont.family),
                 cursorBrush = androidx.compose.ui.graphics.SolidColor(NoorColor.accentPrimary),
                 modifier = Modifier.fillMaxWidth()
             )

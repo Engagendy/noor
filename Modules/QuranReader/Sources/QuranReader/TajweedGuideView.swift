@@ -99,10 +99,10 @@ public struct TajweedGuideView: View {
                         .frame(minWidth: 56, alignment: .center)
                     VStack(alignment: .leading, spacing: 3) {
                         Text(isArabicUI ? mark.nameArabic : mark.nameEnglish)
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.noorScaled(15, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
                         Text(isArabicUI ? mark.meaningArabic : mark.meaningEnglish)
-                            .font(.system(size: 13.5))
+                            .font(.noorScaled(13.5))
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
                 }

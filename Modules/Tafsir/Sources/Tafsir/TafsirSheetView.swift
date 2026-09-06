@@ -63,7 +63,7 @@ public struct TafsirSheetView: View {
     private func tafsirParagraph(_ paragraph: String) -> some View {
         if edition.isArabic {
             Text(paragraph)
-                .font(.system(size: 18))
+                .font(.noorScaled(18))
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineSpacing(10)
                 .textSelection(.enabled)
@@ -108,7 +108,7 @@ public struct TafsirSheetView: View {
                             ForEach(TafsirEdition.all) { candidate in
                                 let isOn = candidate.slug == editionSlug
                                 Text(candidate.displayName)
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .font(.noorScaled(13, weight: .semibold))
                                     .lineLimit(1)
                                     .fixedSize(horizontal: true, vertical: false)
                                     .padding(.horizontal, 14)
