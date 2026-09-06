@@ -419,11 +419,12 @@ struct QuranTab: View {
             // Bars are declared per screen (stack-level modifiers don't
             // reach pushed destinations): index = own header + tabs.
             .toolbar(.hidden, for: .navigationBar)
-            .toolbar(.visible, for: .tabBar)
             #endif
     }
 
-    private func reader(surahId: Int, ayah: Int?) -> some View {
+    /// `exit` is nil in the split view, where the reader is the detail pane
+    /// and there is nothing to pop.
+    private func reader(surahId: Int, ayah: Int?, exit: (() -> Void)? = nil) -> some View {
         SurahReaderView(
             database: database,
             surahId: surahId,
@@ -434,7 +435,8 @@ struct QuranTab: View {
             bookmarkedRefs: Set((library?.bookmarks ?? []).map(\.id)),
             onToggleBookmark: { bookmarkSurah, bookmarkAyah in
                 library?.toggle(surahId: bookmarkSurah, ayah: bookmarkAyah)
-            })
+            },
+            onExitReader: exit)
             .id("\(surahId)-\(ayah ?? 0)")
     }
 
@@ -445,9 +447,18 @@ struct QuranTab: View {
                 NavigationStack(path: $compactPath) {
                     listView
                         .navigationDestination(for: ReaderTarget.self) { target in
-                            reader(surahId: target.surahId, ayah: target.ayah)
+                            reader(surahId: target.surahId, ayah: target.ayah,
+                                   exit: { compactPath.removeAll() })
                         }
                 }
+                // The reader is immersive: no tab bar. `.toolbar(.hidden,
+                // for: .tabBar)` declared INSIDE the pushed reader never
+                // took effect (the index below it declares .visible in the
+                // same stack, and iOS 26's floating tab bar keeps winning),
+                // so the tab's own root drives it explicitly from the
+                // navigation path — the iOS twin of Android's
+                // `ReaderChrome.readerOpen`.
+                .toolbar(compactPath.isEmpty ? .visible : .hidden, for: .tabBar)
 
             } else {
                 splitView

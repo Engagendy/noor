@@ -150,6 +150,39 @@ public enum NoorAppFont: String, CaseIterable, Sendable {
         guard let base = UIFont(name: fontName(for: weight), size: size) else { return nil }
         return UIFontMetrics(forTextStyle: textStyle).scaledFont(for: base)
     }
+
+    /// Text attributes for UIKit chrome (tab-bar item titles, nav-bar
+    /// titles), with the line box pinned to the system face's.
+    ///
+    /// Arabic faces reserve far more vertical room than SF does — the marks
+    /// they must clear live above the letters. Measured at 10pt: SF's line
+    /// box is 11.8pt, Readex Pro 12.5, Tajawal 12.0, Almarai 11.2, IBM Plex
+    /// 15.0 and Cairo **18.7** (1.59×). UIKit lays a tab-bar item out from
+    /// that line box, so with Cairo (and, less visibly, IBM Plex) the label
+    /// grew upwards into its icon. The fix has to be the LINE BOX, not the
+    /// point size: the extra height is empty padding, not bigger glyphs, so
+    /// shrinking Cairo to a system-sized line box would render it at ~6pt
+    /// while the collision is fully cured by clamping the box. Legibility
+    /// and family stay intact; the glyphs are unchanged.
+    public func chromeAttributes(size: CGFloat, weight: Font.Weight = .regular,
+                                 textStyle: UIFont.TextStyle = .body)
+        -> [NSAttributedString.Key: Any]? {
+        guard let font = uiFont(size: size, weight: weight, textStyle: textStyle) else { return nil }
+        let systemLine = UIFontMetrics(forTextStyle: textStyle)
+            .scaledFont(for: .systemFont(ofSize: size)).lineHeight
+        guard font.lineHeight > systemLine else { return [.font: font] }
+        let style = NSMutableParagraphStyle()
+        style.minimumLineHeight = systemLine
+        style.maximumLineHeight = systemLine
+        style.alignment = .center
+        return [
+            .font: font,
+            .paragraphStyle: style,
+            // Clamping the box drops the text towards the baseline of the
+            // shorter box; lift it back so the glyphs stay centred in it.
+            .baselineOffset: (systemLine - font.lineHeight) / 4,
+        ]
+    }
     #endif
 
     /// The family the app is currently drawn in.
@@ -191,24 +224,28 @@ public enum NoorAppFont: String, CaseIterable, Sendable {
         let font = current
         let bar = UINavigationBarAppearance()
         bar.configureWithDefaultBackground()
-        if let large = font.uiFont(size: 34, weight: .bold, textStyle: .largeTitle) {
-            bar.largeTitleTextAttributes[.font] = large
+        // Same line-box clamp as the tab bar: a nav-bar title is a
+        // fixed-height slot too (44pt inline), so a 1.6× line box pushes the
+        // title off centre and can clip it.
+        if let large = font.chromeAttributes(size: 34, weight: .bold, textStyle: .largeTitle) {
+            bar.largeTitleTextAttributes.merge(large) { _, new in new }
         }
-        if let inline = font.uiFont(size: 17, weight: .semibold, textStyle: .headline) {
-            bar.titleTextAttributes[.font] = inline
+        if let inline = font.chromeAttributes(size: 17, weight: .semibold, textStyle: .headline) {
+            bar.titleTextAttributes.merge(inline) { _, new in new }
         }
         UINavigationBar.appearance().standardAppearance = bar
         UINavigationBar.appearance().compactAppearance = bar
         UINavigationBar.appearance().scrollEdgeAppearance = bar
 
-        if let tabFont = font.uiFont(size: 10, weight: .medium, textStyle: .caption2) {
+        if let tabAttributes = font.chromeAttributes(size: 10, weight: .medium,
+                                                     textStyle: .caption2) {
             let tab = UITabBarAppearance()
             tab.configureWithDefaultBackground()
             for item in [tab.stackedLayoutAppearance,
                          tab.inlineLayoutAppearance,
                          tab.compactInlineLayoutAppearance] {
-                item.normal.titleTextAttributes[.font] = tabFont
-                item.selected.titleTextAttributes[.font] = tabFont
+                item.normal.titleTextAttributes.merge(tabAttributes) { _, new in new }
+                item.selected.titleTextAttributes.merge(tabAttributes) { _, new in new }
             }
             UITabBar.appearance().standardAppearance = tab
             UITabBar.appearance().scrollEdgeAppearance = tab

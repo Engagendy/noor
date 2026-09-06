@@ -587,6 +587,23 @@
         }
       }
     },
+    "Back to Quran": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الرجوع إلى القرآن"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to Quran"
+          }
+        }
+      }
+    },
     "Bearing from true north": {
       "extractionState": "stale",
       "localizations": {
@@ -857,6 +874,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Clear search"
+          }
+        }
+      }
+    },
+    "Close": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إغلاق"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
           }
         }
       }
@@ -3180,6 +3214,23 @@
         }
       }
     },
+    "Search surah": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ابحث عن سورة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search surah"
+          }
+        }
+      }
+    },
     "Section": {
       "extractionState": "stale",
       "localizations": {
@@ -3536,6 +3587,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "السور"
+          }
+        }
+      }
+    },
+    "Surah list": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قائمة السور"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Surah list"
           }
         }
       }

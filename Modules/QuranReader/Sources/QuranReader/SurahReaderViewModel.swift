@@ -35,7 +35,9 @@ public final class SurahReaderViewModel {
 
     private var structure: QuranStructure?
     private let database: QuranDatabase
-    private let surahId: Int
+    /// Scope of ayah mode + the title/basmala source. The surah drawer can
+    /// move it, so it is not a `let`.
+    private var surahId: Int
     /// Verified DB basmala, loaded once (used for headers on any surah).
     private var basmalaAny: String?
     private var pageCache: [Int: [PageSection]] = [:]
@@ -79,9 +81,9 @@ public final class SurahReaderViewModel {
             } else {
                 basmalaAny = try database.verses(surahId: 1).first?.text
             }
-            if surahId != 1 && surahId != 9 {
-                basmala = basmalaAny
-            }
+            // Al-Fatiha and At-Tawbah have no separate basmala line — and
+            // this must RESET when the drawer moves us onto one of them.
+            basmala = (surahId != 1 && surahId != 9) ? basmalaAny : nil
             let structure = try database.structure()
             self.structure = structure
             juz = structure.juz(surahId: surahId, ayah: 1)
@@ -94,6 +96,14 @@ public final class SurahReaderViewModel {
         } catch {
             loadError = error
         }
+    }
+
+    /// Re-scope to another surah (surah drawer). The page/flow caches are
+    /// keyed by mushaf page, not by surah, so they stay valid.
+    public func open(surahId newId: Int) {
+        guard newId != surahId else { return }
+        surahId = newId
+        load()
     }
 
     public func page(containing ayah: Int) -> Int? {

@@ -32,6 +32,16 @@ public struct SurahReaderView: View {
     @State private var actionVerses: SurahReaderViewModel.PageGroup?
     @State private var chromeVisible = true
     @State private var didAutoHide = false
+    /// Surah index drawer (mirrors Android's SurahDrawer) — the reader's
+    /// only visible exit now that the back chevron is the list button.
+    @State private var showDrawer =
+        ProcessInfo.processInfo.environment["NOOR_SHOWDRAWER"] == "1"
+    /// The surah the reader is scoped to. Starts at the opened surah and
+    /// follows the drawer's picks (ayah mode reloads around it).
+    @State private var readingSurahId: Int
+    /// Ayah to scroll to in ayah mode: the arrival ayah, then ayah 1 after
+    /// a drawer jump. Nil once there is nothing left to jump to.
+    @State private var arrivalAyah: Int?
     @State private var downloader = SurahDownloader()
     @State private var fontStore = PageFontStore()
     @GestureState private var pinchScale: CGFloat = 1
@@ -48,6 +58,13 @@ public struct SurahReaderView: View {
     private let scrollToAyah: Int?
     private let bookmarkedRefs: Set<String>       // "surah:ayah"
     private let onToggleBookmark: ((Int, Int) -> Void)?
+    /// Explicit way out for the drawer's "Back to Quran" row. The app layer
+    /// pops its own navigation path here: with both bars hidden, SwiftUI's
+    /// `dismiss()` does NOT pop this reader on iOS 26 (verified on the
+    /// simulator, and the interactive edge-swipe is gone with the bar), so
+    /// the drawer row would otherwise be a dead end. Falls back to
+    /// `dismiss()` when the host does not provide one (split view / previews).
+    private let onExitReader: (() -> Void)?
 
     public init(
         database: QuranDatabase,
@@ -57,12 +74,16 @@ public struct SurahReaderView: View {
         translations: TranslationStore? = nil,
         layout: PageLayoutDatabase? = nil,
         bookmarkedRefs: Set<String> = [],
-        onToggleBookmark: ((Int, Int) -> Void)? = nil
+        onToggleBookmark: ((Int, Int) -> Void)? = nil,
+        onExitReader: (() -> Void)? = nil
     ) {
+        self.onExitReader = onExitReader
         self.layout = layout
         _viewModel = State(initialValue: SurahReaderViewModel(database: database, surahId: surahId))
         self.surahId = surahId
         self.scrollToAyah = scrollToAyah
+        _readingSurahId = State(initialValue: surahId)
+        _arrivalAyah = State(initialValue: scrollToAyah)
         self.player = player
         self.translations = translations
         self.bookmarkedRefs = bookmarkedRefs
@@ -111,6 +132,13 @@ public struct SurahReaderView: View {
             case .page: madaniPager
             }
         }
+        // Rebuild the reading content when the drawer moves us to another
+        // surah. The ayah rows carry explicit `.id("a<ayah>")`s and their
+        // word-by-word loader is an on-appear `.task`, so keeping the old
+        // identities left surah 18's words and translations on screen under
+        // surah 22's title. A jump is rare and always a full context switch,
+        // so re-creating the subtree is the honest answer.
+        .id(readingSurahId)
         .environment(\.layoutDirection, .rightToLeft)
         .background(NoorColor.bgPrimary)
         // Constant-height top strip: content never reflows — the two rows
@@ -127,6 +155,27 @@ public struct SurahReaderView: View {
                         .onTapGesture { backgroundTapped() }
                     optionsPanel
                 }
+            }
+        }
+        // Above the options panel and the top strip: while the drawer is
+        // open its scrim owns every tap, so the dismissal order stays
+        // options → drawer → leave the reader (opening one closes the other).
+        .overlay {
+            if showDrawer {
+                SurahDrawerView(
+                    surahs: viewModel.allSurahs,
+                    // What is on screen right now: in the pagers that is
+                    // the surah of the current page, which swiping changes
+                    // without any drawer pick.
+                    currentSurahId: titleSurah?.id ?? readingSurahId,
+                    isArabicUI: isArabicUI,
+                    onPick: { open($0) },
+                    onClose: { withAnimation(.easeInOut(duration: 0.25)) { showDrawer = false } },
+                    onExitReader: {
+                        showDrawer = false
+                        if let onExitReader { onExitReader() } else { dismiss() }
+                    })
+                    .environment(\.locale, locale)
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -153,7 +202,7 @@ public struct SurahReaderView: View {
             // AFTER load(): before it `structure`/`surah` are nil, so the
             // ayah-mode page lookup and lastSurah write would be no-ops.
             if mode == .ayah {
-                persistPosition(page: viewModel.page(surahId: surahId, ayah: scrollToAyah ?? 1))
+                persistPosition(page: viewModel.page(surahId: readingSurahId, ayah: scrollToAyah ?? 1))
             } else {
                 persistPosition(page: currentPage)
             }
@@ -271,23 +320,16 @@ public struct SurahReaderView: View {
         ZStack {
             // Full chrome row
             HStack(spacing: 12) {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.backward")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(NoorColor.accentPrimary)
-                        .frame(width: 38, height: 38)
-                        .frame(width: 44, height: 44)
-                        .background(
-                            Circle()
-                                .fill(NoorColor.bgElevated)
-                                .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
-                        )
-                        .contentShape(Circle())
+                // The surah drawer replaces the old back chevron: a bare
+                // glyph, no chip (matching Android). Leaving the reader now
+                // lives inside the drawer ("Back to Quran") and on the
+                // interactive swipe-back.
+                SurahListButton {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        showOptions = false
+                        showDrawer = true
+                    }
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Back")
                 Spacer()
                 VStack(spacing: 0) {
                     Text(verbatim: titleSurah?.displayName(arabicUI: isArabicUI) ?? "")
@@ -340,6 +382,12 @@ public struct SurahReaderView: View {
                     .frame(width: 40, height: 40)
             }
             .opacity(chromeVisible ? 1 : 0)
+            // A zero-opacity SwiftUI view still takes taps. Without this the
+            // list button would be live (and invisible) while the chrome is
+            // hidden; with it, a tap there reaches the strip below and
+            // reveals the chrome first — so the button is never a dead spot
+            // and never an invisible trap, in every reading mode.
+            .allowsHitTesting(chromeVisible)
 
             // Minimal reading row
             TimelineView(.everyMinute) { context in
@@ -567,10 +615,15 @@ public struct SurahReaderView: View {
                 .onTapGesture(perform: backgroundTapped)
             }
             .onChange(of: viewModel.verses.count) {
-                if let ayah = scrollToAyah { proxy.scrollTo("a\(ayah)", anchor: .top) }
+                if let ayah = arrivalAyah { proxy.scrollTo("a\(ayah)", anchor: .top) }
+            }
+            // Drawer jump: land at the top of the new surah even when the
+            // ayah count happens to be unchanged.
+            .onChange(of: readingSurahId) {
+                proxy.scrollTo("a1", anchor: .top)
             }
             .onChange(of: recitingKey) { _, new in
-                guard let new, new / 1000 == surahId else { return }
+                guard let new, new / 1000 == readingSurahId else { return }
                 withAnimation(.easeInOut(duration: 0.3)) {
                     proxy.scrollTo("a\(new % 1000)", anchor: .center)
                 }
@@ -649,6 +702,23 @@ public struct SurahReaderView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Ayah \(verse.ayah)")
         .accessibilityValue(displayText(verse))
+    }
+
+    /// Drawer pick: close the drawer and take the reader to that surah, in
+    /// whichever mode is showing — the pagers jump to its first mushaf page,
+    /// ayah mode reloads scoped to it.
+    private func open(_ surah: Surah) {
+        withAnimation(.easeInOut(duration: 0.25)) { showDrawer = false }
+        readingSurahId = surah.id
+        arrivalAyah = 1
+        selectedKey = nil
+        revealedKeys = []
+        viewModel.open(surahId: surah.id)
+        if mode == .ayah {
+            persistPosition(page: viewModel.page(surahId: surah.id, ayah: 1))
+        } else if let page = viewModel.page(surahId: surah.id, ayah: 1) {
+            currentPage = page      // no animation: jumps can be 600 pages
+        }
     }
 
     /// Direct defaults writes: the reader must NOT observe these via
@@ -741,7 +811,10 @@ public struct SurahReaderView: View {
     /// honors RTL — the system Menu follows the process language and can't).
     private var readerMenu: some View {
         Button {
-            withAnimation(.easeInOut(duration: 0.2)) { showOptions.toggle() }
+            withAnimation(.easeInOut(duration: 0.2)) {
+                showDrawer = false
+                showOptions.toggle()
+            }
         } label: {
             Text(verbatim: "Aa")
                 .font(.noorScaled(17, weight: .semibold))
