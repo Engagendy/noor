@@ -127,11 +127,14 @@ private fun androidx.compose.foundation.lazy.LazyListScope.tajweedSection(
                 textAlign = TextAlign.Center,
                 color = NoorColor.accentGold,
                 modifier = Modifier.widthIn(min = 56.dp))
-            Column(Modifier.weight(1f)) {
+            // Names/meanings are Arabic-only: RTL block in the English UI too.
+            ArabicBlock(Modifier.weight(1f)) {
                 Text(mark.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-                     color = NoorColor.inkPrimary)
+                     color = NoorColor.inkPrimary, style = arabicText(),
+                     modifier = Modifier.fillMaxWidth())
                 Text(mark.meaning, fontSize = 13.sp, lineHeight = 19.sp,
-                     color = NoorColor.inkSecondary)
+                     color = NoorColor.inkSecondary, style = arabicText(),
+                     modifier = Modifier.fillMaxWidth())
             }
         }
     }

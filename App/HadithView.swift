@@ -78,6 +78,8 @@ struct HadithListView: View {
                             Button {
                                 selected = hadith
                             } label: {
+                                // Whole row is one Arabic block: the number
+                                // badge sits on the right, text starts there.
                                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                                     Text(verbatim: isArabicUI ? hadith.number.arabicIndic : "\(hadith.number)")
                                         .font(.system(size: 13, weight: .semibold).monospacedDigit())
@@ -87,9 +89,9 @@ struct HadithListView: View {
                                         .font(.noorScaled(15))
                                         .foregroundStyle(NoorColor.inkPrimary)
                                         .lineLimit(2)
-                                        .multilineTextAlignment(.leading)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .arabicBlock()
                                 }
+                                .arabicBlock()
                                 .padding(.vertical, 4)
                                 .contentShape(Rectangle())
                             }
@@ -106,7 +108,6 @@ struct HadithListView: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(NoorColor.bgPrimary)
-            .environment(\.layoutDirection, .rightToLeft)
             .navigationTitle(Text("Hadith"))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -161,9 +162,7 @@ struct HadithDetailView: View {
                                 .font(.noorScaled(18))
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .lineSpacing(10)
-                                .multilineTextAlignment(.leading)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .environment(\.layoutDirection, .rightToLeft)
+                                .arabicBlock()
                             if !isArabicUI && !item.english.isEmpty {
                                 Rectangle()
                                     .fill(NoorColor.accentGold.opacity(0.3))
@@ -230,6 +229,18 @@ struct HadithDetailView: View {
     }
 }
 
+
+#Preview("Hadith EN-LTR") {
+    HadithListView(items: HadithStore.load(), isArabicUI: false)
+        .environment(\.locale, Locale(identifier: "en"))
+}
+
+#Preview("Hadith detail EN-LTR") {
+    if let first = HadithStore.load().first {
+        HadithDetailView(hadith: first, isArabicUI: false)
+            .environment(\.locale, Locale(identifier: "en"))
+    }
+}
 
 #Preview("Hadith AR-RTL") {
     HadithListView(items: HadithStore.load(), isArabicUI: true)

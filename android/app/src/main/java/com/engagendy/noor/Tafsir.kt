@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -167,6 +168,7 @@ fun TafsirSheet(
                 fontSize = 20.sp,
                 lineHeight = 42.sp,
                 color = NoorColor.inkPrimary,
+                style = arabicText(),
                 modifier = Modifier
                     .padding(top = 12.dp)
                     .fillMaxWidth()
@@ -223,7 +225,8 @@ fun TafsirSheet(
                                     fontSize = if (edition.isArabic) 18.sp else 16.sp,
                                     lineHeight = if (edition.isArabic) 34.sp else 26.sp,
                                     color = NoorColor.inkPrimary,
-                                    modifier = Modifier.padding(bottom = 14.dp)
+                                    style = if (edition.isArabic) arabicText() else TextStyle.Default,
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp)
                                 )
                             }
                         }

@@ -32,8 +32,7 @@ struct HadithBookmarksView: View {
                         .font(.system(size: 15))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .arabicBlock()
                     Text(verbatim: entry.title)
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.accentGold)
@@ -55,7 +54,6 @@ struct HadithBookmarksView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
-        .environment(\.layoutDirection, .rightToLeft)
         .navigationTitle(Text(verbatim: isArabicUI ? "المحفوظات" : "Bookmarked"))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
@@ -114,4 +112,10 @@ struct HadithBookmarksView: View {
         }
         resolved = entries
     }
+}
+
+#Preview("Hadith bookmarks EN-LTR") {
+    NavigationStack { HadithBookmarksView(isArabicUI: false) }
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
 }

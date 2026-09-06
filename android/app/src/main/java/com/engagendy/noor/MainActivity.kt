@@ -237,7 +237,8 @@ fun NoorApp(openRequest: OpenRequest? = null) {
                 openResume = ::openResume,
                 openPage = { page -> mushafPage = page; tab = Tab.QURAN },
                 openSurah = { id -> quranSurah = id; tab = Tab.QURAN },
-                openAthkar = { tab = Tab.ATHKAR })
+                openAthkar = { tab = Tab.ATHKAR },
+                openPrayer = { tab = Tab.PRAYER })
             Tab.QURAN -> QuranScreen(modifier, mushafPage = mushafPage,
                                      resumeSurahId = quranSurah,
                                      onMushafClosed = { mushafPage = 0 },

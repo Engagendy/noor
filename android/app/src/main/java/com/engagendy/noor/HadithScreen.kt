@@ -175,7 +175,8 @@ fun HadithScreen(modifier: Modifier = Modifier) {
                         .padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
                     Text(hit.hadith.arabic, fontSize = 15.sp, maxLines = 2,
-                         color = NoorColor.inkPrimary)
+                         color = NoorColor.inkPrimary, style = arabicText(),
+                         modifier = Modifier.fillMaxWidth())
                     Text("${hit.collection.localizedName} · ${hit.bookTitle} · ${hit.hadith.number}",
                          fontSize = 12.sp, color = NoorColor.accentGold,
                          modifier = Modifier.padding(top = 3.dp))
@@ -336,7 +337,9 @@ private fun FortyListScreen(items: List<BundledHadith>, onBack: () -> Unit,
         HadithHeaderBar(title, onBack)
         LazyColumn(Modifier.fillMaxSize()) {
             items(items) { hadith ->
-                Row(
+                // Arabic row: number chip on the right, text reads RTL —
+                // in the English UI too.
+                ArabicDirection { Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
@@ -357,8 +360,9 @@ private fun FortyListScreen(items: List<BundledHadith>, onBack: () -> Unit,
                          fontWeight = FontWeight.SemiBold, color = NoorColor.accentGold,
                          modifier = Modifier.padding(end = 12.dp))
                     Text(hadith.arabic, fontSize = 15.sp, maxLines = 2,
-                         color = NoorColor.inkPrimary)
-                }
+                         color = NoorColor.inkPrimary, style = arabicText(),
+                         modifier = Modifier.weight(1f))
+                } }
                 HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             }
         }
@@ -393,7 +397,7 @@ private fun SahihBooksScreen(collection: HadithCollection, onBack: () -> Unit,
                          fontWeight = FontWeight.Bold, color = NoorColor.accentGold,
                          modifier = Modifier.padding(end = 12.dp))
                     Column {
-                        Text(book.arabicTitle, fontSize = 15.sp,
+                        Text(book.arabicTitle, fontSize = 15.sp, style = arabicText(),
                              fontWeight = FontWeight.SemiBold, color = NoorColor.inkPrimary)
                         Text(stringResource(R.string.g2_hadith_count, book.count.localizedDigits()),
                              fontSize = 12.sp,
@@ -427,7 +431,7 @@ private fun BookHadithsScreen(collection: HadithCollection, book: HadithBook, on
         HadithSearchField(query, onChange = { query = it }, placeholder = stringResource(R.string.g2_search_hadiths))
         LazyColumn(Modifier.fillMaxSize()) {
             items(filtered) { hadith ->
-                Row(
+                ArabicDirection { Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
@@ -447,8 +451,9 @@ private fun BookHadithsScreen(collection: HadithCollection, book: HadithBook, on
                          color = NoorColor.accentGold,
                          modifier = Modifier.padding(end = 12.dp))
                     Text(hadith.arabic, fontSize = 15.sp, maxLines = 3,
-                         color = NoorColor.inkPrimary)
-                }
+                         color = NoorColor.inkPrimary, style = arabicText(),
+                         modifier = Modifier.weight(1f))
+                } }
                 HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             }
         }
@@ -496,10 +501,11 @@ private fun HadithDetailScreen(detail: HadithDetail, onBack: () -> Unit,
                     .padding(horizontal = 20.dp)
             ) {
                 Text(page.arabic, fontSize = 18.sp, lineHeight = 34.sp,
-                     color = NoorColor.inkPrimary)
+                     color = NoorColor.inkPrimary, style = arabicText(),
+                     modifier = Modifier.fillMaxWidth())
                 Text(page.reference, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                     color = NoorColor.accentGold,
-                     modifier = Modifier.padding(top = 16.dp, bottom = 24.dp))
+                     color = NoorColor.accentGold, style = arabicText(),
+                     modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 24.dp))
             }
         }
     }

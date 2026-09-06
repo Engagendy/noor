@@ -103,8 +103,7 @@ struct SelectedDuasView: View {
                             .font(NoorFont.quran(size: 19))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineSpacing(12)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .arabicBlock()
                         Text(verbatim: item.reference)
                             .font(NoorFont.caption)
                             .foregroundStyle(NoorColor.accentGold)
@@ -142,8 +141,7 @@ struct SelectedDuasView: View {
                             .font(.system(size: 17))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineSpacing(8)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .arabicBlock()
                         Text(verbatim: dua.source)
                             .font(NoorFont.caption)
                             .foregroundStyle(NoorColor.inkSecondary)
@@ -180,4 +178,10 @@ struct SelectedDuasView: View {
             }
         }
     }
+}
+
+#Preview("Selected duas EN-LTR") {
+    NavigationStack { SelectedDuasView() }
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
 }

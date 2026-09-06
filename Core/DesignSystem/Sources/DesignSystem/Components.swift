@@ -169,6 +169,42 @@ public extension View {
     }
 }
 
+// MARK: - Arabic content block
+
+/// Lays out a block of Arabic content (ayah, hadith, dhikr, tafsir…)
+/// right-to-left and anchored to the right edge — whatever the UI
+/// language. In the English UI SwiftUI's environment is LTR, so a bare
+/// `.multilineTextAlignment(.leading)` + `.frame(alignment: .leading)`
+/// pins Arabic to the LEFT; forcing the environment to RTL makes every
+/// `.leading` inside resolve to the right, which is where Arabic starts.
+///
+/// - `.leading` (default): right-aligned, full width — body text.
+/// - `.center`: centred (basmala, share card, a centred ayah on a card).
+///
+/// Apply it to the whole Arabic row when a badge (ayah number, play
+/// button) accompanies the text: inside the block, the badge's `.leading`
+/// slot is the right side. Card chrome (English title, buttons) stays
+/// OUTSIDE the block so it follows the interface direction. In the Arabic
+/// UI the environment is already RTL and nothing changes.
+public struct ArabicBlock: ViewModifier {
+    var alignment: TextAlignment
+
+    public func body(content: Content) -> some View {
+        content
+            .multilineTextAlignment(alignment)
+            .frame(maxWidth: .infinity, alignment: alignment == .center ? .center : .leading)
+            .environment(\.layoutDirection, .rightToLeft)
+    }
+}
+
+public extension View {
+    /// See `ArabicBlock`. Right-aligned by default; pass `.center` for
+    /// designs that centre the Arabic (basmala, share card).
+    func arabicBlock(alignment: TextAlignment = .leading) -> some View {
+        modifier(ArabicBlock(alignment: alignment))
+    }
+}
+
 // MARK: - Islamic geometric ornament (خاتم — the eight-pointed star)
 
 /// One eight-pointed star (two overlapping rotated squares), the khatam

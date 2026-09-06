@@ -276,7 +276,8 @@ fun DhikrListScreen(category: DhikrCategory, onBack: () -> Unit, modifier: Modif
                         .padding(16.dp)
                 ) {
                     Text(dhikr.text, fontSize = 18.sp, lineHeight = 32.sp,
-                         color = NoorColor.inkPrimary)
+                         color = NoorColor.inkPrimary, style = arabicText(),
+                         modifier = Modifier.fillMaxWidth())
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,

@@ -119,9 +119,7 @@ struct HadithTab: View {
                             .font(.system(size: 15))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .environment(\.layoutDirection, .rightToLeft)
+                            .arabicBlock()
                         Text(verbatim: isArabicUI
                              ? "\(hit.collection.arabicName) · \(hit.bookTitle) · \(hit.hadith.number)"
                              : "\(hit.collection.englishName) · \(hit.bookTitle) · \(hit.hadith.number)")
@@ -234,6 +232,8 @@ struct FortyList: View {
             Button {
                 selected = hadith
             } label: {
+                // One Arabic block per row: number badge on the right,
+                // hadith text starting from the right edge.
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text(verbatim: isArabicUI ? hadith.number.arabicIndic : "\(hadith.number)")
                         .font(.system(size: 13, weight: .semibold).monospacedDigit())
@@ -243,10 +243,9 @@ struct FortyList: View {
                         .font(.system(size: 15))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                            .environment(\.layoutDirection, .rightToLeft)
+                        .arabicBlock()
                 }
+                .arabicBlock()
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
             }
@@ -266,4 +265,10 @@ struct FortyList: View {
                 .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
     }
+}
+
+#Preview("Hadith tab EN-LTR") {
+    NavigationStack { HadithTab() }
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
 }

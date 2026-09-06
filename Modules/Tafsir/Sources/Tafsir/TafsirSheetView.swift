@@ -57,6 +57,29 @@ public struct TafsirSheetView: View {
         }
     }
 
+    /// Arabic tafsir is an Arabic block (RTL, right edge) even in the English
+    /// UI; English editions read left-to-right.
+    @ViewBuilder
+    private func tafsirParagraph(_ paragraph: String) -> some View {
+        if edition.isArabic {
+            Text(paragraph)
+                .font(.system(size: 18))
+                .foregroundStyle(NoorColor.inkPrimary)
+                .lineSpacing(10)
+                .textSelection(.enabled)
+                .arabicBlock()
+        } else {
+            Text(paragraph)
+                .font(NoorFont.tafsir)
+                .foregroundStyle(NoorColor.inkPrimary)
+                .lineSpacing(6)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .textSelection(.enabled)
+                .environment(\.layoutDirection, .leftToRight)
+        }
+    }
+
     /// Splits the tafsir into renderable paragraphs (never empty).
     private func paragraphs(of text: String) -> [String] {
         let parts = text
@@ -74,9 +97,7 @@ public struct TafsirSheetView: View {
                         .font(NoorFont.quran(size: 20))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(14)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .environment(\.layoutDirection, .rightToLeft)
+                        .arabicBlock()
                         .padding(14)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(NoorColor.accentGold.opacity(0.6), lineWidth: 1))
 
@@ -112,16 +133,9 @@ public struct TafsirSheetView: View {
                         // that drops shaping/bidi (seen with Ibn Kathir 3:7).
                         LazyVStack(alignment: .leading, spacing: 14) {
                             ForEach(Array(paragraphs(of: text).enumerated()), id: \.offset) { _, paragraph in
-                                Text(paragraph)
-                                    .font(edition.isArabic ? .system(size: 18) : NoorFont.tafsir)
-                                    .foregroundStyle(NoorColor.inkPrimary)
-                                    .lineSpacing(edition.isArabic ? 10 : 6)
-                                    .multilineTextAlignment(.leading)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .textSelection(.enabled)
+                                tafsirParagraph(paragraph)
                             }
                         }
-                        .environment(\.layoutDirection, edition.isArabic ? .rightToLeft : .leftToRight)
                     case .failed(let message):
                         ContentUnavailableView {
                             Label("Tafsir unavailable", systemImage: "wifi.slash")
@@ -142,4 +156,11 @@ public struct TafsirSheetView: View {
             await service.load(edition: edition, surah: surahId, ayah: ayah)
         }
     }
+}
+
+#Preview("Tafsir EN-LTR (Arabic ayah stays RTL)") {
+    // Non-Quranic placeholder Arabic only — real ayat come from the DB.
+    TafsirSheetView(surahId: 1, ayah: 1, ayahText: "نص عربي تجريبي للمعاينة فقط")
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
 }

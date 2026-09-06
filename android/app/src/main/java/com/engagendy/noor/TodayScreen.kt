@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
@@ -36,6 +37,10 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,6 +76,7 @@ fun TodayScreen(
     openPage: (Int) -> Unit,
     openSurah: (Int) -> Unit,
     openAthkar: () -> Unit,
+    openPrayer: () -> Unit,
 ) {
     val context = LocalContext.current
     var showSettings by rememberSaveable { mutableStateOf(false) }
@@ -108,7 +114,8 @@ fun TodayScreen(
             now = now,
             onCalendar = { showHijriCalendar = true },
             onSettings = { showSettings = true })
-        NextPrayerHero(entries = entries, now = now, city = prayerPrefs.location)
+        NextPrayerHero(entries = entries, now = now, city = prayerPrefs.location,
+                       openPrayer = openPrayer)
         JumuahCard(now = now, openKahf = { openSurah(18) })
         ContinueReadingCard(openResume)
         ContinueListeningCard()
@@ -138,14 +145,18 @@ fun TodayScreen(
                     .padding(horizontal = 20.dp)
                     .padding(bottom = 32.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(reference, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                         color = NoorColor.accentGold, modifier = Modifier.weight(1f))
-                    ShareIconButton { shareRendered(context, arabic, reference) }
+                // Arabic hadith block: always RTL, whatever the UI language.
+                ArabicDirection {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(reference, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                             color = NoorColor.accentGold, style = arabicText(),
+                             modifier = Modifier.weight(1f))
+                        ShareIconButton { shareRendered(context, arabic, reference) }
+                    }
+                    Text(arabic, fontSize = 17.sp, lineHeight = 34.sp,
+                         color = NoorColor.inkPrimary, style = arabicText(),
+                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
                 }
-                Text(arabic, fontSize = 17.sp, lineHeight = 34.sp,
-                     color = NoorColor.inkPrimary,
-                     modifier = Modifier.padding(top = 8.dp))
             }
         }
     }
@@ -206,7 +217,8 @@ private fun TodayHeader(now: Date, onCalendar: () -> Unit, onSettings: () -> Uni
 /// Green hero: next prayer name + time, big countdown, five progress
 /// capsules with the prayer names under them — per the iOS hero.
 @Composable
-private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPreset) {
+private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPreset,
+                           openPrayer: () -> Unit) {
     val next = PrayerEngine.next(entries, now)
     val passed = entries.count { !it.time.after(now) }
     val formatter = remember(city.timeZone) {
@@ -216,12 +228,23 @@ private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPres
     }
     val countdown = next?.let { relativeCountdown(it.time.time - now.time) }
 
+    // The whole hero opens the Prayer tab. Clip BEFORE clickable so the
+    // ripple stays inside the rounded card; the card holds no inner
+    // tappables, so nothing is swallowed. Its natural height is far above
+    // 48dp, heightIn only guards the degenerate case.
+    val prayerTabLabel = stringResource(R.string.g1_prayer_times)
     Box(
         Modifier
             .padding(top = 8.dp)
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(18.dp))
+            .clickable(onClickLabel = prayerTabLabel, onClick = openPrayer)
             .background(NoorColor.accentPrimary)
+            .semantics {
+                role = Role.Button
+                contentDescription = prayerTabLabel
+            }
     ) {
         // Subtle star-lattice ornament, exactly the iOS hero overlay.
         IslamicLattice(Color.White.copy(alpha = 0.06f), 64.dp, Modifier.matchParentSize())
@@ -847,7 +870,8 @@ private fun DailyAyahCard(now: Date) {
                 color = NoorColor.inkPrimary,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 2.dp))
+                style = arabicText(),
+                modifier = Modifier.fillMaxWidth().padding(top = 2.dp))
             Spacer(Modifier.weight(1f))
             Text(reference ?: "", fontSize = 12.sp, color = NoorColor.inkSecondary,
                  modifier = Modifier.padding(top = 6.dp))
@@ -892,9 +916,9 @@ private fun DailyDhikrCard(now: Date, entries: List<PrayerEntry>, openAthkar: ()
     ) {
         if (dhikr != null) {
             Text(dhikr.text, fontSize = 16.sp, lineHeight = 30.sp,
-                 color = NoorColor.inkPrimary,
+                 color = NoorColor.inkPrimary, style = arabicText(),
                  maxLines = 5, overflow = TextOverflow.Ellipsis,
-                 modifier = Modifier.padding(top = 2.dp))
+                 modifier = Modifier.fillMaxWidth().padding(top = 2.dp))
             Spacer(Modifier.weight(1f))
             if (dhikr.count > 1) {
                 Text(stringResource(R.string.g1_repeat_times, dhikr.count.localizedDigits()),
@@ -935,9 +959,9 @@ private fun DailyHadithCard(now: Date, openDetail: (Pair<String, String>) -> Uni
     ) {
         if (loaded != null) {
             Text(loaded.first, fontSize = 16.sp, lineHeight = 30.sp,
-                 color = NoorColor.inkPrimary,
+                 color = NoorColor.inkPrimary, style = arabicText(),
                  maxLines = 4, overflow = TextOverflow.Ellipsis,
-                 modifier = Modifier.padding(top = 2.dp))
+                 modifier = Modifier.fillMaxWidth().padding(top = 2.dp))
             Spacer(Modifier.weight(1f))
             Text(stringResource(R.string.g1_read_full_hadith), fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.bgPrimary,
@@ -1002,8 +1026,9 @@ private fun OnThisDayCard(
                 .padding(top = 2.dp)
         ) {
             Text(first.arabic, fontSize = 15.sp, lineHeight = 26.sp,
-                 color = NoorColor.inkPrimary,
-                 maxLines = 3, overflow = TextOverflow.Ellipsis)
+                 color = NoorColor.inkPrimary, style = arabicText(),
+                 maxLines = 3, overflow = TextOverflow.Ellipsis,
+                 modifier = Modifier.fillMaxWidth())
             Row(modifier = Modifier.padding(top = 4.dp)) {
                 first.yearHijri?.let {
                     Text(stringResource(R.string.g1_year_h, it.localizedDigits()), fontSize = 12.sp,

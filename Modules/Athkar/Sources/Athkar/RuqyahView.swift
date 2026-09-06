@@ -112,8 +112,7 @@ struct RuqyahView: View {
                             .font(NoorFont.quran(size: 20))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineSpacing(14)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .arabicBlock()
                     }
                     .padding(16)
                     .noorCard()
@@ -145,8 +144,7 @@ struct RuqyahView: View {
                             .font(.system(size: 17))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .lineSpacing(8)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .arabicBlock()
                         Text(verbatim: dua.source)
                             .font(NoorFont.caption)
                             .foregroundStyle(NoorColor.accentGold)
@@ -181,4 +179,10 @@ struct RuqyahView: View {
             }
         }
     }
+}
+
+#Preview("Ruqyah EN-LTR") {
+    NavigationStack { RuqyahView() }
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
 }

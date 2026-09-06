@@ -99,20 +99,17 @@ public struct SurahListView: View {
                                 Button {
                                     openReference(hit.surahId, hit.ayah)
                                 } label: {
-                                    // Inside forced RTL, .leading == the
-                                    // right edge — ayat start from the right.
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(hit.text)
                                             .font(NoorFont.quran(size: 17))
                                             .foregroundStyle(NoorColor.inkPrimary)
                                             .lineLimit(2)
-                                            .multilineTextAlignment(.leading)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .arabicBlock()
                                         Text(verbatim: "\u{200F}\(surahName(hit.surahId)) · \(hit.surahId):\(hit.ayah)")
                                             .font(NoorFont.caption)
                                             .foregroundStyle(NoorColor.inkSecondary)
                                     }
-                                    .environment(\.layoutDirection, .rightToLeft)
+                                    .arabicBlock()
                                     .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.borderless)
@@ -394,6 +391,20 @@ struct SurahRow: View {
                 selection: .constant(1),
                 openReference: { _, _ in })
         }
+    }
+}
+
+#Preview("Surah index — EN LTR, ayah search") {
+    if let db = try? QuranDatabase(), let surahs = try? db.allSurahs() {
+        NavigationStack {
+            SurahListView(
+                surahs: surahs,
+                structure: try? db.structure(),
+                selection: .constant(1),
+                openReference: { _, _ in })
+        }
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
     }
 }
 

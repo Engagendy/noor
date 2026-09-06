@@ -122,7 +122,8 @@ struct MainTabView: View {
                         tab = .quran
                         quranOpenTarget = ReaderTarget(surahId: surah, ayah: ayah)
                     },
-                    openAthkar: { tab = .athkar })
+                    openAthkar: { tab = .athkar },
+                    openPrayer: { tab = .prayer })
                     .safeAreaInset(edge: .bottom, spacing: 8) { globalPill }
             }
             .tabItem { Label("Today", systemImage: "sun.max") }

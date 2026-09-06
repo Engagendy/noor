@@ -1,8 +1,16 @@
 package com.engagendy.noor
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.LayoutDirection
 import java.util.Locale
 
@@ -29,6 +37,46 @@ fun noorLayoutDirection(): LayoutDirection =
 /// Arabic-Indic digits in Arabic UI, Western digits otherwise —
 /// the locale-aware counterpart of `Int.arabicIndic()`.
 fun Int.localizedDigits(): String = if (isArabicLocale()) arabicIndic() else toString()
+
+// MARK: - Arabic content inside an English UI
+//
+// Arabic-only content (Quran ayat, hadith, athkar/duas, Arabic names,
+// Arabic tafsir) must ALWAYS read right-to-left and start at the right
+// edge, whatever the UI language. Compose resolves an unset paragraph
+// direction from LocalLayoutDirection — so in the English UI an Arabic
+// paragraph was laid out LTR: left-aligned, with ayah-number glyphs and
+// punctuation falling on the wrong side. Two helpers, used together:
+//
+//  - `ArabicDirection` / `ArabicBlock` flip LocalLayoutDirection for a
+//    subtree, so Rows put badges/share buttons on the right and Columns
+//    start-align to the right (row structure that is UI chrome — card
+//    titles, back/share bars — stays in the UI direction).
+//  - `arabicText()` is the TextStyle for every Arabic `Text`: Rtl paragraph
+//    direction + Start alignment (= right edge). Pass `TextAlign.Center`
+//    / `Justify` where the design already centres or justifies.
+//
+// In the Arabic UI both are no-ops in effect (direction is already RTL).
+
+/// Provide RTL layout direction to `content` without adding a layout node —
+/// drop-in inside any Row/Column/LazyColumn item.
+@Composable
+fun ArabicDirection(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl, content = content)
+}
+
+/// A full-width RTL Column for an Arabic content block.
+@Composable
+fun ArabicBlock(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    ArabicDirection {
+        Column(modifier.fillMaxWidth(), content = content)
+    }
+}
+
+/// TextStyle for Arabic-only text: RTL paragraph direction, aligned to the
+/// paragraph start (the right edge). Give the Text `fillMaxWidth()` so the
+/// alignment has room to act.
+fun arabicText(align: TextAlign = TextAlign.Start): TextStyle =
+    TextStyle(textDirection = TextDirection.Rtl, textAlign = align)
 
 // MARK: - direction-aware arrows
 //

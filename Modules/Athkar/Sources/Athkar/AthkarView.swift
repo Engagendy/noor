@@ -306,13 +306,11 @@ struct DhikrCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Inside RTL, .leading is the right edge — where Arabic starts.
             Text(dhikr.text)
                 .font(.noorScaled(19))
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineSpacing(8)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .arabicBlock()
             HStack {
                 if isComplete {
                     Label {
@@ -503,4 +501,11 @@ struct TasbihView: View {
 
 #Preview {
     NavigationStack { AthkarView() }
+}
+
+#Preview("Dhikr list EN-LTR") {
+    if let category = AthkarStore.load().first {
+        NavigationStack { DhikrListView(category: category) }
+            .environment(\.locale, Locale(identifier: "en"))
+    }
 }

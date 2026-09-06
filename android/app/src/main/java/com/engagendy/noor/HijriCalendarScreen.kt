@@ -308,7 +308,7 @@ private fun EventRow(event: IslamicEvent, onClick: () -> Unit) {
              textAlign = TextAlign.Center,
              modifier = Modifier.size(width = 28.dp, height = 22.dp))
         Text(event.arabic, fontSize = 14.sp, color = NoorColor.inkPrimary,
-             lineHeight = 22.sp,
+             lineHeight = 22.sp, style = arabicText(),
              modifier = Modifier.weight(1f).padding(start = 6.dp))
     }
 }
@@ -343,8 +343,8 @@ fun EventDetailSheet(event: IslamicEvent, onDismiss: () -> Unit) {
                 }
             }
             Text(event.arabic, fontSize = 19.sp, fontWeight = FontWeight.SemiBold,
-                 lineHeight = 32.sp, color = NoorColor.inkPrimary,
-                 modifier = Modifier.padding(top = 6.dp))
+                 lineHeight = 32.sp, color = NoorColor.inkPrimary, style = arabicText(),
+                 modifier = Modifier.fillMaxWidth().padding(top = 6.dp))
             Text(dateLine, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.accentGold,
                  modifier = Modifier.padding(top = 10.dp))
@@ -352,7 +352,8 @@ fun EventDetailSheet(event: IslamicEvent, onDismiss: () -> Unit) {
                 color = NoorColor.accentGold.copy(alpha = 0.3f),
                 modifier = Modifier.padding(vertical = 14.dp))
             Text(event.detailArabic, fontSize = 16.5.sp, lineHeight = 32.sp,
-                 color = NoorColor.inkPrimary)
+                 color = NoorColor.inkPrimary, style = arabicText(),
+                 modifier = Modifier.fillMaxWidth())
             Text(stringResource(R.string.g1_source, event.sourceArabic), fontSize = 13.sp,
                  color = NoorColor.inkSecondary,
                  modifier = Modifier.padding(top = 14.dp))

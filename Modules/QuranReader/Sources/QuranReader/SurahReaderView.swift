@@ -444,8 +444,7 @@ public struct SurahReaderView: View {
                         Text(basmala)
                             .font(NoorFont.quran(size: liveFontSize * 0.92))
                             .foregroundStyle(NoorColor.inkPrimary)
-                            .frame(maxWidth: .infinity)
-                            .multilineTextAlignment(.center)
+                            .arabicBlock(alignment: .center)
                             .padding(.bottom, 12)
                     }
                     tappableFlow(section: section, page: page)
@@ -555,8 +554,7 @@ public struct SurahReaderView: View {
                         Text(basmala)
                             .font(NoorFont.quran(size: liveFontSize * 0.92))
                             .foregroundStyle(NoorColor.inkPrimary)
-                            .frame(maxWidth: .infinity)
-                            .multilineTextAlignment(.center)
+                            .arabicBlock(alignment: .center)
                             .padding(.bottom, 14)
                     }
                     ForEach(viewModel.verses) { verse in
@@ -600,8 +598,7 @@ public struct SurahReaderView: View {
                     .font(NoorFont.quran(size: liveFontSize))
                     .foregroundStyle(isReciting ? NoorColor.accentPrimary : NoorColor.inkPrimary)
                     .lineSpacing(liveFontSize * NoorMetrics.quranLineSpacingFactor)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .arabicBlock()
             }
             if showTranslation,
                let translation = translations?.translation(surah: verse.surahId, ayah: verse.ayah) {
@@ -893,6 +890,14 @@ private struct WordByWordContainer: View {
 #Preview("Al-Fatiha — Mushaf light") {
     if let db = try? QuranDatabase() {
         NavigationStack { SurahReaderView(database: db, surahId: 1) }
+    }
+}
+
+#Preview("Al-Baqarah — EN LTR (Arabic stays RTL)") {
+    if let db = try? QuranDatabase() {
+        NavigationStack { SurahReaderView(database: db, surahId: 2) }
+            .environment(\.locale, Locale(identifier: "en"))
+            .environment(\.layoutDirection, .leftToRight)
     }
 }
 

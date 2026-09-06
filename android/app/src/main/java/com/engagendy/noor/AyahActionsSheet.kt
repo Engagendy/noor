@@ -61,6 +61,7 @@ fun AyahActionsSheet(
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 color = NoorColor.inkPrimary,
+                style = arabicText(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(1.dp, NoorColor.accentGold.copy(alpha = 0.5f), RoundedCornerShape(10.dp))

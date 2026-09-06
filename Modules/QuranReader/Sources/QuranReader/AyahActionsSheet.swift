@@ -69,7 +69,7 @@ struct AyahActionsSheet: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
-                .environment(\.layoutDirection, .rightToLeft)
+                .arabicBlock()
                 .padding(.vertical, 8)
                 .contentShape(Rectangle())
             }
@@ -89,9 +89,7 @@ struct AyahActionsSheet: View {
                     .foregroundStyle(NoorColor.inkPrimary)
                     .lineSpacing(12)
                     .lineLimit(3)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .environment(\.layoutDirection, .rightToLeft)
+                    .arabicBlock()
                     .padding(14)
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(NoorColor.accentGold.opacity(0.5), lineWidth: 1))
                     .padding(.bottom, 6)
@@ -153,5 +151,15 @@ struct AyahActionsSheet: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+#Preview("Ayah actions EN-LTR") {
+    if let db = try? QuranDatabase(), let verses = try? db.verses(surahId: 1) {
+        AyahActionsSheet(verses: Array(verses.prefix(3)), bookmarkedRefs: [],
+                         onPlay: nil, onTafsir: { _ in }, onShare: { _ in },
+                         onToggleBookmark: nil)
+            .environment(\.locale, Locale(identifier: "en"))
+            .environment(\.layoutDirection, .leftToRight)
     }
 }

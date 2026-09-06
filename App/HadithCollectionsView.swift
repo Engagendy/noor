@@ -162,6 +162,8 @@ struct HadithBookView: View {
             Button {
                 selected = hadith
             } label: {
+                // One Arabic block per row: number badge on the right,
+                // hadith text starting from the right edge.
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text(verbatim: isArabicUI
                          ? (Int(hadith.number).map(\.arabicIndic) ?? hadith.number)
@@ -173,11 +175,9 @@ struct HadithBookView: View {
                         .font(.system(size: 15))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(3)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: isArabicUI ? .leading : .trailing)
-                        .environment(\.layoutDirection, .rightToLeft)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .arabicBlock()
                 }
+                .arabicBlock()
                 .padding(.vertical, 4)
                 .contentShape(Rectangle())
             }
@@ -244,9 +244,7 @@ struct LibraryHadithDetail: View {
                                 .font(.noorScaled(18))
                                 .foregroundStyle(NoorColor.inkPrimary)
                                 .lineSpacing(10)
-                                .multilineTextAlignment(.leading)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .environment(\.layoutDirection, .rightToLeft)
+                                .arabicBlock()
                             if !isArabicUI && !item.english.isEmpty {
                                 Rectangle()
                                     .fill(NoorColor.accentGold.opacity(0.3))
@@ -311,4 +309,10 @@ struct LibraryHadithDetail: View {
             }
         }
     }
+}
+
+#Preview("Hadith library EN-LTR") {
+    NavigationStack { HadithCollectionsView(isArabicUI: false) }
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
 }

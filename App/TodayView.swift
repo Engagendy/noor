@@ -23,6 +23,8 @@ struct TodayView: View {
     }
     /// Switches to the Athkar tab (Daily Dhikr card).
     let openAthkar: () -> Void
+    /// Switches to the Prayer tab (next-prayer hero card).
+    var openPrayer: () -> Void = {}
     @State private var athkar: [DhikrCategory] = []
     @State private var hadiths: [HadithItem] = []
     @State private var dailySahih: (hadith: LibraryHadith, collection: HadithCollectionID)?
@@ -302,9 +304,7 @@ struct TodayView: View {
                     .foregroundStyle(NoorColor.inkPrimary)
                     .lineSpacing(6)
                     .lineLimit(4)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .environment(\.layoutDirection, .rightToLeft)
+                    .arabicBlock()
                 if dhikr.count > 1 {
                     Text("Repeat \(dhikr.count)×")
                         .font(NoorFont.caption)
@@ -357,9 +357,7 @@ struct TodayView: View {
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(7)
                         .lineLimit(4)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .environment(\.layoutDirection, .rightToLeft)
+                        .arabicBlock()
                     Spacer(minLength: 0)
                     Text(isArabicUI ? "اقرأ الحديث كاملًا" : "Read the full hadith")
                         .font(.system(size: 12.5, weight: .semibold))
@@ -404,9 +402,7 @@ struct TodayView: View {
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(7)
                         .lineLimit(4)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .environment(\.layoutDirection, .rightToLeft)
+                        .arabicBlock()
                     Spacer(minLength: 0)
                     HStack(spacing: 14) {
                         Text(isArabicUI ? "اقرأ الحديث كاملًا" : "Read the full hadith")
@@ -610,7 +606,23 @@ struct TodayView: View {
         let next = today ?? prayerDay(date: now.addingTimeInterval(86400))?.entries.first
         let isTomorrow = today == nil && next != nil
         let passed = day.passedCount(at: now)
-        return VStack(alignment: .leading, spacing: 4) {
+        return Button(action: openPrayer) {
+            nextPrayerHeroContent(next: next, isTomorrow: isTomorrow, passed: passed, day: day)
+        }
+        // .plain: no tint on the content; the whole card is the target
+        // (well above the 44pt minimum).
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(next.map {
+            "\(localizedName($0.name)) \(isTomorrow ? "tomorrow" : "") \($0.time.formatted(cityTimeFormat))"
+        } ?? String(localized: "All prayers done for today"))
+        .accessibilityHint("Opens prayer times")
+        .accessibilityAddTraits(.isButton)
+    }
+
+    private func nextPrayerHeroContent(next: PrayerDay.Entry?, isTomorrow: Bool,
+                                       passed: Int, day: PrayerDay) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(next.map { localizedName($0.name).uppercased() } ?? localizedName("Isha").uppercased())
                     .font(.system(size: 13, weight: .semibold))
@@ -664,7 +676,7 @@ struct TodayView: View {
                 )
                 .shadow(color: NoorColor.accentPrimary.opacity(0.22), radius: 9, y: 6)
         )
-        .accessibilityElement(children: .combine)
+        .contentShape(RoundedRectangle(cornerRadius: 18))
     }
 
     /// Current reading streak in days (0 if the chain broke before today).
@@ -1018,9 +1030,7 @@ struct TodayView: View {
                     .font(NoorFont.quran(size: 21))
                     .foregroundStyle(NoorColor.inkPrimary)
                     .lineSpacing(12)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .environment(\.layoutDirection, .rightToLeft)
+                    .arabicBlock()
                 Text(verbatim: "\u{200F}\(daily.surah.displayName(arabicUI: isArabicUI)) \(daily.verse.surahId):\(daily.verse.ayah)")
                     .font(NoorFont.caption)
                     .foregroundStyle(NoorColor.inkSecondary)
@@ -1303,5 +1313,16 @@ struct AllEventsView: View {
                     .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
             }
         }
+    }
+}
+
+#Preview("Today EN-LTR (Arabic cards stay RTL)") {
+    if let db = try? QuranDatabase() {
+        NavigationStack {
+            TodayView(database: db, openReader: {}, openPage: { _ in },
+                      openListening: { _, _ in }, openAthkar: {})
+        }
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
     }
 }

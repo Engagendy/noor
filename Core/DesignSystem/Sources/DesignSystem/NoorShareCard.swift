@@ -27,8 +27,7 @@ public struct NoorShareCard: View {
                 .font(useQuranFont ? NoorFont.quran(size: 30) : .system(size: 24))
                 .foregroundStyle(Color(red: 0.12, green: 0.16, blue: 0.20))
                 .lineSpacing(useQuranFont ? 22 : 14)
-                .multilineTextAlignment(.center)
-                .environment(\.layoutDirection, .rightToLeft)
+                .arabicBlock(alignment: .center)
             if let translation {
                 Text(translation)
                     .font(.system(size: 17, design: .serif))
@@ -256,3 +255,13 @@ private struct ActivityShareView: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 #endif
+
+#Preview("Share card EN-LTR (Arabic centred RTL)") {
+    // Non-Quranic placeholder Arabic only — real ayat come from the DB.
+    NoorShareCard(arabicText: "نص عربي تجريبي للمعاينة فقط، سطر ثانٍ أطول قليلًا للتفاف",
+                  translation: "Placeholder translation line.",
+                  reference: "Preview · 1:1", attribution: "نور Noor",
+                  useQuranFont: false)
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
+}

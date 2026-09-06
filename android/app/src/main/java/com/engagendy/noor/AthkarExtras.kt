@@ -152,16 +152,21 @@ fun RuqyahScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         .background(NoorColor.bgElevated, RoundedCornerShape(14.dp))
                         .padding(16.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(item.reference, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                             color = NoorColor.accentGold, modifier = Modifier.weight(1f))
-                        ShareIconButton {
-                            shareRendered(context, item.text, item.reference, useQuranFont = true,
-                                          attribution = "نور Noor · Quran text: Tanzil.net")
+                    // Quran passage block: RTL in the English UI too.
+                    ArabicDirection {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(item.reference, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                                 color = NoorColor.accentGold, style = arabicText(),
+                                 modifier = Modifier.weight(1f))
+                            ShareIconButton {
+                                shareRendered(context, item.text, item.reference, useQuranFont = true,
+                                              attribution = "نور Noor · Quran text: Tanzil.net")
+                            }
                         }
+                        Text(item.text, fontFamily = QuranFont, fontSize = 20.sp, lineHeight = 44.sp,
+                             color = NoorColor.inkPrimary, style = arabicText(),
+                             modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
                     }
-                    Text(item.text, fontFamily = QuranFont, fontSize = 20.sp, lineHeight = 44.sp,
-                         color = NoorColor.inkPrimary, modifier = Modifier.padding(top = 8.dp))
                 }
             }
             item {
@@ -177,13 +182,16 @@ fun RuqyahScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         .background(NoorColor.bgElevated, RoundedCornerShape(14.dp))
                         .padding(16.dp)
                 ) {
-                    Text(dua.text, fontSize = 17.sp, lineHeight = 30.sp,
-                         color = NoorColor.inkPrimary)
-                    Row(verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                        Text(dua.source, fontSize = 12.sp, color = NoorColor.accentGold,
-                             modifier = Modifier.weight(1f))
-                        ShareIconButton { shareRendered(context, dua.text, dua.source) }
+                    ArabicDirection {
+                        Text(dua.text, fontSize = 17.sp, lineHeight = 30.sp,
+                             color = NoorColor.inkPrimary, style = arabicText(),
+                             modifier = Modifier.fillMaxWidth())
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                            Text(dua.source, fontSize = 12.sp, color = NoorColor.accentGold,
+                                 style = arabicText(), modifier = Modifier.weight(1f))
+                            ShareIconButton { shareRendered(context, dua.text, dua.source) }
+                        }
                     }
                 }
             }
@@ -275,15 +283,18 @@ fun SelectedDuasScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         .background(NoorColor.bgElevated, RoundedCornerShape(14.dp))
                         .padding(16.dp)
                 ) {
-                    Text(item.text, fontFamily = QuranFont, fontSize = 19.sp, lineHeight = 40.sp,
-                         color = NoorColor.inkPrimary)
-                    Row(verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                        Text(item.reference, fontSize = 12.sp, color = NoorColor.accentGold,
-                             modifier = Modifier.weight(1f))
-                        ShareIconButton {
-                            shareRendered(context, item.text, item.reference, useQuranFont = true,
-                                          attribution = "نور Noor · Quran text: Tanzil.net")
+                    ArabicDirection {
+                        Text(item.text, fontFamily = QuranFont, fontSize = 19.sp, lineHeight = 40.sp,
+                             color = NoorColor.inkPrimary, style = arabicText(),
+                             modifier = Modifier.fillMaxWidth())
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                            Text(item.reference, fontSize = 12.sp, color = NoorColor.accentGold,
+                                 style = arabicText(), modifier = Modifier.weight(1f))
+                            ShareIconButton {
+                                shareRendered(context, item.text, item.reference, useQuranFont = true,
+                                              attribution = "نور Noor · Quran text: Tanzil.net")
+                            }
                         }
                     }
                 }
@@ -301,17 +312,22 @@ fun SelectedDuasScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         .background(NoorColor.bgElevated, RoundedCornerShape(14.dp))
                         .padding(16.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(dua.title, fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                             color = NoorColor.accentGold, modifier = Modifier.weight(1f))
-                        ShareIconButton {
-                            shareRendered(context, dua.text, "${dua.title} · ${dua.source}")
+                    ArabicDirection {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(dua.title, fontSize = 15.sp, fontWeight = FontWeight.Bold,
+                                 color = NoorColor.accentGold, style = arabicText(),
+                                 modifier = Modifier.weight(1f))
+                            ShareIconButton {
+                                shareRendered(context, dua.text, "${dua.title} · ${dua.source}")
+                            }
                         }
+                        Text(dua.text, fontSize = 17.sp, lineHeight = 30.sp,
+                             color = NoorColor.inkPrimary, style = arabicText(),
+                             modifier = Modifier.fillMaxWidth().padding(top = 6.dp))
+                        Text(dua.source, fontSize = 12.sp, color = NoorColor.inkSecondary,
+                             style = arabicText(),
+                             modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
                     }
-                    Text(dua.text, fontSize = 17.sp, lineHeight = 30.sp,
-                         color = NoorColor.inkPrimary, modifier = Modifier.padding(top = 6.dp))
-                    Text(dua.source, fontSize = 12.sp, color = NoorColor.inkSecondary,
-                         modifier = Modifier.padding(top = 8.dp))
                 }
             }
             item { Spacer(Modifier.padding(bottom = 24.dp)) }
@@ -482,6 +498,7 @@ fun AsmaulHusnaScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                      color = NoorColor.accentGold, modifier = Modifier.padding(top = 8.dp))
                 Text(name.meaningArabic, fontSize = 17.sp, lineHeight = 28.sp,
                      textAlign = TextAlign.Center, color = NoorColor.inkPrimary,
+                     style = arabicText(TextAlign.Center),
                      modifier = Modifier.padding(top = 12.dp, bottom = 12.dp))
                 // Branded card share, like the iOS AsmaulHusnaView sheet.
                 ShareIconButton {

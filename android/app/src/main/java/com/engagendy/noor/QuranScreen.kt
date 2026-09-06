@@ -470,7 +470,8 @@ fun QuranScreen(
                                 surah.nameArabic,
                                 fontFamily = HafsFont,
                                 fontSize = 20.sp,
-                                color = NoorColor.inkPrimary
+                                color = NoorColor.inkPrimary,
+                                style = arabicText()
                             )
                             Text(
                                 stringResource(
@@ -510,7 +511,9 @@ fun QuranScreen(
                                 fontSize = 17.sp,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
-                                color = NoorColor.inkPrimary
+                                color = NoorColor.inkPrimary,
+                                style = arabicText(),
+                                modifier = Modifier.fillMaxWidth()
                             )
                             Text(
                                 "‏${surahName(hit.surahId)} · ${hit.surahId.localizedDigits()}:${hit.ayah.localizedDigits()}",
@@ -811,7 +814,8 @@ fun ReaderScreen(
                     fontFamily = HafsFont,
                     fontSize = 20.sp,
                     color = NoorColor.inkPrimary,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    style = arabicText(TextAlign.Center)
                 )
                 Text(
                     stringResource(R.string.g2_juz_n, juz.localizedDigits()),
@@ -842,6 +846,8 @@ fun ReaderScreen(
             )
         }
         Box(Modifier.weight(1f)) {
+            // The whole Quran text area is an RTL block, in the English UI too.
+            ArabicDirection {
             LazyColumn(Modifier.fillMaxSize().padding(horizontal = 18.dp), state = listState) {
                 if (hasBasmala) {
                     item {
@@ -850,6 +856,7 @@ fun ReaderScreen(
                             fontFamily = QuranFont,
                             fontSize = (fontSize * 0.85f).sp,
                             textAlign = TextAlign.Center,
+                            style = arabicText(TextAlign.Center),
                             color = NoorColor.inkPrimary,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
                         )
@@ -902,6 +909,9 @@ fun ReaderScreen(
                                 fontSize = fontSize.sp,
                                 lineHeight = (fontSize * 2.2f).sp,
                                 color = NoorColor.inkPrimary,
+                                // RTL paragraph whatever the UI language: the
+                                // ayah-number chip lands at the line end (left).
+                                style = arabicText(),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(10.dp))
@@ -922,8 +932,10 @@ fun ReaderScreen(
                             lineHeight = (fontSize * 2.2f).sp,
                             color = NoorColor.inkPrimary,
                             textAlign = TextAlign.Justify,
+                            style = arabicText(TextAlign.Justify),
                             onTextLayout = { textLayout = it },
                             modifier = Modifier
+                                .fillMaxWidth()
                                 .padding(bottom = 40.dp)
                                 .pointerInput(surah.id) {
                                     detectTapGestures(
@@ -933,6 +945,7 @@ fun ReaderScreen(
                         )
                     }
                 }
+            }
             }
             if (showOptions) {
                 // Scrim: any tap outside the panel dismisses it.
