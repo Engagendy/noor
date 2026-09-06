@@ -56,6 +56,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -81,6 +82,9 @@ fun QuranScreen(
     }
     // Exact arrival ayah (search hit, juz start, bookmark); 0 = surah start.
     var openAyah by remember(resumeSurahId) { mutableStateOf(0) }
+    // Bumped on every navigation request into the reader, so re-opening the
+    // SAME surah (picked from the reader's drawer) still resets it.
+    var openSerial by remember { mutableStateOf(0) }
     // Madani page mode: opened from Today (frontier) or the mushaf button.
     var openMushafAt by remember(mushafPage) { mutableStateOf(mushafPage) }
     // Bookmarks live in prefs as "surah:ayah" strings; prefs are the source
@@ -115,6 +119,7 @@ fun QuranScreen(
         onMushafClosed()
         openAyah = ayah
         openSurah = surahs.firstOrNull { it.id == surahId }
+        openSerial++
     }
 
     // System back pops one level, same as each screen's رجوع button.
@@ -172,8 +177,12 @@ fun QuranScreen(
                 surah = current,
                 mode = readerMode,
                 scrollToAyah = openAyah,
+                navToken = openSerial,
+                allSurahs = surahs,
                 bookmarks = bookmarks,
-                onToggleBookmark = { ayah -> toggleBookmark(current.id, ayah) },
+                // Continuous reading: the ayah's OWN surah comes back from
+                // the reader — never `current`, which is only where it opened.
+                onToggleBookmark = { surahId, ayah -> toggleBookmark(surahId, ayah) },
                 onModeChange = { newMode ->
                     // User action from the options panel — persist + switch.
                     prefs.edit().putString("reader.mode", newMode).apply()
@@ -183,6 +192,7 @@ fun QuranScreen(
                 onOpenReference = { surahId, ayah ->
                     openAyah = ayah
                     openSurah = surahs.firstOrNull { it.id == surahId }
+                    openSerial++
                 },
                 modifier = modifier)
         }
@@ -203,6 +213,7 @@ fun QuranScreen(
     fun openReference(surahId: Int, ayah: Int) {
         openAyah = ayah
         openSurah = surahs.firstOrNull { it.id == surahId }
+        openSerial++
     }
 
     // Word search runs off-main over the normalized index (LIKE, like iOS).
@@ -554,8 +565,85 @@ private fun IndexSegment(
     }
 }
 
+/// One surah rendered as the continuous mushaf-style flow: gold ayah
+/// markers, ۞ at hizb-quarter starts, ۩ on sajdah ayat and a small juz
+/// header where a new juz begins — all indexing marks, never text edits.
+/// Each verse span is annotated so a tap resolves its ayah.
+///
+/// Pure and deterministic: the highlight only adds a span style, so the
+/// character offsets do not depend on it.
+private fun buildSurahFlow(
+    context: Context,
+    db: QuranDb,
+    surahId: Int,
+    verses: List<Verse>,
+    juzAt: Map<Int, Int>,
+    quarterKeys: Set<Int>,
+    sajdaKeys: Set<Int>,
+    fontSize: Float,
+    highlightAyah: Int,
+) = buildAnnotatedString {
+    verses.forEach { verse ->
+        val key = surahId * 1000 + verse.ayah
+        juzAt[key]?.let { idx ->
+            if (length > 0) append("\n")
+            withStyle(SpanStyle(
+                color = NoorColor.accentGold,
+                fontSize = (fontSize * 0.5f).sp,
+                fontWeight = FontWeight.SemiBold)) {
+                append("— " + context.getString(R.string.g2_juz_n, idx.localizedDigits()) + " —")
+            }
+            append("\n")
+        }
+        pushStringAnnotation(tag = "ayah", annotation = verse.ayah.toString())
+        if (key in quarterKeys) {
+            withStyle(SpanStyle(color = NoorColor.accentGold)) { append("۞ ") }
+        }
+        // Ayah 1 of surahs 2..114 stores the basmala as a leading prefix;
+        // the reader draws its own basmala line above, so render only the
+        // ayah's own words (see QuranDb KDoc).
+        val body = db.textWithoutLeadingBasmala(verse)
+        if (highlightAyah == verse.ayah) {
+            withStyle(SpanStyle(background = NoorColor.stateReciting)) { append(body) }
+        } else {
+            append(body)
+        }
+        if (key in sajdaKeys) {
+            withStyle(SpanStyle(color = NoorColor.accentGold)) { append(" ۩") }
+        }
+        withStyle(SpanStyle(
+            color = NoorColor.accentGold,
+            fontSize = (fontSize * 0.62f).sp)) {
+            append(" ⁧﴿${verse.ayah.arabicIndic()}﴾⁩ ")
+        }
+        pop()
+    }
+}
+
+/// Surahs 1 and 9 never get a separate basmala line (1's is its ayah 1).
+private fun hasBasmalaLine(surahId: Int) = surahId != 9 && surahId != 1
+
+/// Structure metadata shared by every reader page (juz/quarter starts,
+/// sajdah ayat, the verified basmala) — read once, passed down.
+private data class ReaderMeta(
+    val juzAt: Map<Int, Int>,
+    val quarterKeys: Set<Int>,
+    val sajdaKeys: Set<Int>,
+    val basmala: String?,
+)
+
 /// The flow / ayah-by-ayah reader, with the iOS-style "Aa" options panel:
 /// segmented reading-mode picker + text-size stepper on an elevated card.
+///
+/// Moving between surahs is a HORIZONTAL SWIPE over a 114-page pager (page
+/// index = surah id − 1), exactly like the Madani page mode — each page owns
+/// its own vertical scroll, so the two gestures never fight. The drawer
+/// handles distant jumps. Everything the chrome shows and every per-ayah
+/// action therefore keys off the CURRENT PAGE's surah, never [surah], which
+/// is only where the reader opened.
+///
+/// [navToken] changes on every navigation request from the caller, so
+/// re-opening the SAME surah still moves the pager back to it.
 @Composable
 fun ReaderScreen(
     surah: Surah,
@@ -564,207 +652,178 @@ fun ReaderScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     scrollToAyah: Int = 0,
+    navToken: Int = 0,
+    allSurahs: List<Surah> = emptyList(),
     bookmarks: Set<String> = emptySet(),
-    onToggleBookmark: (Int) -> Unit = {},
+    onToggleBookmark: (surahId: Int, ayah: Int) -> Unit = { _, _ -> },
     onOpenReference: ((surahId: Int, ayah: Int) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val db = remember { QuranDb.get(context) }
-    val verses = remember(surah.id) { db.verses(surah.id) }
+    val surahs = remember(allSurahs) { allSurahs.ifEmpty { db.surahs() } }
     val prefs = remember { KhatmahPlan.prefs(context) }
     val scope = rememberCoroutineScope()
     // Video share state lives here, above the self-dismissing actions sheet.
     val videoShare = rememberAyahVideoShare(scope)
     var showOptions by remember { mutableStateOf(false) }
     var showGoToPage by remember { mutableStateOf(false) }
-    // Options panel is a plain overlay: back closes it before the caller's
-    // handler pops the reader (sheets/dialogs consume back themselves).
+    var showSurahList by remember { mutableStateOf(false) }
+    // Overlays close before the caller's handler pops the reader (sheets and
+    // dialogs consume back themselves). Registered after the caller's, so
+    // these win while open.
     androidx.activity.compose.BackHandler(enabled = showOptions) { showOptions = false }
+    androidx.activity.compose.BackHandler(enabled = showSurahList) { showSurahList = false }
     var fontSize by remember { mutableFloatStateOf(prefs.getFloat("reader.fontSize", 26f)) }
-    // Structure metadata (juz/quarter starts, sajdah ayat) keyed s*1000+a.
-    val sajdaKeys = remember { db.sajdaKeys() }
-    val quarterKeys = remember {
-        db.quarterStarts().map { it.surahId * 1000 + it.ayah }.toSet()
+    // Structure metadata (juz/quarter starts, sajdah ayat) keyed s*1000+a,
+    // plus the basmala line straight from the verified DB (1:1), never typed.
+    val meta = remember {
+        ReaderMeta(
+            juzAt = db.juzStarts().associateBy({ it.surahId * 1000 + it.ayah }, { it.idx }),
+            quarterKeys = db.quarterStarts().map { it.surahId * 1000 + it.ayah }.toSet(),
+            sajdaKeys = db.sajdaKeys(),
+            basmala = db.basmala())
     }
-    val juzAt = remember { db.juzStarts().associateBy({ it.surahId * 1000 + it.ayah }, { it.idx }) }
-    val juz = remember(surah.id, scrollToAyah) { db.juzFor(surah.id, scrollToAyah.coerceAtLeast(1)) }
-    // Resume position: one direct prefs write per surah open, off-main —
-    // never observed as Compose state (same rule as the Madani pager).
-    LaunchedEffect(surah.id) {
-        withContext(Dispatchers.IO) {
-            ReadingProgress.surahViewed(context, surah.id)
-        }
+    val juzStarts = remember { db.juzStarts() }
+    // Juz for a reference, from the in-memory starts — no DB hit per swipe.
+    fun juzOf(surahId: Int, ayah: Int): Int =
+        juzStarts.lastOrNull {
+            it.surahId < surahId || (it.surahId == surahId && it.ayah <= ayah)
+        }?.idx ?: 1
+
+    // One page per surah. Compose's pager honours the layout direction, so
+    // the swipe mirrors itself in Arabic exactly as the Madani pager does.
+    val pager = androidx.compose.foundation.pager.rememberPagerState(
+        initialPage = (surah.id - 1).coerceIn(0, 113)
+    ) { 114 }
+    // Caller-driven navigation (search hit, bookmark, juz, go-to-page,
+    // "continue reading") jumps the pager; the drawer scrolls it directly.
+    LaunchedEffect(surah.id, navToken) {
+        if (pager.currentPage != surah.id - 1) pager.scrollToPage(surah.id - 1)
     }
-    val hasBasmala = surah.id != 9 && surah.id != 1
-    // Basmala header text comes from the verified DB (1:1), never typed —
-    // same source the Madani page uses.
-    val basmala = remember { db.basmala() }
-    // Ayah being recited in THIS surah (iOS recitingKey) — Compose state
-    // from the player, so the highlight tracks playback automatically.
-    val recitingAyah =
-        if (NoorPlayer.currentSurah == surah.id) NoorPlayer.currentAyah else 0
-    // Recitation wins over the arrival highlight (iOS: recitingKey ?? selectedKey).
-    val highlightAyah = if (recitingAyah > 0) recitingAyah else scrollToAyah
-    // Continuous mushaf-style flow: one attributed stream with gold ayah
-    // markers, ۞ at hizb-quarter starts, ۩ on sajdah ayat and a small juz
-    // header line where a new juz begins — all indexing marks, never text
-    // edits. Each verse span is annotated so a tap resolves its ayah.
-    val flow = remember(surah.id, fontSize, highlightAyah) {
-        buildAnnotatedString {
-            verses.forEach { verse ->
-                val key = surah.id * 1000 + verse.ayah
-                juzAt[key]?.let { idx ->
-                    if (length > 0) append("\n")
-                    withStyle(SpanStyle(
-                        color = NoorColor.accentGold,
-                        fontSize = (fontSize * 0.5f).sp,
-                        fontWeight = FontWeight.SemiBold)) {
-                        append("— " + context.getString(R.string.g2_juz_n, idx.localizedDigits()) + " —")
-                    }
-                    append("\n")
-                }
-                pushStringAnnotation(tag = "ayah", annotation = verse.ayah.toString())
-                if (key in quarterKeys) {
-                    withStyle(SpanStyle(color = NoorColor.accentGold)) { append("۞ ") }
-                }
-                // Ayah 1 of surahs 2..114 stores the basmala as a leading
-                // prefix; the reader draws its own basmala line above, so
-                // render only the ayah's own words (see QuranDb KDoc).
-                val body = db.textWithoutLeadingBasmala(verse)
-                if (highlightAyah == verse.ayah) {
-                    withStyle(SpanStyle(background = NoorColor.stateReciting)) {
-                        append(body)
-                    }
-                } else {
-                    append(body)
-                }
-                if (key in sajdaKeys) {
-                    withStyle(SpanStyle(color = NoorColor.accentGold)) { append(" ۩") }
-                }
-                withStyle(SpanStyle(
-                    color = NoorColor.accentGold,
-                    fontSize = (fontSize * 0.62f).sp)) {
-                    append(" ⁧﴿${verse.ayah.arabicIndic()}﴾⁩ ")
-                }
-                pop()
+    val currentSurah = surahs.firstOrNull { it.id == pager.currentPage + 1 } ?: surah
+    val juz = juzOf(
+        currentSurah.id,
+        if (currentSurah.id == surah.id) scrollToAyah.coerceAtLeast(1) else 1)
+    // Resume position: one direct prefs write per settled surah, off-main —
+    // never observed as Compose state (same rule as the Madani pager), and
+    // driven from an effect, never from composition.
+    // A settle on a surah other than the one being recited means the reader
+    // swiped away — stop auto-following until playback restarts (mirrors the
+    // Madani pager's followPlayback).
+    var followPlayback by remember { mutableStateOf(true) }
+    LaunchedEffect(pager) {
+        androidx.compose.runtime.snapshotFlow { pager.settledPage }.collect { page ->
+            if (NoorPlayer.currentSurah != 0 && page + 1 != NoorPlayer.currentSurah) {
+                followPlayback = false
             }
+            withContext(Dispatchers.IO) { ReadingProgress.surahViewed(context, page + 1) }
         }
     }
-    // Ayah picked for the actions sheet / tafsir (0 = none).
-    var actionAyah by remember(surah.id) { mutableStateOf(0) }
-    var tafsirAyah by remember(surah.id) { mutableStateOf(0) }
-    var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
-    val listState = rememberLazyListState()
-
-    fun ayahAt(position: Offset) {
-        val layout = textLayout ?: return
-        val offset = layout.getOffsetForPosition(position)
-        flow.getStringAnnotations("ayah", offset, offset).firstOrNull()?.let {
-            actionAyah = it.item.toIntOrNull() ?: 0
-        }
+    // Verses, loaded off-main and cached by surah id. Access-ordered and
+    // capped, so only the pages around the reader hold verse data.
+    val verseCache = remember {
+        java.util.Collections.synchronizedMap(
+            object : LinkedHashMap<Int, List<Verse>>(8, 0.75f, true) {
+                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Int, List<Verse>>) =
+                    size > 7
+            })
+    }
+    val versesFor: suspend (Int) -> List<Verse> = { id ->
+        verseCache[id] ?: withContext(Dispatchers.IO) { db.verses(id) }.also { verseCache[id] = it }
     }
 
-    fun startPlayback(fromAyah: Int = 1) {
+    // Ayah picked for the actions sheet / tafsir — the SURAH travels with
+    // the verse, so bookmark/share/copy/video/tafsir can never be filed
+    // under the surah the reader happened to open at.
+    var actionTarget by remember { mutableStateOf<Pair<Surah, Verse>?>(null) }
+    var tafsirTarget by remember { mutableStateOf<Pair<Surah, Verse>?>(null) }
+
+    fun startPlayback(s: Surah, fromAyah: Int = 1) {
         scope.launch {
             // "This page only" boundary comes from the layout DB — off-main.
             val pageEnd = withContext(Dispatchers.IO) {
                 runCatching {
-                    PageLayoutDb.get(context).pageEndAyah(surah.id, fromAyah)
+                    PageLayoutDb.get(context).pageEndAyah(s.id, fromAyah)
                 }.getOrDefault(0)
             }
-            NoorPlayer.play(surah.id, surah.ayahCount, fromAyah, surah.nameArabic, pageEnd)
+            NoorPlayer.play(s.id, s.ayahCount, fromAyah, s.nameArabic, pageEnd)
         }
     }
 
-    fun shareAyah(verse: Verse) {
+    fun shareAyah(s: Surah, verse: Verse) {
         scope.launch {
             val bitmap = withContext(Dispatchers.IO) {
                 ShareCard.render(
                     context,
                     "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩",
-                    context.getString(R.string.g2_surah_prefix, surah.nameArabic) +
-                        " · ${surah.id.localizedDigits()}:${verse.ayah.localizedDigits()}",
+                    context.getString(R.string.g2_surah_prefix, s.nameArabic) +
+                        " · ${s.id.localizedDigits()}:${verse.ayah.localizedDigits()}",
                     useQuranFont = true)
             }
             ShareCard.share(context, bitmap)
         }
     }
 
-    fun copyAyah(verse: Verse) {
+    fun copyAyah(s: Surah, verse: Verse) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText(
             context.getString(R.string.g2_ayah_clip_label),
-            "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩ — ${surah.id}:${verse.ayah}"))
+            "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩ — ${s.id}:${verse.ayah}"))
     }
 
-    // Open-at-ayah: ayah mode scrolls to the block; flow mode scrolls the
-    // single flow item to the ayah's first line once the layout is known.
-    // Keyed on scrollToAyah too: go-to-page / search / hizb references can
-    // resolve inside the surah already open, changing only the ayah.
-    LaunchedEffect(mode, surah.id, scrollToAyah) {
-        if (mode == "ayah" && scrollToAyah > 0) {
-            val idx = verses.indexOfFirst { it.ayah == scrollToAyah }
-            if (idx >= 0) listState.scrollToItem((if (hasBasmala) 1 else 0) + idx)
-        }
-    }
-    var didScrollFlow by remember(surah.id, scrollToAyah) { mutableStateOf(false) }
-    LaunchedEffect(textLayout, mode, scrollToAyah) {
-        val layout = textLayout
-        if (mode == "ayah" || didScrollFlow || scrollToAyah <= 0 || layout == null) return@LaunchedEffect
-        val target = flow.getStringAnnotations("ayah", 0, flow.length)
-            .firstOrNull { it.item == scrollToAyah.toString() }?.start ?: return@LaunchedEffect
-        didScrollFlow = true
-        val top = layout.getLineTop(layout.getLineForOffset(target)).toInt()
-        listState.scrollToItem(if (hasBasmala) 1 else 0, top)
-    }
-    // Follow-along scroll (iOS onChange(of: recitingKey) → scrollTo):
-    // as recitation advances, keep the playing ayah in view. Driven by
-    // the player's Compose state via snapshotFlow — no polling. The span
-    // offsets are stable across highlight rebuilds (styles add no text).
-    LaunchedEffect(mode, surah.id) {
-        androidx.compose.runtime.snapshotFlow {
-            if (NoorPlayer.currentSurah == surah.id) NoorPlayer.currentAyah else 0
-        }.collect { ayah ->
-            if (ayah <= 0) return@collect
-            if (mode == "ayah") {
-                val idx = verses.indexOfFirst { it.ayah == ayah }
-                if (idx >= 0) listState.animateScrollToItem((if (hasBasmala) 1 else 0) + idx)
-            } else {
-                val layout = textLayout ?: return@collect
-                val target = flow.getStringAnnotations("ayah", 0, flow.length)
-                    .firstOrNull { it.item == ayah.toString() }?.start ?: return@collect
-                val top = layout.getLineTop(layout.getLineForOffset(target)).toInt()
-                listState.animateScrollToItem(if (hasBasmala) 1 else 0, top)
+    // Continuous playback crossing into the next surah (NoorPlayer's
+    // advanceToNextSurah) flips the pager to that surah; the page then
+    // scrolls to the reciting ayah itself. Same follow-along contract as
+    // the Madani pager, driven by the player's Compose state — no polling.
+    LaunchedEffect(pager) {
+        androidx.compose.runtime.snapshotFlow { NoorPlayer.currentSurah }.collect { playing ->
+            if (playing == 0) {
+                followPlayback = true  // next session follows again
+                return@collect
+            }
+            if (followPlayback && playing in 1..114 && pager.currentPage != playing - 1) {
+                pager.animateScrollToPage(playing - 1)
             }
         }
     }
+    // The reader swiped away, then drove the player by hand (previous / next
+    // / play, or tapped the pill's reference): jump back to the recitation.
+    LaunchedEffect(pager) {
+        androidx.compose.runtime.snapshotFlow { NoorPlayer.resyncRequest }
+            .drop(1)
+            .collect {
+                val playing = NoorPlayer.currentSurah
+                followPlayback = true
+                if (playing in 1..114 && pager.currentPage != playing - 1) {
+                    pager.animateScrollToPage(playing - 1)
+                }
+            }
+    }
 
-    // The iOS ayah-actions sheet: play from here, tafsir, share, copy, bookmark.
-    val actionVerse = verses.firstOrNull { it.ayah == actionAyah }
-    if (actionVerse != null) {
+    // The iOS ayah-actions sheet: play from here, tafsir, share, copy,
+    // bookmark. It dismisses itself BEFORE firing, so everything the action
+    // needs (scope, videoShare, tafsirTarget) lives at screen level.
+    actionTarget?.let { (actionSurah, actionVerse) ->
         AyahActionsSheet(
             verse = actionVerse,
-            isBookmarked = "${surah.id}:${actionVerse.ayah}" in bookmarks,
-            onPlay = { startPlayback(actionVerse.ayah) },
-            onTafsir = { tafsirAyah = actionVerse.ayah },
-            onShare = { shareAyah(actionVerse) },
-            onShareVideo = { videoShare.start(actionVerse, surah) },
-            onCopy = { copyAyah(actionVerse) },
-            onToggleBookmark = { onToggleBookmark(actionVerse.ayah) },
-            onDismiss = { actionAyah = 0 })
+            isBookmarked = "${actionSurah.id}:${actionVerse.ayah}" in bookmarks,
+            onPlay = { startPlayback(actionSurah, actionVerse.ayah) },
+            onTafsir = { tafsirTarget = actionSurah to actionVerse },
+            onShare = { shareAyah(actionSurah, actionVerse) },
+            onShareVideo = { videoShare.start(actionVerse, actionSurah) },
+            onCopy = { copyAyah(actionSurah, actionVerse) },
+            onToggleBookmark = { onToggleBookmark(actionSurah.id, actionVerse.ayah) },
+            onDismiss = { actionTarget = null })
     }
     AyahVideoProgressDialog(videoShare)
 
-    if (tafsirAyah > 0) {
-        val verse = verses.firstOrNull { it.ayah == tafsirAyah }
-        if (verse != null) {
-            TafsirSheet(
-                surahId = surah.id,
-                ayah = verse.ayah,
-                ayahText = verse.text,
-                onDismiss = { tafsirAyah = 0 },
-                surahName = surah.nameArabic)
-        }
+    tafsirTarget?.let { (tafsirSurah, verse) ->
+        TafsirSheet(
+            surahId = tafsirSurah.id,
+            ayah = verse.ayah,
+            ayahText = verse.text,
+            onDismiss = { tafsirTarget = null },
+            surahName = tafsirSurah.nameArabic)
     }
 
     // Go-to-page (iOS GoToPageSheet, surfaced in the flow reader too):
@@ -782,26 +841,19 @@ fun ReaderScreen(
             onDismiss = { showGoToPage = false })
     }
 
-    Column(modifier.fillMaxSize()) {
+    Box(modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp)
         ) {
-            // Circular elevated back button, like the iOS reader chrome.
-            Surface(
-                shape = CircleShape,
-                color = NoorColor.bgElevated,
-                shadowElevation = 3.dp,
-                modifier = Modifier.size(38.dp).clip(CircleShape).clickable(onClick = onBack)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    // Direction-aware: back points RIGHT in Arabic, LEFT in
-                    // English (the fixed drawable was reversed under English).
-                    Icon(painterResource(NoorIcons.chevronBackward()),
-                         contentDescription = stringResource(R.string.g2_back),
-                         tint = NoorColor.accentPrimary,
-                         modifier = Modifier.size(18.dp))
-                }
+            // The surah drawer replaces the old back button: jump to any
+            // surah without going back to the index (swipe covers the
+            // neighbours). Exiting the reader is the drawer's first row,
+            // and system back.
+            SurahListButton {
+                showOptions = false
+                showSurahList = true
             }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -814,7 +866,7 @@ fun ReaderScreen(
                     }
             ) {
                 Text(
-                    surah.nameArabic,
+                    currentSurah.nameArabic,
                     fontFamily = HafsFont,
                     fontSize = 20.sp,
                     color = NoorColor.inkPrimary,
@@ -837,7 +889,7 @@ fun ReaderScreen(
                 tint = NoorColor.accentPrimary,
                 modifier = Modifier.clip(CircleShape).clickable {
                     if (NoorPlayer.currentSurah != 0) NoorPlayer.toggle()
-                    else startPlayback()
+                    else startPlayback(currentSurah)
                 }.padding(10.dp).size(17.dp)
             )
             // "Aa" opens the reader-options floating panel.
@@ -850,108 +902,24 @@ fun ReaderScreen(
             )
         }
         Box(Modifier.weight(1f)) {
-            // The whole Quran text area is an RTL block, in the English UI too.
-            ArabicDirection {
-            LazyColumn(Modifier.fillMaxSize().padding(horizontal = 18.dp), state = listState) {
-                if (hasBasmala) {
-                    item {
-                        Text(
-                            basmala ?: "",
-                            fontFamily = QuranFont,
-                            fontSize = (fontSize * 0.85f).sp,
-                            textAlign = TextAlign.Center,
-                            style = arabicText(TextAlign.Center),
-                            color = NoorColor.inkPrimary,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
-                        )
-                    }
+            androidx.compose.foundation.pager.HorizontalPager(
+                state = pager,
+                beyondViewportPageCount = 1,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                val pageSurah = surahs.firstOrNull { it.id == page + 1 }
+                if (pageSurah != null) {
+                    SurahPage(
+                        surah = pageSurah,
+                        mode = mode,
+                        fontSize = fontSize,
+                        // The arrival ayah belongs to the surah the caller
+                        // asked for — never to a surah swiped into.
+                        scrollToAyah = if (pageSurah.id == surah.id) scrollToAyah else 0,
+                        meta = meta,
+                        versesFor = versesFor,
+                        onAyahTap = { s, verse -> actionTarget = s to verse })
                 }
-                if (mode == "ayah") {
-                    // آية آية: each ayah its own block with the gold number badge,
-                    // ۩ on sajdah ayat, and a juz header where a new juz starts.
-                    items(verses, key = { it.ayah }) { verse ->
-                        val key = surah.id * 1000 + verse.ayah
-                        Column {
-                            juzAt[key]?.let { idx ->
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-                                ) {
-                                    HorizontalDivider(
-                                        color = NoorColor.accentGold.copy(alpha = 0.35f),
-                                        modifier = Modifier.weight(1f))
-                                    Text(
-                                        stringResource(R.string.g2_juz_n, idx.localizedDigits()),
-                                        fontSize = 12.sp,
-                                        color = NoorColor.accentGold,
-                                        modifier = Modifier.padding(horizontal = 10.dp))
-                                    HorizontalDivider(
-                                        color = NoorColor.accentGold.copy(alpha = 0.35f),
-                                        modifier = Modifier.weight(1f))
-                                }
-                            }
-                            Text(
-                                buildAnnotatedString {
-                                    if (key in quarterKeys) {
-                                        withStyle(SpanStyle(color = NoorColor.accentGold)) {
-                                            append("۞ ")
-                                        }
-                                    }
-                                    // Same basmala de-duplication as the
-                                    // flow layout (QuranDb KDoc).
-                                    append(db.textWithoutLeadingBasmala(verse))
-                                    if (key in sajdaKeys) {
-                                        withStyle(SpanStyle(color = NoorColor.accentGold)) {
-                                            append(" ۩")
-                                        }
-                                    }
-                                    withStyle(SpanStyle(
-                                        color = NoorColor.accentGold,
-                                        fontSize = (fontSize * 0.62f).sp)) {
-                                        append("  ⁧﴿${verse.ayah.arabicIndic()}﴾⁩")
-                                    }
-                                },
-                                fontFamily = QuranFont,
-                                fontSize = fontSize.sp,
-                                lineHeight = (fontSize * 2.2f).sp,
-                                color = NoorColor.inkPrimary,
-                                // RTL paragraph whatever the UI language: the
-                                // ayah-number chip lands at the line end (left).
-                                style = arabicText(),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(
-                                        if (verse.ayah == highlightAyah) NoorColor.stateReciting
-                                        else NoorColor.bgPrimary.copy(alpha = 0f))
-                                    .clickable { actionAyah = verse.ayah }
-                                    .padding(horizontal = 12.dp, vertical = 8.dp)
-                            )
-                        }
-                    }
-                } else {
-                    item {
-                        Text(
-                            flow,
-                            fontFamily = QuranFont,
-                            fontSize = fontSize.sp,
-                            lineHeight = (fontSize * 2.2f).sp,
-                            color = NoorColor.inkPrimary,
-                            textAlign = TextAlign.Justify,
-                            style = arabicText(TextAlign.Justify),
-                            onTextLayout = { textLayout = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 40.dp)
-                                .pointerInput(surah.id) {
-                                    detectTapGestures(
-                                        onTap = { ayahAt(it) },
-                                        onLongPress = { ayahAt(it) })
-                                }
-                        )
-                    }
-                }
-            }
             }
             if (showOptions) {
                 // Scrim: any tap outside the panel dismisses it.
@@ -976,7 +944,200 @@ fun ReaderScreen(
             }
         }
     }
+    SurahDrawer(
+        visible = showSurahList,
+        surahs = surahs,
+        currentSurahId = currentSurah.id,
+        onPick = { picked ->
+            showSurahList = false
+            // Distant jump: move the pager itself, so the reader keeps its
+            // pages and the swipe neighbours stay correct.
+            scope.launch { pager.scrollToPage(picked.id - 1) }
+        },
+        onClose = { showSurahList = false },
+        onExitReader = { showSurahList = false; onBack() })
+    }
 }
+
+/// One surah = one pager page: its basmala line (except surahs 1 and 9) and
+/// its ayat, with its OWN vertical scroll state so swiping horizontally and
+/// scrolling vertically never fight. Verses load off-main through the
+/// caller's cache.
+@Composable
+private fun SurahPage(
+    surah: Surah,
+    mode: String,
+    fontSize: Float,
+    scrollToAyah: Int,
+    meta: ReaderMeta,
+    versesFor: suspend (Int) -> List<Verse>,
+    onAyahTap: (Surah, Verse) -> Unit,
+) {
+    val context = LocalContext.current
+    val db = remember { QuranDb.get(context) }
+    val listState = rememberLazyListState()
+    val verses by produceState(emptyList<Verse>(), surah.id) { value = versesFor(surah.id) }
+    var textLayout by remember(surah.id) { mutableStateOf<TextLayoutResult?>(null) }
+    val hasBasmala = hasBasmalaLine(surah.id)
+    // Ayah being recited in THIS surah (iOS recitingKey) — Compose state
+    // from the player, so the highlight tracks playback automatically.
+    val recitingAyah = if (NoorPlayer.currentSurah == surah.id) NoorPlayer.currentAyah else 0
+    // Recitation wins over the arrival highlight (iOS: recitingKey ?? selectedKey).
+    val highlightAyah = if (recitingAyah > 0) recitingAyah else scrollToAyah
+    val flow = remember(surah.id, verses, fontSize, highlightAyah, mode) {
+        if (mode == "ayah") androidx.compose.ui.text.AnnotatedString("")
+        else buildSurahFlow(context, db, surah.id, verses, meta.juzAt, meta.quarterKeys,
+                            meta.sajdaKeys, fontSize, highlightAyah)
+    }
+
+    // Scrolls this page to an ayah: flow mode lands on the ayah's first
+    // line, ayah mode on its block.
+    suspend fun scrollTo(ayah: Int, animate: Boolean) {
+        if (ayah <= 0 || verses.isEmpty()) return
+        if (mode == "ayah") {
+            val idx = verses.indexOfFirst { it.ayah == ayah }
+            if (idx < 0) return
+            val target = (if (hasBasmala) 1 else 0) + idx
+            if (animate) listState.animateScrollToItem(target) else listState.scrollToItem(target)
+            return
+        }
+        val layout = textLayout ?: return
+        val offset = flow.getStringAnnotations("ayah", 0, flow.length)
+            .firstOrNull { it.item == ayah.toString() }?.start ?: return
+        val top = layout.getLineTop(layout.getLineForOffset(offset)).toInt()
+        val item = if (hasBasmala) 1 else 0
+        if (animate) listState.animateScrollToItem(item, top) else listState.scrollToItem(item, top)
+    }
+
+    // Open-at-ayah: waits for the verses (and, in flow mode, the paragraph
+    // layout) before scrolling.
+    LaunchedEffect(surah.id, mode, scrollToAyah, verses, textLayout) {
+        if (scrollToAyah <= 0 || verses.isEmpty()) return@LaunchedEffect
+        if (mode != "ayah" && textLayout == null) return@LaunchedEffect
+        scrollTo(scrollToAyah, animate = false)
+    }
+    // Follow-along scroll (iOS onChange(of: recitingKey) → scrollTo): as the
+    // recitation advances, keep the playing ayah in view.
+    LaunchedEffect(surah.id, mode) {
+        androidx.compose.runtime.snapshotFlow {
+            if (NoorPlayer.currentSurah == surah.id) NoorPlayer.currentAyah else 0
+        }.collect { ayah -> if (ayah > 0) scrollTo(ayah, animate = true) }
+    }
+
+    // The whole Quran text area is an RTL block, in the English UI too.
+    ArabicDirection {
+        LazyColumn(Modifier.fillMaxSize().padding(horizontal = 18.dp), state = listState) {
+            if (hasBasmala) {
+                item("basmala") {
+                    Text(
+                        meta.basmala ?: "",
+                        fontFamily = QuranFont,
+                        fontSize = (fontSize * 0.85f).sp,
+                        textAlign = TextAlign.Center,
+                        style = arabicText(TextAlign.Center),
+                        color = NoorColor.inkPrimary,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
+                    )
+                }
+            }
+            if (mode == "ayah") {
+                // آية آية: each ayah its own block with the gold number badge,
+                // ۩ on sajdah ayat, and a juz header where a new juz starts.
+                items(verses, key = { it.ayah }) { verse ->
+                    val key = surah.id * 1000 + verse.ayah
+                    Column {
+                        meta.juzAt[key]?.let { idx ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                            ) {
+                                HorizontalDivider(
+                                    color = NoorColor.accentGold.copy(alpha = 0.35f),
+                                    modifier = Modifier.weight(1f))
+                                Text(
+                                    stringResource(R.string.g2_juz_n, idx.localizedDigits()),
+                                    fontSize = 12.sp,
+                                    color = NoorColor.accentGold,
+                                    modifier = Modifier.padding(horizontal = 10.dp))
+                                HorizontalDivider(
+                                    color = NoorColor.accentGold.copy(alpha = 0.35f),
+                                    modifier = Modifier.weight(1f))
+                            }
+                        }
+                        Text(
+                            buildAnnotatedString {
+                                if (key in meta.quarterKeys) {
+                                    withStyle(SpanStyle(color = NoorColor.accentGold)) {
+                                        append("۞ ")
+                                    }
+                                }
+                                // Same basmala de-duplication as the flow
+                                // layout (QuranDb KDoc).
+                                append(db.textWithoutLeadingBasmala(verse))
+                                if (key in meta.sajdaKeys) {
+                                    withStyle(SpanStyle(color = NoorColor.accentGold)) {
+                                        append(" ۩")
+                                    }
+                                }
+                                withStyle(SpanStyle(
+                                    color = NoorColor.accentGold,
+                                    fontSize = (fontSize * 0.62f).sp)) {
+                                    append("  ⁧﴿${verse.ayah.arabicIndic()}﴾⁩")
+                                }
+                            },
+                            fontFamily = QuranFont,
+                            fontSize = fontSize.sp,
+                            lineHeight = (fontSize * 2.2f).sp,
+                            color = NoorColor.inkPrimary,
+                            // RTL paragraph whatever the UI language: the
+                            // ayah-number chip lands at the line end (left).
+                            style = arabicText(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    if (verse.ayah == highlightAyah) NoorColor.stateReciting
+                                    else NoorColor.bgPrimary.copy(alpha = 0f))
+                                .clickable { onAyahTap(surah, verse) }
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        )
+                    }
+                }
+            } else {
+                item("flow") {
+                    Text(
+                        flow,
+                        fontFamily = QuranFont,
+                        fontSize = fontSize.sp,
+                        lineHeight = (fontSize * 2.2f).sp,
+                        color = NoorColor.inkPrimary,
+                        textAlign = TextAlign.Justify,
+                        style = arabicText(TextAlign.Justify),
+                        onTextLayout = { textLayout = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 40.dp)
+                            .pointerInput(surah.id, flow) {
+                                fun pick(position: Offset) {
+                                    val layout = textLayout ?: return
+                                    val offset = layout.getOffsetForPosition(position)
+                                    flow.getStringAnnotations("ayah", offset, offset)
+                                        .firstOrNull()?.item?.toIntOrNull()?.let { ayah ->
+                                            verses.firstOrNull { it.ayah == ayah }
+                                                ?.let { onAyahTap(surah, it) }
+                                        }
+                                }
+                                detectTapGestures(
+                                    onTap = { pick(it) },
+                                    onLongPress = { pick(it) })
+                            }
+                    )
+                }
+            }
+        }
+    }
+}
+
 
 /// Floating elevated card under the top bar — the iOS reader options panel:
 /// segmented مصحف / المدني / آية آية picker + Quran text-size stepper

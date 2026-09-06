@@ -257,6 +257,14 @@ private fun SettingsMain(
             NavRow(title = stringResource(R.string.g1_reciter), value = NoorPlayer.reciter.localizedName,
                    onClick = { showReciterPicker = true })
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
+            // Same picker sheet as the reciter row — its pinned top section
+            // is the translated-reading chooser (mirrors iOS Settings).
+            NavRow(title = stringResource(R.string.g2_translation_audio),
+                   value = if (NoorPlayer.translation == TranslationVoice.NONE)
+                               stringResource(R.string.g1_off)
+                           else NoorPlayer.translation.localizedName,
+                   onClick = { showReciterPicker = true })
+            HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             NavRow(title = stringResource(R.string.g1_tajweed_guide), onClick = openTajweed)
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             MushafDownloadRow()

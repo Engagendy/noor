@@ -11,9 +11,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -26,69 +29,121 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /// Reciter picker sheet — search + flags, like the iOS reciter list.
-/// Sections: Hafs reciters, Warsh reciters (with the text-vs-recitation
-/// note), then "Translation audio" (Off + the translated readings).
+/// "Translation audio" is a PINNED row at the very top (above the search
+/// field, never scrolls away) that expands in place into its six options;
+/// below it are the Hafs and Warsh reciter sections.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReciterPickerSheet(onDismiss: () -> Unit) {
     var query by remember { mutableStateOf("") }
+    // Expand-in-place: while open it replaces the search field + reciter
+    // list, so the sheet never grows a second scrolling area.
+    var translationsOpen by remember { mutableStateOf(false) }
     fun matches(r: ReciterA) = query.isBlank() ||
         r.nameArabic.contains(query) || r.nameEnglish.contains(query, ignoreCase = true)
     val hafs = Reciters.hafs.filter(::matches)
     val warsh = Reciters.warsh.filter(::matches)
-    val translations = TranslationVoice.entries.filter {
-        query.isBlank() || it == TranslationVoice.NONE ||
-            it.nameArabic.contains(query) || it.nameEnglish.contains(query, ignoreCase = true)
-    }
-    val showTranslations = query.isBlank() || translations.size > 1
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
         Column(Modifier.padding(horizontal = 16.dp)) {
             Text(stringResource(R.string.g2_choose_reciter), fontSize = 17.sp, fontWeight = FontWeight.Bold,
                  color = NoorColor.inkPrimary,
                  modifier = Modifier.padding(bottom = 10.dp))
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                placeholder = { Text(stringResource(R.string.g2_search_reciters), color = NoorColor.inkSecondary) },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = NoorColor.accentPrimary,
-                    unfocusedBorderColor = NoorColor.inkSecondary.copy(alpha = 0.3f),
-                    focusedContainerColor = NoorColor.bgElevated,
-                    unfocusedContainerColor = NoorColor.bgElevated,
-                ),
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-            )
-            LazyColumn(Modifier.heightIn(max = 480.dp)) {
-                if (hafs.isNotEmpty() && warsh.isNotEmpty()) {
-                    item(key = "hafsHeader") { SectionHeader(stringResource(R.string.g2_section_hafs)) }
-                }
-                items(hafs, key = { it.id }) { ReciterRow(it, onDismiss) }
-                if (warsh.isNotEmpty()) {
-                    item(key = "warshHeader") { SectionHeader(stringResource(R.string.g2_section_warsh)) }
-                    items(warsh, key = { it.id }) { ReciterRow(it, onDismiss) }
-                    item(key = "warshNote") { SectionFooter(stringResource(R.string.g2_warsh_note)) }
-                }
-                if (showTranslations) {
-                    item(key = "translationHeader") {
-                        SectionHeader(stringResource(R.string.g2_translation_audio))
+            TranslationSummaryRow(
+                expanded = translationsOpen,
+                onClick = { translationsOpen = !translationsOpen })
+            if (translationsOpen) {
+                Column(
+                    Modifier
+                        .heightIn(max = 480.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(top = 4.dp)
+                ) {
+                    TranslationVoice.entries.forEach { voice ->
+                        TranslationRow(voice, onSelected = { translationsOpen = false })
                     }
-                    items(translations, key = { "translation_" + it.name }) { voice ->
-                        TranslationRow(voice, onDismiss)
+                    SectionFooter(stringResource(R.string.g2_translation_audio_note))
+                }
+            } else {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    placeholder = { Text(stringResource(R.string.g2_search_reciters), color = NoorColor.inkSecondary) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NoorColor.accentPrimary,
+                        unfocusedBorderColor = NoorColor.inkSecondary.copy(alpha = 0.3f),
+                        focusedContainerColor = NoorColor.bgElevated,
+                        unfocusedContainerColor = NoorColor.bgElevated,
+                    ),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp),
+                )
+                LazyColumn(Modifier.heightIn(max = 480.dp)) {
+                    if (hafs.isNotEmpty() && warsh.isNotEmpty()) {
+                        item(key = "hafsHeader") { SectionHeader(stringResource(R.string.g2_section_hafs)) }
                     }
-                    item(key = "translationNote") {
-                        SectionFooter(stringResource(R.string.g2_translation_audio_note))
+                    items(hafs, key = { it.id }) { ReciterRow(it, onDismiss) }
+                    if (warsh.isNotEmpty()) {
+                        item(key = "warshHeader") { SectionHeader(stringResource(R.string.g2_section_warsh)) }
+                        items(warsh, key = { it.id }) { ReciterRow(it, onDismiss) }
+                        item(key = "warshNote") { SectionFooter(stringResource(R.string.g2_warsh_note)) }
                     }
                 }
             }
         }
+    }
+}
+
+/// Pinned "Translation audio" row — label + current value + disclosure.
+/// Tinted with the accent while a translated reading is on, so its state
+/// reads at a glance.
+@Composable
+private fun TranslationSummaryRow(expanded: Boolean, onClick: () -> Unit) {
+    val voice = NoorPlayer.translation
+    val on = voice != TranslationVoice.NONE
+    val label = stringResource(R.string.g2_translation_audio)
+    val value = if (on) voice.localizedName else stringResource(R.string.g1_off)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .background(
+                if (on) NoorColor.accentPrimary.copy(alpha = 0.10f) else NoorColor.bgElevated,
+                RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_translate),
+            contentDescription = null,
+            tint = if (on) NoorColor.accentPrimary else NoorColor.inkSecondary,
+            modifier = Modifier.size(22.dp))
+        Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+             maxLines = 1, color = NoorColor.inkPrimary)
+        // The value takes the slack and ellipsizes, so the label never wraps.
+        Text(value, fontSize = 13.sp, maxLines = 1,
+             overflow = TextOverflow.Ellipsis,
+             textAlign = TextAlign.End,
+             color = if (on) NoorColor.accentPrimary else NoorColor.inkSecondary,
+             modifier = Modifier.weight(1f))
+        Icon(
+            painterResource(
+                if (expanded) NoorIcons.chevronBackward() else NoorIcons.chevronForward()),
+            contentDescription = null,
+            tint = if (on) NoorColor.accentPrimary else NoorColor.inkSecondary,
+            modifier = Modifier.size(16.dp))
     }
 }
 
@@ -113,6 +168,7 @@ private fun ReciterRow(reciter: ReciterA, onDismiss: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(12.dp))
             .clickable { NoorPlayer.selectReciter(reciter); onDismiss() }
             .background(
@@ -123,8 +179,8 @@ private fun ReciterRow(reciter: ReciterA, onDismiss: () -> Unit) {
     ) {
         if (reciter.flag.isEmpty()) {
             // Vector fallback — never an emoji glyph as icon.
-            androidx.compose.material3.Icon(
-                androidx.compose.ui.res.painterResource(R.drawable.ic_mic),
+            Icon(
+                painterResource(R.drawable.ic_mic),
                 contentDescription = null,
                 tint = NoorColor.accentPrimary,
                 modifier = Modifier.size(20.dp))
@@ -143,10 +199,11 @@ private fun ReciterRow(reciter: ReciterA, onDismiss: () -> Unit) {
     }
 }
 
-/// One translated-reading option ("Off" first). Selecting does not close
-/// the sheet — it is a modifier on top of the reciter, not a replacement.
+/// One translated-reading option ("Off" first). Selecting collapses the
+/// section but keeps the sheet open — it is a modifier on top of the
+/// reciter, not a replacement.
 @Composable
-private fun TranslationRow(voice: TranslationVoice, onDismiss: () -> Unit) {
+private fun TranslationRow(voice: TranslationVoice, onSelected: () -> Unit) {
     val selected = voice == NoorPlayer.translation
     val label = if (voice == TranslationVoice.NONE) stringResource(R.string.g1_off)
                 else voice.localizedName
@@ -155,16 +212,17 @@ private fun TranslationRow(voice: TranslationVoice, onDismiss: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(12.dp))
-            .clickable { NoorPlayer.selectTranslation(voice); onDismiss() }
+            .clickable { NoorPlayer.selectTranslation(voice); onSelected() }
             .background(
                 if (selected) NoorColor.stateReciting
                 else NoorColor.bgPrimary,
                 RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 12.dp)
     ) {
-        androidx.compose.material3.Icon(
-            androidx.compose.ui.res.painterResource(R.drawable.ic_mic),
+        Icon(
+            painterResource(R.drawable.ic_translate),
             contentDescription = null,
             tint = if (voice == TranslationVoice.NONE) NoorColor.inkSecondary
                    else NoorColor.accentPrimary,

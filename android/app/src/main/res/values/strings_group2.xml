@@ -129,4 +129,7 @@
     <string name="g2_copy">نسخ</string>
     <string name="g2_bookmarked">محفوظة في الإشارات</string>
     <string name="g2_bookmark">إشارة مرجعية</string>
+    <!-- Reader chrome: surah drawer -->
+    <string name="g2_surah_list">فهرس السور</string>
+    <string name="g2_back_to_quran">الرجوع إلى القرآن</string>
 </resources>

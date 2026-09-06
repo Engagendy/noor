@@ -56,6 +56,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/// One page's measurement: the mapped words and their widths per line
+/// index, and the single scale the whole page renders at (the smallest any
+/// line needs, so one glyph size serves the page like the print).
+private data class PageMeasure(
+    val words: Map<Int, List<String>>,
+    val widths: Map<Int, List<Float>>,
+    val scale: Float,
+)
+
 /// Pixel-faithful Madani mushaf: HorizontalPager over all 604 printed
 /// pages, with the iOS reader chrome — a fixed-height top strip that
 /// cross-fades between full controls (back · surah + juz/page · play · Aa)
@@ -81,10 +90,18 @@ fun MushafScreen(
     var chromeVisible by remember { mutableStateOf(true) }
     var showOptions by remember { mutableStateOf(false) }
     var showGoToPage by remember { mutableStateOf(false) }
-    // The options panel is a plain overlay (not a dialog): back closes it
-    // first; with it closed, the caller's handler pops the mushaf itself.
-    // (GoToPageDialog is a real Dialog and consumes back on its own.)
+    // Surah drawer (same component as the flow reader) — it replaced the
+    // chrome's back button, so it also carries the way out of the reader.
+    var showSurahList by remember { mutableStateOf(false) }
+    val allSurahs by produceState(emptyList<Surah>()) {
+        value = withContext(Dispatchers.IO) { QuranDb.get(context).surahs() }
+    }
+    // The options panel and the drawer are plain overlays (not dialogs):
+    // back closes them first; with them closed, the caller's handler pops
+    // the mushaf itself. (GoToPageDialog is a real Dialog and consumes back
+    // on its own.)
     androidx.activity.compose.BackHandler(enabled = showOptions) { showOptions = false }
+    androidx.activity.compose.BackHandler(enabled = showSurahList) { showSurahList = false }
     // Ayah long-pressed on the page — the iOS ayah-actions sheet.
     var actionRef by remember { mutableStateOf<AyahRef?>(null) }
     // Tafsir opened from that sheet (survives the sheet's self-dismiss).
@@ -182,7 +199,8 @@ fun MushafScreen(
         }
     }
 
-    Column(modifier.fillMaxSize()) {
+    Box(modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize()) {
         MushafTopBar(
             page = currentPage,
             surah = titleSurah,
@@ -191,7 +209,11 @@ fun MushafScreen(
             onToggleChrome = { chromeVisible = !chromeVisible },
             onToggleOptions = { showOptions = !showOptions },
             onGoToPage = { showGoToPage = true },
-            onBack = onBack)
+            onOpenList = {
+                showOptions = false
+                chromeVisible = true
+                showSurahList = true
+            })
         Box(Modifier.weight(1f)) {
             HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = 1) { index ->
                 MadaniPage(
@@ -217,6 +239,22 @@ fun MushafScreen(
                 )
             }
         }
+    }
+    SurahDrawer(
+        visible = showSurahList,
+        surahs = allSurahs,
+        currentSurahId = titleSurah?.id ?: 1,
+        onPick = { picked ->
+            showSurahList = false
+            scope.launch {
+                val page = withContext(Dispatchers.IO) {
+                    runCatching { PageLayoutDb.get(context).firstPage(picked.id) }.getOrDefault(0)
+                }
+                if (page in 1..PageLayoutDb.PAGE_COUNT) pager.animateScrollToPage(page - 1)
+            }
+        },
+        onClose = { showSurahList = false },
+        onExitReader = { showSurahList = false; onBack() })
     }
     // Long-pressed ayah → the same actions sheet as the flow reader
     // (play from here, tafsir, share, copy, bookmark). Verse text and surah
@@ -354,7 +392,7 @@ private fun MushafTopBar(
     onToggleChrome: () -> Unit,
     onToggleOptions: () -> Unit,
     onGoToPage: () -> Unit,
-    onBack: () -> Unit,
+    onOpenList: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = androidx.compose.runtime.rememberCoroutineScope()
@@ -392,21 +430,14 @@ private fun MushafTopBar(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxSize().alpha(fullAlpha)
         ) {
-            // Circular elevated back button, 48dp touch target. The chevron
-            // follows the direction-aware rule (RIGHT in ar, LEFT in en),
-            // matching the iOS auto-mirrored chevron.backward.
-            Surface(
-                shape = CircleShape,
-                color = NoorColor.bgElevated,
-                shadowElevation = 3.dp,
-                modifier = Modifier.size(48.dp).clip(CircleShape).clickable(enabled = chromeVisible, onClick = onBack)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(painterResource(NoorIcons.chevronBackward()),
-                         contentDescription = stringResource(R.string.g2_back),
-                         tint = NoorColor.accentPrimary,
-                         modifier = Modifier.size(18.dp))
-                }
+            // Circular elevated surah-list button, 48dp touch target: opens
+            // the surah drawer (which also holds the exit back to the Quran
+            // tab). Only live while the chrome is showing.
+            // While the chrome is hidden the whole strip is a "show chrome"
+            // target, exactly as the old back button behaved (it was
+            // disabled, so taps fell through to the strip).
+            SurahListButton(size = 48) {
+                if (chromeVisible) onOpenList() else onToggleChrome()
             }
             Spacer(Modifier.weight(1f))
             // Center title opens go-to-page while the chrome is visible
@@ -622,13 +653,55 @@ private fun MadaniPageBody(
             min(maxWidthPx / 9.8f, rowHeight.toPx() * 0.72f)
         }
         val basmalaSize = with(density) { (rowHeight.toPx() * 0.45f).toSp() }
+        // ONE glyph size for the whole page, like the print: every Words
+        // line is measured up front and the page takes the SMALLEST scale
+        // any line needs. Scaling per line made a surah's short closing
+        // line (which never overflows, so it kept scale 1) render visibly
+        // larger than the full-width lines around it — in the mushaf
+        // justification comes from the space between words, never from
+        // resizing glyphs. Cached per page + available width, so this never
+        // runs on the recomposition hot path.
+        val measured = remember(page, content.lines, content.fontFamily, baseSizePx, maxWidthPx) {
+            val style = TextStyle(
+                fontFamily = content.fontFamily,
+                fontSize = with(density) { baseSizePx.toSp() })
+            val target = maxWidthPx * 0.995f
+            // A font file that Typeface accepted can still be rejected by
+            // Compose's resolver, and an uncaught "Could not load font" here
+            // kills the app on every attempt to open the page. Measure
+            // defensively and treat a failure as "this font is unusable".
+            runCatching {
+                var pageScale = 1f
+                val words = HashMap<Int, List<String>>()
+                val widths = HashMap<Int, List<Float>>()
+                content.lines.forEachIndexed { index, line ->
+                    if (line.kind != LineKind.Words) return@forEachIndexed
+                    // Codepoints remapped to match the page font.
+                    val lineWords = line.wordsV2.map { PageFontStore.mapGlyphs(it) }
+                    val lineWidths = lineWords.map { word ->
+                        measurer.measure(
+                            AnnotatedString(word), style,
+                            softWrap = false, maxLines = 1
+                        ).size.width.toFloat()
+                    }
+                    words[index] = lineWords
+                    widths[index] = lineWidths
+                    val total = lineWidths.sum()
+                    if (total > target) pageScale = min(pageScale, target / total)
+                }
+                PageMeasure(words, widths, pageScale)
+            }.onFailure {
+                android.util.Log.e("NoorFont",
+                    "measure failed page=$page family=${content.fontFamily}", it)
+            }.getOrNull()
+        }
         // Short pages (1, 2) keep printed row height and sit centered
         // rather than stretching a handful of lines over the whole screen.
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
         ) {
-            content.lines.forEach { line ->
+            content.lines.forEachIndexed { lineIndex, line ->
                 // Soft rounded stateReciting wash behind every line that
                 // carries the playing ayah (line-level, like iOS page mode).
                 val highlighted = reciting != null && reciting in line.ayahRefs
@@ -668,32 +741,7 @@ private fun MadaniPageBody(
                             // neighbors, and the slack distributes evenly
                             // like the justified Madani print. RTL: first
                             // word starts at the right edge.
-                            val style = TextStyle(
-                                fontFamily = content.fontFamily,
-                                fontSize = with(density) { baseSizePx.toSp() })
-                            // Codepoints remapped to match the patched font.
-                            val words = remember(line.glyphsV2) {
-                                line.wordsV2.map { PageFontStore.mapGlyphs(it) }
-                            }
-                            // A font file that Typeface accepted can still be
-                            // rejected by Compose's resolver, and an uncaught
-                            // "Could not load font" here kills the app on every
-                            // attempt to open the page. Measure defensively and
-                            // treat a failure as "this font is unusable".
-                            val widths = remember(line.glyphsV2, baseSizePx, content.fontFamily) {
-                                runCatching {
-                                    words.map { word ->
-                                        measurer.measure(
-                                            AnnotatedString(word), style,
-                                            softWrap = false, maxLines = 1
-                                        ).size.width.toFloat()
-                                    }
-                                }.onFailure {
-                                    android.util.Log.e("NoorFont",
-                                        "measure failed page=$page family=${content.fontFamily}", it)
-                                }.getOrNull()
-                            }
-                            if (widths == null) {
+                            if (measured == null) {
                                 // Throw the bad file away and ask for it again;
                                 // the placeholder shows until it arrives.
                                 LaunchedEffect(page) {
@@ -704,13 +752,18 @@ private fun MadaniPageBody(
                                 }
                                 return@Box
                             }
-                            val total = widths.sum()
+                            val words = measured.words[lineIndex] ?: return@Box
+                            val widths = measured.widths[lineIndex] ?: return@Box
+                            val scale = measured.scale
+                            // The page's uniform size decides the printed
+                            // width; justification then distributes the
+                            // remaining slack between the words. Closing
+                            // lines under 55% of the width stay centered,
+                            // like the print.
+                            val total = widths.sum() * scale
                             val target = maxWidthPx * 0.995f
-                            // Overflow shrinks; short closing lines (<55%)
-                            // stay centered like the print.
-                            val scale = if (total > target) target / total else 1f
                             val justify = total >= maxWidthPx * 0.55f
-                            val slack = (target - total * scale).coerceAtLeast(0f)
+                            val slack = (target - total).coerceAtLeast(0f)
                             val gap = if (justify && words.size > 1)
                                 slack / (words.size - 1) else 0f
                             // Words arrive in reading order, so the first must

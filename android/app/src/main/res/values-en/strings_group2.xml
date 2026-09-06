@@ -128,4 +128,7 @@
     <string name="g2_copy">Copy</string>
     <string name="g2_bookmarked">Saved in bookmarks</string>
     <string name="g2_bookmark">Bookmark</string>
+    <!-- Reader chrome: surah drawer -->
+    <string name="g2_surah_list">Surah list</string>
+    <string name="g2_back_to_quran">Back to Quran</string>
 </resources>
