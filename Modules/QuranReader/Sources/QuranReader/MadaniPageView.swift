@@ -38,8 +38,18 @@ struct MadaniPageView: View {
     /// placed by us and the slack is shared between the gaps — the same
     /// algorithm the Android reader uses, so both platforms match the print.
     /// Short closing lines stay centered rather than being stretched apart.
+    ///
+    /// `pageScale` is the ONE scale the whole page prints at (see
+    /// `GlyphMetrics.pageScale`). Sizing each line on its own made a surah's
+    /// short closing line — which never needs shrinking — tower over the
+    /// full-width lines that did (pages 595, 602). In the printed mushaf every
+    /// glyph on a page shares one size; only the gaps between words change.
     @ViewBuilder
-    private func justifiedLine(_ line: PageLine, fontSize: CGFloat, width: CGFloat) -> some View {
+    private func justifiedLine(_ line: PageLine,
+                               fontSize: CGFloat,
+                               width: CGFloat,
+                               pageScale: CGFloat,
+                               pageInk: (top: CGFloat, bottom: CGFloat)) -> some View {
         let fontName = PageFontStore.fontName(page: page)
         let words = lineWords(line)
         let total = GlyphMetrics.total(words, page: page, size: fontSize)
@@ -52,14 +62,15 @@ struct MadaniPageView: View {
                 // than the size measured against and the line overflows. A
                 // mushaf page is a fixed 15-row grid already sized to the
                 // screen, so it must not scale a second time.
-                .font(.custom(fontName, fixedSize: fontSize))
+                .font(.custom(fontName, fixedSize: fontSize * pageScale))
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
         } else {
             let target = width * 0.995
-            // Overflow shrinks the line; it must never clip.
-            let scale = total > target ? target / total : 1
+            // The page's shared scale already fits every line; the second
+            // branch is a float-rounding safety net so a line can never clip.
+            let scale = total * pageScale > target ? target / total : pageScale
             let justify = total * scale >= width * 0.55
             let slack = max(target - total * scale, 0)
             let gap = justify && words.count > 1 ? slack / CGFloat(words.count - 1) : 0
@@ -69,12 +80,17 @@ struct MadaniPageView: View {
             // Outlines fill wherever the ink is, and Dynamic Type never
             // enters into it.
             let outlines = GlyphMetrics.outlines(words, page: page, size: fontSize)
-            let metrics = GlyphMetrics.vertical(page: page, size: fontSize)
             Canvas { context, canvasSize in
                 let blockWidth = total * scale + gap * CGFloat(max(words.count - 1, 0))
                 var x = (canvasSize.width + blockWidth) / 2           // right edge, RTL
-                let baseline = (canvasSize.height - (metrics.ascent + metrics.descent) * scale) / 2
-                    + metrics.ascent * scale
+                // Baseline from the page's INK extent, not the font's nominal
+                // ascent/descent: QCF marks that ride high (the maddah over
+                // ٱلٓمٓ, the superscript marks on the basmala line) reach above
+                // the ascent, and a Canvas clips to its own bounds, so they
+                // came out sliced flat. Measured page-wide, so every row keeps
+                // the same baseline instead of jittering per line.
+                let baseline = (canvasSize.height - (pageInk.top + pageInk.bottom) * scale) / 2
+                    + pageInk.top * scale
                 for word in outlines {
                     x -= word.advance * scale
                     // Font units are y-up; the canvas is y-down.
@@ -140,6 +156,19 @@ struct MadaniPageView: View {
             let contentWidth = geometry.size.width - Self.pageMargin * 2
             let rowHeight = geometry.size.height / CGFloat(max(lines.count, 15))
             let fontSize = min(contentWidth / 9.8, rowHeight * 0.72)
+            // One glyph size for the whole page, measured once per
+            // (page, variant, size, column width) — never per redraw.
+            let pageScale = GlyphMetrics.pageScale(lines,
+                                                   page: page,
+                                                   size: fontSize,
+                                                   target: contentWidth * 0.995,
+                                                   words: lineWords)
+            // How far the page's ink really reaches above and below the
+            // baseline — cached alongside the scale, same measurement pass.
+            let pageInk = GlyphMetrics.pageInk(lines,
+                                               page: page,
+                                               size: fontSize,
+                                               words: lineWords)
             Group {
                 if fontReady && !lines.isEmpty {
                     VStack(spacing: 0) {
@@ -172,7 +201,9 @@ struct MadaniPageView: View {
                             case .words:
                                 justifiedLine(line,
                                               fontSize: fontSize,
-                                              width: contentWidth)
+                                              width: contentWidth,
+                                              pageScale: pageScale,
+                                              pageInk: pageInk)
                                     .frame(maxWidth: .infinity)
                                     .frame(height: rowHeight)
                                     .background(
@@ -241,8 +272,88 @@ private enum GlyphMetrics {
     struct Outline {
         let path: CGPath
         let advance: CGFloat
+        /// Where the ink actually reaches, relative to the baseline (y-up).
+        /// QCF marks can sit well above the font's nominal ascent.
+        let bounds: CGRect
     }
     private static var cache: [String: Outline] = [:]
+    private static var scaleCache: [String: CGFloat] = [:]
+    private static var inkCache: [String: (top: CGFloat, bottom: CGFloat)] = [:]
+
+    /// The single scale the whole page prints at: the tightest any one of its
+    /// lines needs to fit the column, applied to every line.
+    ///
+    /// A mushaf page is set in ONE glyph size — justification comes from the
+    /// spaces between words, never from resizing a line. Scaling each line on
+    /// its own left a surah's short closing line (which never overflows, so it
+    /// kept scale 1) visibly larger than the full-width lines that had been
+    /// shrunk to fit.
+    ///
+    /// Measured once per (page, variant, size, column width) and kept: the
+    /// reader re-renders on every animation frame, and the cache is consulted
+    /// before the per-line word split is even built.
+    static func pageScale(_ lines: [PageLine],
+                          page: Int,
+                          size: CGFloat,
+                          target: CGFloat,
+                          words: (PageLine) -> [String]) -> CGFloat {
+        // No font yet: measuring would yield nothing, and caching that "1"
+        // would stick once the download lands.
+        guard target > 0, PageFontStore.measurementFont(page: page, size: size) != nil else { return 1 }
+        let key = "\(page)|\(Int(size * 10))|\(Int(target * 10))|\(PageFontStore.variant)"
+        if let hit = scaleCache[key] { return hit }
+        var scale: CGFloat = 1
+        var measured = false
+        for line in lines where line.kind == .words {
+            let total = total(words(line), page: page, size: size)
+            guard total > 0 else { continue }
+            measured = true
+            if total > target { scale = min(scale, target / total) }
+        }
+        // The first body pass runs before `.task` has loaded the page's
+        // lines. Caching that empty pass would pin the page at scale 1 —
+        // exactly the per-line sizing this exists to remove.
+        guard measured else { return 1 }
+        scaleCache[key] = scale
+        return scale
+    }
+
+    /// The page's true ink extent above and below the baseline, at `size`.
+    ///
+    /// A row is a fixed slice of the 15-row grid and a Canvas clips to its own
+    /// bounds, so a baseline placed from the font's nominal ascent sliced the
+    /// tops off high marks. Taking the union of the glyph outlines' bounding
+    /// boxes gives the box that actually has to fit; centring that box in the
+    /// row buys the headroom out of the row's own slack instead of growing it.
+    ///
+    /// Page-wide (not per line) so every row shares one baseline, and cached
+    /// per (page, variant, size) like `pageScale`.
+    static func pageInk(_ lines: [PageLine],
+                        page: Int,
+                        size: CGFloat,
+                        words: (PageLine) -> [String]) -> (top: CGFloat, bottom: CGFloat) {
+        let nominal = vertical(page: page, size: size)
+        let fallback = (top: nominal.ascent, bottom: nominal.descent)
+        guard PageFontStore.measurementFont(page: page, size: size) != nil else { return fallback }
+        let key = "\(page)|\(Int(size * 10))|\(PageFontStore.variant)"
+        if let hit = inkCache[key] { return hit }
+        var top: CGFloat = 0
+        var bottom: CGFloat = 0
+        for line in lines where line.kind == .words {
+            for outline in outlines(words(line), page: page, size: size) {
+                let box = outline.bounds
+                guard !box.isNull, !box.isEmpty else { continue }
+                top = max(top, box.maxY)
+                bottom = max(bottom, -box.minY)
+            }
+        }
+        guard top > 0 || bottom > 0 else { return fallback }
+        // A hair of breathing room so antialiasing never grazes the edge.
+        let pad = size * 0.03
+        let result = (top: top + pad, bottom: bottom + pad)
+        inkCache[key] = result
+        return result
+    }
 
     /// Total advance of a line's words, or 0 when the page font is not
     /// available yet — never a system-font substitute's width, which would be
@@ -291,6 +402,8 @@ private enum GlyphMetrics {
                 }
             }
         }
-        return Outline(path: path, advance: advance)
+        return Outline(path: path,
+                       advance: advance,
+                       bounds: path.isEmpty ? .zero : path.boundingBoxOfPath)
     }
 }

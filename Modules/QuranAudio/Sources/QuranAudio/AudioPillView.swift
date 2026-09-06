@@ -143,6 +143,8 @@ public struct ReciterPickerSheet: View {
     let isArabicUI: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
+    /// Drives the pushed "Translation audio" list (pinned row at the top).
+    @State private var showTranslationPicker = false
 
     public init(selection: Binding<String>, translationSelection: Binding<String>? = nil,
                 isArabicUI: Bool) {
@@ -157,14 +159,6 @@ public struct ReciterPickerSheet: View {
         let all = Reciter.all(riwayah: riwayah)
         guard !query.isEmpty else { return all }
         return all.filter {
-            $0.arabicName.localizedCaseInsensitiveContains(query)
-                || $0.englishName.localizedCaseInsensitiveContains(query)
-        }
-    }
-
-    private var filteredVoices: [TranslationVoice] {
-        guard !query.isEmpty else { return TranslationVoice.allCases }
-        return TranslationVoice.allCases.filter {
             $0.arabicName.localizedCaseInsensitiveContains(query)
                 || $0.englishName.localizedCaseInsensitiveContains(query)
         }
@@ -188,60 +182,26 @@ public struct ReciterPickerSheet: View {
                         Text("The mushaf text shown follows Hafs; the recitation follows Warsh.")
                     }
                 }
-                if let translationSelection, !filteredVoices.isEmpty {
-                    Section {
-                        ForEach(filteredVoices) { voice in
-                            voiceRow(voice, selection: translationSelection)
-                        }
-                    } header: {
-                        Text("Translation audio")
-                    } footer: {
-                        Text("Reads each ayah in the chosen language right after the Arabic.")
-                    }
-                }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(NoorColor.bgPrimary)
             .safeAreaInset(edge: .top) {
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 14))
-                        .foregroundStyle(NoorColor.inkSecondary)
-                    // Custom placeholder: the system one ignores the RTL
-                    // environment and anchors to the process language.
-                    TextField("", text: $searchText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 15))
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .overlay(alignment: .leading) {
-                            if searchText.isEmpty {
-                                Text("Search reciters")
-                                    .font(.system(size: 15))
-                                    .foregroundStyle(NoorColor.inkSecondary.opacity(0.8))
-                                    .allowsHitTesting(false)
-                            }
-                        }
-                        .accessibilityLabel("Search reciters")
-                    if !searchText.isEmpty {
-                        Button {
-                            searchText = ""
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 15))
-                                .foregroundStyle(NoorColor.inkSecondary)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Clear search")
+                VStack(spacing: 0) {
+                    // Pinned above the search field so the translated reading
+                    // is the first thing seen — it used to sit under 43
+                    // reciters and went undiscovered.
+                    if let translationSelection {
+                        translationEntryRow(translationSelection)
                     }
+                    searchField
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 9)
-                .background(RoundedRectangle(cornerRadius: 11).fill(NoorColor.bgElevated))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
                 .background(NoorColor.bgPrimary)
+            }
+            .navigationDestination(isPresented: $showTranslationPicker) {
+                if let translationSelection {
+                    translationPicker(translationSelection)
+                }
             }
             .navigationTitle(Text("Reciter"))
             #if os(iOS)
@@ -254,6 +214,46 @@ public struct ReciterPickerSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    /// Reciter search box (custom placeholder: the system one ignores the
+    /// RTL environment and anchors to the process language).
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 14))
+                .foregroundStyle(NoorColor.inkSecondary)
+            TextField("", text: $searchText)
+                .textFieldStyle(.plain)
+                .font(.system(size: 15))
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .overlay(alignment: .leading) {
+                    if searchText.isEmpty {
+                        Text("Search reciters")
+                            .font(.system(size: 15))
+                            .foregroundStyle(NoorColor.inkSecondary.opacity(0.8))
+                            .allowsHitTesting(false)
+                    }
+                }
+                .accessibilityLabel("Search reciters")
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .background(RoundedRectangle(cornerRadius: 11).fill(NoorColor.bgElevated))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 }
 
@@ -294,17 +294,86 @@ extension ReciterPickerSheet {
         .listRowBackground(Color.clear)
     }
 
-    /// Translated-reading option; "Off" first. Selecting doesn't dismiss so
-    /// the user can still pick a reciter in the same visit.
+    /// Pinned entry point: label + current value + chevron. Tinted with the
+    /// accent token while a translation is on, secondary ink when off.
+    private func translationEntryRow(_ selection: Binding<String>) -> some View {
+        let voice = TranslationVoice(rawValue: selection.wrappedValue) ?? .none
+        let tint = voice == .none ? NoorColor.inkSecondary : NoorColor.accentPrimary
+        return Button {
+            showTranslationPicker = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "character.bubble")
+                    .font(.system(size: 15))
+                    .foregroundStyle(tint)
+                    .frame(width: 24)
+                Text("Translation audio")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(NoorColor.inkPrimary)
+                    .lineLimit(1)
+                    .layoutPriority(1)
+                Spacer(minLength: 8)
+                // Language only — the full "language · voice" pair is shown
+                // in the pushed list and would truncate the label here.
+                Text(verbatim: voice.shortName(arabicUI: isArabicUI))
+                    .font(.system(size: 14, weight: voice == .none ? .regular : .semibold))
+                    .foregroundStyle(tint)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                // chevron.forward mirrors automatically in RTL.
+                Image(systemName: "chevron.forward")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(NoorColor.inkSecondary.opacity(0.6))
+            }
+            .padding(.horizontal, 12)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background(RoundedRectangle(cornerRadius: 11)
+            .fill(voice == .none ? NoorColor.bgElevated : NoorColor.accentPrimary.opacity(0.12)))
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("Translation audio"))
+        .accessibilityValue(Text(verbatim: voice.displayName(arabicUI: isArabicUI)))
+        .accessibilityAddTraits(.isButton)
+    }
+
+    /// The six options, pushed from the pinned row (keeps the sheet's medium
+    /// detent usable — six inline rows would swallow the reciter list).
+    @ViewBuilder
+    private func translationPicker(_ selection: Binding<String>) -> some View {
+        List {
+            Section {
+                ForEach(TranslationVoice.allCases) { voice in
+                    voiceRow(voice, selection: selection)
+                }
+            } footer: {
+                Text("Reads each ayah in the chosen language right after the Arabic.")
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(NoorColor.bgPrimary)
+        .navigationTitle(Text("Translation audio"))
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
+    }
+
+    /// Translated-reading option; "Off" first. Picking one pops back to the
+    /// reciter list so the updated value is visible on the pinned row.
     private func voiceRow(_ voice: TranslationVoice, selection: Binding<String>) -> some View {
         let isOn = selection.wrappedValue == voice.rawValue
         return Button {
             selection.wrappedValue = voice.rawValue
+            showTranslationPicker = false
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: voice == .none ? "speaker.slash" : "globe")
+                Image(systemName: voice == .none ? "speaker.slash" : "character.bubble")
                     .font(.system(size: 15))
-                    .foregroundStyle(NoorColor.accentPrimary)
+                    .foregroundStyle(voice == .none ? NoorColor.inkSecondary : NoorColor.accentPrimary)
                     .frame(width: 24)
                 Text(verbatim: voice.displayName(arabicUI: isArabicUI))
                     .font(.system(size: 16, weight: isOn ? .semibold : .regular))
@@ -317,13 +386,45 @@ extension ReciterPickerSheet {
                 }
             }
             .padding(.vertical, 6)
+            .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
         .listRowBackground(Color.clear)
-        .accessibilityAddTraits(isOn ? .isSelected : [])
+        .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }
 }
+
+#if DEBUG
+#Preview("Reciter sheet — EN LTR") {
+    ReciterPickerSheetPreviewHost(isArabicUI: false, voice: .none)
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
+}
+
+#Preview("Reciter sheet — AR RTL") {
+    ReciterPickerSheetPreviewHost(isArabicUI: true, voice: .english)
+        .environment(\.locale, Locale(identifier: "ar"))
+        .environment(\.layoutDirection, .rightToLeft)
+}
+
+/// Holds the two bindings so the preview can exercise selection.
+private struct ReciterPickerSheetPreviewHost: View {
+    let isArabicUI: Bool
+    @State var reciter = Reciter.alafasy.rawValue
+    @State var voice: String
+
+    init(isArabicUI: Bool, voice: TranslationVoice) {
+        self.isArabicUI = isArabicUI
+        _voice = State(initialValue: voice.rawValue)
+    }
+
+    var body: some View {
+        ReciterPickerSheet(selection: $reciter, translationSelection: $voice,
+                           isArabicUI: isArabicUI)
+    }
+}
+#endif
 
 /// RTL-correct playback-mode picker.
 struct PlaybackModeSheet: View {

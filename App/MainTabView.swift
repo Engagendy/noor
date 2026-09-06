@@ -26,6 +26,11 @@ struct MainTabView: View {
         default: .today
     }
     @State private var player = QuranAudioPlayer()
+    /// Screenshot/UI-test hook: NOOR_RECITER_SHEET=1 opens the reciter
+    /// picker (with its pinned "Translation audio" row) at launch.
+    @State private var showReciterSheetHook =
+        ProcessInfo.processInfo.environment["NOOR_RECITER_SHEET"] == "1"
+    @Environment(\.locale) private var locale
     @State private var quranOpenRequest: Int?
     /// Open the reader at an exact mushaf page (continue / khatmah).
     @State private var quranOpenPage: Int?
@@ -76,6 +81,18 @@ struct MainTabView: View {
     var body: some View {
         mainTabs
             .tint(NoorColor.accentPrimary)
+            .sheet(isPresented: $showReciterSheetHook) {
+                let arabicUI = locale.language.languageCode?.identifier == "ar"
+                ReciterPickerSheet(
+                    selection: Binding(
+                        get: { player.reciter.rawValue },
+                        set: { player.reciter = Reciter(rawValue: $0) ?? .alafasy }),
+                    translationSelection: Binding(
+                        get: { player.translationVoice.rawValue },
+                        set: { player.translationVoice = TranslationVoice(rawValue: $0) ?? .none }),
+                    isArabicUI: arabicUI)
+                    .environment(\.layoutDirection, arabicUI ? .rightToLeft : .leftToRight)
+            }
             .onChange(of: translationId) { _, _ in
                 // Swap the loaded edition and fetch it right away.
                 translations = TranslationStore()

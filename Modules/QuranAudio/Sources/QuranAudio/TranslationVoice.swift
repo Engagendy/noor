@@ -46,6 +46,14 @@ public enum TranslationVoice: String, CaseIterable, Identifiable, Codable {
         arabicUI ? arabicName : englishName
     }
 
+    /// Language only ("English" / "الإنجليزية"); "Off" is already short.
+    /// Used where the full "language · voice" pair would not fit, e.g. the
+    /// pinned summary row at the top of the reciter sheet.
+    public func shortName(arabicUI: Bool) -> String {
+        let full = displayName(arabicUI: arabicUI)
+        return full.components(separatedBy: " · ").first ?? full
+    }
+
     /// EveryAyah folder (verified 2026-09-02 for 001001, 002286, 114006).
     var folder: String? {
         switch self {
