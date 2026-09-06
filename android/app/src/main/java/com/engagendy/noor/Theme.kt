@@ -180,22 +180,32 @@ object NoorFont {
 /// is what plain `Text(...)` calls inherit.)
 private fun typographyFor(family: FontFamily): Typography {
     val d = Typography()
+    // Compose's legacy font padding pads every line box by the FACE's ascent
+    // and descent. Arabic faces built for tall marks (Cairo most of all)
+    // report far more than a Latin face, so the padding inflates every line
+    // until fixed-height rows overlap — the tab label rode up over its icon
+    // and the Today cards ran into each other. Pinning it off makes the line
+    // box follow the specified size instead of the face's own metrics.
+    fun androidx.compose.ui.text.TextStyle.fit() = copy(
+        fontFamily = family,
+        platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+            includeFontPadding = false))
     return Typography(
-        displayLarge = d.displayLarge.copy(fontFamily = family),
-        displayMedium = d.displayMedium.copy(fontFamily = family),
-        displaySmall = d.displaySmall.copy(fontFamily = family),
-        headlineLarge = d.headlineLarge.copy(fontFamily = family),
-        headlineMedium = d.headlineMedium.copy(fontFamily = family),
-        headlineSmall = d.headlineSmall.copy(fontFamily = family),
-        titleLarge = d.titleLarge.copy(fontFamily = family),
-        titleMedium = d.titleMedium.copy(fontFamily = family),
-        titleSmall = d.titleSmall.copy(fontFamily = family),
-        bodyLarge = d.bodyLarge.copy(fontFamily = family),
-        bodyMedium = d.bodyMedium.copy(fontFamily = family),
-        bodySmall = d.bodySmall.copy(fontFamily = family),
-        labelLarge = d.labelLarge.copy(fontFamily = family),
-        labelMedium = d.labelMedium.copy(fontFamily = family),
-        labelSmall = d.labelSmall.copy(fontFamily = family),
+        displayLarge = d.displayLarge.fit(),
+        displayMedium = d.displayMedium.fit(),
+        displaySmall = d.displaySmall.fit(),
+        headlineLarge = d.headlineLarge.fit(),
+        headlineMedium = d.headlineMedium.fit(),
+        headlineSmall = d.headlineSmall.fit(),
+        titleLarge = d.titleLarge.fit(),
+        titleMedium = d.titleMedium.fit(),
+        titleSmall = d.titleSmall.fit(),
+        bodyLarge = d.bodyLarge.fit(),
+        bodyMedium = d.bodyMedium.fit(),
+        bodySmall = d.bodySmall.fit(),
+        labelLarge = d.labelLarge.fit(),
+        labelMedium = d.labelMedium.fit(),
+        labelSmall = d.labelSmall.fit(),
     )
 }
 

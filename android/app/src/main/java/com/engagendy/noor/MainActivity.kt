@@ -13,6 +13,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -227,7 +230,21 @@ fun NoorApp(openRequest: OpenRequest? = null) {
                         icon = {
                             Icon(painterResource(item.icon), contentDescription = title)
                         },
-                        label = { Text(title) },
+                        // Cairo (and other tall-metric Arabic faces) report a
+                        // large ascent/descent. With the default font padding
+                        // the label box grows until it rides up over the icon,
+                        // so pin the line box rather than letting the face
+                        // decide it.
+                        label = {
+                            Text(
+                                title,
+                                maxLines = 1,
+                                fontSize = 11.sp,
+                                lineHeight = 13.sp,
+                                style = LocalTextStyle.current.copy(
+                                    platformStyle = PlatformTextStyle(
+                                        includeFontPadding = false)))
+                        },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = NoorColor.accentPrimary,
                             selectedTextColor = NoorColor.accentPrimary,
