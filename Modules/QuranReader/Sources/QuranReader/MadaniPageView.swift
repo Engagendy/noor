@@ -183,7 +183,7 @@ struct MadaniPageView: View {
                                     .frame(maxWidth: .infinity)
                                     .frame(height: rowHeight)
                             case .surahHeaderWithBasmala:
-                                Text(basmala ?? "")
+                                Text(verbatim: basmala ?? "")
                                     .font(NoorFont.quran(size: rowHeight * 0.45))
                                     .foregroundStyle(NoorColor.inkPrimary)
                                     .lineLimit(1)
@@ -191,7 +191,7 @@ struct MadaniPageView: View {
                                     .frame(maxWidth: .infinity)
                                     .frame(height: rowHeight)
                             case .basmala:
-                                Text(basmala ?? "")
+                                Text(verbatim: basmala ?? "")
                                     .font(NoorFont.quran(size: rowHeight * 0.45))
                                     .foregroundStyle(NoorColor.inkPrimary)
                                     .lineLimit(1)

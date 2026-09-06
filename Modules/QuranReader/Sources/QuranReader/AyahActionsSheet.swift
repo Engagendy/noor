@@ -59,7 +59,7 @@ struct AyahActionsSheet: View {
             } label: {
                 HStack(spacing: 12) {
                     AyahEndMarker(verse.ayah, size: 30)
-                    Text(verse.text)
+                    Text(verbatim: verse.text)
                         .font(NoorFont.quran(size: 18))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(1)
@@ -84,7 +84,7 @@ struct AyahActionsSheet: View {
     private func actionList(for verse: Verse) -> some View {
         ScrollView {
             VStack(spacing: 10) {
-                Text(verse.text)
+                Text(verbatim: verse.text)
                     .font(NoorFont.quran(size: 19))
                     .foregroundStyle(NoorColor.inkPrimary)
                     .lineSpacing(12)

@@ -12,6 +12,10 @@ struct NoorApp: App {
         // Migration: we briefly wrote AppleLanguages for in-app language;
         // that mirrors rendering when it disagrees with the environment.
         UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        // Migration: the withdrawn "Adhan (Makkah, Maghrib)" recording. Runs
+        // before TabLifecycle's launch reschedule, so pending notifications
+        // that still name the deleted sound file are rebuilt with a real one.
+        AdhanSound.migrateStoredValue()
         // Adhan must sound even when the app is frontmost.
         UNUserNotificationCenter.current().delegate = NoorNotificationDelegate.shared
         PageFontStore.purgeStaleCaches()

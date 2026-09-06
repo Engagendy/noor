@@ -62,14 +62,14 @@ public struct TafsirSheetView: View {
     @ViewBuilder
     private func tafsirParagraph(_ paragraph: String) -> some View {
         if edition.isArabic {
-            Text(paragraph)
+            Text(verbatim: paragraph)
                 .font(.noorScaled(18))
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineSpacing(10)
                 .textSelection(.enabled)
                 .arabicBlock()
         } else {
-            Text(paragraph)
+            Text(verbatim: paragraph)
                 .font(NoorFont.tafsir)
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineSpacing(6)
@@ -93,7 +93,7 @@ public struct TafsirSheetView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(ayahText)
+                    Text(verbatim: ayahText)
                         .font(NoorFont.quran(size: 20))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineSpacing(14)
@@ -107,7 +107,7 @@ public struct TafsirSheetView: View {
                         HStack(spacing: 8) {
                             ForEach(TafsirEdition.all) { candidate in
                                 let isOn = candidate.slug == editionSlug
-                                Text(candidate.displayName)
+                                Text(verbatim: candidate.displayName)
                                     .font(.noorScaled(13, weight: .semibold))
                                     .lineLimit(1)
                                     .fixedSize(horizontal: true, vertical: false)

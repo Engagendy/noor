@@ -146,13 +146,16 @@ enum class AdhanSound(val nameRes: Int, val rawRes: Int?) {
     MELODIC(R.string.g1_adhan_melodic, R.raw.adhan_melodic),
     AZEEZ(R.string.g1_adhan_azeez, R.raw.adhan_azeez),
     MAKKAH(R.string.g1_adhan_makkah, R.raw.adhan_makkah),
-    MAKKAH_MAGHRIB(R.string.g1_adhan_makkah_maghrib, R.raw.adhan_makkah_maghrib),
     BELL(R.string.g1_adhan_bell, null),
     SILENT(R.string.g1_adhan_silent, null);
 
     companion object {
         fun named(name: String?): AdhanSound =
-            entries.firstOrNull { it.name == name } ?: MADINAH
+            // "MAKKAH_MAGHRIB" was a bundled Maghrib recording that was
+            // withdrawn; anyone who had chosen it lands on the other Makkah
+            // adhan rather than being silently reset to the default.
+            if (name == "MAKKAH_MAGHRIB") MAKKAH
+            else entries.firstOrNull { it.name == name } ?: MADINAH
     }
 }
 

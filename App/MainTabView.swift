@@ -292,7 +292,7 @@ struct MainTabView: View {
         if notificationsEnabled {
             await scheduler.reschedule(
                 location: location, method: method, madhab: madhab,
-                sound: AdhanSound(rawValue: soundRaw) ?? .adhanMadinah,
+                sound: AdhanSound.stored(soundRaw),
                 arabic: isArabicNotifications,
                 preAlertMinutes: preAlertMinutes,
                 athkarMinutes: athkarMinutes, now: now)

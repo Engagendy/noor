@@ -437,7 +437,7 @@ struct DhikrCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(dhikr.text)
+            Text(verbatim: dhikr.text)
                 .font(.noorScaled(19))
                 .foregroundStyle(NoorColor.inkPrimary)
                 .lineSpacing(8)

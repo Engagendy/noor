@@ -127,7 +127,7 @@ public struct PrayerTimesView: View {
         }
         // Hear the adhan whenever the choice changes, wherever it was made.
         .onChange(of: soundRaw) {
-            AdhanPreviewPlayer.shared.play(AdhanSound(rawValue: soundRaw) ?? .adhanMadinah)
+            AdhanPreviewPlayer.shared.play(AdhanSound.stored(soundRaw))
         }
         .onDisappear { AdhanPreviewPlayer.shared.stop() }
         .sheet(isPresented: $showAdhanSounds) {
@@ -164,9 +164,9 @@ public struct PrayerTimesView: View {
                 let date = Calendar.current.date(byAdding: .day, value: offset, to: now) ?? now
                 let isSelected = offset == dayOffset
                 VStack(spacing: 2) {
-                    Text(date.formatted(.dateTime.weekday(.abbreviated).locale(locale)))
+                    Text(verbatim: date.formatted(.dateTime.weekday(.abbreviated).locale(locale)))
                         .font(.noorScaled(12))
-                    Text(date.formatted(.dateTime.day().locale(locale)))
+                    Text(verbatim: date.formatted(.dateTime.day().locale(locale)))
                         .font(.noorScaled(14, weight: isSelected ? .bold : .semibold))
                 }
                 .frame(maxWidth: .infinity)
@@ -339,7 +339,7 @@ public struct PrayerTimesView: View {
                     Text("Adhan sound")
                         .font(.noorScaled(15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
-                    Text((AdhanSound(rawValue: soundRaw) ?? .adhanMadinah).displayName)
+                    Text(AdhanSound.stored(soundRaw).displayName)
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
@@ -534,7 +534,10 @@ public struct PrayerTimesView: View {
 }
 
 public enum AdhanSound: String, CaseIterable, Identifiable {
-    case adhanMadinah, adhanMelodic, adhanAzeez, adhanMakkah, adhanMakkahMaghrib, bell, silent
+    case adhanMadinah, adhanMelodic, adhanAzeez, adhanMakkah, bell, silent
+
+    /// UserDefaults key holding the chosen adhan.
+    public static let defaultsKey = "prayer.sound"
 
     public var id: String { rawValue }
     public var displayName: LocalizedStringResource {
@@ -543,7 +546,6 @@ public enum AdhanSound: String, CaseIterable, Identifiable {
         case .adhanMelodic: "Adhan (melodic)"
         case .adhanAzeez: "Adhan (Azeez)"
         case .adhanMakkah: "Adhan (Makkah)"
-        case .adhanMakkahMaghrib: "Adhan (Makkah, Maghrib)"
         case .bell: "Bell"
         case .silent: "Silent"
         }
@@ -556,9 +558,34 @@ public enum AdhanSound: String, CaseIterable, Identifiable {
         case .adhanMelodic: "adhan_melodic.caf"
         case .adhanAzeez: "adhan_azeez.caf"
         case .adhanMakkah: "adhan_makkah.caf"
-        case .adhanMakkahMaghrib: "adhan_makkah_maghrib.caf"
         case .bell, .silent: nil
         }
+    }
+
+    /// Decodes a value read back from UserDefaults, mapping retired cases.
+    ///
+    /// `adhanMakkahMaghrib` (Masjid al-Haram, Maghrib 2012) was withdrawn:
+    /// the recording was wrong. `init(rawValue:)` returns nil for it, so
+    /// every read site must come through here — falling back to the default
+    /// would silently move the user to a different muadhin, and a scheduled
+    /// `UNNotificationSound` naming a file no longer in the bundle plays the
+    /// system default or nothing at all. Land them on the OTHER Makkah adhan.
+    /// Mirrors Android's `AdhanSound.named` (MAKKAH_MAGHRIB → MAKKAH).
+    public static func stored(_ raw: String) -> AdhanSound {
+        if let sound = AdhanSound(rawValue: raw) { return sound }
+        if raw == "adhanMakkahMaghrib" { return .adhanMakkah }
+        return .adhanMadinah
+    }
+
+    /// Rewrites a retired stored value in place at launch, so the picker
+    /// highlights the right row and the reschedule watcher (which compares
+    /// raw strings) sees a value that still exists.
+    @discardableResult
+    public static func migrateStoredValue(defaults: UserDefaults = .standard) -> Bool {
+        guard let raw = defaults.string(forKey: defaultsKey),
+              AdhanSound(rawValue: raw) == nil else { return false }
+        defaults.set(stored(raw).rawValue, forKey: defaultsKey)
+        return true
     }
 }
 

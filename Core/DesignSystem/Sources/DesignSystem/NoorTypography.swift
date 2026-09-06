@@ -25,10 +25,14 @@ public enum NoorFont {
     /// text which sets no font of its own still follows the setting.
     public static var body: Font { NoorAppFont.current.scaled(17, relativeTo: .body) }
 
-    /// Translation & tafsir body. UI text follows Dynamic Type (design §3);
-    /// only the Quran font has its own in-reader size control.
-    public static var translation: Font { NoorAppFont.current.scaled(17, relativeTo: .body) }
-    public static var tafsir: Font { NoorAppFont.current.scaled(16, relativeTo: .callout) }
+    /// Translation & tafsir body: deliberately SERIF, and deliberately NOT
+    /// routed through the interface-font setting. The design guidelines ask
+    /// for a serif here for the "sacred book" feel, and it is what sets
+    /// meaning apart from chrome; the font picker changes the interface only.
+    /// Both follow Dynamic Type (design §3) — only the Quran font has its own
+    /// in-reader size control.
+    public static var translation: Font { .system(.body, design: .serif) }
+    public static var tafsir: Font { .system(.callout, design: .serif) }
 
     public static var screenTitle: Font {
         NoorAppFont.current.scaled(28, weight: .semibold, relativeTo: .title)
@@ -71,5 +75,39 @@ extension Font {
         #else
         return .system(size: size, weight: weight)
         #endif
+    }
+}
+
+/// Letter tracking that applies to LATIN interface text only.
+///
+/// Tracking is a Latin device: it opens up small, semibold, caps-style
+/// labels. Arabic script is cursive, so the extra space is inserted *inside*
+/// the word — and after a non-joining letter (alef, dal, raa, waw…) it
+/// widens the gap that is already there until the word reads as two. The
+/// reported symptom was the prayer label الفجر rendering as "ا لفجر".
+///
+/// So: zero tracking in the Arabic interface, unchanged in English. Use this
+/// on every *localised* label; plain `.tracking(_:)` is still correct on text
+/// that is Latin whatever the interface language (e.g. the "Noor" wordmark).
+public extension View {
+    func noorTracking(_ amount: CGFloat) -> some View {
+        modifier(NoorTrackingModifier(amount: amount))
+    }
+
+    /// Same rule where the environment locale cannot be trusted and the
+    /// caller already knows the language — widgets carry `isArabic` on their
+    /// timeline entry precisely because their environment does not follow the
+    /// app's per-app language.
+    func noorTracking(_ amount: CGFloat, arabic: Bool) -> some View {
+        tracking(arabic ? 0 : amount)
+    }
+}
+
+private struct NoorTrackingModifier: ViewModifier {
+    let amount: CGFloat
+    @Environment(\.locale) private var locale
+
+    func body(content: Content) -> some View {
+        content.tracking(locale.language.languageCode?.identifier == "ar" ? 0 : amount)
     }
 }

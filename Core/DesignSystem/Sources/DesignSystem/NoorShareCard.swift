@@ -23,13 +23,13 @@ public struct NoorShareCard: View {
                 size: 44,
                 archColor: Color(red: 0.055, green: 0.420, blue: 0.361),
                 lampColor: Color(red: 0.73, green: 0.54, blue: 0.18))
-            Text(arabicText)
+            Text(verbatim: arabicText)
                 .font(useQuranFont ? NoorFont.quran(size: 30) : .system(size: 24))
                 .foregroundStyle(Color(red: 0.12, green: 0.16, blue: 0.20))
                 .lineSpacing(useQuranFont ? 22 : 14)
                 .arabicBlock(alignment: .center)
             if let translation {
-                Text(translation)
+                Text(verbatim: translation)
                     .font(.system(size: 17, design: .serif))
                     .foregroundStyle(Color(red: 0.36, green: 0.40, blue: 0.44))
                     .multilineTextAlignment(.center)

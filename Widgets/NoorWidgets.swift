@@ -181,9 +181,9 @@ struct NextPrayerSmallView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(entry.nextName.uppercased())
+            Text(verbatim: entry.nextName.uppercased())
                 .font(.system(size: 11, weight: .bold))
-                .tracking(1.2)
+                .noorTracking(1.2, arabic: entry.isArabic)
                 .foregroundStyle(WidgetTheme.green)
             Text(entry.nextTime, style: .timer)
                 .font(.system(size: 26, weight: .bold).monospacedDigit())
@@ -216,20 +216,20 @@ struct TodayPrayersMediumView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(entry.isArabic ? "اليوم" : "TODAY")
                     .font(.system(size: 12, weight: .bold))
-                    .tracking(1)
+                    .noorTracking(1, arabic: entry.isArabic)
                     .foregroundStyle(WidgetTheme.teal)
                 Text(entry.nextTime, style: .timer)
                     .font(.system(size: 12, weight: .bold).monospacedDigit())
                     .foregroundStyle(WidgetTheme.teal)
                 Spacer()
-                Text(entry.cityName)
+                Text(verbatim: entry.cityName)
                     .font(.system(size: 11))
                     .foregroundStyle(WidgetTheme.darkSecondary)
             }
             HStack {
                 ForEach(entry.times, id: \.name) { item in
                     VStack(spacing: 2) {
-                        Text(item.name)
+                        Text(verbatim: item.name)
                             .font(.system(size: 11, weight: item.isNext ? .bold : .regular))
                             .foregroundStyle(item.isNext ? WidgetTheme.teal : WidgetTheme.darkSecondary)
                         Text(item.time, style: .time)

@@ -114,7 +114,7 @@ struct SettingsView: View {
                         Text("Notification sound")
                             .foregroundStyle(NoorColor.inkPrimary)
                         Spacer()
-                        Text((AdhanSound(rawValue: soundRaw) ?? .adhanMadinah).displayName)
+                        Text(AdhanSound.stored(soundRaw).displayName)
                             .foregroundStyle(NoorColor.inkSecondary)
                         Image(systemName: "chevron.forward")
                             .font(.system(size: 13, weight: .semibold))

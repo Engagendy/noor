@@ -16,10 +16,10 @@ struct WordByWordView: View {
             ForEach(words, id: \.position) { word in
                 let isCurrent = word.position == highlightPosition
                 VStack(spacing: 3) {
-                    Text(word.text)
+                    Text(verbatim: word.text)
                         .font(NoorFont.quran(size: fontSize * 0.92))
                         .foregroundStyle(isCurrent ? NoorColor.accentPrimary : NoorColor.inkPrimary)
-                    Text(word.translation)
+                    Text(verbatim: word.translation)
                         .font(.system(size: 11, design: .serif))
                         .foregroundStyle(NoorColor.inkSecondary)
                         .multilineTextAlignment(.center)

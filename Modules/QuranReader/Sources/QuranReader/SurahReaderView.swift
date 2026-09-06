@@ -290,7 +290,7 @@ public struct SurahReaderView: View {
                 .accessibilityLabel("Back")
                 Spacer()
                 VStack(spacing: 0) {
-                    Text(titleSurah?.displayName(arabicUI: isArabicUI) ?? "")
+                    Text(verbatim: titleSurah?.displayName(arabicUI: isArabicUI) ?? "")
                         .font(isArabicUI ? NoorFont.quran(size: 16) : .system(size: 15, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                         .lineLimit(1)
@@ -344,7 +344,7 @@ public struct SurahReaderView: View {
             // Minimal reading row
             TimelineView(.everyMinute) { context in
                 HStack {
-                    Text(titleSurah?.displayName(arabicUI: true) ?? "")
+                    Text(verbatim: titleSurah?.displayName(arabicUI: true) ?? "")
                         .font(NoorFont.quran(size: 15))
                     Spacer()
                     Text(context.date, format: .dateTime.hour().minute())
@@ -441,7 +441,7 @@ public struct SurahReaderView: View {
                             .padding(.vertical, 10)
                     }
                     if let basmala = section.basmala {
-                        Text(basmala)
+                        Text(verbatim: basmala)
                             .font(NoorFont.quran(size: liveFontSize * 0.92))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .arabicBlock(alignment: .center)
@@ -451,7 +451,7 @@ public struct SurahReaderView: View {
                 }
                 HStack(spacing: 10) {
                     Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
-                    Text(page.arabicIndic)
+                    Text(verbatim: page.arabicIndic)
                         .font(.noorScaled(12))
                         .foregroundStyle(NoorColor.accentGold)
                     Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
@@ -551,7 +551,7 @@ public struct SurahReaderView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 6) {
                     if let basmala = viewModel.basmala {
-                        Text(basmala)
+                        Text(verbatim: basmala)
                             .font(NoorFont.quran(size: liveFontSize * 0.92))
                             .foregroundStyle(NoorColor.inkPrimary)
                             .arabicBlock(alignment: .center)
@@ -599,20 +599,26 @@ public struct SurahReaderView: View {
                     highlightPosition: recitingWordPosition(surahId: verse.surahId, ayah: verse.ayah),
                     onTapWord: { _ in tafsirVerse = verse })
             } else {
-                // The sajdah sign ۩ is already part of the Tanzil text for
-                // sajdah ayat — never append a second one.
-                (Text(displayText(verse))
-                    + Text(verbatim: "  \u{2067}﴿\(verse.ayah.arabicIndic)﴾\u{2069}")
-                        .font(NoorFont.quran(size: liveFontSize * 0.62))
-                        .foregroundStyle(NoorColor.accentGold))
-                    .font(NoorFont.quran(size: liveFontSize))
-                    .foregroundStyle(isReciting ? NoorColor.accentPrimary : NoorColor.inkPrimary)
-                    .lineSpacing(liveFontSize * NoorMetrics.quranLineSpacingFactor)
-                    .arabicBlock()
+                // Shared word-by-word flow (QuranFlowText): one Text(verbatim:)
+                // per fragment, placed right-to-left by RTLFlowLayout — the
+                // same path the mushaf page and the kids reader use. Never go
+                // back to `Text + Text` concatenation: one bidi run spanning
+                // the ayah body and its end marker is what scrambled the
+                // Arabic in the kids reader. The end marker and the basmala
+                // strip on ayah 1 both come from QuranFlow.items; the sajdah
+                // sign ۩ is already in the Tanzil text so nothing is appended.
+                // Tap, long-press (ayah actions), bookmarking, hifz blur and
+                // the selection background all live on the enclosing block, so
+                // the flow itself needs no callbacks.
+                QuranFlowText(
+                    items: QuranFlow.items(verses: [verse],
+                                           basmalaToStrip: viewModel.basmala),
+                    fontSize: liveFontSize,
+                    highlightKey: isReciting ? key : nil)
             }
             if showTranslation,
                let translation = translations?.translation(surah: verse.surahId, ayah: verse.ayah) {
-                Text(translation)
+                Text(verbatim: translation)
                     .font(NoorFont.translation)
                     .foregroundStyle(NoorColor.inkSecondary)
                     .lineSpacing(4)

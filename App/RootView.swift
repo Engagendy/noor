@@ -50,7 +50,7 @@ struct RootView: View {
                 ContentUnavailableView(
                     "Content unavailable",
                     systemImage: "exclamationmark.triangle",
-                    description: Text(message)
+                    description: Text(verbatim: message)
                 )
             }
         }

@@ -254,7 +254,11 @@ private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPres
                 next?.displayName() ?: stringResource(R.string.g1_isha),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.5.sp,
+                // Tracking is a Latin small-label device. Arabic is cursive:
+                // spacing the glyphs apart widens the natural gap after a
+                // non-joining letter (the alef of الفجر) into what reads as a
+                // word break. Never track Arabic.
+                letterSpacing = if (isArabicUi()) 0.sp else 1.5.sp,
                 color = Color.White.copy(alpha = 0.85f))
             Spacer(Modifier.weight(1f))
             if (next != null) {

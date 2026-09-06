@@ -163,7 +163,7 @@ public struct SurahListView: View {
                                         Text(verbatim: "\(surahName(bookmark.surahId)) · \(bookmark.surahId):\(bookmark.ayah)")
                                             .font(.noorScaled(15, weight: .semibold))
                                             .foregroundStyle(NoorColor.inkPrimary)
-                                        Text(bookmark.createdAt.formatted(date: .abbreviated, time: .omitted))
+                                        Text(verbatim: bookmark.createdAt.formatted(date: .abbreviated, time: .omitted))
                                             .font(NoorFont.caption)
                                             .foregroundStyle(NoorColor.inkSecondary)
                                     }
@@ -282,7 +282,7 @@ public struct SurahListView: View {
                                     .lineLimit(2)
                                     .arabicBlock()
                             } else {
-                                Text(hit.text)
+                                Text(verbatim: hit.text)
                                     .font(NoorFont.quran(size: 17))
                                     .foregroundStyle(NoorColor.inkPrimary)
                                     .lineLimit(2)
@@ -369,7 +369,7 @@ public struct SurahListView: View {
                         Text("Juz \(juz.idx)")
                             .font(.noorScaled(16, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
-                        Text(referenceLabel(juz))
+                        Text(verbatim: referenceLabel(juz))
                             .font(NoorFont.caption)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }
@@ -415,7 +415,7 @@ public struct SurahListView: View {
                     .font(NoorFont.caption)
                     .foregroundStyle(NoorColor.inkSecondary)
                 Spacer()
-                Text(referenceLabel(quarter))
+                Text(verbatim: referenceLabel(quarter))
                     .font(NoorFont.caption)
                     .foregroundStyle(NoorColor.inkSecondary)
             }
@@ -455,14 +455,14 @@ struct SurahRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 if isArabicUI {
-                    Text(surah.nameArabic)
+                    Text(verbatim: surah.nameArabic)
                         .font(NoorFont.quran(size: 18))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text(verbatim: "\(surah.ayahCount.arabicIndic) آية · \(surah.isMeccan ? "مكية" : "مدنية")")
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 } else {
-                    Text(surah.nameTransliterated)
+                    Text(verbatim: surah.nameTransliterated)
                         .font(.noorScaled(16, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text("\(surah.nameEnglish) · \(surah.ayahCount) ayat · \(surah.isMeccan ? String(localized: "Makki", locale: locale) : String(localized: "Madani", locale: locale))")
@@ -474,7 +474,7 @@ struct SurahRow: View {
             Spacer()
 
             if !isArabicUI {
-                Text(surah.nameArabic)
+                Text(verbatim: surah.nameArabic)
                     .font(NoorFont.quran(size: 19))
                     .foregroundStyle(NoorColor.inkPrimary)
             }

@@ -93,15 +93,15 @@ public struct TajweedGuideView: View {
         Section(header: Text(title).foregroundStyle(NoorColor.inkSecondary)) {
             ForEach(marks) { mark in
                 HStack(alignment: .top, spacing: 14) {
-                    Text(mark.symbol)
+                    Text(verbatim: mark.symbol)
                         .font(quranFont ? NoorFont.quran(size: 26) : .system(size: 17, weight: .semibold))
                         .foregroundStyle(NoorColor.accentGold)
                         .frame(minWidth: 56, alignment: .center)
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(isArabicUI ? mark.nameArabic : mark.nameEnglish)
+                        Text(verbatim: isArabicUI ? mark.nameArabic : mark.nameEnglish)
                             .font(.noorScaled(15, weight: .semibold))
                             .foregroundStyle(NoorColor.inkPrimary)
-                        Text(isArabicUI ? mark.meaningArabic : mark.meaningEnglish)
+                        Text(verbatim: isArabicUI ? mark.meaningArabic : mark.meaningEnglish)
                             .font(.noorScaled(13.5))
                             .foregroundStyle(NoorColor.inkSecondary)
                     }

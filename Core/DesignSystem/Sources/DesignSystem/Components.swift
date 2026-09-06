@@ -83,7 +83,7 @@ public struct AyahEndMarker: View {
     }
 
     public var body: some View {
-        Text(ayah.arabicIndic)
+        Text(verbatim: ayah.arabicIndic)
             .font(.noorScaled(size * 0.5))
             .foregroundStyle(NoorColor.accentGold)
             .frame(width: size, height: size)
