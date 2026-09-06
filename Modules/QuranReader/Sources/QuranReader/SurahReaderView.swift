@@ -30,7 +30,15 @@ public struct SurahReaderView: View {
     @State private var tafsirVerse: Verse?
     @State private var shareVerse: Verse?
     @State private var actionVerses: SurahReaderViewModel.PageGroup?
-    @State private var chromeVisible = true
+    /// Chrome visibility lives in the shared `ReaderChrome`, not in a local
+    /// `@State`: the app layer's tab bar follows the same flag, so the bar
+    /// and the top strip can never drift apart. Everything in this view
+    /// keeps using `chromeVisible` exactly as before.
+    private let chrome = ReaderChrome.shared
+    private var chromeVisible: Bool {
+        get { chrome.chromeVisible }
+        nonmutating set { chrome.chromeVisible = newValue }
+    }
     @State private var didAutoHide = false
     /// Surah index drawer (mirrors Android's SurahDrawer) — the reader's
     /// only visible exit now that the back chevron is the list button.
@@ -96,6 +104,10 @@ public struct SurahReaderView: View {
             _selectedKey = State(initialValue: surahId * 1000 + ayah)
         }
     }
+
+    /// How far the audio pill slides up to clear the tab bar floating over
+    /// the reader (measured against the real iOS 26 bar, 6.9" screen).
+    private static let tabBarClearance: CGFloat = 62
 
     private var mode: DisplayMode { DisplayMode(rawValue: modeRaw) ?? .mushaf }
     private var liveFontSize: CGFloat {
@@ -186,15 +198,32 @@ public struct SurahReaderView: View {
                     .environment(\.layoutDirection, .leftToRight)
                     .padding(.bottom, 6)
                     .padding(.top, 2)
+                    // The tab bar floats OVER the reader while the chrome is
+                    // up, right on top of the pill. Slide the pill clear of
+                    // it — as an offset, never as padding, so this costs the
+                    // page below not one point of height.
+                    .offset(y: chromeVisible ? -Self.tabBarClearance : 0)
             }
         }
+        // The tab bar comes back with the chrome (see `ReaderChrome` and
+        // MainTabView). It must NOT resize the reader when it does: a
+        // Madani page is a rigid 15-row grid stretched to the height it
+        // gets, so every line would reflow on every tap. Ignoring the
+        // container's bottom inset makes the bar float over the page
+        // instead of insetting it; the home-indicator inset is padded back
+        // in first so the layout is exactly what it was before the bar
+        // existed (the window's inset never changes with the bar).
+        .padding(.bottom, ReaderChrome.homeIndicatorInset)
+        .ignoresSafeArea(.container, edges: .bottom)
         #if os(iOS)
-        // Reader: fully immersive — no system bars, ever.
+        // Reader: no navigation bar, ever (the top strip replaces it).
         .toolbar(.hidden, for: .navigationBar)
-        .toolbar(.hidden, for: .tabBar)
         .statusBarHidden(!chromeVisible)
         #endif
         .simultaneousGesture(pinch)
+        // Reader session bounds for the shared chrome state.
+        .onAppear { chrome.readerAppeared() }
+        .onDisappear { chrome.readerDisappeared() }
         .task {
             viewModel.load()
             // Opening a page counts even without swiping (resume accuracy

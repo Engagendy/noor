@@ -70,10 +70,16 @@ plan section 4 exactly (iOS).
   like the print; <55%-width closing lines centered), so glyph bearings can
   never overlap a neighbouring word whatever the shaper does.
 - Immersive reader: the tab bar is hidden while either Quran reader is open
-  (`ReaderChrome.readerOpen`, mirroring iOS `.toolbar(.hidden, for: .tabBar)`)
-  — a Madani page is a rigid 15-row grid stretched to the height it gets, so
-  chrome shrinks every line. When it is hidden the bottom Column must carry
-  `navigationBarsPadding()`, since `NavigationBar` was consuming that inset.
+  (`ReaderChrome.readerOpen`) — a Madani page is a rigid 15-row grid stretched
+  to the height it gets, so chrome shrinks every line. When it is hidden the
+  bottom Column must carry `navigationBarsPadding()`, since `NavigationBar`
+  was consuming that inset. **Deliberate divergence:** Android hides its bar
+  for the WHOLE reader session (safe — it has a system back button); iOS ties
+  the bar to the reader's chrome instead (it has no back button, and with the
+  navigation bar hidden the edge-swipe back is gone too, so the immersive
+  state would have only the drawer's exit row). Don't "fix" them into
+  symmetry. On iOS the bar must never inset the reader (see
+  `ReaderChrome.homeIndicatorInset`).
 - Release signing: `android/noor-upload.keystore` + `keystore.properties`
   (gitignored — back up!). Play requires targetSdk 36+. Devices running the
   Play-signed closed-test build REJECT adb installs of locally-signed APKs

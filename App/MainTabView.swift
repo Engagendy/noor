@@ -384,6 +384,8 @@ struct QuranTab: View {
     @State private var selection: Int?
     @State private var targetAyah: Int?
     @State private var compactPath: [ReaderTarget] = []
+    /// Written by `SurahReaderView` as the user toggles the chrome.
+    private let readerChrome = ReaderChrome.shared
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
@@ -451,14 +453,31 @@ struct QuranTab: View {
                                    exit: { compactPath.removeAll() })
                         }
                 }
-                // The reader is immersive: no tab bar. `.toolbar(.hidden,
-                // for: .tabBar)` declared INSIDE the pushed reader never
-                // took effect (the index below it declares .visible in the
-                // same stack, and iOS 26's floating tab bar keeps winning),
-                // so the tab's own root drives it explicitly from the
-                // navigation path — the iOS twin of Android's
-                // `ReaderChrome.readerOpen`.
-                .toolbar(compactPath.isEmpty ? .visible : .hidden, for: .tabBar)
+                // The reader is immersive, but its tab bar follows the
+                // reader's CHROME rather than the whole session — a
+                // deliberate divergence from Android, which hides its bar
+                // for the entire session because it has a system back
+                // button. iOS has none, and with the navigation bar hidden
+                // the interactive edge-swipe back is gone too, so the fully
+                // immersive state would leave the drawer's "Back to Quran"
+                // row as the only way out. Tap the page and the top strip
+                // and the tab bar come back together; tap again and both go.
+                // Do not "fix" the two platforms back into symmetry.
+                //
+                // `.toolbar(…, for: .tabBar)` declared INSIDE the pushed
+                // reader never took effect (the index below it declares
+                // .visible in the same stack, and iOS 26's floating tab bar
+                // keeps winning), so the tab's own root drives it.
+                // `ReaderChrome` is the single source of truth the reader
+                // itself writes — the iOS twin of Android's `ReaderChrome`.
+                // `readerOpen` guards the hidden case: a `.hidden`
+                // preference declared here applies to the TabView as a
+                // whole, even while another tab is selected, so tapping a
+                // tab from inside the reader would otherwise leave EVERY
+                // tab without a bar.
+                .toolbar(compactPath.isEmpty || !readerChrome.readerOpen
+                         || readerChrome.chromeVisible ? .visible : .hidden,
+                         for: .tabBar)
 
             } else {
                 splitView
