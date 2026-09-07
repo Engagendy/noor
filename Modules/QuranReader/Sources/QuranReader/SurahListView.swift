@@ -35,6 +35,9 @@ public struct SurahListView: View {
     /// Saved bookmarks (provided by the app layer from the Library store).
     let bookmarks: [BookmarkRef]
     let onRemoveBookmark: ((BookmarkRef) -> Void)?
+    /// Opens the learning area (matns + tajweed guide). The app layer owns
+    /// the destination — QuranReader must not import another feature module.
+    let onOpenLearn: (() -> Void)?
 
     /// Screenshot/UI-test hook: NOOR_SEARCH=<query> opens with the field filled.
     @State private var searchText = ProcessInfo.processInfo.environment["NOOR_SEARCH"] ?? ""
@@ -57,7 +60,8 @@ public struct SurahListView: View {
         openReference: @escaping (_ surahId: Int, _ ayah: Int?) -> Void,
         searchVerses: @escaping (_ query: String) -> VerseSearchResults = { _ in .empty },
         bookmarks: [BookmarkRef] = [],
-        onRemoveBookmark: ((BookmarkRef) -> Void)? = nil
+        onRemoveBookmark: ((BookmarkRef) -> Void)? = nil,
+        onOpenLearn: (() -> Void)? = nil
     ) {
         self.surahs = surahs
         self.structure = structure
@@ -66,6 +70,7 @@ public struct SurahListView: View {
         self.searchVerses = searchVerses
         self.bookmarks = bookmarks
         self.onRemoveBookmark = onRemoveBookmark
+        self.onOpenLearn = onOpenLearn
     }
 
     /// Preview seam: opens with the search field already filled.
@@ -186,9 +191,37 @@ public struct SurahListView: View {
             VStack(alignment: .leading, spacing: 10) {
             // Custom heading: the system large title never renders above a
             // top safe-area inset in a compact stack.
-            Text("Quran")
-                .font(NoorFont.screenTitle)
-                .foregroundStyle(NoorColor.inkPrimary)
+            HStack(alignment: .firstTextBaseline) {
+                Text("Quran")
+                    .font(NoorFont.screenTitle)
+                    .foregroundStyle(NoorColor.inkPrimary)
+                Spacer(minLength: 8)
+                // Entry to the learning area. A labelled pill beside the
+                // title, not a fourth segment: the segmented control is an
+                // *index of the mushaf* (Surah / Juz / Bookmarks) and a
+                // "Learn" tab there would neither be an index nor survive
+                // the Arabic label widths.
+                if let onOpenLearn {
+                    Button(action: onOpenLearn) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "graduationcap.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                            Text("Learn")
+                                .font(.noorScaled(14, weight: .semibold))
+                        }
+                        .foregroundStyle(NoorColor.accentPrimary)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 34)
+                        .background(
+                            Capsule().fill(NoorColor.accentPrimary.opacity(0.12)))
+                        .frame(minHeight: 44)
+                        .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Learn")
+                    .accessibilityHint("Tajweed guide and memorisation texts")
+                }
+            }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
                 .padding(.top, 8)

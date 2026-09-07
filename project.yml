@@ -29,6 +29,8 @@ packages:
     path: Modules/Tafsir
   Library:
     path: Modules/Library
+  Learn:
+    path: Modules/Learn
   Athkar:
     path: Modules/Athkar
 
@@ -105,6 +107,7 @@ targets:
       - package: Qibla
       - package: Tafsir
       - package: Library
+      - package: Learn
       - package: Athkar
       - target: NoorWidgets
         platformFilter: iOS

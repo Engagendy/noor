@@ -1,4 +1,5 @@
 import DesignSystem
+import Learn
 import Notifications
 import PrayerTimes
 import Translations
@@ -219,10 +220,18 @@ struct SettingsView: View {
                 } label: {
                     Text("Translation audio")
                 }
-                NavigationLink {
-                    TajweedGuideView()
-                } label: {
-                    Text("Tajweed Guide")
+                // The tajweed guide moved to the learning area (Quran tab →
+                // Learn). This pointer stays so existing users who learnt to
+                // find it here are not left hunting; it opens the same
+                // screen, one level in.
+                NavigationLink(value: LearnRoute.home) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Learn")
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Text("Tajweed guide and memorisation texts — also in the Quran tab.")
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                    }
                 }
                 MushafDownloadRow()
                 Picker(selection: $translationId) {
@@ -295,6 +304,8 @@ struct SettingsView: View {
                 .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
         .navigationTitle(Text("Settings"))
+        // The learning area is reachable from here too (see the Learn row).
+        .learnDestinations()
         // Language is applied entirely via the SwiftUI environment in
         // RootView. Never touch AppleLanguages: a process launched in one
         // direction with the environment forcing the other renders mirrored.

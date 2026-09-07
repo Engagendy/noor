@@ -143,6 +143,29 @@ never touch Quran rendering, which stays on the verified Quran fonts above.
   open licence — same standing as the bundled text.
 - **Attribution:** "Athkar audio read by Hamad Al-Duraihim, courtesy of IslamHouse / hisnmuslim.com."
 
+### Tuhfat al-Atfal — tajweed matn (bundled)
+- **Text:** تحفة الأطفال في تجويد القرآن by Sulayman ibn Husayn al-Jamzuri
+  (سليمان الجمزوري), completed 1198 AH / c. 1784 CE. The poem itself is in
+  the **public domain** — its author died more than two centuries ago, far
+  beyond any copyright term anywhere.
+- **Transcription source:** Arabic Wikisource, page "تحفة الأطفال"
+  (https://ar.wikisource.org/wiki/%D8%AA%D8%AD%D9%81%D8%A9_%D8%A7%D9%84%D8%A3%D8%B7%D9%81%D8%A7%D9%84),
+  page id 4754. Retrieved 2026-09-07; the page footer states
+  **Creative Commons Attribution-ShareAlike 4.0** (verified on the live page:
+  `creativecommons.org/licenses/by-sa/4.0/`).
+- **File:** `Modules/Learn/Sources/Learn/Resources/matn-tuhfat-al-atfal.json`,
+  built by `Tools/build_matn_tuhfa.py` — fetched through the MediaWiki parse
+  API, never typed by hand. The only transformation is stripping ARABIC
+  TATWEEL (U+0640, used as visual padding by the Word table the page was
+  converted from) and collapsing whitespace; the script asserts per cell that
+  the letter-and-haraka sequence is otherwise byte-identical to the source and
+  fails loudly otherwise. 60 lines, 10 sections, fully vowelled (1805 harakat).
+- **Attribution:** "Tuhfat al-Atfal by Sulayman al-Jamzuri (public domain);
+  transcription from Arabic Wikisource, CC BY-SA 4.0."
+- **Audio:** none. No recording of the matn ships until its licence is
+  verified and recorded here (hard rule 5); the JSON keeps empty `audio` and
+  `timings` slots for that day.
+
 ## Software dependencies
 
 | Package | License | URL |

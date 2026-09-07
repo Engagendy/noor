@@ -87,6 +87,12 @@ public struct TajweedGuideView: View {
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
         .navigationTitle(Text("Tajweed Guide"))
+        // Inline, like the rest of the learning area: pushed into the Quran
+        // tab's stack the large title drew straight over the first section
+        // header.
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 
     private func section(title: LocalizedStringKey, marks: [Mark], quranFont: Bool) -> some View {

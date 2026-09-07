@@ -59,6 +59,70 @@
         }
       }
     },
+    "%lld lines": {
+      "localizations": {
+        "ar": {
+          "variations": {
+            "plural": {
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "لا أبيات"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "بيت واحد"
+                }
+              },
+              "two": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "بيتان"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld أبيات"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld بيتًا"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld بيت"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld line"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld lines"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld min": {
       "localizations": {
         "ar": {
@@ -844,6 +908,16 @@
         }
       }
     },
+    "Classical poems memorised by students of tajweed.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "منظومات كلاسيكية يحفظها طلاب التجويد."
+          }
+        }
+      }
+    },
     "Clear": {
       "extractionState": "stale",
       "localizations": {
@@ -1541,6 +1615,16 @@
         }
       }
     },
+    "Go to marked line": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الانتقال إلى البيت المعلَّم"
+          }
+        }
+      }
+    },
     "Go to page": {
       "extractionState": "stale",
       "localizations": {
@@ -1908,12 +1992,32 @@
         }
       }
     },
+    "Learn": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التعلّم"
+          }
+        }
+      }
+    },
     "Light (Mushaf)": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "فاتح (مصحف)"
+          }
+        }
+      }
+    },
+    "Line %lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "البيت %lld"
           }
         }
       }
@@ -2061,6 +2165,16 @@
         }
       }
     },
+    "Mark this line": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "علِّم هذا البيت"
+          }
+        }
+      }
+    },
     "Match your local masjid exactly. Applies everywhere: timeline, widgets, and notifications.": {
       "extractionState": "stale",
       "localizations": {
@@ -2074,6 +2188,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Match your local masjid exactly. Applies everywhere: timeline, widgets, and notifications."
+          }
+        }
+      }
+    },
+    "Memorisation texts": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متون الحفظ"
           }
         }
       }
@@ -2599,6 +2723,16 @@
         }
       }
     },
+    "Pause marks, mushaf symbols and the letter rules.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "علامات الوقف ورموز المصحف وأحكام الحروف."
+          }
+        }
+      }
+    },
     "Play": {
       "extractionState": "manual",
       "localizations": {
@@ -2977,6 +3111,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "القارئ"
+          }
+        }
+      }
+    },
+    "Reference": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مرجع"
+          }
+        }
+      }
+    },
+    "Remove mark": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إزالة العلامة"
           }
         }
       }
@@ -3699,6 +3853,26 @@
         }
       }
     },
+    "Tajweed guide and memorisation texts": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "دليل التجويد ومتون الحفظ"
+          }
+        }
+      }
+    },
+    "Tajweed guide and memorisation texts — also in the Quran tab.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "دليل التجويد ومتون الحفظ — وهي أيضًا في تبويب القرآن."
+          }
+        }
+      }
+    },
     "Tajweed rules (أحكام التجويد)": {
       "extractionState": "stale",
       "localizations": {
@@ -3734,6 +3908,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "السبحة"
+          }
+        }
+      }
+    },
+    "Text size": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حجم الخط"
           }
         }
       }

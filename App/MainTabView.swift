@@ -1,6 +1,7 @@
 import ContentDB
 import Athkar
 import DesignSystem
+import Learn
 import Library
 import Notifications
 import PrayerTimes
@@ -383,7 +384,12 @@ struct QuranTab: View {
     @AppStorage("reader.lastSurah") private var lastSurah = 1
     @State private var selection: Int?
     @State private var targetAyah: Int?
-    @State private var compactPath: [ReaderTarget] = []
+    /// Type-erased so the Quran stack can push both the reader and the
+    /// learning area from one path.
+    @State private var compactPath = NavigationPath()
+    /// iPad/Mac: the learning area is a sheet — the split view's detail pane
+    /// belongs to the reader.
+    @State private var showLearn = false
     /// Written by `SurahReaderView` as the user toggles the chrome.
     private let readerChrome = ReaderChrome.shared
     #if os(iOS)
@@ -399,10 +405,11 @@ struct QuranTab: View {
         lastSurah = surahId
         targetAyah = ayah
         selection = surahId
-        compactPath = [ReaderTarget(surahId: surahId, ayah: ayah)]
+        compactPath = NavigationPath()
+        compactPath.append(ReaderTarget(surahId: surahId, ayah: ayah))
     }
 
-    private var listView: some View {
+    private func listView(onLearn: @escaping () -> Void) -> some View {
         SurahListView(
             surahs: surahs,
             structure: structure,
@@ -416,7 +423,8 @@ struct QuranTab: View {
             },
             onRemoveBookmark: { ref in
                 library?.remove(BookmarkItem(surahId: ref.surahId, ayah: ref.ayah, createdAt: ref.createdAt))
-            })
+            },
+            onOpenLearn: onLearn)
             #if os(iOS)
             // Bars are declared per screen (stack-level modifiers don't
             // reach pushed destinations): index = own header + tabs.
@@ -447,11 +455,12 @@ struct QuranTab: View {
             #if os(iOS)
             if sizeClass == .compact {
                 NavigationStack(path: $compactPath) {
-                    listView
+                    listView(onLearn: { compactPath.append(LearnRoute.home) })
                         .navigationDestination(for: ReaderTarget.self) { target in
                             reader(surahId: target.surahId, ayah: target.ayah,
-                                   exit: { compactPath.removeAll() })
+                                   exit: { compactPath = NavigationPath() })
                         }
+                        .learnDestinations()
                 }
                 // The reader is immersive, but its tab bar follows the
                 // reader's CHROME rather than the whole session — a
@@ -492,15 +501,36 @@ struct QuranTab: View {
             if selection == nil { selection = lastSurah }
             consumeOpenRequest()
             if let auto = autoOpenSurah { open(auto, nil) }
+            openLearnForScreenshots()
         }
         .onChange(of: openRequest) { _, _ in consumeOpenRequest() }
         .onChange(of: openPageRequest) { _, _ in consumeOpenRequest() }
         .onChange(of: openTarget) { _, _ in consumeOpenRequest() }
     }
 
+    /// Screenshot/UI-test hook: NOOR_LEARN=1 pushes the learning area,
+    /// =matn its first matn, =tajweed the guide.
+    private func openLearnForScreenshots() {
+        guard compactPath.isEmpty,
+              let mode = ProcessInfo.processInfo.environment["NOOR_LEARN"]
+        else { return }
+        compactPath.append(LearnRoute.home)
+        switch mode {
+        case "matn":
+            if let id = MatnStore.load().first?.id { compactPath.append(LearnRoute.matn(id)) }
+        case "tajweed":
+            compactPath.append(LearnRoute.tajweed)
+        default:
+            break
+        }
+    }
+
     private var splitView: some View {
         NavigationSplitView {
-            listView
+            listView(onLearn: { showLearn = true })
+                .sheet(isPresented: $showLearn) {
+                    NavigationStack { LearnView().learnDestinations() }
+                }
         } detail: {
             if let selection {
                 reader(surahId: selection, ayah: targetAyah)
