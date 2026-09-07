@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Hub -->
+    <string name="learn_title">Learn</string>
+    <string name="learn_open">Learn</string>
+    <string name="learn_search_hint">Search everything in Learn</string>
+    <string name="learn_no_matches">No matches in the learning texts</string>
+    <string name="learn_section_matns">Memorisation texts</string>
+    <string name="learn_matns_footer">Classical poems students memorise: tajweed, and the terms of hadith.</string>
+    <string name="learn_section_reference">Reference</string>
+    <string name="learn_tajweed_sub">Pause marks, mushaf symbols and the letter rules.</string>
+    <string name="learn_tafsir_title">Tafsir by surah</string>
+    <string name="learn_tafsir_sub">Pick a surah and read its tafsir ayah by ayah.</string>
+    <string name="learn_gharib_title">Quranic word meanings</string>
+    <string name="learn_gharib_sub">The words in the Quran that are hard to understand.</string>
+    <string name="learn_lines">%1$s lines</string>
+    <string name="learn_line_n">Line %1$s</string>
+    <string name="learn_showing_of">Showing %1$s of %2$s — open the text to see the rest</string>
+    <string name="learn_settings_sub">Tajweed guide and memorisation texts — also in the Quran tab.</string>
+    <string name="learn_hint">Tajweed guide and memorisation texts</string>
+
+    <!-- Matn reader -->
+    <string name="matn_search_hint">Search this matn</string>
+    <string name="matn_no_lines">No matching lines</string>
+    <string name="matn_count">%1$s of %2$s lines</string>
+    <string name="matn_sections_editorial">Section headings are the app\'s, not the source\'s.</string>
+    <string name="matn_text_size">Text size</string>
+    <string name="matn_mark">Mark this line</string>
+    <string name="matn_unmark">Remove mark</string>
+    <string name="matn_goto_marked">Go to marked line</string>
+    <string name="matn_search_a11y">Search this matn</string>
+    <string name="matn_smaller">Smaller</string>
+    <string name="matn_larger">Larger</string>
+
+    <!-- Tafsir browser / word meanings -->
+    <string name="tafsir_browse_title">Tafsir</string>
+    <string name="tafsir_choose_surah">Choose a surah</string>
+    <string name="tafsir_edition">Tafsir edition</string>
+    <string name="tafsir_edition_footer">Your choice is remembered, and is the same one the ayah sheet uses.</string>
+    <string name="tafsir_search_hint">Search the tafsir you have</string>
+    <string name="gharib_search_hint">Search the word meanings you have</string>
+    <string name="tafsir_coverage_partial">Searching %1$s of %2$s surahs you have downloaded</string>
+    <string name="tafsir_coverage_complete">Searching all %1$s surahs — this edition is fully downloaded</string>
+    <string name="tafsir_no_matches">No matches</string>
+    <string name="tafsir_no_matches_partial">Only the surahs you have downloaded were searched — the word may still be in the rest.</string>
+    <string name="tafsir_preparing">Preparing the search…</string>
+    <string name="tafsir_download_for_search">Download all %1$s surahs to search them</string>
+    <string name="tafsir_download_offline">Download for offline</string>
+    <string name="tafsir_downloading_progress">Downloading tafsir %1$s/%2$s…</string>
+    <string name="tafsir_available_offline">Available offline</string>
+    <string name="tafsir_downloading_surah">Downloading this surah\'s tafsir…</string>
+    <string name="tafsir_downloading_surah_sub">It is kept on the device, so this surah opens offline next time.</string>
+    <string name="tafsir_empty_surah">This edition has nothing for this surah.</string>
+    <string name="tafsir_gharib_note">Only the ayat with words worth glossing appear here.</string>
+    <string name="tafsir_surah_search_hint">Search this surah</string>
+    <string name="tafsir_no_match_surah">No matches in this surah</string>
+    <string name="tafsir_ayat_count">%1$s of %2$s ayat</string>
+    <string name="tafsir_results">Results</string>
+    <string name="tafsir_group_gharib">Quranic word meanings — %1$s</string>
+    <string name="tafsir_group_tafsir">Tafsir — %1$s</string>
+    <string name="tafsir_unavailable">Tafsir unavailable — check your connection.</string>
+    <string name="tafsir_ayat_n">%1$s ayat</string>
+</resources>

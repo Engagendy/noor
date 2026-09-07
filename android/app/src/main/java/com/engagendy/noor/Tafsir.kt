@@ -56,13 +56,44 @@ object Tafsir {
         TafsirEdition("ar-tafsir-al-tabari", "الطبري", true),
         TafsirEdition("ar-tafseer-al-qurtubi", "القرطبي", true),
         TafsirEdition("en-tafisr-ibn-kathir", "Ibn Kathir (English)", false),
+        // Word meanings (غريب القرآن) rather than running commentary: each
+        // entry glosses the difficult words of its ayah. `GHARIB_SLUG` points
+        // the Learn hub's "Quranic word meanings" entry at it — it is an
+        // ordinary edition here too, so anyone who prefers it in the ayah
+        // sheet can pick it there.
+        TafsirEdition("al-muyassar-fi-al-gharib", "الميسر في الغريب", true),
+        // Despite its name, what the API serves under this slug is running
+        // commentary in the wording of as-Sa'di, NOT a word glossary
+        // (verified on iOS 2026-09-07 against 1:1, 2:255 and 18:9) — so it is
+        // offered as one more tafsir, not as غريب القرآن.
+        TafsirEdition("asseraj-fi-bayan-gharib-alquran", "السراج", true),
     )
+
+    /// The edition behind the Learn hub's "Quranic word meanings" entry.
+    const val GHARIB_SLUG = "al-muyassar-fi-al-gharib"
+
+    const val SURAH_COUNT = 114
+
+    val gharib: TafsirEdition get() = named(GHARIB_SLUG)
 
     fun named(slug: String?): TafsirEdition =
         editions.firstOrNull { it.slug == slug } ?: editions[0]
 
+    // Paths are built from Int.toString()/plain slugs only — never a
+    // locale-formatted number (CLAUDE.md: Locale.ROOT for filenames).
+    private fun surahDir(context: Context, slug: String, surah: Int): File =
+        File(context.filesDir, "tafsir/$slug/$surah")
+
     private fun cacheFile(context: Context, slug: String, surah: Int, ayah: Int): File =
-        File(context.filesDir, "tafsir/$slug/$surah/$ayah.txt")
+        File(surahDir(context, slug, surah), "$ayah.txt")
+
+    /// Written after a whole surah bundle has been cached. Without it a
+    /// directory holding one ayah the user happened to tap in the reader
+    /// would look like a complete surah to the browser and to search. It is
+    /// a zero-byte marker in the SAME cache — no tafsir text lives here.
+    /// (Mirrors iOS `TafsirService.completionMarker`.)
+    private fun completionMarker(context: Context, slug: String, surah: Int): File =
+        File(surahDir(context, slug, surah), ".complete")
 
     /// Cache-first load; the network path runs entirely on IO.
     suspend fun load(context: Context, slug: String, surah: Int, ayah: Int): Result<String> =
@@ -90,6 +121,112 @@ object Tafsir {
                 }
             }
         }
+
+    // MARK: - One surah, as a whole (the Learn browser + search)
+
+    /// One ayah's tafsir. Editions that gloss only some ayat (غريب القرآن)
+    /// simply omit the rest, so the browser renders what the edition has
+    /// rather than a row per ayah of the surah.
+    data class Entry(val ayah: Int, val text: String)
+
+    /// True once this surah's whole bundle is on disk — the browser reads it
+    /// with no network at all.
+    fun isSurahCached(context: Context, slug: String, surah: Int): Boolean =
+        completionMarker(context, slug, surah).exists()
+
+    /// The surahs of this edition whose WHOLE bundle is cached, in order. A
+    /// surah half-filled by tapping single ayat in the reader is NOT one of
+    /// them — searching it would look complete and quietly miss most of it
+    /// (this is exactly what the `.complete` marker is for).
+    fun cachedSurahNumbers(context: Context, slug: String): List<Int> =
+        (1..SURAH_COUNT).filter { isSurahCached(context, slug, it) }
+
+    /// Reads a cached surah out of the per-ayah cache — the SAME files
+    /// `load` writes and reads. There is exactly one tafsir cache.
+    fun cachedSurah(context: Context, slug: String, surah: Int): List<Entry> {
+        val dir = surahDir(context, slug, surah)
+        val names = dir.list() ?: return emptyList()
+        return names.mapNotNull { name ->
+            if (!name.endsWith(".txt")) return@mapNotNull null
+            val ayah = name.dropLast(4).toIntOrNull() ?: return@mapNotNull null
+            if (ayah <= 0) return@mapNotNull null
+            val text = runCatching { File(dir, name).readText() }.getOrNull() ?: return@mapNotNull null
+            if (text.isBlank()) null else Entry(ayah, text)
+        }.sortedBy { it.ayah }
+    }
+
+    /// True when every surah of this edition is cached (spot-checked, like
+    /// iOS). The `1.txt` fallback keeps packs downloaded by earlier versions
+    /// — which wrote no completion marker — from looking undownloaded.
+    fun isPackDownloaded(context: Context, slug: String): Boolean =
+        listOf(1, 2, 18, 67, 114).all { surah ->
+            isSurahCached(context, slug, surah) ||
+                cacheFile(context, slug, surah, 1).exists()
+        }
+
+    /// THE per-surah fetch: one bundle, written into the per-ayah cache that
+    /// `load` reads. Both the whole-edition download and the Learn browser go
+    /// through here, so there is one network path and one cache.
+    private fun fetchAndCacheSurahBlocking(
+        context: Context,
+        slug: String,
+        surah: Int,
+    ): List<Entry> {
+        val url = URL("https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/$slug/$surah.json")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.connectTimeout = 15_000
+        connection.readTimeout = 20_000
+        val body = try {
+            if (connection.responseCode != 200) error("HTTP ${connection.responseCode}")
+            connection.inputStream.bufferedReader().readText()
+        } finally {
+            connection.disconnect()
+        }
+        val dir = surahDir(context, slug, surah)
+        dir.mkdirs()
+        val array = org.json.JSONArray(body)
+        val entries = ArrayList<Entry>(array.length())
+        for (index in 0 until array.length()) {
+            val item = array.getJSONObject(index)
+            // The bundles carry ayah as a number in some editions and a
+            // string in others — accept both (as iOS does).
+            val ayah = item.optInt("ayah", 0).takeIf { it > 0 }
+                ?: item.optString("ayah").toIntOrNull() ?: 0
+            if (ayah <= 0) continue
+            val text = stripHtml(item.optString("text"))
+            if (text.isEmpty()) continue
+            runCatching { cacheFile(context, slug, surah, ayah).writeText(text) }
+            entries.add(Entry(ayah, text))
+        }
+        completionMarker(context, slug, surah).writeText("")
+        TafsirPacks.noteCacheChanged()
+        return entries.sortedBy { it.ayah }
+    }
+
+    /// Loads one surah for the Learn browser: cache first (offline), then the
+    /// same per-surah bundle the pack download uses, cached the same way.
+    /// An empty result is a real answer, not a failure — word-meaning
+    /// editions skip whole surahs.
+    suspend fun loadSurah(context: Context, slug: String, surah: Int): Result<List<Entry>> =
+        withContext(Dispatchers.IO) {
+            if (isSurahCached(context, slug, surah)) {
+                val cached = cachedSurah(context, slug, surah)
+                if (cached.isNotEmpty()) return@withContext Result.success(cached)
+            }
+            runCatching { fetchAndCacheSurahBlocking(context, slug, surah) }
+                .recoverCatching { error ->
+                    // Offline with a partial cache (ayat read one by one in
+                    // the reader) is still worth showing.
+                    val cached = cachedSurah(context, slug, surah)
+                    if (cached.isEmpty()) throw error else cached
+                }
+        }
+
+    /// Used by the whole-edition download; blocking, IO-dispatcher only.
+    internal fun downloadSurahBlocking(context: Context, slug: String, surah: Int) {
+        if (isSurahCached(context, slug, surah)) return
+        fetchAndCacheSurahBlocking(context, slug, surah)
+    }
 
     /// The CDN texts occasionally carry basic HTML tags — flatten to plain text.
     fun stripHtml(html: String): String = html

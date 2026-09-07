@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Alignment
@@ -120,6 +121,15 @@ fun QuranScreen(
         openAyah = ayah
         openSurah = surahs.firstOrNull { it.id == surahId }
         openSerial++
+    }
+
+    // The learning area (matns, tajweed guide, tafsir, غريب القرآن) — pushed
+    // from this tab exactly as iOS pushes `LearnRoute.home` on the Quran
+    // stack. It owns its own back handling.
+    var showLearn by rememberSaveable { mutableStateOf(false) }
+    if (showLearn) {
+        LearnScreen(onBack = { showLearn = false }, modifier = modifier)
+        return
     }
 
     // System back pops one level, same as each screen's رجوع button.
@@ -265,6 +275,23 @@ fun QuranScreen(
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = NoorColor.inkPrimary
+            )
+            // Entry to the learning area. A labelled pill beside the title,
+            // not a fourth segment: the segmented control below is an INDEX
+            // of the mushaf (Surah / Juz / Bookmarks), and "Learn" is not an
+            // index of anything.
+            Text(
+                stringResource(R.string.learn_open),
+                fontSize = 14.sp,
+                color = NoorColor.accentPrimary,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(NoorColor.accentPrimary.copy(alpha = 0.12f))
+                    .clickable(onClickLabel = stringResource(R.string.learn_hint)) {
+                        showLearn = true
+                    }
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
             )
             Text(
                 stringResource(R.string.g2_mushaf),

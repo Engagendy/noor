@@ -67,6 +67,7 @@ Attributions are displayed in Settings → About.
 - **Note:** verify per-tafsir redistribution terms before App Store release.
 
 ### Al-Muyassar fi al-Gharib — Quranic word meanings (fetched per surah, cached)
+<!-- Shipped on BOTH platforms: iOS Modules/Tafsir, Android Tafsir.kt. -->
 - **Source:** the same spa5k/tafsir_api CDN, edition slug
   `al-muyassar-fi-al-gharib` (الميسر في غريب القرآن). It backs the Learn hub's
   "Quranic word meanings" entry, through the same service, network path and
@@ -173,7 +174,10 @@ never touch Quran rendering, which stays on the verified Quran fonts above.
   page id 4754. Retrieved 2026-09-07; the page footer states
   **Creative Commons Attribution-ShareAlike 4.0** (verified on the live page:
   `creativecommons.org/licenses/by-sa/4.0/`).
-- **File:** `Modules/Learn/Sources/Learn/Resources/matn-tuhfat-al-atfal.json`,
+- **File:** `Modules/Learn/Sources/Learn/Resources/matn-tuhfat-al-atfal.json`
+  (Android ships a BYTE-IDENTICAL copy at
+  `android/app/src/main/assets/matn-tuhfat-al-atfal.json` — copied, never
+  re-fetched or re-parsed, so both platforms show the same text),
   built by `Tools/build_matn_tuhfa.py` — fetched through the MediaWiki parse
   API, never typed by hand. The only transformation is stripping ARABIC
   TATWEEL (U+0640, used as visual padding by the Word table the page was
@@ -199,7 +203,10 @@ never touch Quran rendering, which stays on the verified Quran fonts above.
   **Creative Commons Attribution-ShareAlike 4.0** (verified on the live page:
   `creativecommons.org/licenses/by-sa/4.0/`). NOTE the page name — the
   similarly named "المنظومة البيقونية" is a near-empty different page.
-- **File:** `Modules/Learn/Sources/Learn/Resources/matn-bayquniyyah.json`,
+- **File:** `Modules/Learn/Sources/Learn/Resources/matn-bayquniyyah.json`
+  (Android ships a BYTE-IDENTICAL copy at
+  `android/app/src/main/assets/matn-bayquniyyah.json` — copied, never
+  re-fetched or re-parsed),
   built by `Tools/build_matn_bayquniyyah.py` — fetched through the MediaWiki
   parse API, never typed by hand. The only transformation is stripping ARABIC
   TATWEEL (U+0640, visual padding for the {{أبيات}} grid; 275 occurrences) and

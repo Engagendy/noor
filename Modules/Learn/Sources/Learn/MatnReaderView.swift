@@ -357,12 +357,16 @@ public struct MatnReaderView: View {
         Text(verbatim: section.displayTitle(arabicUI: isArabicUI))
             .font(.noorScaled(16, weight: .semibold))
             .foregroundStyle(NoorColor.accentPrimary)
-            // `.leading` is direction-aware and is the ONLY correct answer
-            // here: the interface is already right-to-left in Arabic, so
-            // asking for `.trailing` there put the heading against the LEFT
-            // edge — the flip was applied twice. In English `.leading` is
-            // the left edge, which is what English wants.
+            // The heading belongs on the same edge as the verses it heads,
+            // and the verses always start on the RIGHT because the poem is
+            // Arabic whatever the interface language (`lineRow` forces
+            // right-to-left for exactly that reason). Deriving the edge from
+            // the interface instead put the heading on the left in English
+            // while its own verses sat on the right, so one section read in
+            // two directions. Do not "fix" this back to a direction-aware
+            // alignment: this view is Arabic content, not chrome.
             .frame(maxWidth: .infinity, alignment: .leading)
+            .environment(\.layoutDirection, .rightToLeft)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(NoorColor.bgElevated)

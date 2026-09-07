@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Learn area (hub, matns, tafsir browser, word meanings) — mirrors the
+     iOS Modules/Learn + Modules/Tafsir strings. -->
+<resources>
+    <!-- Hub -->
+    <string name="learn_title">تعلّم</string>
+    <string name="learn_open">تعلّم</string>
+    <string name="learn_search_hint">ابحث في كل ما في قسم التعلّم</string>
+    <string name="learn_no_matches">لا نتائج في نصوص التعلّم</string>
+    <string name="learn_section_matns">نصوص للحفظ</string>
+    <string name="learn_matns_footer">منظومات يحفظها الطلاب: التجويد، ومصطلح الحديث.</string>
+    <string name="learn_section_reference">مراجع</string>
+    <string name="learn_tajweed_sub">علامات الوقف ورموز المصحف وأحكام الحروف.</string>
+    <string name="learn_tafsir_title">التفسير حسب السورة</string>
+    <string name="learn_tafsir_sub">اختر سورة واقرأ تفسيرها آية آية.</string>
+    <string name="learn_gharib_title">غريب القرآن</string>
+    <string name="learn_gharib_sub">معاني الكلمات التي يصعب فهمها في القرآن.</string>
+    <string name="learn_lines">%1$s بيتًا</string>
+    <string name="learn_line_n">البيت %1$s</string>
+    <string name="learn_showing_of">تعرض %1$s من %2$s — تابع البحث داخل النص</string>
+    <string name="learn_settings_sub">دليل التجويد ونصوص الحفظ — موجود أيضًا في تبويب القرآن.</string>
+    <string name="learn_hint">دليل التجويد ونصوص الحفظ</string>
+
+    <!-- Matn reader -->
+    <string name="matn_search_hint">ابحث في هذا المتن</string>
+    <string name="matn_no_lines">لا أبيات مطابقة</string>
+    <string name="matn_count">%1$s من %2$s بيتًا</string>
+    <string name="matn_sections_editorial">عناوين الأقسام من وضع التطبيق لا من المصدر.</string>
+    <string name="matn_text_size">حجم الخط</string>
+    <string name="matn_mark">علّم هذا البيت</string>
+    <string name="matn_unmark">أزل العلامة</string>
+    <string name="matn_goto_marked">اذهب إلى البيت المعلَّم</string>
+    <string name="matn_search_a11y">ابحث في هذا المتن</string>
+    <string name="matn_smaller">أصغر</string>
+    <string name="matn_larger">أكبر</string>
+
+    <!-- Tafsir browser / word meanings -->
+    <string name="tafsir_browse_title">التفسير</string>
+    <string name="tafsir_choose_surah">اختر سورة</string>
+    <string name="tafsir_edition">نسخة التفسير</string>
+    <string name="tafsir_edition_footer">اختيارك محفوظ، وهو نفسه المستخدم في بطاقة الآية.</string>
+    <string name="tafsir_search_hint">ابحث في التفسير الذي نزّلته</string>
+    <string name="gharib_search_hint">ابحث في معاني الكلمات التي نزّلتها</string>
+    <string name="tafsir_coverage_partial">البحث في %1$s من %2$s سورة نزّلتها على جهازك</string>
+    <string name="tafsir_coverage_complete">البحث في %1$s سورة — التفسير كامل على جهازك</string>
+    <string name="tafsir_no_matches">لا نتائج</string>
+    <string name="tafsir_no_matches_partial">لم يُبحث إلا في السور التي نزّلتها — قد تكون الكلمة في بقية السور.</string>
+    <string name="tafsir_preparing">جارٍ تجهيز البحث…</string>
+    <string name="tafsir_download_for_search">نزّل %1$s سورة كلها للبحث فيها</string>
+    <string name="tafsir_download_offline">تنزيل للاستخدام دون اتصال</string>
+    <string name="tafsir_downloading_progress">جارٍ تنزيل التفسير %1$s/%2$s…</string>
+    <string name="tafsir_available_offline">متاح دون اتصال</string>
+    <string name="tafsir_downloading_surah">جارٍ تنزيل تفسير هذه السورة…</string>
+    <string name="tafsir_downloading_surah_sub">يُحفظ على الجهاز لتفتح السورة دون اتصال في المرة القادمة.</string>
+    <string name="tafsir_empty_surah">لا يوجد في هذه النسخة شيء لهذه السورة.</string>
+    <string name="tafsir_gharib_note">تظهر هنا الآيات التي فيها كلمات تحتاج بيانًا فقط.</string>
+    <string name="tafsir_surah_search_hint">ابحث في هذه السورة</string>
+    <string name="tafsir_no_match_surah">لا نتائج في هذه السورة</string>
+    <string name="tafsir_ayat_count">%1$s من %2$s آية</string>
+    <string name="tafsir_results">النتائج</string>
+    <string name="tafsir_group_gharib">غريب القرآن — %1$s</string>
+    <string name="tafsir_group_tafsir">التفسير — %1$s</string>
+    <string name="tafsir_unavailable">تعذّر تحميل التفسير — تحقق من الاتصال.</string>
+    <string name="tafsir_ayat_n">%1$s آية</string>
+</resources>

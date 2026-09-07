@@ -79,12 +79,15 @@ fun SettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     androidx.activity.compose.BackHandler(enabled = sub != "main") { sub = "main" }
     when (sub) {
         "storage" -> StorageScreen(onBack = { sub = "main" }, modifier = modifier)
-        "tajweed" -> TajweedGuideScreen(onBack = { sub = "main" }, modifier = modifier)
+        // The tajweed guide moved INTO the learning area; Settings keeps a
+        // pointer row (below) so users who learnt to find it here are not
+        // stranded — it opens the same hub, one level in.
+        "learn" -> LearnScreen(onBack = { sub = "main" }, modifier = modifier)
         "zakat" -> ZakatScreen(onBack = { sub = "main" }, modifier = modifier)
         else -> SettingsMain(
             onBack = onBack,
             openStorage = { sub = "storage" },
-            openTajweed = { sub = "tajweed" },
+            openLearn = { sub = "learn" },
             openZakat = { sub = "zakat" },
             modifier = modifier)
     }
@@ -94,7 +97,7 @@ fun SettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 private fun SettingsMain(
     onBack: () -> Unit,
     openStorage: () -> Unit,
-    openTajweed: () -> Unit,
+    openLearn: () -> Unit,
     openZakat: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -312,7 +315,7 @@ private fun SettingsMain(
                            else NoorPlayer.translation.localizedName,
                    onClick = { showReciterPicker = true })
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
-            NavRow(title = stringResource(R.string.g1_tajweed_guide), onClick = openTajweed)
+            LearnPointerRow(onClick = openLearn)
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             MushafDownloadRow()
         }
@@ -437,6 +440,31 @@ private fun ToggleRow(
             colors = SwitchDefaults.colors(
                 checkedTrackColor = NoorColor.accentPrimary,
                 checkedThumbColor = NoorColor.bgElevated))
+    }
+}
+
+/// The tajweed guide used to live here. It moved into the learning area
+/// (Quran tab → تعلّم / Learn) with the matns, the tafsir browser and غريب
+/// القرآن; this row stays so anyone who learnt to find it in Settings is not
+/// left hunting, and it opens the same screen.
+@Composable
+private fun LearnPointerRow(onClick: () -> Unit) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 11.dp)
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.learn_title), fontSize = 15.sp,
+                 color = NoorColor.inkPrimary)
+            Text(stringResource(R.string.learn_settings_sub), fontSize = 12.sp,
+                 lineHeight = 18.sp, color = NoorColor.inkSecondary)
+        }
+        Icon(painterResource(NoorIcons.chevronForward()), contentDescription = null,
+             tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
     }
 }
 
