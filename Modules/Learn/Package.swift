@@ -14,7 +14,10 @@ let package = Package(
         .target(
             name: "Learn",
             dependencies: ["DesignSystem"],
-            resources: [.copy("Resources/matn-tuhfat-al-atfal.json")]
+            resources: [
+                .copy("Resources/matn-tuhfat-al-atfal.json"),
+                .copy("Resources/matn-bayquniyyah.json"),
+            ]
         )
     ]
 )

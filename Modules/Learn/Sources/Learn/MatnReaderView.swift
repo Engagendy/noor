@@ -114,6 +114,13 @@ public struct MatnReaderView: View {
         .task {
             guard !didRestore else { return }
             didRestore = true
+            // Screenshot/UI-test hook: NOOR_MATN_LINE=31 opens the reader at
+            // that line (a section boundary, say) without touching defaults.
+            if let pinned = ProcessInfo.processInfo.environment["NOOR_MATN_LINE"].flatMap(Int.init),
+               matn.lines.contains(where: { $0.number == pinned }) {
+                position = .line(pinned)
+                return
+            }
             // Resume where the reader last was. The marked line is
             // deliberately NOT the resume target — it is the line being
             // memorised, one tap away on the toolbar bookmark.
@@ -207,6 +214,12 @@ public struct MatnReaderView: View {
                 Text("\(matn.lines.count) lines")
             }
             Text(verbatim: "\(matn.sourceName) · \(matn.sourceLicense)")
+            // Honesty about the headings: al-Bayquniyyah's source page has
+            // none, so ours are editorial and must not pass for the poet's.
+            if matn.sectionsEditorial == true {
+                Text("Section headings are the app's, not the source's.")
+                    .multilineTextAlignment(.center)
+            }
         }
         .font(NoorFont.caption)
         .foregroundStyle(NoorColor.inkSecondary)

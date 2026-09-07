@@ -8,6 +8,7 @@ import PrayerTimes
 import Qibla
 import QuranAudio
 import QuranReader
+import Tafsir
 import SwiftUI
 import Translations
 import WidgetKit
@@ -460,7 +461,7 @@ struct QuranTab: View {
                             reader(surahId: target.surahId, ayah: target.ayah,
                                    exit: { compactPath = NavigationPath() })
                         }
-                        .learnDestinations()
+                        .learnDestinations { topic in tafsirScreen(topic) }
                 }
                 // The reader is immersive, but its tab bar follows the
                 // reader's CHROME rather than the whole session — a
@@ -508,8 +509,22 @@ struct QuranTab: View {
         .onChange(of: openTarget) { _, _ in consumeOpenRequest() }
     }
 
+    /// The Learn hub's tafsir destinations. They live in the Tafsir module
+    /// (Learn must not import a sibling feature), and both go through the one
+    /// `TafsirService` — same CDN bundles, same cache as the ayah sheet.
+    @ViewBuilder
+    private func tafsirScreen(_ topic: LearnRoute.TafsirTopic) -> some View {
+        switch topic {
+        case .browse:
+            TafsirBrowserView()
+        case .wordMeanings:
+            TafsirBrowserView(edition: .gharib)
+        }
+    }
+
     /// Screenshot/UI-test hook: NOOR_LEARN=1 pushes the learning area,
-    /// =matn its first matn, =tajweed the guide.
+    /// =matn its first matn (or =<matn id> a named one), =tajweed the guide,
+    /// =tafsir the tafsir browser, =gharib the word meanings.
     private func openLearnForScreenshots() {
         guard compactPath.isEmpty,
               let mode = ProcessInfo.processInfo.environment["NOOR_LEARN"]
@@ -520,8 +535,22 @@ struct QuranTab: View {
             if let id = MatnStore.load().first?.id { compactPath.append(LearnRoute.matn(id)) }
         case "tajweed":
             compactPath.append(LearnRoute.tajweed)
+        case "tafsir", "gharib":
+            let wordMeanings = mode == "gharib"
+            compactPath.append(LearnRoute.tafsir(wordMeanings ? .wordMeanings : .browse))
+            // NOOR_TAFSIR_SURAH=2 also opens that surah, for the screenshots.
+            if let surah = ProcessInfo.processInfo.environment["NOOR_TAFSIR_SURAH"]
+                .flatMap(Int.init) {
+                let slug = wordMeanings
+                    ? TafsirEdition.gharib.slug
+                    : (ProcessInfo.processInfo.environment["NOOR_TAFSIR_EDITION"]
+                       ?? UserDefaults.standard.string(forKey: "tafsir.edition")
+                       ?? TafsirEdition.all[0].slug)
+                compactPath.append(TafsirSurahRoute(surahId: surah, slug: slug))
+            }
         default:
-            break
+            // Any matn by id, e.g. NOOR_LEARN=bayquniyyah.
+            if MatnStore.matn(id: mode) != nil { compactPath.append(LearnRoute.matn(mode)) }
         }
     }
 
@@ -529,7 +558,9 @@ struct QuranTab: View {
         NavigationSplitView {
             listView(onLearn: { showLearn = true })
                 .sheet(isPresented: $showLearn) {
-                    NavigationStack { LearnView().learnDestinations() }
+                    NavigationStack {
+                        LearnView().learnDestinations { topic in tafsirScreen(topic) }
+                    }
                 }
         } detail: {
             if let selection {

@@ -5,9 +5,10 @@ import SwiftUI
 /// poems) and the tajweed reference guide, in one place reachable from the
 /// Quran tab.
 ///
-/// The matn list is driven by `MatnStore`, so a second matn (al-Jazariyyah,
+/// The matn list is driven by `MatnStore`, so another matn (al-Jazariyyah,
 /// once a vowelled source is verified) appears here by adding its JSON — no
-/// UI change needed.
+/// UI change needed. Two ship today: Tuhfat al-Atfal (tajweed) and
+/// al-Bayquniyyah (hadith terminology, the companion to the Hadith tab).
 public struct LearnView: View {
     public init() {}
 
@@ -28,28 +29,32 @@ public struct LearnView: View {
             } header: {
                 Text("Memorisation texts").foregroundStyle(NoorColor.inkSecondary)
             } footer: {
-                Text("Classical poems memorised by students of tajweed.")
+                Text("Classical poems students memorise: tajweed, and the terms of hadith.")
                     .font(NoorFont.caption)
                     .foregroundStyle(NoorColor.inkSecondary)
             }
 
             Section {
                 NavigationLink(value: LearnRoute.tajweed) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "character.book.closed")
-                            .font(.system(size: 17))
-                            .foregroundStyle(NoorColor.accentGold)
-                            .frame(width: 30)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Tajweed Guide")
-                                .font(.noorScaled(16, weight: .semibold))
-                                .foregroundStyle(NoorColor.inkPrimary)
-                            Text("Pause marks, mushaf symbols and the letter rules.")
-                                .font(NoorFont.caption)
-                                .foregroundStyle(NoorColor.inkSecondary)
-                        }
-                    }
-                    .frame(minHeight: 44)
+                    referenceRow(icon: "character.book.closed",
+                                 title: Text("Tajweed Guide"),
+                                 subtitle: Text("Pause marks, mushaf symbols and the letter rules."))
+                }
+                .listRowBackground(Color.clear)
+                // Tafsir used to be reachable only by tapping one ayah in the
+                // reader — no way to read a surah through.
+                NavigationLink(value: LearnRoute.tafsir(.browse)) {
+                    referenceRow(icon: "book.pages",
+                                 title: Text("Tafsir by surah"),
+                                 subtitle: Text("Pick a surah and read its tafsir ayah by ayah."))
+                }
+                .listRowBackground(Color.clear)
+                // Its own entry, not an edition buried in a picker: this is
+                // what someone wants when a word in the ayah is the problem.
+                NavigationLink(value: LearnRoute.tafsir(.wordMeanings)) {
+                    referenceRow(icon: "text.magnifyingglass",
+                                 title: Text("Quranic word meanings"),
+                                 subtitle: Text("The words in the Quran that are hard to understand."))
                 }
                 .listRowBackground(Color.clear)
             } header: {
@@ -65,6 +70,24 @@ public struct LearnView: View {
         .onAppear {
             if matns.isEmpty { matns = MatnStore.load() }
         }
+    }
+
+    private func referenceRow(icon: String, title: Text, subtitle: Text) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 17))
+                .foregroundStyle(NoorColor.accentGold)
+                .frame(width: 30)
+            VStack(alignment: .leading, spacing: 2) {
+                title
+                    .font(.noorScaled(16, weight: .semibold))
+                    .foregroundStyle(NoorColor.inkPrimary)
+                subtitle
+                    .font(NoorFont.caption)
+                    .foregroundStyle(NoorColor.inkSecondary)
+            }
+        }
+        .frame(minHeight: 44)
     }
 
     @ViewBuilder
@@ -102,13 +125,14 @@ public struct LearnView: View {
 }
 
 #Preview("Learn — AR RTL") {
-    NavigationStack { LearnView().learnDestinations() }
+    // The host supplies the tafsir screens (see `learnDestinations`).
+    NavigationStack { LearnView().learnDestinations { _ in Text(verbatim: "Tafsir") } }
         .environment(\.locale, Locale(identifier: "ar"))
         .environment(\.layoutDirection, .rightToLeft)
 }
 
 #Preview("Learn — EN LTR") {
-    NavigationStack { LearnView().learnDestinations() }
+    NavigationStack { LearnView().learnDestinations { _ in Text(verbatim: "Tafsir") } }
         .environment(\.locale, Locale(identifier: "en"))
         .environment(\.layoutDirection, .leftToRight)
 }

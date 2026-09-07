@@ -1,7 +1,9 @@
 import Learn
 import XCTest
 
-/// Guards over the bundled matn JSON produced by `Tools/build_matn_tuhfa.py`.
+/// Guards over the bundled matn JSON produced by the `Tools/build_matn_*.py`
+/// builders. Every guard below runs over EVERY bundled matn, so a new one
+/// (add its file to `MatnStore.bundledFiles`) is covered the moment it ships.
 ///
 /// No line of the poem is typed here — every assertion is derived from the
 /// bundled data at runtime. The vowel guard is the important one: a future
@@ -32,15 +34,41 @@ final class MatnTests: XCTestCase {
         XCTAssertFalse(matns.isEmpty, "the bundled matn JSON must load")
     }
 
-    func testTuhfaIsBundledWithTheParsedLineAndSectionCounts() throws {
-        let matn = try XCTUnwrap(MatnStore.matn(id: "tuhfat-al-atfal"))
-        // The count the Wikisource edition actually carries (the received
-        // count is conventionally 61 and varies slightly by edition — if the
-        // source is ever re-fetched and differs, this fails rather than
-        // silently changing the poem).
-        XCTAssertEqual(matn.lines.count, 60)
-        XCTAssertEqual(matn.sections.count, 10)
-        XCTAssertEqual(matn.lines.map(\.number), Array(1...60))
+    /// The counts each Wikisource edition actually carries. The received
+    /// counts are conventionally 61 (Tuhfa) and 34 (al-Bayquniyyah) and vary
+    /// slightly by edition — if a source is ever re-fetched and differs, this
+    /// fails rather than silently changing a poem.
+    private static let expected: [String: (lines: Int, sections: Int)] = [
+        "tuhfat-al-atfal": (60, 10),
+        "bayquniyyah": (34, 3),
+    ]
+
+    func testEveryBundledMatnIsPresentWithItsParsedLineAndSectionCounts() throws {
+        XCTAssertEqual(Set(matns.map(\.id)), Set(Self.expected.keys),
+                       "the bundled set changed — update `expected`")
+        for matn in matns {
+            let counts = try XCTUnwrap(Self.expected[matn.id])
+            XCTAssertEqual(matn.lines.count, counts.lines, matn.id)
+            XCTAssertEqual(matn.sections.count, counts.sections, matn.id)
+            XCTAssertEqual(matn.lines.map(\.number), Array(1...counts.lines), matn.id)
+        }
+    }
+
+    /// The section headings of al-Bayquniyyah are ours, not its source's, and
+    /// the JSON must keep saying so — the reader prints that note.
+    func testEditorialSectionsAreDeclaredWhereTheSourceHasNoHeadings() throws {
+        XCTAssertEqual(try XCTUnwrap(MatnStore.matn(id: "bayquniyyah")).sectionsEditorial, true)
+        XCTAssertNotEqual(try XCTUnwrap(MatnStore.matn(id: "tuhfat-al-atfal")).sectionsEditorial, true)
+    }
+
+    /// The navigation bar shows the short title; without one it truncates.
+    func testEveryMatnDeclaresBothShortTitles() {
+        for matn in matns {
+            XCTAssertFalse(matn.navigationTitle(arabicUI: true).isEmpty, matn.id)
+            XCTAssertFalse(matn.navigationTitle(arabicUI: false).isEmpty, matn.id)
+            XCTAssertNotNil(matn.shortTitleAr, "\(matn.id): no Arabic short title")
+            XCTAssertNotNil(matn.shortTitleEn, "\(matn.id): no English short title")
+        }
     }
 
     func testEveryLineHasBothHemistichsNonEmpty() {
@@ -94,7 +122,10 @@ final class MatnTests: XCTestCase {
                                             "\(matn.id) line \(line.number) has lost its harakat")
                 total += marks
             }
-            XCTAssertGreaterThan(total, 1000, "\(matn.id): the matn has lost its vowels")
+            // Scaled, not a flat floor: al-Bayquniyyah is 34 lines and
+            // carries 984 harakat, Tuhfat al-Atfal 60 lines and far more.
+            XCTAssertGreaterThan(total, matn.lines.count * 20,
+                                 "\(matn.id): the matn has lost its vowels")
         }
     }
 
@@ -106,6 +137,12 @@ final class MatnTests: XCTestCase {
             XCTAssertFalse(matn.retrieved.isEmpty)
             XCTAssertFalse(matn.titleAr.isEmpty)
             XCTAssertFalse(matn.authorAr.isEmpty)
+            XCTAssertNotNil(ISO8601DateFormatter().date(from: matn.retrieved + "T00:00:00Z"),
+                            "\(matn.id): retrieval date '\(matn.retrieved)' is not a date")
+            for section in matn.sections {
+                XCTAssertFalse(section.displayTitle(arabicUI: true).isEmpty, matn.id)
+                XCTAssertFalse(section.displayTitle(arabicUI: false).isEmpty, matn.id)
+            }
         }
     }
 

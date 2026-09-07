@@ -8,10 +8,12 @@ let package = Package(
         .library(name: "Tafsir", targets: ["Tafsir"])
     ],
     dependencies: [
-        .package(path: "../../Core/DesignSystem")
+        .package(path: "../../Core/DesignSystem"),
+        // Core only (CLAUDE.md §4): the browser needs the surah list.
+        .package(path: "../../Core/ContentDB")
     ],
     targets: [
-        .target(name: "Tafsir", dependencies: ["DesignSystem"]),
+        .target(name: "Tafsir", dependencies: ["DesignSystem", "ContentDB"]),
         .testTarget(name: "TafsirTests", dependencies: ["Tafsir"])
     ]
 )

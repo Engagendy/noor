@@ -1,11 +1,12 @@
 import Foundation
 
 /// A classical didactic poem (متن) the user memorises, as bundled by
-/// `Tools/build_matn_tuhfa.py`.
+/// `Tools/build_matn_tuhfa.py` / `Tools/build_matn_bayquniyyah.py`.
 ///
 /// The schema is deliberately wider than today's needs: it carries N matns
-/// (al-Jazariyyah drops straight in once a *vowelled* source is verified —
-/// the Wikisource copy is unvowelled, which is useless for tajweed), and it
+/// (two ship today — Tuhfat al-Atfal and al-Bayquniyyah; al-Jazariyyah drops
+/// straight in once a *vowelled* source is verified — the Wikisource copy is
+/// unvowelled, which is useless for tajweed), and it
 /// reserves `audio`/`timings` so follow-along recitation can be added without
 /// restructuring anything. No audio ships until a recording's licence is
 /// recorded in LICENSES.md (CLAUDE.md rule 5).
@@ -30,6 +31,11 @@ public struct Matn: Codable, Identifiable, Hashable, Sendable {
     public let audio: String?
     /// Reserved: per-line start seconds for follow-along highlighting.
     public let timings: [Double]?
+    /// True when the section headings are OURS, not the source's — some
+    /// sources (al-Bayquniyyah's Wikisource page) carry no headings at all,
+    /// and the reader says so under the poem rather than letting an
+    /// editorial label pass for the author's.
+    public let sectionsEditorial: Bool?
     public let sections: [Section]
     public let lines: [Line]
 
@@ -68,6 +74,7 @@ public struct Matn: Codable, Identifiable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case id, sections, lines, audio, timings, retrieved
+        case sectionsEditorial = "sections_editorial"
         case titleAr = "title_ar"
         case titleEn = "title_en"
         case shortTitleAr = "short_title_ar"
@@ -100,7 +107,7 @@ public struct Matn: Codable, Identifiable, Hashable, Sendable {
 public enum MatnStore {
     /// Every bundled matn. Add a file here (and its builder under `Tools/`)
     /// to ship another one — the UI is already N-matn.
-    static let bundledFiles = ["matn-tuhfat-al-atfal"]
+    static let bundledFiles = ["matn-tuhfat-al-atfal", "matn-bayquniyyah"]
 
     public static func load() -> [Matn] {
         let decoder = JSONDecoder()

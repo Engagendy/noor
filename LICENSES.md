@@ -58,12 +58,32 @@ Attributions are displayed in Settings → About.
 - **Note:** verify redistribution terms before App Store submission; audio is
   never bundled, only fetched by the user's explicit playback.
 
-### Tafsir — Al-Muyassar & Ibn Kathir (fetched per-ayah, cached)
+### Tafsir — Al-Muyassar, As-Sa'di, Ibn Kathir, At-Tabari, Al-Qurtubi (fetched, cached)
 - **Source:** spa5k/tafsir_api CDN bundles
   (https://github.com/spa5k/tafsir_api), serving public tafsir text
-  collections; fetched on demand and cached on device.
+  collections; fetched on demand (per ayah, or a whole surah for the Learn
+  browser) and cached on device.
 - **Attribution:** "Tafsir texts via the Tafsir API project."
 - **Note:** verify per-tafsir redistribution terms before App Store release.
+
+### Al-Muyassar fi al-Gharib — Quranic word meanings (fetched per surah, cached)
+- **Source:** the same spa5k/tafsir_api CDN, edition slug
+  `al-muyassar-fi-al-gharib` (الميسر في غريب القرآن). It backs the Learn hub's
+  "Quranic word meanings" entry, through the same service, network path and
+  cache as every other tafsir edition.
+- **Provenance stated upstream:** the repository's `editions.json` records
+  only `name`/`author_name` "Al-Muyassar fi Al-Gharib", `language: arabic` and
+  `source: https://qul.tarteel.ai/resources/tafsir/519` (Tarteel's QUL
+  resource library). The repository itself is **MIT** licensed, which covers
+  its code and packaging; it states NO licence for the individual tafsir
+  texts, and the linked QUL page carries no licence statement either
+  (checked 2026-09-07). Same posture as the editions already shipped, but it
+  is unresolved and should be settled before release.
+- **Also added:** `asseraj-fi-bayan-gharib-alquran` ("Asseraj fi Bayan Gharib
+  AlQuran", QUL resource 250), selectable in the ayah sheet. Despite the name,
+  what the API serves under that slug is running commentary in the wording of
+  as-Sa'di, not a word glossary (compared against 1:1, 2:255 and 18:9 on
+  2026-09-07), so it is presented as a tafsir edition, not as غريب القرآن.
 
 ### QCF v2 page fonts (Madani page mode — downloaded on demand)
 - **Source:** King Fahd Glorious Quran Printing Complex per-page fonts
@@ -165,6 +185,33 @@ never touch Quran rendering, which stays on the verified Quran fonts above.
 - **Audio:** none. No recording of the matn ships until its licence is
   verified and recorded here (hard rule 5); the JSON keeps empty `audio` and
   `timings` slots for that day.
+
+### Al-Bayquniyyah — hadith terminology matn (bundled)
+- **Text:** المنظومة البيقونية (منظومة البيقوني في مصطلح الحديث). The
+  Wikisource page names the author only as "البيقوني"; he is commonly
+  identified as ʿUmar ibn Muhammad al-Bayquni, d. c. 1080 AH / 1669 CE (that
+  identification is NOT from the source page). The poem itself is in the
+  **public domain** — an 11th-century-Hijri work, far beyond any copyright
+  term anywhere.
+- **Transcription source:** Arabic Wikisource, page "منظومة البيقوني"
+  (https://ar.wikisource.org/wiki/%D9%85%D9%86%D8%B8%D9%88%D9%85%D8%A9_%D8%A7%D9%84%D8%A8%D9%8A%D9%82%D9%88%D9%86%D9%8A),
+  page id 8295, revision 435652. Retrieved 2026-09-07; the page footer states
+  **Creative Commons Attribution-ShareAlike 4.0** (verified on the live page:
+  `creativecommons.org/licenses/by-sa/4.0/`). NOTE the page name — the
+  similarly named "المنظومة البيقونية" is a near-empty different page.
+- **File:** `Modules/Learn/Sources/Learn/Resources/matn-bayquniyyah.json`,
+  built by `Tools/build_matn_bayquniyyah.py` — fetched through the MediaWiki
+  parse API, never typed by hand. The only transformation is stripping ARABIC
+  TATWEEL (U+0640, visual padding for the {{أبيات}} grid; 275 occurrences) and
+  collapsing whitespace (31 redundant spaces); the script asserts per
+  hemistich that the letter-and-haraka sequence is otherwise identical to the
+  source and fails loudly otherwise. 34 lines, fully vowelled (984 harakat).
+- **Sections:** the source page carries NO headings; the three section titles
+  in the JSON are the app's own editorial labels, flagged by
+  `sections_editorial: true` and disclosed under the poem in the reader.
+- **Attribution:** "Al-Bayquniyyah by ʿUmar al-Bayquni (public domain);
+  transcription from Arabic Wikisource, CC BY-SA 4.0."
+- **Audio:** none, as with Tuhfat al-Atfal (hard rule 5).
 
 ## Software dependencies
 

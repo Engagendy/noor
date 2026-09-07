@@ -9,6 +9,18 @@ public enum LearnRoute: Hashable, Sendable {
     /// One matn by `Matn.id`.
     case matn(String)
     case tajweed
+    /// The tafsir surfaces. Their screens live in the Tafsir module, which
+    /// Learn must NOT import (CLAUDE.md §4: features never import each
+    /// other), so the host supplies them to `learnDestinations`.
+    case tafsir(TafsirTopic)
+
+    /// Which tafsir surface a `.tafsir` route wants.
+    public enum TafsirTopic: Hashable, Sendable {
+        /// Browse tafsir by surah, in the edition the user picks.
+        case browse
+        /// غريب القرآن — the meanings of the difficult words.
+        case wordMeanings
+    }
 }
 
 public extension View {
@@ -16,7 +28,12 @@ public extension View {
     /// `NavigationStack`. Every host that shows `LearnView` must call this
     /// exactly once per stack — twice in one stack makes SwiftUI complain
     /// about a duplicate destination.
-    func learnDestinations() -> some View {
+    /// - Parameter tafsir: builds the screen for a `.tafsir` route. The host
+    ///   passes `TafsirBrowserView` (App target); Learn cannot, since it must
+    ///   not import a sibling feature module.
+    func learnDestinations<TafsirScreen: View>(
+        @ViewBuilder tafsir: @escaping (LearnRoute.TafsirTopic) -> TafsirScreen
+    ) -> some View {
         navigationDestination(for: LearnRoute.self) { route in
             switch route {
             case .home:
@@ -27,6 +44,8 @@ public extension View {
                 }
             case .tajweed:
                 TajweedGuideView()
+            case .tafsir(let topic):
+                tafsir(topic)
             }
         }
     }

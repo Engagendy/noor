@@ -5,6 +5,7 @@ import PrayerTimes
 import Translations
 import QuranAudio
 import QuranReader
+import Tafsir
 import SwiftUI
 
 struct SettingsView: View {
@@ -305,7 +306,12 @@ struct SettingsView: View {
         }
         .navigationTitle(Text("Settings"))
         // The learning area is reachable from here too (see the Learn row).
-        .learnDestinations()
+        .learnDestinations { topic in
+            switch topic {
+            case .browse: TafsirBrowserView()
+            case .wordMeanings: TafsirBrowserView(edition: .gharib)
+            }
+        }
         // Language is applied entirely via the SwiftUI environment in
         // RootView. Never touch AppleLanguages: a process launched in one
         // direction with the environment forcing the other renders mirrored.

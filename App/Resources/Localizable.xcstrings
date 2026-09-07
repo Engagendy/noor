@@ -880,6 +880,17 @@
         }
       }
     },
+    "Choose a surah": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اختر سورة"
+          }
+        }
+      }
+    },
     "City": {
       "extractionState": "stale",
       "localizations": {
@@ -914,6 +925,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "منظومات كلاسيكية يحفظها طلاب التجويد."
+          }
+        }
+      }
+    },
+    "Classical poems students memorise: tajweed, and the terms of hadith.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "منظومات يحفظها طلبة العلم: في التجويد ومصطلح الحديث."
           }
         }
       }
@@ -1374,6 +1396,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "جارٍ تنزيل التفسير %lld/114…"
+          }
+        }
+      }
+    },
+    "Downloading this surah's tafsir…": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ تنزيل تفسير هذه السورة…"
           }
         }
       }
@@ -1881,6 +1914,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "العشاء"
+          }
+        }
+      }
+    },
+    "It is kept on the device, so this surah opens offline next time.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يُحفظ في الجهاز، فتُفتح هذه السورة دون إنترنت في المرة القادمة."
           }
         }
       }
@@ -2645,6 +2689,17 @@
         }
       }
     },
+    "Only the ayat with words worth glossing appear here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تظهر هنا الآيات التي فيها كلمات تحتاج بيانًا فقط."
+          }
+        }
+      }
+    },
     "Or jump to a juz": {
       "extractionState": "stale",
       "localizations": {
@@ -2729,6 +2784,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "علامات الوقف ورموز المصحف وأحكام الحروف."
+          }
+        }
+      }
+    },
+    "Pick a surah and read its tafsir ayah by ayah.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اختر سورة واقرأ تفسيرها آيةً آية."
           }
         }
       }
@@ -3009,6 +3075,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "حجم نص القرآن"
+          }
+        }
+      }
+    },
+    "Quranic word meanings": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "غريب القرآن"
           }
         }
       }
@@ -3392,6 +3469,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "القسم"
+          }
+        }
+      }
+    },
+    "Section headings are the app's, not the source's.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عناوين الأقسام من إضافة التطبيق لا من المصدر."
           }
         }
       }
@@ -3805,6 +3893,28 @@
         }
       }
     },
+    "Tafsir by surah": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "التفسير حسب السورة"
+          }
+        }
+      }
+    },
+    "Tafsir edition": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نسخة التفسير"
+          }
+        }
+      }
+    },
     "Tafsir packs": {
       "localizations": {
         "ar": {
@@ -3951,6 +4061,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "The mushaf text shown follows Hafs; the recitation follows Warsh."
+          }
+        }
+      }
+    },
+    "The words in the Quran that are hard to understand.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "معاني الكلمات التي يصعب فهمها في القرآن."
+          }
+        }
+      }
+    },
+    "This edition has nothing for this surah.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا تحتوي هذه النسخة على شيء لهذه السورة."
           }
         }
       }
@@ -4229,6 +4361,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "ستتجمع علاماتك هنا."
+          }
+        }
+      }
+    },
+    "Your choice is remembered, and is the same one the ayah sheet uses.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يُحفظ اختيارك، وهو نفسه المستخدم في بطاقة تفسير الآية."
           }
         }
       }
