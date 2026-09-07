@@ -146,7 +146,10 @@ public struct MatnReaderView: View {
                 .environment(\.locale, locale)
                 .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
-        .navigationTitle(Text(verbatim: matn.displayTitle(arabicUI: isArabicUI)))
+        // The bar carries the SHORT title on purpose: the full one is the
+        // heading at the top of the poem, and in a 44pt inline bar beside
+        // two toolbar buttons it was truncated mid-word.
+        .navigationTitle(Text(verbatim: matn.navigationTitle(arabicUI: isArabicUI)))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -216,7 +219,12 @@ public struct MatnReaderView: View {
         Text(verbatim: section.displayTitle(arabicUI: isArabicUI))
             .font(.noorScaled(16, weight: .semibold))
             .foregroundStyle(NoorColor.accentPrimary)
-            .frame(maxWidth: .infinity, alignment: isArabicUI ? .trailing : .leading)
+            // `.leading` is direction-aware and is the ONLY correct answer
+            // here: the interface is already right-to-left in Arabic, so
+            // asking for `.trailing` there put the heading against the LEFT
+            // edge — the flip was applied twice. In English `.leading` is
+            // the left edge, which is what English wants.
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(NoorColor.bgElevated)
@@ -247,7 +255,16 @@ public struct MatnReaderView: View {
 
             hemistichs(line, twoColumn: twoColumn)
         }
-        .padding(.horizontal, 12)
+        // The row is Arabic verse plus its own gutter, so it reads as ONE
+        // block in the verse's direction whatever the interface language:
+        // the number/bookmark gutter sits at the right, where the line
+        // starts. In the English interface the ambient direction is
+        // left-to-right, which used to strand the gutter on the far left
+        // with the verse right-aligned an inch away from it.
+        .environment(\.layoutDirection, .rightToLeft)
+        // Same 16pt margin as the section header above it, so the gutter and
+        // the header start on exactly the same edge.
+        .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(isMarked ? NoorColor.accentGold.opacity(0.10) : Color.clear)
         .accessibilityElement(children: .combine)
@@ -265,13 +282,14 @@ public struct MatnReaderView: View {
                 hemistich(line.first)
                 hemistich(line.second)
             }
-            .environment(\.layoutDirection, .rightToLeft)
         } else {
+            // Both hemistichs are full-width `arabicBlock`s, so stacked they
+            // share one starting edge — the second can never drift from the
+            // first.
             VStack(alignment: .leading, spacing: 6) {
                 hemistich(line.first)
                 hemistich(line.second)
             }
-            .environment(\.layoutDirection, .rightToLeft)
         }
     }
 

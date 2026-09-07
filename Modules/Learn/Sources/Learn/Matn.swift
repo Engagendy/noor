@@ -13,6 +13,10 @@ public struct Matn: Codable, Identifiable, Hashable, Sendable {
     public let id: String
     public let titleAr: String
     public let titleEn: String
+    /// Short citation forms, for the navigation bar — the full title is the
+    /// heading inside the reader. Optional so a matn may omit them.
+    public let shortTitleAr: String?
+    public let shortTitleEn: String?
     public let authorAr: String
     public let authorEn: String
     /// Arabic composition note, e.g. "فرغ من نظمها سنة ١١٩٨ هـ".
@@ -66,6 +70,8 @@ public struct Matn: Codable, Identifiable, Hashable, Sendable {
         case id, sections, lines, audio, timings, retrieved
         case titleAr = "title_ar"
         case titleEn = "title_en"
+        case shortTitleAr = "short_title_ar"
+        case shortTitleEn = "short_title_en"
         case authorAr = "author_ar"
         case authorEn = "author_en"
         case composedAr = "composed_ar"
@@ -76,6 +82,13 @@ public struct Matn: Codable, Identifiable, Hashable, Sendable {
     }
 
     public func displayTitle(arabicUI: Bool) -> String { arabicUI ? titleAr : titleEn }
+
+    /// The name for a 44pt inline navigation bar: short enough to sit beside
+    /// the toolbar buttons without truncating. Falls back to the full title
+    /// when a matn declares no short form.
+    public func navigationTitle(arabicUI: Bool) -> String {
+        (arabicUI ? shortTitleAr : shortTitleEn) ?? displayTitle(arabicUI: arabicUI)
+    }
     public func displayAuthor(arabicUI: Bool) -> String { arabicUI ? authorAr : authorEn }
 
     /// The lines of one section, in order.

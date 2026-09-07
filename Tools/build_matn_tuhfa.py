@@ -171,6 +171,12 @@ def main():
         "id": "tuhfat-al-atfal",
         "title_ar": "تحفة الأطفال في تجويد القرآن",
         "title_en": "Tuhfat al-Atfal — a poem on Quranic tajweed",
+        # The full title is the heading INSIDE the reader; the navigation bar
+        # gets these short forms, because a 44pt inline bar next to two
+        # toolbar buttons truncates the long one mid-word. Both are the
+        # matn's own name, just the customary short citation form.
+        "short_title_ar": "تحفة الأطفال",
+        "short_title_en": "Tuhfat al-Atfal",
         "author_ar": "سليمان بن حسين الجمزوري",
         "author_en": "Sulayman al-Jamzuri",
         "composed_ar": "فرغ من نظمها سنة ١١٩٨ هـ",
