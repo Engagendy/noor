@@ -45,8 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -106,7 +104,8 @@ private fun SettingsMain(
     // Bumped after every prefs write (click handlers only) so rows re-read
     // stored values; prefs themselves are never observed from composition.
     var version by remember { mutableIntStateOf(0) }
-    val language = remember(version) { prefs.getString("app.language", "system") ?: "system" }
+    // Reactive app language — the whole tree repaints from it (NoorLocale).
+    val language = NoorLocale.choice
     val theme = remember(version) { prefs.getString("app.theme", "system") ?: "system" }
     val appFont = remember(version) { NoorFontChoice.from(prefs.getString("ui.font", null)) }
     // Captured in composition for use inside the theme click handler.
@@ -212,15 +211,9 @@ private fun SettingsMain(
                     "system" to stringResource(R.string.g1_lang_system),
                     "ar" to "العربية", "en" to "English"),
                 selectedId = language,
-                onSelect = { choice ->
-                    prefs.edit().putString("app.language", choice).apply()
-                    version++
-                    // Applies immediately: AppCompat recreates the activity in
-                    // the chosen per-app locale. "system" clears the override.
-                    AppCompatDelegate.setApplicationLocales(
-                        if (choice == "system") LocaleListCompat.getEmptyLocaleList()
-                        else LocaleListCompat.forLanguageTags(choice))
-                })
+                // Applies immediately from our own pref; the per-app locale
+                // is still set for notifications/widgets/launcher label.
+                onSelect = { choice -> NoorLocale.set(context, choice) })
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             ChoiceRow(
                 title = stringResource(R.string.g1_appearance),

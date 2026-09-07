@@ -212,7 +212,11 @@ private fun KidsHeader(onSound: () -> Unit, onGrownUp: () -> Unit) {
                 .clickable(onClick = onGrownUp)
         ) {
             Icon(
-                painterResource(R.drawable.ic_gear),
+                // A padlock, not a gear: this is the way OUT of kids mode,
+                // guarded by the grown-up gate. A gear reads as "settings"
+                // and hides what the control actually does (iOS uses the
+                // same lock glyph).
+                painterResource(R.drawable.ic_lock),
                 contentDescription = stringResource(R.string.kids_grownup),
                 tint = NoorColor.inkSecondary,
                 modifier = Modifier.size(22.dp))

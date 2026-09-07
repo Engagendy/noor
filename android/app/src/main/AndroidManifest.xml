@@ -20,6 +20,7 @@
          (kCLLocationAccuracyKilometer). Never leaves the device. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <application
+        android:name=".NoorApplication"
         android:label="@string/app_name"
         android:localeConfig="@xml/locales_config"
         android:icon="@mipmap/ic_launcher"

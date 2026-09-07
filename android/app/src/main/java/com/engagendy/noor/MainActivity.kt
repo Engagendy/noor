@@ -2,6 +2,7 @@ package com.engagendy.noor
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -55,6 +56,23 @@ enum class Tab(val titleRes: Int, val icon: Int) {
 data class OpenRequest(val route: String, val serial: Int)
 
 class MainActivity : AppCompatActivity() {
+    /// The activity is built in the app's OWN language, read from the
+    /// `app.language` pref — not from whatever the system decided to do with
+    /// the per-app locale. This covers non-Compose surfaces the activity
+    /// creates (dialogs, toasts, AppCompat chrome); Compose gets the same
+    /// locale from `NoorLocaleProvider` below, which also re-applies it
+    /// WITHOUT a recreation when the user switches language.
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(NoorLocale.wrapBase(newBase))
+    }
+
+    /// "system" must genuinely follow the device — including a language
+    /// changed while the app was backgrounded.
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        NoorLocale.refreshFromSystem()
+    }
+
     /// Set from onCreate/onNewIntent (never from composition); NoorApp
     /// consumes it in a LaunchedEffect.
     private var openRequest by mutableStateOf<OpenRequest?>(null)
@@ -125,6 +143,10 @@ class MainActivity : AppCompatActivity() {
                     isAppearanceLightNavigationBars = !dark
                 }
             }
+            // The app language, applied to the whole tree from OUR pref.
+            // Everything below resolves strings/drawables through it, so a
+            // language tap repaints on the next frame on every OEM.
+            NoorLocaleProvider {
             NoorTheme {
                 // Direction follows the CURRENT UI language: ar → RTL, en → LTR.
                 CompositionLocalProvider(LocalLayoutDirection provides noorLayoutDirection()) {
@@ -147,11 +169,15 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+            }
         }
     }
 
     override fun onResume() {
         super.onResume()
+        // Catches a device-language change made while we were backgrounded
+        // on skins that do not recreate the activity for it.
+        NoorLocale.refreshFromSystem()
         // The user may have just granted "Alarms & reminders" (or changed
         // notification settings) in the system UI — re-arm as exact alarms.
         if (KhatmahPlan.prefs(this).getBoolean("onboarding.done", false)) {

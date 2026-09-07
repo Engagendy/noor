@@ -140,15 +140,16 @@ fun OnboardingScreen(onDone: () -> Unit) {
     }
 }
 
-/// Step 1 — language picker; the choice applies IMMEDIATELY (per-app
-/// locale recreates the activity in the new language; the saved step
-/// keeps onboarding on this screen so the user sees the switch happen).
+/// Step 1 — language picker; the choice applies IMMEDIATELY. NoorLocale
+/// repaints the tree from our own pref on the next frame (no activity
+/// recreation, no waiting on the OEM's per-app-locale plumbing), and if a
+/// skin recreates us anyway the rememberSaveable `step` keeps onboarding
+/// exactly here so the user sees the switch happen.
 @Composable
 private fun LanguageStep(onContinue: () -> Unit) {
     val context = LocalContext.current
-    val current = remember {
-        KhatmahPlan.prefs(context).getString("app.language", "system") ?: "system"
-    }
+    // Reactive: the highlight moves the moment the language does.
+    val current = NoorLocale.choice
     Column(Modifier.fillMaxSize().padding(24.dp)) {
         Spacer(Modifier.weight(1f))
         StepTitle(stringResource(R.string.g1_app_language))
@@ -177,14 +178,7 @@ private fun LanguageStep(onContinue: () -> Unit) {
                         .background(
                             if (selected) NoorColor.stateReciting else Color.Transparent,
                             RoundedCornerShape(10.dp))
-                        .clickable {
-                            KhatmahPlan.prefs(context)
-                                .edit().putString("app.language", id).apply()
-                            androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
-                                if (id == "system")
-                                    androidx.core.os.LocaleListCompat.getEmptyLocaleList()
-                                else androidx.core.os.LocaleListCompat.forLanguageTags(id))
-                        }
+                        .clickable { NoorLocale.set(context, id) }
                         .padding(horizontal = 14.dp, vertical = 12.dp))
             }
         }

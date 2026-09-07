@@ -60,9 +60,9 @@ fun KidsSoundSheet(age: Int, onDismiss: () -> Unit) {
                 color = NoorColor.inkPrimary,
                 modifier = Modifier.padding(bottom = 12.dp))
             SectionLabel(stringResource(R.string.kids_language))
-            // Same mechanism as the grown-up language picker: the per-app
-            // locale via AppCompatDelegate (res/xml/locales_config.xml).
-            // The activity recreates; the kids shell comes back because
+            // Same mechanism as the grown-up language picker (NoorLocale):
+            // the sheet repaints in place, no recreation needed. Should a
+            // skin recreate us anyway, the kids shell comes back because
             // `kids.enabled` is read from prefs on every start and the
             // shell's own state is rememberSaveable.
             // Selection comes from the RESOLVED resource language, so it can
@@ -117,12 +117,10 @@ fun KidsSoundSheet(age: Int, onDismiss: () -> Unit) {
     }
 }
 
-/// User action: store the choice like Settings does, then apply the
-/// per-app locale — AppCompatDelegate recreates the activity in it.
+/// User action: store the choice like Settings does. NoorLocale repaints
+/// the kids shell in place; nothing here depends on a recreation.
 private fun setKidsLanguage(context: android.content.Context, tag: String) {
-    KhatmahPlan.prefs(context).edit().putString("app.language", tag).apply()
-    androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
-        androidx.core.os.LocaleListCompat.forLanguageTags(tag))
+    NoorLocale.set(context, tag)
 }
 
 @Composable
