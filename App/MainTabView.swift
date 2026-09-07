@@ -393,6 +393,11 @@ struct QuranTab: View {
     @State private var showLearn = false
     /// Written by `SurahReaderView` as the user toggles the chrome.
     private let readerChrome = ReaderChrome.shared
+    /// Cross-source search for the learning area: Learn folds its own matns,
+    /// this adds the tafsir/غريب القرآن the Tafsir module owns. Held here so
+    /// its indexes — and any pack download started from a result — outlive
+    /// the search field.
+    @State private var learnSearch = LearnTafsirSearch()
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
@@ -463,6 +468,10 @@ struct QuranTab: View {
                         }
                         .learnDestinations { topic in tafsirScreen(topic) }
                 }
+                // On the STACK, not on its root: a pushed `LearnView` reads
+                // the stack's environment, and set inside it the provider
+                // never reached the destination.
+                .learnSearch(learnSearch)
                 // The reader is immersive, but its tab bar follows the
                 // reader's CHROME rather than the whole session — a
                 // deliberate divergence from Android, which hides its bar
@@ -519,6 +528,12 @@ struct QuranTab: View {
             TafsirBrowserView()
         case .wordMeanings:
             TafsirBrowserView(edition: .gharib)
+        case .surah(let slug, let surah, let ayah):
+            // A hub search result: straight into one surah of one edition,
+            // scrolled to the ayah that matched.
+            TafsirSurahView(surahId: surah, edition: TafsirEdition.named(slug),
+                            isWordMeanings: slug == TafsirEdition.gharib.slug,
+                            highlightAyah: ayah)
         }
     }
 
@@ -559,7 +574,9 @@ struct QuranTab: View {
             listView(onLearn: { showLearn = true })
                 .sheet(isPresented: $showLearn) {
                     NavigationStack {
-                        LearnView().learnDestinations { topic in tafsirScreen(topic) }
+                        LearnView()
+                            .learnDestinations { topic in tafsirScreen(topic) }
+                            .learnSearch(learnSearch)
                     }
                 }
         } detail: {

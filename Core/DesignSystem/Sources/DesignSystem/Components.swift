@@ -305,3 +305,133 @@ public struct HighlightedSnippet: View {
             .accessibilityLabel(Text(verbatim: spoken))
     }
 }
+
+// MARK: - Search field
+
+/// The app's in-content search field — the same one the Quran index draws,
+/// lifted out so the Learn area (hub, matn readers, tafsir/غريب القرآن)
+/// does not redraw it three more times.
+///
+/// The placeholder is an overlaid `Text`, NOT `TextField`'s own prompt: the
+/// system prompt anchors to the process language and ignores the RTL
+/// environment, so in the Arabic interface it rendered left-to-right.
+/// Alignment is `.leading` everywhere — it is already direction-aware, and
+/// `isArabicUI ? .trailing : .leading` flips twice.
+public struct NoorSearchField: View {
+    @Binding private var text: String
+    private let placeholder: Text
+
+    public init(text: Binding<String>, placeholder: Text) {
+        _text = text
+        self.placeholder = placeholder
+    }
+
+    public var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 15))
+                .foregroundStyle(NoorColor.inkSecondary)
+            TextField("", text: $text)
+                .textFieldStyle(.plain)
+                .autocorrectionDisabled()
+                #if os(iOS)
+                .textInputAutocapitalization(.never)
+                #endif
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .overlay(alignment: .leading) {
+                    if text.isEmpty {
+                        placeholder
+                            .foregroundStyle(NoorColor.inkSecondary.opacity(0.8))
+                            .lineLimit(1)
+                            .allowsHitTesting(false)
+                    }
+                }
+                .accessibilityLabel(Text("Search"))
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(NoorColor.inkSecondary)
+                        .frame(width: 40, height: 40)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Clear search"))
+            }
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 40)
+        .background(RoundedRectangle(cornerRadius: 12).fill(NoorColor.bgElevated))
+        .overlay(RoundedRectangle(cornerRadius: 12)
+            .stroke(NoorColor.inkPrimary.opacity(0.08), lineWidth: 1))
+    }
+}
+
+/// One search result: the matching window with the term emphasised over the
+/// reference it came from. Shared by every "search inside this content"
+/// screen (matn readers, tafsir, غريب القرآن, the Learn hub) so a result
+/// looks the same wherever it is found.
+///
+/// It takes the snippet's three slices rather than `ArabicSearch.Snippet`
+/// because DesignSystem is a leaf module and must not pull in ContentDB
+/// (GRDB + the bundled databases). Each feature module adds the one-line
+/// convenience initialiser over its own import of ContentDB.
+public struct SearchResultRow: View {
+    private let before: String
+    private let match: String
+    private let after: String
+    private let truncatedStart: Bool
+    private let truncatedEnd: Bool
+    private let reference: String
+    private let isArabic: Bool
+    private let font: Font
+
+    public init(before: String, match: String, after: String,
+                truncatedStart: Bool = false, truncatedEnd: Bool = false,
+                reference: String, isArabic: Bool = true,
+                font: Font = .noorScaled(16)) {
+        self.before = before
+        self.match = match
+        self.after = after
+        self.truncatedStart = truncatedStart
+        self.truncatedEnd = truncatedEnd
+        self.reference = reference
+        self.isArabic = isArabic
+        self.font = font
+    }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            snippetView
+            Text(verbatim: reference)
+                .font(NoorFont.caption)
+                .foregroundStyle(NoorColor.inkSecondary)
+        }
+        // `.leading` only: it is already direction-aware, so `isArabicUI ?
+        // .trailing : .leading` would flip twice.
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private var snippetView: some View {
+        let highlighted = HighlightedSnippet(
+            before: before, match: match, after: after,
+            truncatedStart: truncatedStart, truncatedEnd: truncatedEnd,
+            font: font)
+            .lineLimit(3)
+        if isArabic {
+            highlighted.arabicBlock()
+        } else {
+            highlighted
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .environment(\.layoutDirection, .leftToRight)
+        }
+    }
+}

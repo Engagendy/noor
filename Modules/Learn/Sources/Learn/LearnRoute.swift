@@ -8,6 +8,8 @@ public enum LearnRoute: Hashable, Sendable {
     case home
     /// One matn by `Matn.id`.
     case matn(String)
+    /// One matn opened at a line — where a search result jumps to.
+    case matnLine(id: String, line: Int)
     case tajweed
     /// The tafsir surfaces. Their screens live in the Tafsir module, which
     /// Learn must NOT import (CLAUDE.md §4: features never import each
@@ -20,6 +22,10 @@ public enum LearnRoute: Hashable, Sendable {
         case browse
         /// غريب القرآن — the meanings of the difficult words.
         case wordMeanings
+        /// One surah of one edition, optionally scrolled to a single ayah —
+        /// where a search result from the hub jumps to. Carries only a slug
+        /// and numbers, so Learn still names no Tafsir type.
+        case surah(slug: String, surah: Int, ayah: Int?)
     }
 }
 
@@ -41,6 +47,10 @@ public extension View {
             case .matn(let id):
                 if let matn = MatnStore.matn(id: id) {
                     MatnReaderView(matn: matn)
+                }
+            case .matnLine(let id, let line):
+                if let matn = MatnStore.matn(id: id) {
+                    MatnReaderView(matn: matn, openAt: line)
                 }
             case .tajweed:
                 TajweedGuideView()

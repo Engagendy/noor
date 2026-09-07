@@ -1,3 +1,4 @@
+import ContentDB
 import DesignSystem
 import SwiftUI
 
@@ -11,6 +12,8 @@ import SwiftUI
 /// is `Text(verbatim:)` — it must never go through a localisation lookup.
 public struct MatnReaderView: View {
     let matn: Matn
+    /// A line to open on (a hub search result), rather than the saved place.
+    let openAt: Int?
 
     @Environment(\.locale) private var locale
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
@@ -31,14 +34,27 @@ public struct MatnReaderView: View {
     /// rows nobody has looked at, which reset the saved line to 1.
     @State private var position: Item?
     @State private var didRestore = false
+
+    /// Search inside this matn. The index folds every hemistich once when
+    /// the reader appears (60 lines / ~3 KB — free), so a keystroke only
+    /// scans pre-folded scalars through the shared `ArabicSearch` ranking.
+    @State private var searchIndex: MatnSearchIndex?
+    @State private var searchText = ProcessInfo.processInfo.environment["NOOR_MATN_SEARCH"] ?? ""
+    @State private var showSearch = ProcessInfo.processInfo.environment["NOOR_MATN_SEARCH"] != nil
+    @State private var results: [MatnSearchIndex.Hit] = []
+    /// The line a result jumped to, briefly tinted so the eye lands on it.
+    @State private var flashedLine: Int?
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
 
     private static let sizeRange: ClosedRange<Double> = 15...34
 
-    public init(matn: Matn) {
+    /// - Parameter openAt: line to open on, e.g. the one a search result in
+    ///   the Learn hub pointed at. Takes precedence over the saved place.
+    public init(matn: Matn, openAt: Int? = nil) {
         self.matn = matn
+        self.openAt = openAt
         _lastLine = AppStorage(wrappedValue: 0, "matn.\(matn.id).lastLine")
         _markedRaw = AppStorage(wrappedValue: "", "matn.\(matn.id).marked")
     }
@@ -82,6 +98,102 @@ public struct MatnReaderView: View {
         // class — NOT from a `GeometryReader`, whose second pass re-ran the
         // resume `.task` and threw the reader back to the top.
         reader(twoColumn: isWide)
+            // An overlay, not a branch: the poem stays mounted underneath, so
+            // clearing the query returns to exactly the same scroll position.
+            .overlay {
+                if isSearching { resultsList }
+            }
+            // The field is added AFTER the overlay so it stays on top of the
+            // results — inset first, and the overlay covered it.
+            .safeAreaInset(edge: .top) {
+                if showSearch {
+                    NoorSearchField(text: $searchText,
+                                    placeholder: Text("Search this matn"))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(NoorColor.bgPrimary)
+                }
+            }
+            .task(id: searchText) {
+                guard isSearching else { results = []; return }
+                // Debounced like the Quran search — one query per pause, not
+                // one per keystroke.
+                try? await Task.sleep(nanoseconds: 150_000_000)
+                guard !Task.isCancelled else { return }
+                results = searchIndex?.search(searchText) ?? []
+            }
+    }
+
+    private var isSearching: Bool {
+        !searchText.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    /// Matching lines, best matches first (whole word, then word prefix,
+    /// then mid-word — the shared tiers). Tapping one closes the search and
+    /// scrolls the poem to that line.
+    private var resultsList: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                if results.isEmpty {
+                    Text("No matching lines")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 40)
+                } else {
+                    countRow
+                    ForEach(results) { hit in
+                        Button {
+                            jump(to: hit.line.number)
+                        } label: {
+                            SearchResultRow(
+                                snippet: hit.snippet,
+                                reference: lineReference(hit.line.number),
+                                font: .noorScaled(fontSize - 2))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                        }
+                        .buttonStyle(.plain)
+                        Divider().overlay(NoorColor.inkPrimary.opacity(0.06))
+                    }
+                }
+            }
+            .padding(.bottom, 96)
+        }
+        .background(NoorColor.bgPrimary)
+    }
+
+    @ViewBuilder
+    private var countRow: some View {
+        // The matn is bundled whole, so this count is the whole poem — no
+        // coverage caveat is needed here (unlike tafsir).
+        Group {
+            if isArabicUI {
+                Text(verbatim: "\(results.count.arabicIndic) من \(matn.lines.count.arabicIndic) بيتًا")
+            } else {
+                Text("\(results.count) of \(matn.lines.count) lines")
+            }
+        }
+        .font(NoorFont.caption)
+        .foregroundStyle(NoorColor.inkSecondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+    }
+
+    private func lineReference(_ number: Int) -> String {
+        isArabicUI ? "البيت \(number.arabicIndic)" : "Line \(number)"
+    }
+
+    private func jump(to line: Int) {
+        searchText = ""
+        showSearch = false
+        position = .line(line)
+        flashedLine = line
+        Task {
+            try? await Task.sleep(nanoseconds: 1_600_000_000)
+            withAnimation { flashedLine = nil }
+        }
     }
 
     private var isWide: Bool {
@@ -116,9 +228,11 @@ public struct MatnReaderView: View {
             didRestore = true
             // Screenshot/UI-test hook: NOOR_MATN_LINE=31 opens the reader at
             // that line (a section boundary, say) without touching defaults.
-            if let pinned = ProcessInfo.processInfo.environment["NOOR_MATN_LINE"].flatMap(Int.init),
+            if let pinned = openAt
+                ?? ProcessInfo.processInfo.environment["NOOR_MATN_LINE"].flatMap(Int.init),
                matn.lines.contains(where: { $0.number == pinned }) {
                 position = .line(pinned)
+                if openAt != nil { flashedLine = pinned }
                 return
             }
             // Resume where the reader last was. The marked line is
@@ -127,8 +241,19 @@ public struct MatnReaderView: View {
             guard lastLine > 1 else { return }
             position = .line(lastLine)
         }
+        .onAppear {
+            if searchIndex == nil { searchIndex = MatnSearchIndex(matn: matn) }
+        }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                    Button {
+                        showSearch.toggle()
+                        if !showSearch { searchText = "" }
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel("Search this matn")
                     if let target = marked.min() {
                         Button {
                             withAnimation { position = .line(target) }
@@ -279,7 +404,9 @@ public struct MatnReaderView: View {
         // the header start on exactly the same edge.
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(isMarked ? NoorColor.accentGold.opacity(0.10) : Color.clear)
+        .background(flashedLine == line.number
+                    ? NoorColor.accentPrimary.opacity(0.18)
+                    : (isMarked ? NoorColor.accentGold.opacity(0.10) : Color.clear))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text("Line \(line.number)"))
         .accessibilityValue(Text(verbatim: "\(line.first) … \(line.second)"))

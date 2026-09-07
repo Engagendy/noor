@@ -42,6 +42,9 @@ struct SettingsView: View {
         ProcessInfo.processInfo.environment["NOOR_KIDS_AGE_SHEET"] == "1"
     @State private var showKidsGate =
         ProcessInfo.processInfo.environment["NOOR_KIDS_GATE"] == "1"
+    /// The learning area is reachable from Settings too, so its cross-source
+    /// search needs the same provider the Quran tab gives it.
+    @State private var learnSearch = LearnTafsirSearch()
     @Environment(\.locale) private var locale
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
@@ -310,8 +313,13 @@ struct SettingsView: View {
             switch topic {
             case .browse: TafsirBrowserView()
             case .wordMeanings: TafsirBrowserView(edition: .gharib)
+            case .surah(let slug, let surah, let ayah):
+                TafsirSurahView(surahId: surah, edition: TafsirEdition.named(slug),
+                                isWordMeanings: slug == TafsirEdition.gharib.slug,
+                                highlightAyah: ayah)
             }
         }
+        .learnSearch(learnSearch)
         // Language is applied entirely via the SwiftUI environment in
         // RootView. Never touch AppleLanguages: a process launched in one
         // direction with the environment forcing the other renders mirrored.

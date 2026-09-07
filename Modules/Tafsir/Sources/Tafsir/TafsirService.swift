@@ -64,12 +64,12 @@ public final class TafsirService {
         state = newState
     }
 
-    private static func surahDirectory(edition: TafsirEdition, surah: Int) -> URL {
+    nonisolated private static func surahDirectory(edition: TafsirEdition, surah: Int) -> URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return base.appendingPathComponent("tafsir/\(edition.slug)/\(surah)")
     }
 
-    private static func cacheFile(edition: TafsirEdition, surah: Int, ayah: Int) -> URL {
+    nonisolated private static func cacheFile(edition: TafsirEdition, surah: Int, ayah: Int) -> URL {
         surahDirectory(edition: edition, surah: surah).appendingPathComponent("\(ayah).txt")
     }
 
@@ -77,7 +77,7 @@ public final class TafsirService {
     /// directory holding one ayah the user happened to tap in the reader
     /// would look like a complete surah to the browser. It is a marker in
     /// the SAME cache, not a second one — no tafsir text lives here.
-    private static func completionMarker(edition: TafsirEdition, surah: Int) -> URL {
+    nonisolated private static func completionMarker(edition: TafsirEdition, surah: Int) -> URL {
         surahDirectory(edition: edition, surah: surah).appendingPathComponent(".complete")
     }
 
@@ -137,13 +137,13 @@ public final class TafsirService {
 
     /// True once this surah's whole bundle is on disk — the browser reads it
     /// with no network at all.
-    public static func isSurahCached(edition: TafsirEdition, surah: Int) -> Bool {
+    nonisolated public static func isSurahCached(edition: TafsirEdition, surah: Int) -> Bool {
         FileManager.default.fileExists(atPath: completionMarker(edition: edition, surah: surah).path)
     }
 
     /// Reads a cached surah out of the per-ayah cache. Same files `load`
     /// writes and reads — there is exactly one tafsir cache in the app.
-    private static func cachedSurah(edition: TafsirEdition, surah: Int) -> [Entry] {
+    nonisolated static func cachedSurah(edition: TafsirEdition, surah: Int) -> [Entry] {
         let directory = surahDirectory(edition: edition, surah: surah)
         let names = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
         return names.compactMap { name -> Entry? in
@@ -196,7 +196,7 @@ public final class TafsirService {
     /// True when every surah of this edition is cached (spot-checked).
     /// The `1.txt` fallback keeps packs downloaded by earlier versions —
     /// which wrote no completion marker — from looking undownloaded.
-    public static func isPackDownloaded(edition: TafsirEdition) -> Bool {
+    nonisolated public static func isPackDownloaded(edition: TafsirEdition) -> Bool {
         [1, 2, 18, 67, 114].allSatisfy { surah in
             isSurahCached(edition: edition, surah: surah)
                 || FileManager.default.fileExists(

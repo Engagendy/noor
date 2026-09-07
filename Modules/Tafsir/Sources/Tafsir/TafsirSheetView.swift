@@ -20,41 +20,10 @@ public struct TafsirSheetView: View {
     private var edition: TafsirEdition { TafsirEdition.named(editionSlug) }
 
     /// Offline pack state row (design 6.5: download state per tafsir pack).
-    @ViewBuilder
+    /// The row itself lives in `TafsirPackRow`, shared with the browser and
+    /// the Learn search so there is one download path and one piece of UI.
     private var packRow: some View {
-        switch service.packState {
-        case .downloading(let surah):
-            VStack(alignment: .leading, spacing: 5) {
-                Text("Downloading tafsir \(surah)/114…")
-                    .font(NoorFont.caption)
-                    .foregroundStyle(NoorColor.inkSecondary)
-                ProgressView(value: Double(surah), total: 114)
-                    .tint(NoorColor.accentPrimary)
-            }
-        case .done:
-            Label("Available offline", systemImage: "checkmark.circle")
-                .font(NoorFont.caption)
-                .foregroundStyle(NoorColor.accentPrimary)
-        case .failed(let message):
-            Text(verbatim: message)
-                .font(NoorFont.caption)
-                .foregroundStyle(.red)
-        case .idle:
-            if TafsirService.isPackDownloaded(edition: edition) {
-                Label("Available offline", systemImage: "checkmark.circle")
-                    .font(NoorFont.caption)
-                    .foregroundStyle(NoorColor.accentPrimary)
-            } else {
-                Button {
-                    Task { await service.downloadPack(edition: edition) }
-                } label: {
-                    Label("Download for offline", systemImage: "arrow.down.circle")
-                        .font(NoorFont.caption)
-                }
-                .buttonStyle(.borderless)
-                .tint(NoorColor.accentPrimary)
-            }
-        }
+        TafsirPackRow(edition: edition, service: service)
     }
 
     /// Arabic tafsir is an Arabic block (RTL, right edge) even in the English

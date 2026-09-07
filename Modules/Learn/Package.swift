@@ -8,12 +8,14 @@ let package = Package(
         .library(name: "Learn", targets: ["Learn"])
     ],
     dependencies: [
-        .package(path: "../../Core/DesignSystem")
+        .package(path: "../../Core/DesignSystem"),
+        // Core only (CLAUDE.md §4): the shared Arabic search folding/ranking.
+        .package(path: "../../Core/ContentDB")
     ],
     targets: [
         .target(
             name: "Learn",
-            dependencies: ["DesignSystem"],
+            dependencies: ["DesignSystem", "ContentDB"],
             resources: [
                 .copy("Resources/matn-tuhfat-al-atfal.json"),
                 .copy("Resources/matn-bayquniyyah.json"),
