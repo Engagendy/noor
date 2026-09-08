@@ -13,6 +13,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.unit.sp
@@ -37,7 +40,9 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
 enum class Tab(val titleRes: Int, val icon: Int) {
@@ -231,55 +236,84 @@ fun NoorApp(openRequest: OpenRequest? = null) {
         }
         tab = Tab.QURAN
     }
+    // Immersive reading (iOS: the reader's tab bar follows its chrome): the
+    // reader owns the whole page, and the bar comes and goes with the top
+    // strip. Gated on the tab too, so the bar can never be stranded
+    // off-screen after a tab is tapped from inside the reader.
+    // Only a reader whose chrome hides needs the floating bar: the flow /
+    // ayah-by-ayah reader's top bar is permanently visible, so its tab bar is
+    // permanently visible too and stays INLINE, insetting its scrolling text
+    // rather than sitting on top of it.
+    val readerImmersive =
+        ReaderChrome.readerOpen && ReaderChrome.chromeHides && tab == Tab.QURAN
+    val barVisible = !readerImmersive || ReaderChrome.chromeVisible
+    // The tab bar drawn as ONE composable, used inline (normal tabs) or as a
+    // floating overlay (reader) — same items, same colors, no duplication.
+    val tabBar: @Composable () -> Unit = {
+        NavigationBar(containerColor = NoorColor.bgElevated) {
+            Tab.entries.forEach { item ->
+                val title = stringResource(item.titleRes)
+                NavigationBarItem(
+                    selected = tab == item,
+                    onClick = { tab = item },
+                    icon = {
+                        Icon(painterResource(item.icon), contentDescription = title)
+                    },
+                    // Cairo (and other tall-metric Arabic faces) report a
+                    // large ascent/descent. With the default font padding
+                    // the label box grows until it rides up over the icon,
+                    // so pin the line box rather than letting the face
+                    // decide it.
+                    label = {
+                        Text(
+                            title,
+                            maxLines = 1,
+                            fontSize = 11.sp,
+                            lineHeight = 13.sp,
+                            style = LocalTextStyle.current.copy(
+                                platformStyle = PlatformTextStyle(
+                                    includeFontPadding = false)))
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = NoorColor.accentPrimary,
+                        selectedTextColor = NoorColor.accentPrimary,
+                        indicatorColor = NoorColor.stateReciting,
+                    )
+                )
+            }
+        }
+    }
+    Box(Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = NoorColor.bgPrimary,
         bottomBar = {
-          // Immersive reading (iOS `.toolbar(.hidden, for: .tabBar)`): the
-          // reader owns the whole page and navigates with its own back
-          // button. Gated on the tab too, so the bar can never be stranded.
-          val tabsHidden = ReaderChrome.readerOpen && tab == Tab.QURAN
           androidx.compose.foundation.layout.Column(
-            // NavigationBar consumes the system gesture-bar inset; without it
-            // the pill (and a page with no pill) would sit under the system bar.
-            modifier = if (tabsHidden)
+            // NavigationBar consumes the system gesture-bar inset; while the
+            // reader is open it is not in this Column, so the pill (and a
+            // page with no pill) would otherwise sit under the system bar.
+            modifier = if (readerImmersive)
                 Modifier.navigationBarsPadding()
             else Modifier
           ) {
-            AudioPillView()
-            androidx.compose.animation.AnimatedVisibility(visible = !tabsHidden) {
-            NavigationBar(containerColor = NoorColor.bgElevated) {
-                Tab.entries.forEach { item ->
-                    val title = stringResource(item.titleRes)
-                    NavigationBarItem(
-                        selected = tab == item,
-                        onClick = { tab = item },
-                        icon = {
-                            Icon(painterResource(item.icon), contentDescription = title)
-                        },
-                        // Cairo (and other tall-metric Arabic faces) report a
-                        // large ascent/descent. With the default font padding
-                        // the label box grows until it rides up over the icon,
-                        // so pin the line box rather than letting the face
-                        // decide it.
-                        label = {
-                            Text(
-                                title,
-                                maxLines = 1,
-                                fontSize = 11.sp,
-                                lineHeight = 13.sp,
-                                style = LocalTextStyle.current.copy(
-                                    platformStyle = PlatformTextStyle(
-                                        includeFontPadding = false)))
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = NoorColor.accentPrimary,
-                            selectedTextColor = NoorColor.accentPrimary,
-                            indicatorColor = NoorColor.stateReciting,
-                        )
-                    )
-                }
+            // Inset, not overlay (iOS `safeAreaInset`): a Madani page has no
+            // scroll and must shrink above the pill rather than be covered.
+            // The floating tab bar lands right on top of it, so slide the
+            // pill clear — as an OFFSET, never padding, so this costs the
+            // page below not one pixel of height.
+            val pillLift by androidx.compose.animation.core.animateFloatAsState(
+                if (readerImmersive && barVisible) 1f else 0f,
+                animationSpec = ReaderChrome.fadeSpec,
+                label = "pillLift")
+            androidx.compose.foundation.layout.Box(
+                Modifier.offset { IntOffset(0, -(pillLift * TAB_BAR_CLEARANCE.toPx()).toInt()) }
+            ) {
+                AudioPillView()
             }
-            }
+            // In the reader the bar is an overlay (below), NEVER here: the
+            // Scaffold's bottomBar insets its content by design, and a bar
+            // that takes height re-flows every one of the Madani page's
+            // fifteen rows on every tap.
+            if (!readerImmersive) tabBar()
           }
         }
     ) { padding ->
@@ -303,4 +337,25 @@ fun NoorApp(openRequest: OpenRequest? = null) {
                                        onOpenConsumed = { athkarCategory = null; athkarSerial = 0 })
         }
     }
+    // The reader's tab bar: it FLOATS over the page, outside the Scaffold, so
+    // the reader keeps the full height whether the bar is up or down and the
+    // fifteen rows of a Madani page never move. It fades with the reader's
+    // top strip on the one shared spring, so a tap reads as a single gesture.
+    // Not composed while hidden, so taps at the bottom of the page reach the
+    // page (they toggle the chrome) instead of a tab.
+    androidx.compose.animation.AnimatedVisibility(
+        visible = readerImmersive && ReaderChrome.chromeVisible,
+        enter = androidx.compose.animation.fadeIn(ReaderChrome.fadeSpec),
+        exit = androidx.compose.animation.fadeOut(ReaderChrome.fadeSpec),
+        modifier = Modifier.align(androidx.compose.ui.Alignment.BottomCenter)
+    ) {
+        // NavigationBar applies the system gesture-bar inset itself, so the
+        // floating copy clears it exactly as the inline one does.
+        tabBar()
+    }
+    }
 }
+
+/// Height the floating tab bar covers, used to lift the audio pill clear of
+/// it (iOS `SurahReaderView.tabBarClearance`).
+private val TAB_BAR_CLEARANCE = 62.dp

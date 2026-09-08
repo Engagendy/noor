@@ -87,7 +87,17 @@ fun MushafScreen(
     val pager = rememberPagerState(
         initialPage = (startPage - 1).coerceIn(0, PageLayoutDb.PAGE_COUNT - 1)
     ) { PageLayoutDb.PAGE_COUNT }
-    var chromeVisible by remember { mutableStateOf(true) }
+    // Chrome visibility lives in the shared `ReaderChrome`, not in a local
+    // copy: the bottom tab bar follows this exact state (iOS parity), and a
+    // mirror could disagree with the strip. Reads and writes below are
+    // unchanged — `by` delegates straight to the shared MutableState.
+    var chromeVisible by ReaderChrome.chromeState
+    // This reader hides its chrome, so its tab bar floats over the page
+    // instead of insetting it (see ReaderChrome / MainActivity).
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        ReaderChrome.chromeHides = true
+        onDispose { ReaderChrome.chromeHides = false }
+    }
     var showOptions by remember { mutableStateOf(false) }
     var showGoToPage by remember { mutableStateOf(false) }
     // Surah drawer (same component as the flow reader) — it replaced the

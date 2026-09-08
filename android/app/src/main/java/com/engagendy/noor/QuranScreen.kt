@@ -142,11 +142,17 @@ fun QuranScreen(
         }
     }
 
-    // Immersive reading: the tab bar steps aside while either reader is open
-    // (iOS hides it outright) and comes back when the reader closes.
+    // Immersive reading: while either reader is open the tab bar follows the
+    // reader's chrome (iOS parity) — tap the page and the top strip and the
+    // bar return together. The chrome starts visible on every arrival; only
+    // the Madani reader hides it (its auto-hide and its tap toggle write the
+    // same shared state), so the flow / ayah-by-ayah reader — whose top bar
+    // is permanently visible — simply keeps its tab bar.
     val readerOpen = openMushafAt > 0 || openSurah != null
-    LaunchedEffect(readerOpen) { ReaderChrome.readerOpen = readerOpen }
-    DisposableEffect(Unit) { onDispose { ReaderChrome.readerOpen = false } }
+    LaunchedEffect(readerOpen) {
+        if (readerOpen) ReaderChrome.readerAppeared() else ReaderChrome.readerDisappeared()
+    }
+    DisposableEffect(Unit) { onDispose { ReaderChrome.readerDisappeared() } }
 
     if (openMushafAt > 0) {
         MushafScreen(
