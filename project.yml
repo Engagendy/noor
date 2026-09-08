@@ -83,7 +83,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.engagendy.Noor.widgets
         MARKETING_VERSION: 2.0.0
-        CURRENT_PROJECT_VERSION: 19
+        CURRENT_PROJECT_VERSION: 20
         DEVELOPMENT_TEAM: 7JM77223V5
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: Widgets/NoorWidgets.entitlements
@@ -148,7 +148,7 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         PRODUCT_NAME: Noor
         MARKETING_VERSION: 2.0.0
-        CURRENT_PROJECT_VERSION: 19
+        CURRENT_PROJECT_VERSION: 20
         SWIFT_VERSION: 5.10
         ENABLE_USER_SCRIPT_SANDBOXING: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
