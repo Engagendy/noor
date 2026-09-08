@@ -1,4 +1,3 @@
-import DesignSystem
 import SwiftUI
 
 /// Status-ready branded image card: paper background, gold frame, mihrab

@@ -115,32 +115,17 @@ public enum AyahVideoComposer {
             throw AyahVideoError.exportFailed
         }
 
-        // 3. Export as MP4 / AAC.
-        guard let session = AVAssetExportSession(
-            asset: composition, presetName: AVAssetExportPresetHighestQuality)
-        else { throw AyahVideoError.exportFailed }
-        session.shouldOptimizeForNetworkUse = true
+        // 3. Export as MP4 / AAC. The session lives inside `ExportJob` (an
+        // actor) so the cancellation handler — which runs on whatever thread
+        // cancels the task — can never touch it concurrently with the export.
+        guard let job = ExportJob(composition: composition) else { throw AyahVideoError.exportFailed }
         try await withTaskCancellationHandler {
-            if #available(iOS 18, macOS 15, *) {
-                do {
-                    try await session.export(to: finalURL, as: .mp4)
-                } catch is CancellationError {
-                    throw AyahVideoError.cancelled
-                } catch {
-                    throw AyahVideoError.exportFailed
-                }
-            } else {
-                session.outputURL = finalURL
-                session.outputFileType = .mp4
-                await session.export()
-                switch session.status {
-                case .completed: break
-                case .cancelled: throw AyahVideoError.cancelled
-                default: throw AyahVideoError.exportFailed
-                }
-            }
+            try await job.export(to: finalURL)
         } onCancel: {
-            session.cancelExport()
+            // `onCancel` is synchronous and `@Sendable`; hop onto the actor
+            // rather than reaching into the session from here. An unstructured
+            // `Task` does not inherit cancellation, so this always runs.
+            Task { await job.cancel() }
         }
         guard FileManager.default.fileExists(atPath: finalURL.path) else { throw AyahVideoError.exportFailed }
         return finalURL
@@ -331,12 +316,87 @@ public enum AyahVideoComposer {
     static func writeVideo(size: CGSize, seconds: Double, to url: URL,
                            frameAt: @escaping (Int) -> CVPixelBuffer?) async throws {
         try? FileManager.default.removeItem(at: url)
-        let writer: AVAssetWriter
-        do {
-            writer = try AVAssetWriter(outputURL: url, fileType: .mp4)
-        } catch {
-            throw AyahVideoError.videoWriteFailed
+        let frameCount = Int((seconds * Double(framesPerSecond)).rounded(.up))
+        guard let job = FrameWriter(url: url, size: size, frameCount: frameCount, frameAt: frameAt)
+        else { throw AyahVideoError.videoWriteFailed }
+        try await job.run()
+    }
+}
+
+// MARK: - Isolation domains for the AVFoundation objects
+
+/// Owns the muxing export session.
+///
+/// `AVAssetExportSession` is not `Sendable` and `withTaskCancellationHandler`
+/// invokes `onCancel:` on an arbitrary thread, so instead of handing the
+/// session to that closure it is confined to this actor: the export and the
+/// cancel are both actor-isolated and are therefore serialised against each
+/// other by the actor's executor. Actor reentrancy is what makes the cancel
+/// land at all — `export` suspends, which frees the actor.
+private actor ExportJob {
+    private let session: AVAssetExportSession
+
+    /// A synchronous, non-delegating actor `init` is `nonisolated` and runs on
+    /// the caller, so the (non-`Sendable`) composition crosses no boundary —
+    /// and the session it creates never leaves this actor.
+    init?(composition: AVMutableComposition) {
+        guard let session = AVAssetExportSession(
+            asset: composition, presetName: AVAssetExportPresetHighestQuality)
+        else { return nil }
+        session.shouldOptimizeForNetworkUse = true
+        self.session = session
+    }
+
+    func export(to finalURL: URL) async throws {
+        if #available(iOS 18, macOS 15, *) {
+            do {
+                try await session.export(to: finalURL, as: .mp4)
+            } catch is CancellationError {
+                throw AyahVideoError.cancelled
+            } catch {
+                throw AyahVideoError.exportFailed
+            }
+        } else {
+            session.outputURL = finalURL
+            session.outputFileType = .mp4
+            await session.export()
+            switch session.status {
+            case .completed: break
+            case .cancelled: throw AyahVideoError.cancelled
+            default: throw AyahVideoError.exportFailed
+            }
         }
+    }
+
+    func cancel() { session.cancelExport() }
+}
+
+/// Owns the writer, its video input and the pixel-buffer adaptor for one
+/// still-video pass.
+///
+/// None of the three is `Sendable`, and AVFoundation calls the
+/// `requestMediaDataWhenReady` block on the serial queue it is given — a
+/// different thread from the one that set the writer up. Rather than smuggle
+/// them into a `@Sendable` closure, this actor adopts that very queue as its
+/// executor: setup, every frame append and the finish are then all one
+/// isolation domain, which is exactly the serialisation AVFoundation's own
+/// contract asks for. The block therefore only needs `assumeIsolated` — it is
+/// already running on the actor's executor.
+private actor FrameWriter {
+    private let queue: DispatchSerialQueue
+    private let writer: AVAssetWriter
+    private let input: AVAssetWriterInput
+    private let adaptor: AVAssetWriterInputPixelBufferAdaptor
+    private let frameCount: Int
+    private let frameAt: (Int) -> CVPixelBuffer?
+    private var index = 0
+    private var finished = false
+    private var continuation: CheckedContinuation<Void, Error>?
+
+    nonisolated var unownedExecutor: UnownedSerialExecutor { queue.asUnownedSerialExecutor() }
+
+    init?(url: URL, size: CGSize, frameCount: Int, frameAt: @escaping (Int) -> CVPixelBuffer?) {
+        guard let writer = try? AVAssetWriter(outputURL: url, fileType: .mp4) else { return nil }
         let settings: [String: Any] = [
             AVVideoCodecKey: AVVideoCodecType.h264,
             AVVideoWidthKey: Int(size.width),
@@ -344,57 +404,66 @@ public enum AyahVideoComposer {
             AVVideoCompressionPropertiesKey: [
                 AVVideoAverageBitRateKey: 2_500_000,
                 AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
-                AVVideoMaxKeyFrameIntervalKey: framesPerSecond * 2
+                AVVideoMaxKeyFrameIntervalKey: AyahVideoComposer.framesPerSecond * 2
             ]
         ]
         let input = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
         input.expectsMediaDataInRealTime = false
-        let adaptor = AVAssetWriterInputPixelBufferAdaptor(
+        self.queue = DispatchSerialQueue(label: "com.engagendy.noor.ayah-video")
+        self.writer = writer
+        self.input = input
+        self.adaptor = AVAssetWriterInputPixelBufferAdaptor(
             assetWriterInput: input,
             sourcePixelBufferAttributes: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
+        self.frameCount = frameCount
+        self.frameAt = frameAt
+    }
+
+    func run() async throws {
         guard writer.canAdd(input) else { throw AyahVideoError.videoWriteFailed }
         writer.add(input)
         guard writer.startWriting() else { throw AyahVideoError.videoWriteFailed }
         writer.startSession(atSourceTime: .zero)
 
-        let frameCount = Int((seconds * Double(framesPerSecond)).rounded(.up))
-        var index = 0
-        let queue = DispatchQueue(label: "com.engagendy.noor.ayah-video")
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            var finished = false
-            input.requestMediaDataWhenReady(on: queue) {
-                guard !finished else { return }
-                while input.isReadyForMoreMediaData, index < frameCount {
-                    if Task.isCancelled {
-                        finished = true
-                        input.markAsFinished()
-                        writer.cancelWriting()
-                        continuation.resume(throwing: AyahVideoError.cancelled)
-                        return
-                    }
-                    let time = CMTime(value: CMTimeValue(index), timescale: framesPerSecond)
-                    guard let frame = frameAt(index), adaptor.append(frame, withPresentationTime: time) else {
-                        finished = true
-                        input.markAsFinished()
-                        writer.cancelWriting()
-                        continuation.resume(throwing: AyahVideoError.videoWriteFailed)
-                        return
-                    }
-                    index += 1
-                }
-                if index >= frameCount {
-                    finished = true
-                    input.markAsFinished()
-                    writer.finishWriting {
-                        if writer.status == .completed {
-                            continuation.resume()
-                        } else {
-                            continuation.resume(throwing: AyahVideoError.videoWriteFailed)
-                        }
-                    }
-                }
+            self.continuation = continuation
+            input.requestMediaDataWhenReady(on: queue) { [self] in
+                // Already on `queue`, which *is* this actor's executor.
+                assumeIsolated { $0.pump() }
             }
         }
+        await writer.finishWriting()
+        guard writer.status == .completed else { throw AyahVideoError.videoWriteFailed }
+    }
+
+    /// Append as many frames as the input will take, in order.
+    private func pump() {
+        guard !finished else { return }
+        while input.isReadyForMoreMediaData, index < frameCount {
+            if Task.isCancelled {
+                return abort(with: .cancelled)
+            }
+            let time = CMTime(value: CMTimeValue(index), timescale: AyahVideoComposer.framesPerSecond)
+            guard let frame = frameAt(index), adaptor.append(frame, withPresentationTime: time) else {
+                return abort(with: .videoWriteFailed)
+            }
+            index += 1
+        }
+        if index >= frameCount {
+            finished = true
+            input.markAsFinished()
+            // `run()` resumes on this same executor and finishes the file.
+            continuation?.resume()
+            continuation = nil
+        }
+    }
+
+    private func abort(with error: AyahVideoError) {
+        finished = true
+        input.markAsFinished()
+        writer.cancelWriting()
+        continuation?.resume(throwing: error)
+        continuation = nil
     }
 }
 

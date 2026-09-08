@@ -88,7 +88,13 @@ struct SettingsView: View {
                 } label: {
                     Text("App font")
                 }
+                // Five families, each previewing itself, so on iOS the picker
+                // must push to a full list rather than collapse to a menu.
+                // `.navigationLink` is iOS-only; macOS keeps the default
+                // (a pop-up menu), which is the native idiom there anyway.
+                #if os(iOS)
                 .pickerStyle(.navigationLink)
+                #endif
             }
 
             Section {
