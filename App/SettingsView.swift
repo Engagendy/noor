@@ -23,6 +23,9 @@ struct SettingsView: View {
     @AppStorage("audio.reciter") private var reciterRaw = Reciter.alafasy.rawValue
     @AppStorage(TranslationVoice.defaultsKey) private var translationVoiceRaw = TranslationVoice.none.rawValue
     @AppStorage("translation.id") private var translationId = "en.sahih"
+    /// Same key the reader's options panel writes, so the two places can
+    /// never disagree about whether the gloss is on.
+    @AppStorage("reader.showTranslation") private var showTranslation = false
     @State private var showReciterPicker = false
     @State private var showAdhanSounds = false
     @State private var showZakat = false
@@ -258,6 +261,31 @@ struct SettingsView: View {
                     }
                 }
                 MushafDownloadRow()
+                // WHETHER, then WHICH. The reader's options panel used to own
+                // the on/off switch alone, so Settings showed a list of
+                // editions with no way to tell — or say — that translations
+                // were off at all.
+                Toggle(isOn: Binding(
+                    get: { showTranslation },
+                    set: { on in
+                        showTranslation = on
+                        // A translation line is per-ayah furniture: the
+                        // mushaf and Madani pages have nowhere to draw it, so
+                        // switching it on takes the reader to ayah mode
+                        // exactly as the reader's own toggle does. Without
+                        // this, turning it on here would be another switch
+                        // that appears to do nothing.
+                        if on {
+                            // The reader owns the single download (and now
+                            // reports its progress inline), so nothing is
+                            // fetched from here — a second store writing the
+                            // same file would only race it.
+                            readerMode = SurahReaderView.DisplayMode.ayah.rawValue
+                        }
+                    })) {
+                    Text("Show translation")
+                }
+                .tint(NoorColor.accentPrimary)
                 Picker(selection: $translationId) {
                     ForEach(TranslationStore.allEditions, id: \.id) { edition in
                         Text(verbatim: edition.displayName).tag(edition.id)
@@ -285,7 +313,7 @@ struct SettingsView: View {
             Section {
                 Text(verbatim: "Quran text: Tanzil.net (Uthmani)")
                 Text(verbatim: "Font: KFGQPC Uthmanic Hafs")
-                Text(verbatim: "Translation: Saheeh International (Tanzil)")
+                Text(verbatim: "Translations: Saheeh International and Tanzil (mirror: fawazahmed0/quran-api)")
                 Text(verbatim: "Tafsir: Ibn Kathir, Al-Muyassar (spa5k/tafsir_api)")
                 Text(verbatim: "Recitations: EveryAyah.com")
                 Text(verbatim: "Tajweed annotations: cpfair/quran-tajweed (CC BY 4.0)")

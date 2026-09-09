@@ -99,7 +99,7 @@
     <string name="g1_attr_quran">نص القرآن: Tanzil.net (الرسم العثماني)</string>
     <string name="g1_attr_fonts">الخطوط: KFGQPC حفص العثماني و Amiri Quran</string>
     <string name="g1_attr_page_fonts">خطوط صفحات المصحف: مجمع الملك فهد (QCF v2)</string>
-    <string name="g1_attr_translation">الترجمة: Saheeh International وترجمات Tanzil</string>
+    <string name="g1_attr_translation">الترجمة: Saheeh International وترجمات Tanzil (نسخة: fawazahmed0/quran-api)</string>
     <string name="g1_attr_tafsir">التفسير: ابن كثير والميسّر (spa5k/tafsir_api)</string>
     <string name="g1_attr_recitations">التلاوات: EveryAyah.com</string>
     <string name="g1_attr_hadith">الحديث: fawazahmed0/hadith-api</string>

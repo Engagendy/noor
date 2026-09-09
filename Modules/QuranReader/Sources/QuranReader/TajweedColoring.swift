@@ -121,7 +121,11 @@ public struct TajweedLegendView: View {
             .scrollContentBackground(.hidden)
             .background(NoorColor.bgPrimary)
             .navigationTitle(Text("Tajweed colours"))
+            // iOS-only: the Mac has no navigation bar to size, and an
+            // unguarded call here fails the macOS build outright.
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button {

@@ -34,6 +34,7 @@
     <string name="g2_hifz_mode">Hifz mode (hide text)</string>
     <string name="g2_translation_downloading">Downloading translation…</string>
     <string name="g2_translation_failed">Couldn\'t download the translation — check your connection.</string>
+    <string name="g2_translation_retry">Translation unavailable — tap to retry</string>
     <string name="g2_download_surah_audio">Download surah audio</string>
     <string name="g2_audio_downloaded">Audio downloaded</string>
     <string name="g2_audio_downloading">Downloading %1$s/%2$s…</string>

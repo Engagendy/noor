@@ -1624,20 +1624,74 @@ private fun Modifier.hifzHidden(hidden: Boolean): Modifier =
 
 /// The chosen translation of one ayah, under its Arabic text. Reads in its
 /// OWN direction (LTR for English, RTL for Urdu) inside the RTL Quran block.
+///
+/// This slot is NEVER allowed to render nothing while the reader has asked
+/// for a translation. It used to `?: return` on a missing text, so a store
+/// that was still downloading — or had failed — made every ayah silently
+/// skip the line and the switch looked dead. A feature that fails visibly
+/// can be diagnosed; one that fails silently makes the app look broken.
 @Composable
 private fun TranslationLine(surahId: Int, ayah: Int) {
-    val text = TranslationStore.text(surahId, ayah) ?: return
-    CompositionLocalProvider(
-        LocalLayoutDirection provides
-            (if (TranslationStore.isRTL) LayoutDirection.Rtl else LayoutDirection.Ltr)
-    ) {
-        Text(
-            text,
-            fontSize = 14.sp,
-            lineHeight = 21.sp,
-            color = NoorColor.inkSecondary,
-            textAlign = TextAlign.Start,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+    val text = TranslationStore.text(surahId, ayah)
+    if (text != null) {
+        CompositionLocalProvider(
+            LocalLayoutDirection provides
+                (if (TranslationStore.isRTL) LayoutDirection.Rtl else LayoutDirection.Ltr)
+        ) {
+            Text(
+                text,
+                fontSize = 14.sp,
+                lineHeight = 21.sp,
+                color = NoorColor.inkSecondary,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+        }
+        return
+    }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // Status lines are app chrome, not scripture: they read in the UI
+    // language's direction, not the RTL direction of the Quran block.
+    CompositionLocalProvider(LocalLayoutDirection provides noorLayoutDirection()) {
+        when (TranslationStore.state) {
+            TranslationStore.State.DOWNLOADING ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                ) {
+                    CircularProgressIndicator(
+                        strokeWidth = 1.5.dp,
+                        color = NoorColor.accentPrimary,
+                        modifier = Modifier.size(13.dp))
+                    Text(
+                        stringResource(R.string.g2_translation_downloading),
+                        fontSize = 13.sp,
+                        color = NoorColor.inkSecondary)
+                }
+            // Ready, yet this ayah has no line: the edition itself is short
+            // of it. Nothing to retry, and a false error would be worse.
+            TranslationStore.State.READY -> Unit
+            // Not downloaded / failed — offer the way out, right here.
+            else ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { scope.launch { TranslationStore.ensure(context) } }
+                        .heightIn(min = 44.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.g2_translation_retry),
+                        fontSize = 13.sp,
+                        lineHeight = 19.sp,
+                        color = NoorColor.accentPrimary,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier.fillMaxWidth())
+                }
+        }
     }
 }
 

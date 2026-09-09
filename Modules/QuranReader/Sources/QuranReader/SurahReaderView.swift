@@ -716,15 +716,8 @@ public struct SurahReaderView: View {
                     // filtering to this ayah would copy it on every render.
                     tajweed: tajweedColors ? viewModel.tajweedSpansForSurah() : [:])
             }
-            if showTranslation,
-               let translation = translations?.translation(surah: verse.surahId, ayah: verse.ayah) {
-                Text(verbatim: translation)
-                    .font(NoorFont.translation)
-                    .foregroundStyle(NoorColor.inkSecondary)
-                    .lineSpacing(4)
-                    .environment(\.layoutDirection, .leftToRight)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            if showTranslation {
+                translationSlot(for: verse)
             }
         }
         .padding(.horizontal, 12)
@@ -749,6 +742,59 @@ public struct SurahReaderView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Ayah \(verse.ayah)")
         .accessibilityValue(displayText(verse))
+    }
+
+    /// The translation line under one ayah — and, when there is not one yet,
+    /// WHY there is not one.
+    ///
+    /// This slot is never allowed to render nothing while the reader has
+    /// asked for a translation. It used to be a plain `if let` on the text,
+    /// so a store that was still downloading — or had failed — made every
+    /// ayah silently skip the line and the switch looked dead. A feature
+    /// that fails visibly can be diagnosed; one that fails silently makes
+    /// the app look broken. Mirrors Android's `TranslationLine`.
+    @ViewBuilder
+    private func translationSlot(for verse: Verse) -> some View {
+        if let translation = translations?.translation(surah: verse.surahId, ayah: verse.ayah) {
+            Text(verbatim: translation)
+                .font(NoorFont.translation)
+                .foregroundStyle(NoorColor.inkSecondary)
+                .lineSpacing(4)
+                .environment(\.layoutDirection, translations?.isRTL == true ? .rightToLeft : .leftToRight)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        } else if let translations {
+            switch translations.state {
+            case .downloading:
+                HStack(spacing: 6) {
+                    ProgressView().controlSize(.mini)
+                    Text("Downloading translation…")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                }
+                // The frame must sit INSIDE the direction override: applied
+                // after it, `.leading` would resolve against the RTL Quran
+                // block and push an English status line to the right edge.
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .environment(\.layoutDirection, appDirection)
+            // Ready, yet this ayah has no line: the edition itself is short
+            // of it. Nothing to retry, and a false error would be worse.
+            case .ready:
+                EmptyView()
+            case .notDownloaded, .failed:
+                Button {
+                    Task { await translations.download() }
+                } label: {
+                    Text("Translation unavailable — tap to retry")
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.accentPrimary)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .environment(\.layoutDirection, appDirection)
+            }
+        }
     }
 
     /// Drawer pick: close the drawer and take the reader to that surah, in

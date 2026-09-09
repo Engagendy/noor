@@ -6731,6 +6731,65 @@
         }
       }
     },
+    "Downloading translation…": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ تنزيل الترجمة…"
+          }
+        },
+        "bn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "অনুবাদ ডাউনলোড হচ্ছে…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descargando la traducción…"
+          }
+        },
+        "fa": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "در حال دانلود ترجمه…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Téléchargement de la traduction…"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mengunduh terjemahan…"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memuat turun terjemahan…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çeviri indiriliyor…"
+          }
+        },
+        "ur": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ترجمہ ڈاؤن لوڈ ہو رہا ہے…"
+          }
+        }
+      }
+    },
     "Dubai": {
       "extractionState": "stale",
       "localizations": {
@@ -20454,6 +20513,65 @@
           "stringUnit": {
             "state": "translated",
             "value": "ترجمے کی آڈیو: %@"
+          }
+        }
+      }
+    },
+    "Translation unavailable — tap to retry": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر تحميل الترجمة — اضغط للمحاولة مرة أخرى"
+          }
+        },
+        "bn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "অনুবাদ পাওয়া যায়নি — আবার চেষ্টা করতে ট্যাপ করুন"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traducción no disponible — toca para reintentar"
+          }
+        },
+        "fa": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ترجمه در دسترس نیست — برای تلاش دوباره ضربه بزنید"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traduction indisponible — touchez pour réessayer"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terjemahan tidak tersedia — ketuk untuk coba lagi"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terjemahan tidak tersedia — ketik untuk cuba lagi"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çeviri kullanılamıyor — yeniden denemek için dokunun"
+          }
+        },
+        "ur": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ترجمہ دستیاب نہیں — دوبارہ کوشش کے لیے ٹیپ کریں"
           }
         }
       }

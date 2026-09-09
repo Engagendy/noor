@@ -35,6 +35,7 @@
     <string name="g2_hifz_mode">وضع الحفظ (إخفاء النص)</string>
     <string name="g2_translation_downloading">جارٍ تنزيل الترجمة…</string>
     <string name="g2_translation_failed">تعذر تنزيل الترجمة — تحقق من الاتصال.</string>
+    <string name="g2_translation_retry">تعذّر تحميل الترجمة — اضغط للمحاولة مرة أخرى</string>
     <string name="g2_download_surah_audio">تنزيل صوت السورة</string>
     <string name="g2_audio_downloaded">تم تنزيل الصوت</string>
     <string name="g2_audio_downloading">جارٍ التنزيل %1$s/%2$s…</string>

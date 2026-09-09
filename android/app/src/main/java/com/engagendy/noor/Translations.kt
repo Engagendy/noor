@@ -9,11 +9,10 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.Locale
 
-/// Downloads and serves one Quran TRANSLATION (Tanzil text format:
-/// "surah|ayah|text" lines) — 1:1 port of the iOS Core/Translations
-/// TranslationStore. Downloaded once into filesDir, then fully offline.
+/// Downloads and serves one Quran TRANSLATION — 1:1 port of the iOS
+/// Core/Translations TranslationStore. Downloaded once into filesDir as the
+/// Tanzil line format ("surah|ayah|text"), then fully offline for good.
 /// Never mixed with the Arabic text: the Quran itself always comes from the
 /// bundled verified DB, this file only ever feeds the gloss line under it.
 object TranslationStore {
@@ -33,6 +32,40 @@ object TranslationStore {
     /// Urdu reads right to left; the rest of the editions are LTR.
     val isRTL: Boolean get() = loadedId?.startsWith("ur") == true
 
+    /// Our edition id → the equivalent file in fawazahmed0/quran-api.
+    /// Verified live 2026-09-09: every one of the five returns 200 with a
+    /// complete 6236-ayah file. Note the repo's editions.json KEYS use
+    /// underscores while the FILES use hyphens — these are the file names.
+    private val MirrorFile = mapOf(
+        // Saheeh International is the Umm Muhammad (Emily Assami,
+        // Mary Kennedy, Amatullah Bantley) translation — same text.
+        "en.sahih" to "eng-ummmuhammad",
+        "ur.jalandhry" to "urd-fatehmuhammadja",
+        "fr.hamidullah" to "fra-muhammadhamidul",
+        "id.indonesian" to "ind-indonesianislam",
+        "tr.diyanet" to "tur-diyanetisleri",
+    )
+
+    /// Where an edition is fetched from, in order, first success wins.
+    ///
+    /// The jsDelivr mirror leads and tanzil.net trails deliberately:
+    /// tanzil.net is a single origin that national/corporate web filters
+    /// block wholesale (verified 2026-09-09 from a UAE network — TLS reset
+    /// on 443, and plain HTTP answers a filter's "Web Page Blocked …
+    /// Category: religion" 503 page), which is exactly how this bug was
+    /// reported. jsDelivr is a global CDN with no rate limits, and its own
+    /// README asks callers to carry a fallback, hence the GitHub raw URL in
+    /// the middle. Whichever host answers, the file lands on disk in the
+    /// same Tanzil line format, so an already-downloaded edition keeps
+    /// working untouched.
+    private fun sources(id: String): List<String> = buildList {
+        MirrorFile[id]?.let { file ->
+            add("https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/$file.json")
+            add("https://raw.githubusercontent.com/fawazahmed0/quran-api/1/editions/$file.json")
+        }
+        add("https://tanzil.net/trans/$id")
+    }
+
     fun selectedId(context: Context): String =
         KhatmahPlan.prefs(context).getString("translation.id", TanzilEditions[0].id)
             ?: TanzilEditions[0].id
@@ -43,8 +76,10 @@ object TranslationStore {
     fun text(surah: Int, ayah: Int): String? = texts[surah * 1000 + ayah]
 
     /// Loads the selected edition from disk, downloading it once if needed.
-    /// Safe to call repeatedly (a no-op once ready). Never touches the main
-    /// thread: the file is a few MB and parsing it there stalls the reader.
+    /// Safe to call repeatedly (a no-op once ready), and safe to call again
+    /// after a failure — that is what the reader's "tap to retry" line does.
+    /// Never touches the main thread: the file is a few MB and parsing it
+    /// there stalls the reader.
     suspend fun ensure(context: Context, allowDownload: Boolean = true) {
         val id = selectedId(context)
         if (id == loadedId && state == State.READY) return
@@ -69,24 +104,62 @@ object TranslationStore {
         }
     }
 
+    /// Tries every mirror in turn and writes the first complete answer.
     private fun download(id: String, target: File): Boolean {
         val temp = File(target.parentFile, "$id.part")
-        return try {
-            val connection = URL("https://tanzil.net/trans/%s".format(Locale.ROOT, id))
-                .openConnection() as HttpURLConnection
-            connection.connectTimeout = 15_000
-            connection.readTimeout = 30_000
-            val ok = connection.responseCode == 200
-            val copied = if (ok) connection.inputStream.use { input ->
-                temp.outputStream().use { input.copyTo(it) }
-            } else -1L
-            connection.disconnect()
-            if (ok && copied > 100_000 && temp.renameTo(target)) true
-            else { temp.delete(); false }
-        } catch (_: Exception) {
+        for (url in sources(id)) {
+            val lines = fetch(url)?.let { normalize(it) } ?: continue
+            val written = runCatching {
+                temp.writeText(lines)
+                temp.renameTo(target)
+            }.getOrDefault(false)
+            if (written) return true
             temp.delete()
-            false
         }
+        temp.delete()
+        return false
+    }
+
+    private fun fetch(url: String): String? = try {
+        val connection = URL(url).openConnection() as HttpURLConnection
+        connection.connectTimeout = 15_000
+        connection.readTimeout = 60_000
+        connection.instanceFollowRedirects = true
+        val body = if (connection.responseCode == 200) {
+            connection.inputStream.bufferedReader().use { it.readText() }
+        } else null
+        connection.disconnect()
+        body
+    } catch (_: Exception) {
+        null
+    }
+
+    /// Accepts either wire format and returns the Tanzil line format we
+    /// store, or null when the body is not a whole Quran (a captive-portal
+    /// or filter page never survives this).
+    internal fun normalize(body: String): String? {
+        val head = body.trimStart('\uFEFF', ' ', '\n', '\r', '\t')
+        val lines = if (head.startsWith("{")) jsonToLines(head) ?: return null else body
+        return if (parse(lines).size > 6000) lines else null
+    }
+
+    /// fawazahmed0/quran-api shape: {"quran":[{"chapter":1,"verse":1,…}]}.
+    private fun jsonToLines(body: String): String? = try {
+        val ayat = org.json.JSONObject(body).getJSONArray("quran")
+        buildString(ayat.length() * 140) {
+            for (i in 0 until ayat.length()) {
+                val ayah = ayat.getJSONObject(i)
+                // StringBuilder.append(Int) is ASCII whatever the app
+                // locale — never String.format here (Arabic-Indic digits).
+                append(ayah.getInt("chapter")).append('|')
+                append(ayah.getInt("verse")).append('|')
+                // One ayah per line is the storage contract.
+                append(ayah.getString("text").replace('\n', ' ').replace('\r', ' '))
+                append('\n')
+            }
+        }
+    } catch (_: Exception) {
+        null
     }
 
     /// Parses Tanzil "surah|ayah|text" lines; ignores comments and blanks.

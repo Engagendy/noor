@@ -33,12 +33,40 @@ Attributions are displayed in Settings → About.
 - **Attribution:** "Uthmanic Hafs font by King Fahd Glorious Quran Printing
   Complex."
 
-### Quran translation — Saheeh International (English)
-- **Source:** Tanzil translations collection (https://tanzil.net/trans/), id `en.sahih`.
-- **Access:** downloaded on demand to Application Support; fully offline after.
-- **License:** Tanzil translation terms — free for non-commercial use with
-  source cited; this app is free and non-commercial.
-- **Attribution:** "English translation: Saheeh International, via Tanzil.net."
+### Quran translations (downloaded on demand)
+The five offered editions and the ids they are stored under:
+
+| App id | Translation | tanzil.net id | fawazahmed0/quran-api file |
+|---|---|---|---|
+| `en.sahih` | Saheeh International (Umm Muhammad et al.) | `en.sahih` | `eng-ummmuhammad` |
+| `ur.jalandhry` | Fateh Muhammad Jalandhry (Urdu) | `ur.jalandhry` | `urd-fatehmuhammadja` |
+| `fr.hamidullah` | Muhammad Hamidullah (French) | `fr.hamidullah` | `fra-muhammadhamidul` |
+| `id.indonesian` | Indonesian Ministry of Religious Affairs (Kemenag) | `id.indonesian` | `ind-indonesianislam` |
+| `tr.diyanet` | Diyanet İşleri (Turkish) | `tr.diyanet` | `tur-diyanetisleri` |
+
+- **Access:** downloaded once on demand (Application Support on iOS,
+  `filesDir/translations` on Android), stored as Tanzil "surah|ayah|text"
+  lines; fully offline afterwards. No translation is ever bundled.
+- **Primary source (mirror):** fawazahmed0/quran-api, served by jsDelivr —
+  `https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/<file>.json`,
+  with `https://raw.githubusercontent.com/fawazahmed0/quran-api/1/…` as the
+  second try (that repo's README asks callers to carry a fallback).
+- **Fallback source:** Tanzil translations collection
+  (https://tanzil.net/trans/), the original ids above. It is last because it
+  is a single origin that some national/corporate web filters block outright
+  (observed 2026-09-09 from a UAE network: TLS reset on 443, and an HTTP 503
+  "Web Page Blocked … Category: religion" filter page).
+- **Repository license:** fawazahmed0/quran-api ships the **Unlicense** — a
+  public-domain dedication ("This is free and unencumbered software released
+  into the public domain"), verified at
+  https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/LICENSE on 2026-09-09.
+  That covers the repository's own compilation; it makes no statement about
+  the copyright of the individual translations it redistributes, so the
+  underlying works are used on the same terms as via Tanzil below.
+- **Tanzil terms:** free for non-commercial use with source cited; this app is
+  free and non-commercial.
+- **Attribution:** "Quran translations: Saheeh International and the Tanzil
+  translations collection, mirrored via fawazahmed0/quran-api (Unlicense)."
 
 ### Recitations — EveryAyah.com (streamed/cached on demand)
 - **Reciters:** Mishary Alafasy, Mahmoud Khalil Al-Husary, Mohamed Siddiq
@@ -273,7 +301,6 @@ never touch Quran rendering, which stays on the verified Quran fonts above.
 
 ## Planned (record before shipping each phase)
 
-- Translations (Quran Foundation API / fawazahmed0 quran-api) — per-translation
 - Tafsir packs — per-source
 - Recitations (EveryAyah / Quran Foundation audio) — per-reciter
 - Hadith (Sunnah.com) — per-collection

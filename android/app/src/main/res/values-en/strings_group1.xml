@@ -95,7 +95,7 @@
     <string name="g1_attr_quran">Quran text: Tanzil.net (Uthmani script)</string>
     <string name="g1_attr_fonts">Fonts: KFGQPC Uthmanic Hafs and Amiri Quran</string>
     <string name="g1_attr_page_fonts">Mushaf page fonts: King Fahd Complex (QCF v2)</string>
-    <string name="g1_attr_translation">Translation: Saheeh International and Tanzil translations</string>
+    <string name="g1_attr_translation">Translations: Saheeh International and Tanzil (mirror: fawazahmed0/quran-api)</string>
     <string name="g1_attr_tafsir">Tafsir: Ibn Kathir and Muyassar (spa5k/tafsir_api)</string>
     <string name="g1_attr_recitations">Recitations: EveryAyah.com</string>
     <string name="g1_attr_hadith">Hadith: fawazahmed0/hadith-api</string>

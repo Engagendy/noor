@@ -56,8 +56,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/// The five Tanzil translation editions — 1:1 with the iOS
-/// Core/Translations TranslationStore.allEditions ("translation.id").
+/// The five offered translation editions — 1:1 with the iOS
+/// Core/Translations TranslationStore.allEditions ("translation.id"). The
+/// ids stay Tanzil's; where each one is actually fetched from (jsDelivr
+/// mirror first, tanzil.net last) lives in TranslationStore.sources.
 data class TranslationEdition(val id: String, val displayName: String)
 
 val TanzilEditions = listOf(
@@ -119,6 +121,9 @@ private fun SettingsMain(
     val athkarMinutes = remember(version) { prefs.getInt("athkar.afterSalahMinutes", 20) }
     val sound = remember(version) { PrayerPrefs(context).sound }
     val translationId = remember(version) { prefs.getString("translation.id", "en.sahih") ?: "en.sahih" }
+    // Same pref the reader's options sheet writes ("reader.translation"),
+    // so the two places can never disagree about whether the gloss is on.
+    val showTranslation = remember(version) { prefs.getBoolean("reader.translation", false) }
 
     // Kids mode: the toggle reflects KidsStore's live state (never a prefs
     // read from composition). ON opens the age sheet; OFF asks a grown-up.
@@ -322,6 +327,34 @@ private fun SettingsMain(
 
         SectionTitle(stringResource(R.string.g1_section_translation))
         SettingsCard {
+            // WHETHER, then WHICH. The reader's options sheet used to own the
+            // on/off switch alone, so Settings showed a list of editions with
+            // no way to tell — or say — that translations were off at all.
+            ToggleRow(
+                title = stringResource(R.string.g2_show_translation),
+                checked = showTranslation,
+                subtitle = when {
+                    !showTranslation -> null
+                    TranslationStore.state == TranslationStore.State.DOWNLOADING ->
+                        stringResource(R.string.g2_translation_downloading)
+                    TranslationStore.state == TranslationStore.State.FAILED ->
+                        stringResource(R.string.g2_translation_failed)
+                    else -> null
+                },
+                onChange = { on ->
+                    prefs.edit().putBoolean("reader.translation", on).apply()
+                    // A translation line is per-ayah furniture: the mushaf
+                    // and Madani pages have nowhere to draw it, so switching
+                    // it on takes the reader to ayah mode exactly as the
+                    // reader's own toggle does. Without this, turning it on
+                    // here would be another switch that appears to do
+                    // nothing.
+                    if (on) prefs.edit().putString("reader.mode", "ayah").apply()
+                    version++
+                    // Fetch it now rather than making the reader wait.
+                    if (on) scope.launch { TranslationStore.ensure(context) }
+                })
+            HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             TanzilEditions.forEachIndexed { index, edition ->
                 if (index > 0) {
                     HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
@@ -335,6 +368,9 @@ private fun SettingsMain(
                         .clickable {
                             prefs.edit().putString("translation.id", edition.id).apply()
                             version++
+                            // Swap editions live: `ensure` reloads because the
+                            // selected id no longer matches the loaded one.
+                            if (showTranslation) scope.launch { TranslationStore.ensure(context) }
                         }
                         .padding(horizontal = 16.dp, vertical = 13.dp)
                 ) {
