@@ -23,7 +23,7 @@ public enum NoorFont {
 
     /// The app-wide default face, pushed into `\.font` at the root so that
     /// text which sets no font of its own still follows the setting.
-    public static var body: Font { NoorAppFont.current.scaled(17, relativeTo: .body) }
+    public static var body: Font { NoorAppFont.interfaceScaled(17, relativeTo: .body) }
 
     /// Translation & tafsir body: deliberately SERIF, and deliberately NOT
     /// routed through the interface-font setting. The design guidelines ask
@@ -35,13 +35,13 @@ public enum NoorFont {
     public static var tafsir: Font { .system(.callout, design: .serif) }
 
     public static var screenTitle: Font {
-        NoorAppFont.current.scaled(28, weight: .semibold, relativeTo: .title)
+        NoorAppFont.interfaceScaled(28, weight: .semibold, relativeTo: .title)
     }
     public static var sectionHeader: Font {
-        NoorAppFont.current.scaled(20, weight: .semibold, relativeTo: .title3)
+        NoorAppFont.interfaceScaled(20, weight: .semibold, relativeTo: .title3)
     }
     public static var caption: Font {
-        NoorAppFont.current.scaled(13, relativeTo: .footnote)
+        NoorAppFont.interfaceScaled(13, relativeTo: .footnote)
     }
 }
 
@@ -62,7 +62,7 @@ extension Font {
     /// does not). This is the single token every UI `.font(...)` call goes
     /// through — do not reach for `.system(size:)` directly.
     public static func noorScaled(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        NoorAppFont.current.scaled(size, weight: weight)
+        NoorAppFont.interfaceScaled(size, weight: weight)
     }
 
     /// Escape hatch for text that must stay in the system face regardless of
@@ -86,9 +86,13 @@ extension Font {
 /// widens the gap that is already there until the word reads as two. The
 /// reported symptom was the prayer label الفجر rendering as "ا لفجر".
 ///
-/// So: zero tracking in the Arabic interface, unchanged in English. Use this
-/// on every *localised* label; plain `.tracking(_:)` is still correct on text
-/// that is Latin whatever the interface language (e.g. the "Noor" wordmark).
+/// So: zero tracking in every non-Latin interface — Arabic, Urdu and
+/// Persian for the reason above (Nastaliq worst of all, since tracking
+/// breaks the sloped ligature), and Bengali because tracking separates a
+/// letter from the matra riding on it. Unchanged in the Latin-script
+/// languages. Use this on every *localised* label; plain `.tracking(_:)` is
+/// still correct on text that is Latin whatever the interface language
+/// (e.g. the "Noor" wordmark).
 public extension View {
     func noorTracking(_ amount: CGFloat) -> some View {
         modifier(NoorTrackingModifier(amount: amount))
@@ -105,9 +109,8 @@ public extension View {
 
 private struct NoorTrackingModifier: ViewModifier {
     let amount: CGFloat
-    @Environment(\.locale) private var locale
 
     func body(content: Content) -> some View {
-        content.tracking(locale.language.languageCode?.identifier == "ar" ? 0 : amount)
+        content.tracking(NoorLanguage.current.usesLatinScript ? amount : 0)
     }
 }

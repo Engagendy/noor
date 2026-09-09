@@ -25,13 +25,9 @@ struct RootView: View {
     @AppStorage(NoorAppFont.defaultsKey) private var uiFontRaw = NoorAppFont.fallback.rawValue
     @AppStorage(KidsMode.enabledKey) private var kidsEnabled = false
 
-    private var effectiveDirection: LayoutDirection {
-        switch language {
-        case "ar": .rightToLeft
-        case "en": .leftToRight
-        default: Locale.current.language.characterDirection == .rightToLeft ? .rightToLeft : .leftToRight
-        }
-    }
+    /// The resolved interface language — one type owns the direction, the
+    /// endonym, the formatting locale and the face (see `NoorLanguage`).
+    private var resolvedLanguage: NoorLanguage { NoorLanguage.resolve(language) }
 
     var body: some View {
         Group {
@@ -76,15 +72,22 @@ struct RootView: View {
         // language: NoorFont's tokens are read imperatively, so only a full
         // re-layout makes a change land everywhere at once.
         .id("\(language)|\(uiFontRaw)")
-        .environment(\.locale, language == "system" ? .current : Locale(identifier: language))
+        // Not `Locale.current` even for "system": the resolved language is
+        // the one whose strings are shown, so it must also be the one that
+        // formats the numbers and dates beside them.
+        .environment(\.locale, resolvedLanguage.locale)
         // App-wide default face — text that sets no font of its own (and
         // there is plenty) follows the setting through this.
         .environment(\.font, NoorFont.body)
-        .onChange(of: uiFontRaw, initial: true) { _, _ in
+        .onChange(of: "\(uiFontRaw)|\(language)", initial: true) { _, _ in
             NoorAppFont.invalidateCache()
+            NoorLanguage.invalidateCache()
+            // The language is in here too because it can change the FACE:
+            // an Urdu interface is drawn in Nastaliq whatever family is
+            // chosen, and the UIKit chrome has to be told.
             NoorAppFont.applyChromeAppearance()
         }
-        .environment(\.layoutDirection, effectiveDirection)
+        .environment(\.layoutDirection, resolvedLanguage.layoutDirection)
         .preferredColorScheme(theme == "light" ? .light : theme == "dark" ? .dark : nil)
         .task {
             let start = ContinuousClock.now

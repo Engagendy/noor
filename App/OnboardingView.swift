@@ -12,10 +12,11 @@ struct OnboardingView: View {
 
     @State private var step = 0
 
-    private var isArabicUI: Bool {
-        language == "ar" || (language == "system"
-            && Locale.current.language.languageCode?.identifier == "ar")
-    }
+    /// The language the onboarding itself is shown in — the stored choice,
+    /// or the device's if nothing is stored yet. First-run text is in the
+    /// string catalog like everything else now, so this only has to supply
+    /// the locale and the direction.
+    private var resolved: NoorLanguage { NoorLanguage.resolve(language) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,12 +25,10 @@ struct OnboardingView: View {
                 MihrabLogoMark(size: 64,
                                archColor: NoorColor.accentPrimary,
                                lampColor: NoorColor.accentGold)
-                Text(verbatim: isArabicUI ? "أهلًا بك في نور" : "Welcome to Noor")
+                Text("Welcome to Noor")
                     .font(.noorScaled(24, weight: .bold))
                     .foregroundStyle(NoorColor.inkPrimary)
-                Text(verbatim: isArabicUI
-                     ? "القرآن ومواقيت الصلاة والأذكار — خاص ومجاني للأبد"
-                     : "Quran, prayer times, and athkar — private and free forever")
+                Text("Quran, prayer times, and athkar — private and free forever")
                     .font(.noorScaled(14))
                     .foregroundStyle(NoorColor.inkSecondary)
                     .multilineTextAlignment(.center)
@@ -59,48 +58,64 @@ struct OnboardingView: View {
             .padding(.bottom, 22)
         }
         .background(NoorColor.bgPrimary)
-        .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
-        .environment(\.locale, isArabicUI ? Locale(identifier: "ar") : .current)
+        // Not `noorInterfaceDirection()`: onboarding runs BEFORE anything
+        // is stored, so it follows its own resolved choice, live, as the
+        // reader taps through the ten cards.
+        .environment(\.layoutDirection, resolved.layoutDirection)
+        .environment(\.locale, resolved.locale)
     }
 
     // Step 1 — language
     private var languageStep: some View {
         VStack(spacing: 16) {
-            Spacer()
-            stepTitle(isArabicUI ? "لغة التطبيق" : "App language")
-            HStack(spacing: 12) {
-                languageChoice(title: "العربية", value: "ar")
-                languageChoice(title: "English", value: "en")
+            stepTitle(Text("App language"))
+            // Ten languages, each written in its own language and script —
+            // this is the one screen whose reader may not understand a
+            // single other word on it. It scrolls, because ten cards of a
+            // 44pt-plus target do not fit a small phone.
+            ScrollView {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12),
+                                    GridItem(.flexible(), spacing: 12)],
+                          spacing: 12) {
+                    ForEach(NoorLanguage.allCases, id: \.rawValue) { option in
+                        languageChoice(option)
+                    }
+                }
+                .padding(.vertical, 4)
             }
-            Spacer()
-            primaryButton(isArabicUI ? "متابعة" : "Continue") { step = 1 }
+            .scrollBounceBehavior(.basedOnSize)
+            primaryButton(Text("Continue")) { step = 1 }
         }
         .padding(24)
     }
 
-    private func languageChoice(title: String, value: String) -> some View {
-        let isOn = language == value
-            || (language == "system"
-                && Locale.current.language.languageCode?.identifier == value)
+    private func languageChoice(_ option: NoorLanguage) -> some View {
+        let isOn = resolved == option
         return Button {
-            language = value
+            language = option.rawValue
         } label: {
-            Text(verbatim: title)
-                .font(.noorScaled(18, weight: .semibold))
+            Text(verbatim: option.endonym)
+                .font(NoorAppFont.font(showing: option, size: 18, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .environment(\.layoutDirection, option.layoutDirection)
+                .padding(.horizontal, 8)
                 .frame(maxWidth: .infinity)
-                .frame(height: 62)
+                .frame(height: 56)
                 .background(RoundedRectangle(cornerRadius: 14)
                     .fill(isOn ? NoorColor.accentPrimary : NoorColor.bgElevated))
                 .foregroundStyle(isOn ? NoorColor.bgPrimary : NoorColor.inkPrimary)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(Text(verbatim: option.endonym))
+        .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
     }
 
     // Step 2 — city: the same offline database picker as Settings, kept
     // on the page (no dismiss) so the checkmark and Continue stay visible.
     private var cityStep: some View {
         VStack(spacing: 12) {
-            stepTitle(isArabicUI ? "مدينتك لمواقيت الصلاة" : "Your city for prayer times")
+            stepTitle(Text("Your city for prayer times"))
             NavigationStack {
                 CityPickerView(dismissOnSelect: false)
                     #if os(iOS)
@@ -108,7 +123,7 @@ struct OnboardingView: View {
                     #endif
             }
             .clipShape(RoundedRectangle(cornerRadius: 14))
-            primaryButton(isArabicUI ? "متابعة" : "Continue") { step = 2 }
+            primaryButton(Text("Continue")) { step = 2 }
         }
         .padding(24)
     }
@@ -117,16 +132,17 @@ struct OnboardingView: View {
     private var notificationsStep: some View {
         VStack(spacing: 16) {
             Spacer()
-            stepTitle(isArabicUI ? "تنبيهات الأذان" : "Adhan notifications")
-            Text(verbatim: isArabicUI
-                 ? "أذان جميل عند كل صلاة. يمكنك تغيير الصوت أو إيقافه لاحقًا."
-                 : "A beautiful adhan at every prayer. You can change or silence it anytime.")
+            stepTitle(Text("Adhan notifications"))
+            Text("A beautiful adhan at every prayer. You can change or silence it anytime.")
                 .font(.noorScaled(14))
                 .foregroundStyle(NoorColor.inkSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 12)
             Spacer()
-            primaryButton(isArabicUI ? "تفعيل الأذان" : "Enable adhan") {
+            // Grants notification permission and turns adhan notifications
+            // ON. It plays nothing — every translation must say "turn on",
+            // never "play".
+            primaryButton(Text("Enable adhan")) {
                 Task {
                     let granted = await AdhanNotificationScheduler().requestAuthorization()
                     notificationsEnabled = granted
@@ -136,7 +152,7 @@ struct OnboardingView: View {
             Button {
                 done = true
             } label: {
-                Text(verbatim: isArabicUI ? "لاحقًا" : "Maybe later")
+                Text("Maybe later")
                     .font(.noorScaled(15))
                     .foregroundStyle(NoorColor.inkSecondary)
                     .frame(height: 40)
@@ -146,17 +162,20 @@ struct OnboardingView: View {
         .padding(24)
     }
 
-    private func stepTitle(_ title: String) -> some View {
-        Text(verbatim: title)
+    private func stepTitle(_ title: Text) -> some View {
+        title
             .font(.noorScaled(18, weight: .semibold))
             .foregroundStyle(NoorColor.inkPrimary)
+            .multilineTextAlignment(.center)
     }
 
-    private func primaryButton(_ title: String, action: @escaping () -> Void) -> some View {
+    private func primaryButton(_ title: Text, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(verbatim: title)
+            title
                 .font(.noorScaled(16, weight: .semibold))
                 .foregroundStyle(NoorColor.bgPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
                 .background(RoundedRectangle(cornerRadius: 14).fill(NoorColor.accentPrimary))

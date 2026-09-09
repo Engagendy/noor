@@ -199,7 +199,7 @@ struct HijriCalendarView: View {
             .sheet(item: $detailEvent) { event in
                 EventDetailSheet(event: event, isArabicUI: isArabicUI)
                     .environment(\.locale, locale)
-                    .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                    .noorInterfaceDirection()
             }
         }
     }

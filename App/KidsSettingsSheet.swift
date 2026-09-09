@@ -64,12 +64,12 @@ struct KidsSettingsSheet: View {
         .background(NoorColor.bgPrimary)
         .task {
             // Screenshot/UI-test hook, same family as NOOR_TAB / NOOR_OPEN:
-            // NOOR_KIDS_LANG=<ar|en> taps the language card for us so the
+            // NOOR_KIDS_LANG=<language code> taps the card for us so the
             // LIVE switch (not a relaunch) can be captured.
             guard let target = ProcessInfo.processInfo.environment["NOOR_KIDS_LANG"],
-                  target == "ar" || target == "en" else { return }
+                  let language = NoorLanguage(rawValue: target) else { return }
             try? await Task.sleep(for: .seconds(4))
-            language = target
+            self.language = language.rawValue
         }
     }
 
@@ -82,28 +82,32 @@ struct KidsSettingsSheet: View {
             Text("Language")
                 .font(NoorFont.sectionHeader)
                 .foregroundStyle(NoorColor.accentPrimary)
-            HStack(spacing: 12) {
-                languageCard("العربية", tag: "ar", direction: .rightToLeft)
-                languageCard("English", tag: "en", direction: .leftToRight)
+            // Ten languages no longer fit one row of big cards, so they
+            // wrap in a two-column grid — still one large tap target each,
+            // still nothing to read but the language's own name.
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12),
+                                GridItem(.flexible(), spacing: 12)],
+                      spacing: 12) {
+                ForEach(NoorLanguage.allCases, id: \.rawValue) { option in
+                    languageCard(option)
+                }
             }
         }
     }
 
-    private func languageCard(_ label: String, tag: String,
-                              direction: LayoutDirection) -> some View {
-        // "system" resolves to whichever of the two the device is using,
-        // so the matching card still reads as selected.
-        let resolved = language == "system"
-            ? (isArabicUI ? "ar" : "en")
-            : language
-        let selected = resolved == tag
+    private func languageCard(_ option: NoorLanguage) -> some View {
+        // "system" resolves to whichever language the device is using, so
+        // the matching card still reads as selected.
+        let selected = NoorLanguage.resolve(language) == option
         return Button {
-            language = tag
+            language = option.rawValue
         } label: {
-            Text(verbatim: label)
-                .font(.noorScaled(22, weight: .semibold))
+            Text(verbatim: option.endonym)
+                .font(NoorAppFont.font(showing: option, size: 22, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
                 .foregroundStyle(selected ? NoorColor.bgPrimary : NoorColor.inkPrimary)
-                .environment(\.layoutDirection, direction)
+                .environment(\.layoutDirection, option.layoutDirection)
                 .padding(.vertical, 20)
                 .frame(maxWidth: .infinity)
                 .background(
@@ -117,7 +121,7 @@ struct KidsSettingsSheet: View {
                 .contentShape(RoundedRectangle(cornerRadius: 20))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text(verbatim: label))
+        .accessibilityLabel(Text(verbatim: option.endonym))
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
     }
 

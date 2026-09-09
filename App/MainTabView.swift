@@ -93,7 +93,7 @@ struct MainTabView: View {
                         get: { player.translationVoice.rawValue },
                         set: { player.translationVoice = TranslationVoice(rawValue: $0) ?? .none }),
                     isArabicUI: arabicUI)
-                    .environment(\.layoutDirection, arabicUI ? .rightToLeft : .leftToRight)
+                    .noorInterfaceDirection()
             }
             .onChange(of: translationId) { _, _ in
                 // Swap the loaded edition and fetch it right away.

@@ -202,7 +202,7 @@ struct HadithBookView: View {
                                 bookTitle: isArabicUI ? book.arabicTitle : book.englishTitle,
                                 isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
     }
 }

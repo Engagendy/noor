@@ -162,7 +162,7 @@ public struct AsmaulHusnaView: View {
         .sheet(item: $selected) { name in
             DivineNameDetail(name: name, isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
                 .presentationDetents([.medium])
         }
     }

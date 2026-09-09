@@ -309,12 +309,12 @@ public struct SurahReaderView: View {
                 withAnimation(.easeInOut(duration: 0.3)) { currentPage = page }
             }
             .environment(\.locale, locale)
-            .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+            .noorInterfaceDirection()
         }
         .sheet(isPresented: $showTajweedLegend) {
             TajweedLegendView()
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         .sheet(item: $actionVerses) { group in
             AyahActionsSheet(

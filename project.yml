@@ -6,7 +6,10 @@ options:
     macOS: "14.0"
   createIntermediateGroups: true
   developmentLanguage: en
-  knownRegions: [en, ar]
+  # Every interface language the app ships. iOS only offers a language in
+  # Settings → Noor → Language if it is in the bundle's localizations, so
+  # this list and `NoorLanguage` must not drift apart (NoorTests enforces it).
+  knownRegions: [en, ar, id, ur, fa, tr, ms, bn, fr, es]
 
 packages:
   DesignSystem:

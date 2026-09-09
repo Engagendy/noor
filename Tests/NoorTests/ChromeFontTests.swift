@@ -65,6 +65,36 @@ final class ChromeFontTests: XCTestCase {
                              "Cairo's natural line box is the thing being clamped")
     }
 
+    /// Urdu is drawn in Nastaliq whatever family is chosen. A PostScript
+    /// name that fails to resolve does not throw — CoreText silently returns
+    /// the system face — so the whole Urdu interface would quietly fall back
+    /// to SF and nobody who does not read Urdu would notice.
+    func testNastaliqIsBundledAndResolves() throws {
+        let name = try XCTUnwrap(NoorAppFont.scriptFontName(for: .ur),
+                                 "Urdu must have a script face")
+        let font = try XCTUnwrap(UIFont(name: name, size: 17),
+                                 "Noto Nastaliq Urdu is not registered")
+        XCTAssertEqual(font.fontName, name, "resolved to a fallback face")
+        // ~2.5em: this is the number every fixed-height row has to survive,
+        // and the reason `interfaceSize` brings the point size down.
+        XCTAssertGreaterThan(font.lineHeight, font.pointSize * 2)
+        XCTAssertNil(NoorAppFont.scriptFontName(for: .bn),
+                     "Bengali is covered by the system face — no bundled font")
+        XCTAssertNil(NoorAppFont.scriptFontName(for: .ar))
+    }
+
+    /// The tab bar is a fixed-height slot; Nastaliq's line box is twice the
+    /// system's. This is the Cairo bug again, with a worse face.
+    func testNastaliqChromeIsClampedToTheSystemLineBox() throws {
+        let systemLine = UIFontMetrics(forTextStyle: .caption2)
+            .scaledFont(for: .systemFont(ofSize: 10)).lineHeight
+        let name = try XCTUnwrap(NoorAppFont.scriptFontName(for: .ur))
+        let attributes = try XCTUnwrap(
+            NoorAppFont.chromeAttributes(named: name, size: 10, textStyle: .caption2))
+        XCTAssertLessThanOrEqual(lineBox(attributes), systemLine + 0.01)
+        XCTAssertNotNil(attributes[.paragraphStyle], "Nastaliq must be clamped")
+    }
+
     func testShortMetricFamilyIsLeftAlone() throws {
         // Almarai's line box is already under the system's — no clamp, no
         // paragraph style, nothing to distort.

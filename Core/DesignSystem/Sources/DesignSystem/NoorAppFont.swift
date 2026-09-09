@@ -51,6 +51,11 @@ public enum NoorAppFont: String, CaseIterable, Sendable {
         }
     }
 
+    /// Files the app bundles that are NOT user-choosable families: the
+    /// script faces it selects on its own (see `scriptFontName`). Registered
+    /// with the five, never listed in the picker.
+    static let scriptFontFileNames = ["NotoNastaliqUrdu[wght]"]
+
     /// Bundled files, in the DesignSystem resource bundle under `UIFonts/`.
     var fileNames: [String] {
         switch self {
@@ -129,6 +134,80 @@ public enum NoorAppFont: String, CaseIterable, Sendable {
         }
     }
 
+    /// The face the interface must be drawn in for `language`, whatever
+    /// family is chosen in Settings — or `nil` when the choice stands.
+    ///
+    /// Urdu is the only case: it is written in NASTALIQ, and all five
+    /// families are Naskh Arabic faces. They render Urdu — the letters are
+    /// the same — but sloped-baseline Nastaliq is what an Urdu reader
+    /// expects, and Naskh Urdu reads to them roughly the way blackletter
+    /// English reads to us. Noto Nastaliq Urdu (SIL OFL, bundled unmodified,
+    /// see LICENSES.md) is used instead.
+    ///
+    /// Only the *interface* is affected: Quran text keeps its verified fonts
+    /// (hard rule 1), and the Settings font picker still draws each family
+    /// in its own face so the choice remains meaningful — it is what the
+    /// user gets back in every other language.
+    ///
+    /// Bengali deliberately has no entry: the system face covers Bengali
+    /// well, and `Font.custom` falls back to it per-glyph anyway.
+    public static func scriptFontName(for language: NoorLanguage) -> String? {
+        // The variable file exposes Medium/SemiBold/Bold named instances but
+        // publishes no PostScript name for them, so CoreText's synthesised
+        // names are the only handle — and a name that fails to resolve
+        // silently drops the whole interface to the system face. Nastaliq
+        // does not signal emphasis by weight anyway, so we stay on the one
+        // face we can name for certain.
+        language == .ur ? "NotoNastaliqUrdu-Regular" : nil
+    }
+
+    /// The PostScript name interface text is actually drawn in: the chosen
+    /// family, unless the interface language overrides it.
+    public static func interfaceFontName(for weight: Font.Weight = .regular) -> String {
+        scriptFontName(for: .current) ?? current.fontName(for: weight)
+    }
+
+    /// Point-size correction for the script face.
+    ///
+    /// Noto Nastaliq Urdu's line box is 2.5em (Readex Pro's is ~1.3em):
+    /// the letters hang from a sloped baseline and need the room. At an
+    /// unchanged point size every fixed-height row in the app — buttons,
+    /// onboarding cards, list rows — has to hold a line box twice as tall as
+    /// the one it was measured for. Shrinking the *box* is not an option
+    /// here (unlike the chrome, where the extra height is padding): in
+    /// Nastaliq it is where the glyphs live, and clamping it clips them. So
+    /// the point size comes down instead, which keeps the whole line inside
+    /// the row it was designed for.
+    public static func interfaceSize(_ size: CGFloat) -> CGFloat {
+        scriptFontName(for: .current) == nil ? size : size * 0.72
+    }
+
+    /// A font that can set `language`'s own name — for a language picker,
+    /// whose whole point is that every row is written in its own script and
+    /// is legible to someone who cannot read the current interface language.
+    /// The Urdu row is Nastaliq even while the app is in English.
+    public static func font(showing language: NoorLanguage, size: CGFloat = 17,
+                            weight: Font.Weight = .regular) -> Font {
+        if let script = scriptFontName(for: language) {
+            // A gentler cut than `interfaceSize`: a picker row is not a
+            // fixed-height chrome slot, and the endonym has to be as
+            // readable as the Latin rows beside it.
+            return .custom(script, size: size * 0.85, relativeTo: .body)
+        }
+        return current.scaled(size, weight: weight)
+    }
+
+    /// A Dynamic-Type-scaling interface font: the family the user picked, or
+    /// the script face their language needs. Every UI token goes through it.
+    public static func interfaceScaled(
+        _ size: CGFloat,
+        weight: Font.Weight = .regular,
+        relativeTo style: Font.TextStyle = .body
+    ) -> Font {
+        .custom(interfaceFontName(for: weight),
+                size: interfaceSize(size), relativeTo: style)
+    }
+
     /// A Dynamic-Type-scaling font in this family.
     ///
     /// `Font.custom(_:size:relativeTo:)` scales with the user's text size;
@@ -147,7 +226,12 @@ public enum NoorAppFont: String, CaseIterable, Sendable {
     /// because UIKit appearance fonts are not auto-scaling.
     public func uiFont(size: CGFloat, weight: Font.Weight = .regular,
                        textStyle: UIFont.TextStyle = .body) -> UIFont? {
-        guard let base = UIFont(name: fontName(for: weight), size: size) else { return nil }
+        Self.uiFont(named: fontName(for: weight), size: size, textStyle: textStyle)
+    }
+
+    public static func uiFont(named name: String, size: CGFloat,
+                              textStyle: UIFont.TextStyle) -> UIFont? {
+        guard let base = UIFont(name: name, size: size) else { return nil }
         return UIFontMetrics(forTextStyle: textStyle).scaledFont(for: base)
     }
 
@@ -167,7 +251,24 @@ public enum NoorAppFont: String, CaseIterable, Sendable {
     public func chromeAttributes(size: CGFloat, weight: Font.Weight = .regular,
                                  textStyle: UIFont.TextStyle = .body)
         -> [NSAttributedString.Key: Any]? {
-        guard let font = uiFont(size: size, weight: weight, textStyle: textStyle) else { return nil }
+        Self.chromeAttributes(named: fontName(for: weight), size: size, textStyle: textStyle)
+    }
+
+    /// The same clamp for the face the interface is actually drawn in —
+    /// which for Urdu is the Nastaliq script face, whose 2.5em line box
+    /// would otherwise push a tab-bar label straight through its icon.
+    public static func interfaceChromeAttributes(
+        size: CGFloat, weight: Font.Weight = .regular,
+        textStyle: UIFont.TextStyle = .body
+    ) -> [NSAttributedString.Key: Any]? {
+        chromeAttributes(named: interfaceFontName(for: weight),
+                         size: interfaceSize(size), textStyle: textStyle)
+    }
+
+    public static func chromeAttributes(named name: String, size: CGFloat,
+                                        textStyle: UIFont.TextStyle)
+        -> [NSAttributedString.Key: Any]? {
+        guard let font = uiFont(named: name, size: size, textStyle: textStyle) else { return nil }
         let systemLine = UIFontMetrics(forTextStyle: textStyle)
             .scaledFont(for: .systemFont(ofSize: size)).lineHeight
         guard font.lineHeight > systemLine else { return [.font: font] }
@@ -221,24 +322,23 @@ public enum NoorAppFont: String, CaseIterable, Sendable {
     /// item labels. Safe to call repeatedly; a no-op on macOS.
     public static func applyChromeAppearance() {
         #if canImport(UIKit) && !os(macOS)
-        let font = current
         let bar = UINavigationBarAppearance()
         bar.configureWithDefaultBackground()
         // Same line-box clamp as the tab bar: a nav-bar title is a
         // fixed-height slot too (44pt inline), so a 1.6× line box pushes the
         // title off centre and can clip it.
-        if let large = font.chromeAttributes(size: 34, weight: .bold, textStyle: .largeTitle) {
+        if let large = interfaceChromeAttributes(size: 34, weight: .bold, textStyle: .largeTitle) {
             bar.largeTitleTextAttributes.merge(large) { _, new in new }
         }
-        if let inline = font.chromeAttributes(size: 17, weight: .semibold, textStyle: .headline) {
+        if let inline = interfaceChromeAttributes(size: 17, weight: .semibold, textStyle: .headline) {
             bar.titleTextAttributes.merge(inline) { _, new in new }
         }
         UINavigationBar.appearance().standardAppearance = bar
         UINavigationBar.appearance().compactAppearance = bar
         UINavigationBar.appearance().scrollEdgeAppearance = bar
 
-        if let tabAttributes = font.chromeAttributes(size: 10, weight: .medium,
-                                                     textStyle: .caption2) {
+        if let tabAttributes = interfaceChromeAttributes(size: 10, weight: .medium,
+                                                         textStyle: .caption2) {
             let tab = UITabBarAppearance()
             tab.configureWithDefaultBackground()
             for item in [tab.stackedLayoutAppearance,

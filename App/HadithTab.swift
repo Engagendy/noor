@@ -91,7 +91,7 @@ struct HadithTab: View {
                                 collection: hit.collection,
                                 bookTitle: hit.bookTitle, isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         .task {
             if forty.isEmpty { forty = HadithStore.load() }
@@ -262,7 +262,7 @@ struct FortyList: View {
         .sheet(item: $selected) { hadith in
             HadithDetailView(hadith: hadith, isArabicUI: isArabicUI, items: items)
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
     }
 }

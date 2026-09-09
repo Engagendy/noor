@@ -166,7 +166,7 @@ struct TodayView: View {
         .sheet(isPresented: $showAllEvents) {
             AllEventsView(isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         .sheet(isPresented: $showSettings) {
             NavigationStack {
@@ -178,12 +178,12 @@ struct TodayView: View {
                     }
             }
             .environment(\.locale, locale)
-            .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+            .noorInterfaceDirection()
         }
         .sheet(isPresented: $showHijriCalendar) {
             HijriCalendarView(isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         .sheet(isPresented: $showDailySahih) {
             if let daily = dailySahih {
@@ -199,22 +199,22 @@ struct TodayView: View {
         .sheet(isPresented: $showHadithList) {
             HadithListView(items: hadiths, isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         .sheet(item: $dailyHadithDetail) { hadith in
             HadithDetailView(hadith: hadith, isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         .sheet(isPresented: $showKhatmahGoal) {
             KhatmahGoalSheet(onChanged: { khatmahPlanVersion += 1 })
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         .sheet(item: $detailEvent) { event in
             EventDetailSheet(event: event, isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         .sheet(item: $shareItem) { item in
             switch item {
@@ -503,7 +503,7 @@ struct TodayView: View {
                             .lineSpacing(5)
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                            .noorInterfaceDirection()
                         HStack(spacing: 8) {
                             if let year = event.yearHijri {
                                 Text(verbatim: isArabicUI ? "سنة \(year.arabicIndic) هـ" : "\(year) AH")
@@ -1137,7 +1137,7 @@ struct EventDetailSheet: View {
                     reference: dateLine,
                     attribution: "نور Noor",
                     useQuranFont: false)
-                    .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                    .noorInterfaceDirection()
                     .presentationDetents([.medium, .large])
             }
         }
@@ -1314,7 +1314,7 @@ struct AllEventsView: View {
             .sheet(item: $detail) { event in
                 EventDetailSheet(event: event, isArabicUI: isArabicUI)
                     .environment(\.locale, locale)
-                    .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                    .noorInterfaceDirection()
             }
         }
     }

@@ -143,7 +143,8 @@ Attributions are displayed in Settings → About.
 - **Attribution:** "Amiri Quran font by Khaled Hosny (SIL OFL)."
 
 ### Interface fonts (bundled — Settings → App font)
-The five families the user can choose for the app's *interface* text. They
+The five families the user can choose for the app's *interface* text, plus
+one script font the app selects on its own (Noto Nastaliq Urdu, below). They
 never touch Quran rendering, which stays on the verified Quran fonts above.
 
 - **Files:** iOS `Core/DesignSystem/Sources/DesignSystem/Resources/UIFonts/`;
@@ -170,6 +171,21 @@ never touch Quran rendering, which stays on the verified Quran fonts above.
   - Almarai — Copyright 2019 The Almarai Project Authors. SIL OFL 1.1.
   - Readex Pro — Copyright 2018 The Readex Pro Project Authors. SIL OFL 1.1.
   - Cairo — Copyright 2009 The Cairo Project Authors. SIL OFL 1.1.
+
+### Noto Nastaliq Urdu (bundled — Urdu interface text)
+- **File:** `Core/DesignSystem/Sources/DesignSystem/Resources/UIFonts/NotoNastaliqUrdu[wght].ttf`
+  (the upstream *variable* file).
+- **Source:** google/fonts `ofl/notonastaliqurdu`, fetched from the `main`
+  branch. Bundled unmodified — byte for byte the upstream binary, not
+  subset, not renamed, not re-generated.
+- **License:** SIL Open Font License 1.1.
+- **Why:** Urdu is written in Nastaliq. All five families above are Naskh
+  Arabic faces: they *render* Urdu, but to an Urdu reader the result reads
+  as wrong-script. So when the interface language is Urdu the app draws its
+  interface text in Noto Nastaliq Urdu whatever family is chosen in
+  Settings; the picker itself keeps showing each family in its own face.
+- **Copyright / attribution:** Copyright 2022 The Noto Project Authors
+  (https://github.com/notofonts/nastaliq). SIL OFL 1.1.
 
 ### Athkar — Hisn al-Muslim (bundled)
 - **File:** `Modules/Athkar/Sources/Athkar/Resources/athkar.json`

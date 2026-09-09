@@ -83,14 +83,14 @@ struct KidsShellView: View {
                 },
                 onCancel: { showGate = false })
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         // The child's own controls (language, listen/memorise, reciter) —
         // never behind the gate.
         .sheet(isPresented: $showKidsSettings) {
             KidsSettingsSheet(age: age, onDone: { showKidsSettings = false })
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
     }
 

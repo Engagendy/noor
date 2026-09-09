@@ -1,0 +1,1565 @@
+{
+ "%@  %@%@": {
+  "en": "%1$@  %2$@%3$@"
+ },
+ "%@ min": {
+  "en": "%@ min"
+ },
+ "%@ · %@": {
+  "en": "%1$@ · %2$@"
+ },
+ "%@ · manual": {
+  "en": "%@ · manual",
+  "ar": "%@ · يدوي",
+  "stale": true
+ },
+ "%@ −%@:%@": {
+  "en": "%1$@ −%2$@:%3$@"
+ },
+ "%lld ayat": {
+  "en": "%lld ayat",
+  "ar": "%lld آية"
+ },
+ "%lld lines": {
+  "en": "%lld lines",
+  "en_plural": {
+   "one": "%lld line",
+   "other": "%lld lines"
+  },
+  "ar_plural": {
+   "zero": "لا أبيات",
+   "one": "بيت واحد",
+   "two": "بيتان",
+   "few": "%lld أبيات",
+   "many": "%lld بيتًا",
+   "other": "%lld بيت"
+  }
+ },
+ "%lld min": {
+  "en": "%lld min",
+  "ar": "%lld د"
+ },
+ "%lld of %lld ayat": {
+  "en": "%lld of %lld ayat",
+  "ar": "%1$lld من %2$lld آية"
+ },
+ "%lld of %lld lines": {
+  "en": "%lld of %lld lines",
+  "ar": "%1$lld من %2$lld بيتًا"
+ },
+ "%lld of %lld stars": {
+  "en": "%1$lld of %2$lld stars",
+  "ar": "%1$lld من %2$lld نجوم"
+ },
+ "%lld of 604 pages · ~350 MB total": {
+  "en": "%lld of 604 pages · ~350 MB total",
+  "ar": "%lld من ٦٠٤ صفحات · نحو ٣٥٠ م.ب",
+  "stale": true
+ },
+ "A gentle reminder before each adhan — time for wudu and the walk to the masjid.": {
+  "en": "A gentle reminder before each adhan — time for wudu and the walk to the masjid.",
+  "ar": "تذكير لطيف قبل كل أذان — وقت للوضوء والمشي إلى المسجد.",
+  "stale": true
+ },
+ "A simpler Quran for children, with a grown-up lock.": {
+  "en": "A simpler Quran for children, with a grown-up lock.",
+  "ar": "قرآن أبسط للأطفال، مع قفل لولي الأمر."
+ },
+ "About": {
+  "en": "About",
+  "ar": "حول التطبيق"
+ },
+ "Active — tap to turn off": {
+  "en": "Active — tap to turn off",
+  "ar": "نشط — اضغط للإيقاف",
+  "stale": true
+ },
+ "Adhan (Azeez)": {
+  "en": "Adhan (Azeez)",
+  "ar": "أذان (عاقب عزيز)",
+  "stale": true
+ },
+ "Adhan (Madinah)": {
+  "en": "Adhan (Madinah)",
+  "ar": "أذان الحرم النبوي",
+  "stale": true
+ },
+ "Adhan (Makkah)": {
+  "en": "Adhan (Makkah)",
+  "ar": "أذان الحرم المكي"
+ },
+ "Adhan (melodic)": {
+  "en": "Adhan (melodic)",
+  "ar": "أذان مجوّد",
+  "stale": true
+ },
+ "Adhan (short)": {
+  "en": "Adhan (short)",
+  "ar": "أذان قصير",
+  "stale": true
+ },
+ "Adhan notifications": {
+  "en": "Adhan notifications",
+  "ar": "إشعارات الأذان"
+ },
+ "Adhan sound": {
+  "en": "Adhan sound",
+  "ar": "صوت الأذان",
+  "stale": true
+ },
+ "After prayer by": {
+  "en": "After prayer by",
+  "ar": "بعد الصلاة بـ"
+ },
+ "After-prayer athkar reminder": {
+  "en": "After-prayer athkar reminder",
+  "ar": "تذكير أذكار ما بعد الصلاة"
+ },
+ "Age %lld": {
+  "en": "Age %lld",
+  "ar": "العمر %lld"
+ },
+ "Alert before prayer (minutes)": {
+  "en": "Alert before prayer (minutes)",
+  "ar": "تنبيه قبل الصلاة (دقائق)",
+  "stale": true
+ },
+ "All 604 pages are offline": {
+  "en": "All 604 pages are offline",
+  "ar": "جميع الصفحات الـ٦٠٤ متاحة دون إنترنت",
+  "stale": true
+ },
+ "All prayers done for today": {
+  "en": "All prayers done for today",
+  "ar": "انقضت صلوات اليوم"
+ },
+ "Allow location access in Settings, or pick a city manually.": {
+  "en": "Allow location access in Settings, or pick a city manually.",
+  "ar": "اسمح بالوصول إلى الموقع من الإعدادات، أو اختر مدينة يدويًا.",
+  "stale": true
+ },
+ "Answer": {
+  "en": "Answer",
+  "ar": "الإجابة"
+ },
+ "App font": {
+  "en": "App font",
+  "ar": "خط التطبيق"
+ },
+ "Appearance": {
+  "en": "Appearance",
+  "ar": "المظهر"
+ },
+ "As-salamu alaykum": {
+  "en": "As-salamu alaykum",
+  "ar": "السلام عليكم"
+ },
+ "Ask a grown-up": {
+  "en": "Ask a grown-up",
+  "ar": "اسأل شخصًا بالغًا"
+ },
+ "Asr": {
+  "en": "Asr",
+  "ar": "العصر",
+  "stale": true
+ },
+ "Asr madhab": {
+  "en": "Asr madhab",
+  "ar": "مذهب العصر",
+  "stale": true
+ },
+ "Athkar": {
+  "en": "Athkar",
+  "ar": "الأذكار"
+ },
+ "Athkar audio": {
+  "en": "Athkar audio",
+  "ar": "صوتيات الأذكار"
+ },
+ "Audio downloaded": {
+  "en": "Audio downloaded",
+  "ar": "تم تنزيل الصوت",
+  "stale": true
+ },
+ "Available offline": {
+  "en": "Available offline",
+  "ar": "متاح دون اتصال",
+  "stale": true
+ },
+ "Ayah %lld": {
+  "en": "Ayah %lld",
+  "ar": "الآية %lld",
+  "stale": true
+ },
+ "Ayah actions": {
+  "en": "Ayah actions",
+  "ar": "إجراءات الآية",
+  "stale": true
+ },
+ "Ayah by ayah": {
+  "en": "Ayah by ayah",
+  "ar": "آية آية"
+ },
+ "Ayahs %lld to %lld": {
+  "en": "Ayahs %lld to %lld",
+  "ar": "الآيات %lld إلى %lld",
+  "stale": true
+ },
+ "Ayat": {
+  "en": "Ayat",
+  "ar": "آيات",
+  "stale": true
+ },
+ "Back": {
+  "en": "Back",
+  "ar": "رجوع"
+ },
+ "Back to Quran": {
+  "en": "Back to Quran",
+  "ar": "الرجوع إلى القرآن"
+ },
+ "Bearing from true north": {
+  "en": "Bearing from true north",
+  "ar": "الاتجاه من الشمال الحقيقي",
+  "stale": true
+ },
+ "Bell": {
+  "en": "Bell",
+  "ar": "تنبيه",
+  "stale": true
+ },
+ "Below the nisab — no zakat is due.": {
+  "en": "Below the nisab — no zakat is due.",
+  "ar": "أقل من النصاب — لا زكاة عليك."
+ },
+ "Bookmark": {
+  "en": "Bookmark",
+  "ar": "علامة",
+  "stale": true
+ },
+ "Bookmarks": {
+  "en": "Bookmarks",
+  "ar": "العلامات",
+  "stale": true
+ },
+ "Browse by country": {
+  "en": "Browse by country",
+  "ar": "تصفّح حسب الدولة",
+  "stale": true
+ },
+ "Business inventory": {
+  "en": "Business inventory",
+  "ar": "عروض التجارة"
+ },
+ "COMING UP IN ISLAMIC HISTORY": {
+  "en": "COMING UP IN ISLAMIC HISTORY",
+  "ar": "قريبًا في التاريخ الإسلامي"
+ },
+ "CONTINUE LISTENING": {
+  "en": "CONTINUE LISTENING",
+  "ar": "متابعة الاستماع",
+  "comment": "A button label that reads \"Continue Listening\"."
+ },
+ "CONTINUE READING": {
+  "en": "CONTINUE READING",
+  "ar": "متابعة القراءة"
+ },
+ "Calculation method": {
+  "en": "Calculation method",
+  "ar": "طريقة الحساب",
+  "stale": true
+ },
+ "Cancel": {
+  "en": "Cancel",
+  "ar": "إلغاء"
+ },
+ "Cancelled": {
+  "en": "Cancelled",
+  "ar": "أُلغي"
+ },
+ "Cash (in hand and bank)": {
+  "en": "Cash (in hand and bank)",
+  "ar": "النقد (في اليد والبنك)"
+ },
+ "Chapters": {
+  "en": "Chapters",
+  "ar": "الأبواب"
+ },
+ "Check your connection and try again. (%@)": {
+  "en": "Check your connection and try again. (%@)",
+  "ar": "تحقق من الاتصال وحاول مجددًا. (%@)",
+  "stale": true
+ },
+ "Choose a surah": {
+  "en": "Choose a surah",
+  "ar": "اختر سورة"
+ },
+ "City": {
+  "en": "City",
+  "ar": "المدينة",
+  "stale": true
+ },
+ "City name": {
+  "en": "City name",
+  "ar": "اسم المدينة",
+  "stale": true
+ },
+ "Classical poems memorised by students of tajweed.": {
+  "en": "Classical poems memorised by students of tajweed.",
+  "ar": "منظومات كلاسيكية يحفظها طلاب التجويد."
+ },
+ "Classical poems students memorise: tajweed, and the terms of hadith.": {
+  "en": "Classical poems students memorise: tajweed, and the terms of hadith.",
+  "ar": "منظومات يحفظها طلبة العلم: في التجويد ومصطلح الحديث."
+ },
+ "Clear": {
+  "en": "Clear",
+  "ar": "مسح",
+  "stale": true
+ },
+ "Clear search": {
+  "en": "Clear search",
+  "ar": "مسح البحث"
+ },
+ "Close": {
+  "en": "Close",
+  "ar": "إغلاق"
+ },
+ "Colour key": {
+  "en": "Colour key",
+  "ar": "مفتاح الألوان"
+ },
+ "Compact (~100 MB)": {
+  "en": "Compact (~100 MB)",
+  "ar": "مضغوط (~١٠٠ م.ب)",
+  "stale": true
+ },
+ "Compass uses magnetic north — may differ slightly": {
+  "en": "Compass uses magnetic north — may differ slightly",
+  "ar": "البوصلة تستخدم الشمال المغناطيسي — قد يختلف الاتجاه قليلًا"
+ },
+ "Connect once to download this dhikr": {
+  "en": "Connect once to download this dhikr",
+  "ar": "اتصل بالإنترنت مرة واحدة لتنزيل هذا الذكر"
+ },
+ "Connect once to download this recitation": {
+  "en": "Connect once to download this recitation",
+  "ar": "اتصل بالإنترنت مرة واحدة لتنزيل هذه التلاوة"
+ },
+ "Connect to the internet once to download this page.": {
+  "en": "Connect to the internet once to download this page.",
+  "ar": "اتصل بالإنترنت مرة واحدة لتنزيل هذه الصفحة.",
+  "stale": true
+ },
+ "Continuous": {
+  "en": "Continuous",
+  "ar": "متواصل",
+  "stale": true
+ },
+ "Copy": {
+  "en": "Copy",
+  "ar": "نسخ",
+  "stale": true
+ },
+ "Couldn't create the video. Please try again.": {
+  "en": "Couldn't create the video. Please try again.",
+  "ar": "تعذّر إنشاء الفيديو. حاول مرة أخرى."
+ },
+ "Couldn't get your location": {
+  "en": "Couldn't get your location",
+  "ar": "تعذر تحديد موقعك",
+  "stale": true
+ },
+ "Count": {
+  "en": "Count",
+  "ar": "العدد"
+ },
+ "Countries": {
+  "en": "Countries",
+  "ar": "الدول",
+  "stale": true
+ },
+ "Country": {
+  "en": "Country",
+  "ar": "الدولة",
+  "stale": true
+ },
+ "DAILY AYAH": {
+  "en": "DAILY AYAH",
+  "ar": "آية اليوم"
+ },
+ "DAILY DHIKR": {
+  "en": "DAILY DHIKR",
+  "ar": "ذكر اليوم",
+  "stale": true
+ },
+ "DAILY HADITH": {
+  "en": "DAILY HADITH",
+  "ar": "حديث اليوم"
+ },
+ "Dark (Tahajjud)": {
+  "en": "Dark (Tahajjud)",
+  "ar": "داكن (تهجّد)"
+ },
+ "Debts due now (subtract)": {
+  "en": "Debts due now (subtract)",
+  "ar": "ديون عليك حالّة (تُخصم)"
+ },
+ "Delete": {
+  "en": "Delete",
+  "ar": "حذف"
+ },
+ "Deleting only removes downloaded copies — everything re-downloads when you use it again. The Quran text itself is part of the app and cannot be removed.": {
+  "en": "Deleting only removes downloaded copies — everything re-downloads when you use it again. The Quran text itself is part of the app and cannot be removed.",
+  "ar": "الحذف يزيل النسخ المنزلة فقط — وكل شيء يُنزَّل مجددًا عند استخدامه. نص القرآن جزء من التطبيق ولا يُحذف."
+ },
+ "Dhuhr": {
+  "en": "Dhuhr",
+  "ar": "الظهر",
+  "stale": true
+ },
+ "Done": {
+  "en": "Done",
+  "ar": "تم",
+  "stale": true
+ },
+ "Download": {
+  "en": "Download",
+  "ar": "تنزيل"
+ },
+ "Download all 114 surahs to search them": {
+  "en": "Download all 114 surahs to search them",
+  "ar": "نزّل السور الـ١١٤ كلها للبحث فيها"
+ },
+ "Download for offline": {
+  "en": "Download for offline",
+  "ar": "تنزيل للاستخدام دون اتصال",
+  "stale": true
+ },
+ "Download full mushaf": {
+  "en": "Download full mushaf",
+  "ar": "تنزيل المصحف كاملًا",
+  "stale": true
+ },
+ "Download surah audio": {
+  "en": "Download surah audio",
+  "ar": "تنزيل صوت السورة",
+  "stale": true
+ },
+ "Downloaded ayah audio": {
+  "en": "Downloaded ayah audio",
+  "ar": "صوتيات الآيات المنزلة"
+ },
+ "Downloaded once, readable forever offline. Public-domain dataset; see licenses in Settings.": {
+  "en": "Downloaded once, readable forever offline. Public-domain dataset; see licenses in Settings.",
+  "ar": "تُنزَّل مرة واحدة وتُقرأ دون إنترنت دائمًا. البيانات في الملك العام؛ انظر التراخيص في الإعدادات.",
+  "stale": true
+ },
+ "Downloading %lld/%lld…": {
+  "en": "Downloading %lld/%lld…",
+  "ar": "جارٍ التنزيل %1$lld/%2$lld…",
+  "stale": true
+ },
+ "Downloading tafsir %lld/114…": {
+  "en": "Downloading tafsir %lld/114…",
+  "ar": "جارٍ تنزيل التفسير %lld/114…",
+  "stale": true
+ },
+ "Downloading this surah's tafsir…": {
+  "en": "Downloading this surah's tafsir…",
+  "ar": "جارٍ تنزيل تفسير هذه السورة…"
+ },
+ "Dubai": {
+  "en": "Dubai",
+  "ar": "دبي",
+  "stale": true
+ },
+ "EVENING ATHKAR": {
+  "en": "EVENING ATHKAR",
+  "ar": "أذكار المساء"
+ },
+ "Each ayah %lld times": {
+  "en": "Each ayah %lld times",
+  "ar": "كل آية %lld مرات"
+ },
+ "Edit plan": {
+  "en": "Edit plan",
+  "ar": "تعديل الخطة"
+ },
+ "Egyptian General Authority": {
+  "en": "Egyptian General Authority",
+  "ar": "الهيئة المصرية العامة",
+  "stale": true
+ },
+ "End of surah": {
+  "en": "End of surah",
+  "ar": "نهاية السورة",
+  "stale": true
+ },
+ "Enter the gold price to compute the nisab.": {
+  "en": "Enter the gold price to compute the nisab.",
+  "ar": "أدخل سعر الذهب لحساب النصاب."
+ },
+ "Enter today's local gold price — the nisab is the value of 85 grams of gold.": {
+  "en": "Enter today's local gold price — the nisab is the value of 85 grams of gold.",
+  "ar": "أدخل سعر جرام الذهب اليوم — النصاب هو قيمة ٨٥ جرامًا من الذهب."
+ },
+ "Facing the qibla": {
+  "en": "Facing the qibla",
+  "ar": "أنت باتجاه القبلة",
+  "stale": true
+ },
+ "Fajr": {
+  "en": "Fajr",
+  "ar": "الفجر",
+  "stale": true
+ },
+ "Finish the Quran in": {
+  "en": "Finish the Quran in",
+  "ar": "أتم القرآن خلال"
+ },
+ "Flowing text": {
+  "en": "Flowing text",
+  "ar": "نص متصل"
+ },
+ "Follow-along audio": {
+  "en": "Follow-along audio",
+  "ar": "صوتيات تتبع الكلمات"
+ },
+ "Free forever — fi sabilillah. No ads, no tracking.": {
+  "en": "Free forever — fi sabilillah. No ads, no tracking.",
+  "ar": "مجاني للأبد — في سبيل الله. بلا إعلانات، بلا تتبع."
+ },
+ "From ayah": {
+  "en": "From ayah",
+  "ar": "من الآية",
+  "stale": true
+ },
+ "Go": {
+  "en": "Go",
+  "ar": "انتقل",
+  "stale": true
+ },
+ "Go to ayah": {
+  "en": "Go to ayah",
+  "ar": "الانتقال إلى الآية"
+ },
+ "Go to marked line": {
+  "en": "Go to marked line",
+  "ar": "الانتقال إلى البيت المعلَّم"
+ },
+ "Go to page": {
+  "en": "Go to page",
+  "ar": "الانتقال إلى صفحة",
+  "stale": true
+ },
+ "Gold (grams)": {
+  "en": "Gold (grams)",
+  "ar": "الذهب (بالجرام)"
+ },
+ "Gold price per gram": {
+  "en": "Gold price per gram",
+  "ar": "سعر جرام الذهب"
+ },
+ "Grown-ups": {
+  "en": "Grown-ups",
+  "ar": "لولي الأمر"
+ },
+ "Hadith": {
+  "en": "Hadith",
+  "ar": "الحديث"
+ },
+ "Hadith library": {
+  "en": "Hadith library",
+  "ar": "مكتبة الحديث"
+ },
+ "Hadith packs": {
+  "en": "Hadith packs",
+  "ar": "حزم الحديث"
+ },
+ "Hanafi": {
+  "en": "Hanafi",
+  "ar": "الحنفي",
+  "stale": true
+ },
+ "Hifz mode (hide text)": {
+  "en": "Hifz mode (hide text)",
+  "ar": "وضع الحفظ (إخفاء النص)",
+  "stale": true
+ },
+ "Hijri Calendar": {
+  "en": "Hijri Calendar",
+  "ar": "التقويم الهجري"
+ },
+ "Hisn al-Muslim recordings": {
+  "en": "Hisn al-Muslim recordings",
+  "ar": "تسجيلات حصن المسلم"
+ },
+ "Hizb %lld": {
+  "en": "Hizb %lld",
+  "ar": "الحزب %lld",
+  "stale": true
+ },
+ "Hizb quarters": {
+  "en": "Hizb quarters",
+  "ar": "أرباع الحزب",
+  "stale": true
+ },
+ "Hizb start": {
+  "en": "Hizb start",
+  "ar": "بداية الحزب",
+  "stale": true
+ },
+ "How old is your child?": {
+  "en": "How old is your child?",
+  "ar": "كم عمر طفلك؟"
+ },
+ "ISNA (North America)": {
+  "en": "ISNA (North America)",
+  "ar": "إسنا (أمريكا الشمالية)",
+  "stale": true
+ },
+ "Investments / shares": {
+  "en": "Investments / shares",
+  "ar": "استثمارات وأسهم"
+ },
+ "Isha": {
+  "en": "Isha",
+  "ar": "العشاء"
+ },
+ "It is kept on the device, so this surah opens offline next time.": {
+  "en": "It is kept on the device, so this surah opens offline next time.",
+  "ar": "يُحفظ في الجهاز، فتُفتح هذه السورة دون إنترنت في المرة القادمة."
+ },
+ "It's time for %@": {
+  "en": "It's time for %@",
+  "ar": "حان وقت %@",
+  "stale": true
+ },
+ "Juz": {
+  "en": "Juz",
+  "ar": "الأجزاء",
+  "stale": true
+ },
+ "Juz %lld": {
+  "en": "Juz %lld",
+  "ar": "الجزء %lld",
+  "stale": true
+ },
+ "Juz %lld · Page %lld": {
+  "en": "Juz %lld · Page %lld",
+  "ar": "الجزء %1$lld · صفحة %2$lld",
+  "stale": true
+ },
+ "KHATMAH PLAN": {
+  "en": "KHATMAH PLAN",
+  "ar": "خطة الختمة"
+ },
+ "Khatmah · page %lld of 604": {
+  "en": "Khatmah · page %lld of 604",
+  "ar": "الختمة · صفحة %lld من ٦٠٤"
+ },
+ "Kids mode": {
+  "en": "Kids mode",
+  "ar": "وضع الأطفال"
+ },
+ "Language": {
+  "en": "Language",
+  "ar": "اللغة"
+ },
+ "Larger": {
+  "en": "Larger",
+  "ar": "أكبر",
+  "stale": true
+ },
+ "Learn": {
+  "en": "Learn",
+  "ar": "التعلّم"
+ },
+ "Letters with no colour are read plainly (iẓhār). Colouring is a study aid — the Quran text itself is never changed.": {
+  "en": "Letters with no colour are read plainly (iẓhār). Colouring is a study aid — the Quran text itself is never changed.",
+  "ar": "الحروف غير الملونة تُقرأ إظهارًا. التلوين وسيلة تعليمية، ونص القرآن نفسه لا يُغيَّر أبدًا."
+ },
+ "Light (Mushaf)": {
+  "en": "Light (Mushaf)",
+  "ar": "فاتح (مصحف)"
+ },
+ "Line %lld": {
+  "en": "Line %lld",
+  "ar": "البيت %lld"
+ },
+ "Listen": {
+  "en": "Listen",
+  "ar": "أستمع"
+ },
+ "Live countdown": {
+  "en": "Live countdown",
+  "ar": "العداد المباشر للصلاة",
+  "stale": true
+ },
+ "Live countdown to the next prayer": {
+  "en": "Live countdown to the next prayer",
+  "ar": "عدّ تنازلي مباشر للصلاة التالية"
+ },
+ "Lock screen and Dynamic Island": {
+  "en": "Lock screen and Dynamic Island",
+  "ar": "على شاشة القفل وفي الجزيرة الديناميكية معًا",
+  "stale": true
+ },
+ "MORNING ATHKAR": {
+  "en": "MORNING ATHKAR",
+  "ar": "أذكار الصباح"
+ },
+ "Madani": {
+  "en": "Madani",
+  "ar": "مدنية",
+  "stale": true
+ },
+ "Madani print typefaces": {
+  "en": "Madani print typefaces",
+  "ar": "خط مصحف المدينة"
+ },
+ "Maghrib": {
+  "en": "Maghrib",
+  "ar": "المغرب",
+  "stale": true
+ },
+ "Makki": {
+  "en": "Makki",
+  "ar": "مكية",
+  "stale": true
+ },
+ "Manual adjustments (minutes)": {
+  "en": "Manual adjustments (minutes)",
+  "ar": "تعديل يدوي (بالدقائق)",
+  "stale": true
+ },
+ "Mark this line": {
+  "en": "Mark this line",
+  "ar": "علِّم هذا البيت"
+ },
+ "Match your local masjid exactly. Applies everywhere: timeline, widgets, and notifications.": {
+  "en": "Match your local masjid exactly. Applies everywhere: timeline, widgets, and notifications.",
+  "ar": "طابق مسجدك المحلي تمامًا. يسري على كل شيء: المواقيت والودجات والتنبيهات.",
+  "stale": true
+ },
+ "Memorisation texts": {
+  "en": "Memorisation texts",
+  "ar": "متون الحفظ"
+ },
+ "Memorise": {
+  "en": "Memorise",
+  "ar": "أحفظ"
+ },
+ "Memorize a range": {
+  "en": "Memorize a range",
+  "ar": "حفظ مقطع",
+  "stale": true
+ },
+ "Money owed to you": {
+  "en": "Money owed to you",
+  "ar": "ديون لك عند الناس"
+ },
+ "Moonsighting Committee": {
+  "en": "Moonsighting Committee",
+  "ar": "لجنة رؤية الهلال",
+  "stale": true
+ },
+ "Mushaf": {
+  "en": "Mushaf",
+  "ar": "مصحف",
+  "stale": true
+ },
+ "Mushaf (continuous)": {
+  "en": "Mushaf (continuous)",
+  "ar": "مصحف (متصل)"
+ },
+ "Mushaf page fonts": {
+  "en": "Mushaf page fonts",
+  "ar": "خطوط صفحات المصحف"
+ },
+ "Mushaf symbols": {
+  "en": "Mushaf symbols",
+  "ar": "رموز المصحف",
+  "stale": true
+ },
+ "Mushaf typeface": {
+  "en": "Mushaf typeface",
+  "ar": "خط المصحف",
+  "stale": true
+ },
+ "Muslim World League": {
+  "en": "Muslim World League",
+  "ar": "رابطة العالم الإسلامي",
+  "stale": true
+ },
+ "My athkar": {
+  "en": "My athkar",
+  "ar": "أذكاري"
+ },
+ "My location": {
+  "en": "My location",
+  "ar": "موقعي",
+  "stale": true
+ },
+ "Names of Allah": {
+  "en": "Names of Allah",
+  "ar": "أسماء الله الحسنى",
+  "stale": true
+ },
+ "Nawafil": {
+  "en": "Nawafil",
+  "ar": "النوافل",
+  "stale": true
+ },
+ "Near %@": {
+  "en": "Near %@",
+  "ar": "قرب %@",
+  "stale": true
+ },
+ "Nearby": {
+  "en": "Nearby",
+  "ar": "بالقرب منك",
+  "stale": true
+ },
+ "Net wealth": {
+  "en": "Net wealth",
+  "ar": "صافي المال"
+ },
+ "Next ayah": {
+  "en": "Next ayah",
+  "ar": "الآية التالية"
+ },
+ "Next month": {
+  "en": "Next month",
+  "ar": "الشهر التالي"
+ },
+ "Nisab": {
+  "en": "Nisab",
+  "ar": "النصاب"
+ },
+ "No cities found": {
+  "en": "No cities found",
+  "ar": "لم يُعثر على مدن",
+  "stale": true
+ },
+ "No matches": {
+  "en": "No matches",
+  "ar": "لا نتائج"
+ },
+ "No matches in the learning texts": {
+  "en": "No matches in the learning texts",
+  "ar": "لا نتائج في نصوص التعلّم"
+ },
+ "No matches in this surah": {
+  "en": "No matches in this surah",
+  "ar": "لا نتائج في هذه السورة"
+ },
+ "No matching athkar": {
+  "en": "No matching athkar",
+  "ar": "لا توجد أذكار مطابقة"
+ },
+ "No matching lines": {
+  "en": "No matching lines",
+  "ar": "لا توجد أبيات مطابقة"
+ },
+ "Noor": {
+  "en": "Noor",
+  "ar": "نور"
+ },
+ "Notification": {
+  "en": "Notification",
+  "ar": "الإشعار",
+  "stale": true
+ },
+ "Notification sound": {
+  "en": "Notification sound",
+  "ar": "صوت الإشعار"
+ },
+ "Notifications are scheduled on your device for the next 12 days and roll forward automatically.": {
+  "en": "Notifications are scheduled on your device for the next 12 days and roll forward automatically.",
+  "ar": "تُجدول الإشعارات على جهازك للأيام الاثني عشر القادمة وتتجدد تلقائيًا.",
+  "stale": true
+ },
+ "Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen.": {
+  "en": "Notifications are scheduled on your device for the next 12 days and roll forward automatically. Toggle individual prayers with the bell on the Prayer screen.",
+  "ar": "تُجدول الإشعارات على جهازك للأيام الاثني عشر القادمة وتتجدد تلقائيًا. يمكنك تفعيل أو إيقاف كل صلاة على حدة من زر الجرس في شاشة الصلاة."
+ },
+ "OK": {
+  "en": "OK",
+  "ar": "حسنًا",
+  "stale": true
+ },
+ "ON THIS DAY": {
+  "en": "ON THIS DAY",
+  "ar": "في مثل هذا اليوم"
+ },
+ "Off": {
+  "en": "Off",
+  "ar": "بدون",
+  "stale": true
+ },
+ "Offline tafsir texts": {
+  "en": "Offline tafsir texts",
+  "ar": "نصوص التفسير دون اتصال"
+ },
+ "Only the ayat with words worth glossing appear here.": {
+  "en": "Only the ayat with words worth glossing appear here.",
+  "ar": "تظهر هنا الآيات التي فيها كلمات تحتاج بيانًا فقط."
+ },
+ "Only the surahs you have downloaded were searched — the word may still be in the rest.": {
+  "en": "Only the surahs you have downloaded were searched — the word may still be in the rest.",
+  "ar": "لم يُبحث إلا في السور التي نزّلتها على جهازك — وقد تكون الكلمة في بقيّة السور."
+ },
+ "Or jump to a juz": {
+  "en": "Or jump to a juz",
+  "ar": "أو انتقل إلى جزء",
+  "stale": true
+ },
+ "Page %lld": {
+  "en": "Page %lld",
+  "ar": "صفحة %lld",
+  "stale": true
+ },
+ "Page (Madani print)": {
+  "en": "Page (Madani print)",
+  "ar": "صفحة (طبعة المدينة)",
+  "stale": true
+ },
+ "Page font unavailable": {
+  "en": "Page font unavailable",
+  "ar": "خط الصفحة غير متاح",
+  "stale": true
+ },
+ "Pause": {
+  "en": "Pause",
+  "ar": "إيقاف مؤقت"
+ },
+ "Pause marks (علامات الوقف)": {
+  "en": "Pause marks (علامات الوقف)",
+  "ar": "علامات الوقف",
+  "stale": true
+ },
+ "Pause marks, mushaf symbols and the letter rules.": {
+  "en": "Pause marks, mushaf symbols and the letter rules.",
+  "ar": "علامات الوقف ورموز المصحف وأحكام الحروف."
+ },
+ "Pick a surah and read its tafsir ayah by ayah.": {
+  "en": "Pick a surah and read its tafsir ayah by ayah.",
+  "ar": "اختر سورة واقرأ تفسيرها آيةً آية."
+ },
+ "Play": {
+  "en": "Play",
+  "ar": "تشغيل"
+ },
+ "Play chapter": {
+  "en": "Play chapter",
+  "ar": "تشغيل الفصل"
+ },
+ "Play from here": {
+  "en": "Play from here",
+  "ar": "التشغيل من هنا",
+  "stale": true
+ },
+ "Play recitation": {
+  "en": "Play recitation",
+  "ar": "تشغيل التلاوة",
+  "stale": true
+ },
+ "Play surah": {
+  "en": "Play surah",
+  "ar": "تشغيل السورة",
+  "stale": true
+ },
+ "Playback mode": {
+  "en": "Playback mode",
+  "ar": "وضع التشغيل",
+  "stale": true
+ },
+ "Plays straight through": {
+  "en": "Plays straight through",
+  "ar": "يقرأ السورة كاملة بلا تكرار"
+ },
+ "Point the arrow at the Kaaba": {
+  "en": "Point the arrow at the Kaaba",
+  "ar": "وجّه السهم نحو الكعبة",
+  "stale": true
+ },
+ "Popular": {
+  "en": "Popular",
+  "ar": "الأكثر شيوعًا",
+  "stale": true
+ },
+ "Prayer": {
+  "en": "Prayer",
+  "ar": "الصلاة"
+ },
+ "Prayer Settings": {
+  "en": "Prayer Settings",
+  "ar": "إعدادات الصلاة",
+  "stale": true
+ },
+ "Prayer Times": {
+  "en": "Prayer Times",
+  "ar": "مواقيت الصلاة",
+  "stale": true
+ },
+ "Prayer settings": {
+  "en": "Prayer settings",
+  "ar": "إعدادات الصلاة",
+  "stale": true
+ },
+ "Preparing page %lld…": {
+  "en": "Preparing page %lld…",
+  "ar": "جارٍ تجهيز الصفحة %lld…",
+  "stale": true
+ },
+ "Preparing the search…": {
+  "en": "Preparing the search…",
+  "ar": "جارٍ تهيئة البحث…"
+ },
+ "Preparing video…": {
+  "en": "Preparing video…",
+  "ar": "جارٍ تجهيز الفيديو…"
+ },
+ "Previous ayah": {
+  "en": "Previous ayah",
+  "ar": "الآية السابقة"
+ },
+ "Previous month": {
+  "en": "Previous month",
+  "ar": "الشهر السابق"
+ },
+ "Print quality (~350 MB)": {
+  "en": "Print quality (~350 MB)",
+  "ar": "جودة الطباعة (~٣٥٠ م.ب)",
+  "stale": true
+ },
+ "Qibla": {
+  "en": "Qibla",
+  "ar": "القبلة"
+ },
+ "Quran": {
+  "en": "Quran",
+  "ar": "القرآن"
+ },
+ "Quran text size": {
+  "en": "Quran text size",
+  "ar": "حجم نص القرآن"
+ },
+ "Quranic word meanings": {
+  "en": "Quranic word meanings",
+  "ar": "غريب القرآن"
+ },
+ "Read": {
+  "en": "Read",
+  "ar": "اقرأ"
+ },
+ "Reader options": {
+  "en": "Reader options",
+  "ar": "خيارات القارئ"
+ },
+ "Reading mode": {
+  "en": "Reading mode",
+  "ar": "وضع القراءة"
+ },
+ "Reads each ayah in the chosen language right after the Arabic.": {
+  "en": "Reads each ayah in the chosen language right after the Arabic.",
+  "ar": "تُقرأ كل آية باللغة المختارة بعد التلاوة العربية مباشرة.",
+  "stale": true
+ },
+ "Reads slowly, for learning": {
+  "en": "Reads slowly, for learning",
+  "ar": "قراءة بطيئة للتعلّم"
+ },
+ "Recitations": {
+  "en": "Recitations",
+  "ar": "التلاوات"
+ },
+ "Reciter": {
+  "en": "Reciter",
+  "ar": "القارئ"
+ },
+ "Reference": {
+  "en": "Reference",
+  "ar": "مرجع"
+ },
+ "Remove mark": {
+  "en": "Remove mark",
+  "ar": "إزالة العلامة"
+ },
+ "Repeat %@×": {
+  "en": "Repeat %@×"
+ },
+ "Repeat %lld×": {
+  "en": "Repeat %lld×",
+  "ar": "يُكرر %lld مرة",
+  "stale": true
+ },
+ "Repeat ayah": {
+  "en": "Repeat ayah",
+  "ar": "تكرار الآية",
+  "stale": true
+ },
+ "Repeat each ayah": {
+  "en": "Repeat each ayah",
+  "ar": "تكرار كل آية",
+  "stale": true
+ },
+ "Repetition %lld of %lld": {
+  "en": "Repetition %1$lld of %2$lld",
+  "ar": "التكرار %1$lld من %2$lld"
+ },
+ "Reset": {
+  "en": "Reset",
+  "ar": "إعادة الضبط",
+  "stale": true
+ },
+ "Restart Noor to apply the language change.": {
+  "en": "Restart Noor to apply the language change.",
+  "ar": "أعد تشغيل نور لتطبيق تغيير اللغة.",
+  "stale": true
+ },
+ "Result": {
+  "en": "Result",
+  "ar": "النتيجة"
+ },
+ "Results": {
+  "en": "Results",
+  "ar": "النتائج"
+ },
+ "Retry": {
+  "en": "Retry",
+  "ar": "إعادة المحاولة"
+ },
+ "Roughly facing the qibla": {
+  "en": "Roughly facing the qibla",
+  "ar": "في اتجاه القبلة تقريبًا"
+ },
+ "Ruqyah": {
+  "en": "Ruqyah",
+  "ar": "الرقية الشرعية",
+  "stale": true
+ },
+ "SLEEP ATHKAR": {
+  "en": "SLEEP ATHKAR",
+  "ar": "أذكار النوم"
+ },
+ "Sahih al-Bukhari and Muslim": {
+  "en": "Sahih al-Bukhari and Muslim",
+  "ar": "صحيحا البخاري ومسلم"
+ },
+ "Search": {
+  "en": "Search",
+  "ar": "بحث"
+ },
+ "Search athkar": {
+  "en": "Search athkar",
+  "ar": "ابحث في الأذكار",
+  "stale": true
+ },
+ "Search city": {
+  "en": "Search city",
+  "ar": "ابحث عن مدينة",
+  "stale": true
+ },
+ "Search everything in Learn": {
+  "en": "Search everything in Learn",
+  "ar": "ابحث في كل ما في قسم التعلّم"
+ },
+ "Search reciters": {
+  "en": "Search reciters",
+  "ar": "ابحث عن قارئ",
+  "stale": true
+ },
+ "Search surah": {
+  "en": "Search surah",
+  "ar": "ابحث عن سورة"
+ },
+ "Search the tafsir you have": {
+  "en": "Search the tafsir you have",
+  "ar": "ابحث فيما نزّلته من التفسير"
+ },
+ "Search the word meanings you have": {
+  "en": "Search the word meanings you have",
+  "ar": "ابحث فيما نزّلته من غريب القرآن"
+ },
+ "Search this matn": {
+  "en": "Search this matn",
+  "ar": "ابحث في هذا المتن"
+ },
+ "Search this surah": {
+  "en": "Search this surah",
+  "ar": "ابحث في هذه السورة"
+ },
+ "Section": {
+  "en": "Section",
+  "ar": "القسم",
+  "stale": true
+ },
+ "Section headings are the app's, not the source's.": {
+  "en": "Section headings are the app's, not the source's.",
+  "ar": "عناوين الأقسام من إضافة التطبيق لا من المصدر."
+ },
+ "Selected duas": {
+  "en": "Selected duas",
+  "ar": "أدعية مختارة",
+  "stale": true
+ },
+ "Send the app to family and friends — a poster with the store links, ready for a status.": {
+  "en": "Send the app to family and friends — a poster with the store links, ready for a status.",
+  "ar": "أرسل التطبيق للأهل والأصدقاء: صورة فيها روابط المتجر، جاهزة للحالة."
+ },
+ "Settings": {
+  "en": "Settings",
+  "ar": "الإعدادات"
+ },
+ "Shafi'i, Maliki, Hanbali": {
+  "en": "Shafi'i, Maliki, Hanbali",
+  "ar": "الشافعي والمالكي والحنبلي",
+  "stale": true
+ },
+ "Share": {
+  "en": "Share",
+  "ar": "مشاركة",
+  "stale": true
+ },
+ "Share Noor": {
+  "en": "Share Noor",
+  "ar": "شارك التطبيق"
+ },
+ "Share as video": {
+  "en": "Share as video",
+  "ar": "مشاركة كفيديو"
+ },
+ "Share image": {
+  "en": "Share image",
+  "ar": "مشاركة الصورة",
+  "stale": true
+ },
+ "Show more results": {
+  "en": "Show more results",
+  "ar": "عرض المزيد من النتائج"
+ },
+ "Show translation": {
+  "en": "Show translation",
+  "ar": "عرض الترجمة",
+  "stale": true
+ },
+ "Showing %lld of %lld — open the text to see the rest": {
+  "en": "Showing %lld of %lld — open the text to see the rest",
+  "ar": "تعرض %1$lld من %2$lld — افتح النص لبقية النتائج"
+ },
+ "Showing the first %lld matches — refine your search.": {
+  "en": "Showing the first %lld matches — refine your search.",
+  "ar": "تُعرض أول %lld نتيجة — حدِّد بحثك أكثر."
+ },
+ "Silent": {
+  "en": "Silent",
+  "ar": "صامت",
+  "stale": true
+ },
+ "Silver (grams)": {
+  "en": "Silver (grams)",
+  "ar": "الفضة (بالجرام)"
+ },
+ "Smaller": {
+  "en": "Smaller",
+  "ar": "أصغر",
+  "stale": true
+ },
+ "Start": {
+  "en": "Start",
+  "ar": "ابدأ"
+ },
+ "Start a khatmah plan": {
+  "en": "Start a khatmah plan",
+  "ar": "ابدأ خطة ختمة"
+ },
+ "Start memorizing": {
+  "en": "Start memorizing",
+  "ar": "ابدأ الحفظ",
+  "stale": true
+ },
+ "Start plan": {
+  "en": "Start plan",
+  "ar": "ابدأ الخطة"
+ },
+ "Stop": {
+  "en": "Stop",
+  "ar": "إيقاف"
+ },
+ "Stop download": {
+  "en": "Stop download",
+  "ar": "إيقاف التنزيل"
+ },
+ "Stop plan": {
+  "en": "Stop plan",
+  "ar": "إيقاف الخطة"
+ },
+ "Storage": {
+  "en": "Storage",
+  "ar": "التخزين"
+ },
+ "Sunnah fasting reminders": {
+  "en": "Sunnah fasting reminders",
+  "ar": "تذكير بصيام السنة"
+ },
+ "Sunrise": {
+  "en": "Sunrise",
+  "ar": "الشروق",
+  "stale": true
+ },
+ "Surah": {
+  "en": "Surah",
+  "ar": "السور",
+  "stale": true
+ },
+ "Surah list": {
+  "en": "Surah list",
+  "ar": "قائمة السور"
+ },
+ "Surah name or 2:255": {
+  "en": "Surah name or 2:255",
+  "ar": "اسم السورة أو 2:255",
+  "stale": true
+ },
+ "Surah, word, or 2:255": {
+  "en": "Surah, word, or 2:255",
+  "ar": "سورة، كلمة، أو 2:255",
+  "stale": true
+ },
+ "System": {
+  "en": "System",
+  "ar": "لغة النظام"
+ },
+ "Tafsir": {
+  "en": "Tafsir",
+  "ar": "التفسير",
+  "stale": true
+ },
+ "Tafsir by surah": {
+  "en": "Tafsir by surah",
+  "ar": "التفسير حسب السورة"
+ },
+ "Tafsir edition": {
+  "en": "Tafsir edition",
+  "ar": "نسخة التفسير"
+ },
+ "Tafsir packs": {
+  "en": "Tafsir packs",
+  "ar": "حزم التفسير"
+ },
+ "Tafsir unavailable": {
+  "en": "Tafsir unavailable",
+  "ar": "التفسير غير متاح",
+  "stale": true
+ },
+ "Tafsir — %lld:%lld": {
+  "en": "Tafsir — %lld:%lld",
+  "ar": "التفسير — %1$lld:%2$lld",
+  "stale": true
+ },
+ "Tajweed Guide": {
+  "en": "Tajweed Guide",
+  "ar": "دليل التجويد"
+ },
+ "Tajweed colours": {
+  "en": "Tajweed colours",
+  "ar": "ألوان التجويد"
+ },
+ "Tajweed guide and memorisation texts": {
+  "en": "Tajweed guide and memorisation texts",
+  "ar": "دليل التجويد ومتون الحفظ"
+ },
+ "Tajweed guide and memorisation texts — also in the Quran tab.": {
+  "en": "Tajweed guide and memorisation texts — also in the Quran tab.",
+  "ar": "دليل التجويد ومتون الحفظ — وهي أيضًا في تبويب القرآن."
+ },
+ "Tajweed rules (أحكام التجويد)": {
+  "en": "Tajweed rules (أحكام التجويد)",
+  "ar": "أحكام التجويد",
+  "stale": true
+ },
+ "Tap a sound to hear it": {
+  "en": "Tap a sound to hear it",
+  "ar": "اضغط على أي صوت لسماعه",
+  "stale": true
+ },
+ "Tasbih": {
+  "en": "Tasbih",
+  "ar": "السبحة",
+  "stale": true
+ },
+ "Text size": {
+  "en": "Text size",
+  "ar": "حجم الخط"
+ },
+ "That's not it — here's a new one.": {
+  "en": "That's not it — here's a new one.",
+  "ar": "ليست هذه الإجابة — إليك سؤالًا جديدًا."
+ },
+ "The mushaf text shown follows Hafs; the recitation follows Warsh.": {
+  "en": "The mushaf text shown follows Hafs; the recitation follows Warsh.",
+  "ar": "النص المعروض برواية حفص، والتلاوة برواية ورش عن نافع.",
+  "stale": true
+ },
+ "The words in the Quran that are hard to understand.": {
+  "en": "The words in the Quran that are hard to understand.",
+  "ar": "معاني الكلمات التي يصعب فهمها في القرآن."
+ },
+ "This edition has nothing for this surah.": {
+  "en": "This edition has nothing for this surah.",
+  "ar": "لا تحتوي هذه النسخة على شيء لهذه السورة."
+ },
+ "This page only": {
+  "en": "This page only",
+  "ar": "هذه الصفحة فقط",
+  "stale": true
+ },
+ "To ayah": {
+  "en": "To ayah",
+  "ar": "إلى الآية",
+  "stale": true
+ },
+ "Today": {
+  "en": "Today",
+  "ar": "اليوم"
+ },
+ "Tools": {
+  "en": "Tools",
+  "ar": "أدوات"
+ },
+ "Translation": {
+  "en": "Translation",
+  "ar": "الترجمة"
+ },
+ "Translation audio": {
+  "en": "Translation audio",
+  "ar": "قراءة الترجمة"
+ },
+ "Translation audio: %@": {
+  "en": "Translation audio: %@",
+  "ar": "قراءة الترجمة: %@",
+  "stale": true
+ },
+ "Turn left": {
+  "en": "Turn left",
+  "ar": "اذهب نحو اليسار",
+  "stale": true
+ },
+ "Turn right": {
+  "en": "Turn right",
+  "ar": "اذهب نحو اليمين",
+  "stale": true
+ },
+ "Turn until the arrow points up": {
+  "en": "Turn until the arrow points up",
+  "ar": "در حتى يشير السهم إلى الأعلى",
+  "stale": true
+ },
+ "Umm al-Qura (Makkah)": {
+  "en": "Umm al-Qura (Makkah)",
+  "ar": "أم القرى (مكة)",
+  "stale": true
+ },
+ "University of Karachi": {
+  "en": "University of Karachi",
+  "ar": "جامعة كراتشي",
+  "stale": true
+ },
+ "Unlock": {
+  "en": "Unlock",
+  "ar": "افتح"
+ },
+ "Use my current location": {
+  "en": "Use my current location",
+  "ar": "استخدام موقعي الحالي",
+  "stale": true
+ },
+ "Using current location": {
+  "en": "Using current location",
+  "ar": "يُستخدم الموقع الحالي",
+  "stale": true
+ },
+ "Voluntary prayers and their times": {
+  "en": "Voluntary prayers and their times",
+  "ar": "نوافل الصلاة وأوقاتها",
+  "stale": true
+ },
+ "Warsh riwayah": {
+  "en": "Warsh riwayah",
+  "ar": "رواية ورش عن نافع",
+  "stale": true
+ },
+ "Well done!": {
+  "en": "Well done!",
+  "ar": "أحسنت!"
+ },
+ "Word by word": {
+  "en": "Word by word",
+  "ar": "كلمة كلمة",
+  "stale": true
+ },
+ "Word-tracking surah files": {
+  "en": "Word-tracking surah files",
+  "ar": "ملفات السور لوضع التتبع"
+ },
+ "Your bookmarks will gather here.": {
+  "en": "Your bookmarks will gather here.",
+  "ar": "ستتجمع علاماتك هنا.",
+  "stale": true
+ },
+ "Your choice is remembered, and is the same one the ayah sheet uses.": {
+  "en": "Your choice is remembered, and is the same one the ayah sheet uses.",
+  "ar": "يُحفظ اختيارك، وهو نفسه المستخدم في بطاقة تفسير الآية."
+ },
+ "Your currency": {
+  "en": "Your currency",
+  "ar": "بعملتك المحلية"
+ },
+ "Your stars": {
+  "en": "Your stars",
+  "ar": "نجومك"
+ },
+ "Zakat Calculator": {
+  "en": "Zakat Calculator",
+  "ar": "حاسبة الزكاة"
+ },
+ "Zakat due (2.5%)": {
+  "en": "Zakat due (2.5%)",
+  "ar": "الزكاة المستحقة (٢٫٥٪)"
+ },
+ "Zakat is due when net zakatable wealth has remained at or above the nisab for one full hijri year. This calculator is a guide — consult a scholar for complex cases. All figures stay on your device.": {
+  "en": "Zakat is due when net zakatable wealth has remained at or above the nisab for one full hijri year. This calculator is a guide — consult a scholar for complex cases. All figures stay on your device.",
+  "ar": "تجب الزكاة إذا بلغ صافي المال النصاب وحال عليه الحول الهجري. هذه الحاسبة للاسترشاد — استشر أهل العلم في الحالات المركبة. جميع الأرقام تبقى على جهازك."
+ },
+ "Zakatable wealth": {
+  "en": "Zakatable wealth",
+  "ar": "الأموال الزكوية"
+ },
+ "next · %@": {
+  "en": "next · %@",
+  "ar": "التالية · %@",
+  "stale": true
+ },
+ "with %@'s recitation": {
+  "en": "with %@'s recitation",
+  "ar": "بصوت %@"
+ },
+ "¼ Hizb": {
+  "en": "¼ Hizb",
+  "ar": "ربع الحزب",
+  "stale": true
+ },
+ "½ Hizb": {
+  "en": "½ Hizb",
+  "ar": "نصف الحزب",
+  "stale": true
+ },
+ "¾ Hizb": {
+  "en": "¾ Hizb",
+  "ar": "ثلاثة أرباع الحزب",
+  "stale": true
+ }
+}

@@ -276,7 +276,7 @@ public struct MatnReaderView: View {
             sizeControl
                 .presentationDetents([.height(170)])
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         // The bar carries the SHORT title on purpose: the full one is the
         // heading at the top of the poem, and in a 44pt inline bar beside

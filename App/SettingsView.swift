@@ -11,8 +11,8 @@ import SwiftUI
 struct SettingsView: View {
     static let shareTextAr = "نور: القرآن ومواقيت الصلاة والأذكار، مجانًا للأبد بلا إعلانات ولا تتبّع.\nApp Store: https://apps.apple.com/ae/app/noor-al-muslim/id6807128479\nGoogle Play: https://play.google.com/store/apps/details?id=com.engagendy.noor"
     static let shareTextEn = "Noor: Quran, prayer times and athkar, free forever with no ads and no tracking.\nApp Store: https://apps.apple.com/ae/app/noor-al-muslim/id6807128479\nGoogle Play: https://play.google.com/store/apps/details?id=com.engagendy.noor"
-    /// "system" | "en" | "ar" — applied live via the locale environment,
-    /// and to AppleLanguages so system-provided strings follow on relaunch.
+    /// `"system"` or a `NoorLanguage` raw value — applied live via the
+    /// locale environment (never AppleLanguages; see `NoorApp`).
     @AppStorage("app.language") private var language = "system"
     /// "system" | "light" | "dark"
     @AppStorage("app.theme") private var theme = "system"
@@ -67,12 +67,26 @@ struct SettingsView: View {
 
             Section {
                 Picker(selection: $language) {
-                    Text("System").tag("system")
-                    Text(verbatim: "English").tag("en")
-                    Text(verbatim: "العربية").tag("ar")
+                    Text("System").tag(NoorLanguage.systemValue)
+                    // Every language written in its OWN language and script:
+                    // a picker that says "Bengali" to someone who cannot
+                    // read the current interface language is no picker at
+                    // all. Never localised, never in the catalog.
+                    ForEach(NoorLanguage.allCases, id: \.rawValue) { option in
+                        Text(verbatim: option.endonym)
+                            .font(NoorAppFont.font(showing: option))
+                            .environment(\.layoutDirection, option.layoutDirection)
+                            .tag(option.rawValue)
+                    }
                 } label: {
                     Text("Language")
                 }
+                // Ten languages: a pop-up menu would cover the screen, and
+                // the rows carry their own faces (Nastaliq for Urdu), which
+                // a menu will not draw. Same treatment as the font picker.
+                #if os(iOS)
+                .pickerStyle(.navigationLink)
+                #endif
                 Picker(selection: $theme) {
                     Text("System").tag("system")
                     Text("Light (Mushaf)").tag("light")
@@ -137,7 +151,7 @@ struct SettingsView: View {
                 .sheet(isPresented: $showAdhanSounds) {
                     AdhanSoundPickerView(soundRaw: $soundRaw)
                         .environment(\.locale, locale)
-                        .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                        .noorInterfaceDirection()
                 }
             } header: {
                 Text("Prayer")
@@ -177,7 +191,7 @@ struct SettingsView: View {
                 .sheet(isPresented: $showZakat) {
                     ZakatView()
                         .environment(\.locale, locale)
-                        .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                        .noorInterfaceDirection()
                 }
             } header: {
                 Text("Tools")
@@ -221,7 +235,7 @@ struct SettingsView: View {
                     ReciterPickerSheet(selection: $reciterRaw, translationSelection: $translationVoiceRaw,
                                        isArabicUI: isArabicUI)
                         .environment(\.locale, locale)
-                        .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                        .noorInterfaceDirection()
                 }
                 Picker(selection: $translationVoiceRaw) {
                     ForEach(TranslationVoice.allCases) { voice in
@@ -302,7 +316,7 @@ struct SettingsView: View {
                 },
                 onCancel: { showKidsAge = false })
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         .sheet(isPresented: $showKidsGate) {
             ParentalGateView(
@@ -312,7 +326,7 @@ struct SettingsView: View {
                 },
                 onCancel: { showKidsGate = false })
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         .navigationTitle(Text("Settings"))
         // The learning area is reachable from here too (see the Learn row).

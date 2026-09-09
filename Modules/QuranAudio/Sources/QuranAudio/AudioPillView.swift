@@ -123,12 +123,12 @@ public struct AudioPillView: View {
                         set: { player.translationVoice = TranslationVoice(rawValue: $0) ?? .none }),
                     isArabicUI: isArabicUI)
                     .environment(\.locale, locale)
-                    .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                    .noorInterfaceDirection()
             }
             .sheet(isPresented: $showModePicker) {
                 PlaybackModeSheet(player: player)
                     .environment(\.locale, locale)
-                    .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                    .noorInterfaceDirection()
             }
         }
     }

@@ -65,14 +65,14 @@ struct HadithBookmarksView: View {
         .sheet(item: $selectedForty) { hadith in
             HadithDetailView(hadith: hadith, isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
         .sheet(item: $selectedSahih) { hit in
             LibraryHadithDetail(hadiths: [hit.hadith], initialId: hit.hadith.id,
                                 collection: hit.collection,
                                 bookTitle: hit.bookTitle, isArabicUI: isArabicUI)
                 .environment(\.locale, locale)
-                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+                .noorInterfaceDirection()
         }
     }
 
