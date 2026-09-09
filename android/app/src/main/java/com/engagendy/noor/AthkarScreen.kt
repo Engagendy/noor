@@ -331,6 +331,11 @@ fun DhikrListScreen(
     // Leaving the chapter silences it — the recording belongs to this screen.
     DisposableEffect(Unit) { onDispose { AthkarPlayer.stop() } }
     val listState = rememberLazyListState()
+    // Share affordances. Both the picker sheet's state and the video flow it
+    // starts live HERE, above the sheet: DhikrShareSheet dismisses itself
+    // before firing its action (same rule as AyahActionsSheet).
+    var sharing by remember { mutableStateOf(-1) }
+    val videoShare = rememberShareVideoShare(scope)
     // Search landing: scroll the matched dhikr into view and tint it briefly
     // so the user can see WHICH item matched.
     var highlighted by remember { mutableStateOf(-1) }
@@ -463,12 +468,11 @@ fun DhikrListScreen(
                                     loading = active && AthkarPlayer.isLoading,
                                     onClick = { playOrToggle(id, audio) })
                             }
-                            // Branded image card, like the iOS AthkarView share.
+                            // Branded image card, or the same card as a video
+                            // with this dhikr's recitation — like the iOS
+                            // AthkarView NoorShareSheet.
                             if (showShare) {
-                                ShareIconButton {
-                                    shareRendered(context, dhikr.text, category.title,
-                                                  attribution = "نور Noor · حصن المسلم")
-                                }
+                                ShareIconButton { sharing = index }
                             }
                         }
                     }
@@ -480,6 +484,61 @@ fun DhikrListScreen(
                 }
             }
         }
+    }
+
+    if (sharing in category.items.indices) {
+        val dhikr = category.items[sharing]
+        DhikrShareSheet(
+            hasVideo = dhikr.audio != null,
+            onShareImage = {
+                shareRendered(context, dhikr.text, category.title,
+                              attribution = "نور Noor · حصن المسلم")
+            },
+            onShareVideo = { videoShare.start(dhikr, category.title) },
+            onDismiss = { sharing = -1 })
+    }
+    ShareVideoProgressDialog(videoShare)
+}
+
+/// Share picker for one dhikr: the branded card as an image, or as a video
+/// with Hamad Al-Duraihim's Hisn al-Muslim recording under it. The video row
+/// only appears when this dhikr HAS a recording — never a dead button — and
+/// only per-dhikr audio is offered (the chapter recordings run 6+ minutes).
+/// Like AyahActionsSheet, each row dismisses the sheet BEFORE acting.
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun DhikrShareSheet(
+    hasVideo: Boolean,
+    onShareImage: () -> Unit,
+    onShareVideo: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary
+    ) {
+      // The sheet is its own window and does not inherit the app's language
+      // (see AyahActionsSheet) — re-provide it or every row falls back to
+      // the Arabic default strings in the English UI.
+      NoorLocaleProvider {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            ActionRow(stringResource(R.string.feat_share_image), icon = R.drawable.ic_share,
+                      prominent = true) { onDismiss(); onShareImage() }
+            if (hasVideo) {
+                ActionRow(
+                    stringResource(R.string.feat_share_video),
+                    icon = R.drawable.ic_share,
+                    caption = stringResource(R.string.feat_share_video_caption,
+                                             stringResource(R.string.feat_dhikr_reciter)),
+                ) { onDismiss(); onShareVideo() }
+            }
+        }
+      }
     }
 }
 

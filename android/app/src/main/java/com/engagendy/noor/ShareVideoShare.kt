@@ -1,6 +1,7 @@
 package com.engagendy.noor
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
@@ -36,12 +37,17 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
-/// "Share as video" flow state. Lives ABOVE the AyahActionsSheet (which
-/// dismisses itself before firing its action): download the current
-/// reciter's recitation → compose the MP4 → system share sheet. One small
-/// progress dialog reports the stage; errors are one short toast.
-class AyahVideoShare(private val context: Context, private val scope: CoroutineScope) {
+/// "Share as video" flow state, shared by the Quran reader and the athkar
+/// list. Lives ABOVE the sheet that triggers it (AyahActionsSheet and
+/// DhikrShareSheet both dismiss themselves BEFORE firing their action):
+/// fetch the recitation (cache → download) → compose the MP4 → system share
+/// sheet. One small progress dialog reports the stage; errors are one short
+/// toast. The composer itself is content-agnostic (card bitmap + audio
+/// file), exactly like iOS Core/ShareVideo — only the resolvers below know
+/// what an ayah or a dhikr is.
+class ShareVideoShare(private val context: Context, private val scope: CoroutineScope) {
 
     enum class Stage { DOWNLOADING, COMPOSING }
 
@@ -49,36 +55,63 @@ class AyahVideoShare(private val context: Context, private val scope: CoroutineS
         private set
     private var job: Job? = null
 
+    /// The current reciter's recitation of one ayah, on the ayah share card.
     fun start(verse: Verse, surah: Surah) {
+        start(
+            offlineRes = R.string.feat_video_offline,
+            audio = { NoorPlayer.ensureAyahFile(surah.id, verse.ayah) },
+            card = {
+                ShareCard.render(
+                    context,
+                    "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩",
+                    context.getString(R.string.g2_surah_prefix, surah.nameArabic) +
+                        " · ${surah.id.localizedDigits()}:${verse.ayah.localizedDigits()}",
+                    useQuranFont = true)
+            })
+    }
+
+    /// One dhikr with its own Hisn al-Muslim recording (Hamad Al-Duraihim).
+    /// Per-item audio only — the chapter recordings run to 6+ minutes and are
+    /// deliberately not shareable (mirrors the iOS DhikrVideoComposer). The
+    /// whole recording is used, never a trimmed clip.
+    fun start(dhikr: Dhikr, chapterTitle: String) {
+        val file = dhikr.audio ?: return
+        start(
+            offlineRes = R.string.feat_video_offline_dhikr,
+            audio = { AthkarAudio.ensureLocal(context, file) },
+            card = {
+                ShareCard.render(
+                    context, dhikr.text, chapterTitle,
+                    attribution = "نور Noor · حصن المسلم")
+            })
+    }
+
+    /// The shared flow: [audio] resolves the local MP3 (downloading if it is
+    /// not cached — the spinner covers that), [card] draws the still. Both run
+    /// off-main; [card] is only called once the audio is in hand.
+    private fun start(offlineRes: Int, audio: suspend () -> File?, card: () -> Bitmap) {
         job?.cancel()
         stage = Stage.DOWNLOADING
         job = scope.launch {
             try {
-                val audio = NoorPlayer.ensureAyahFile(surah.id, verse.ayah)
-                if (audio == null) {
-                    toast(if (isOnline()) R.string.feat_video_failed else R.string.feat_video_offline)
+                val file = audio()
+                if (file == null) {
+                    toast(if (isOnline()) R.string.feat_video_failed else offlineRes)
                     return@launch
                 }
                 stage = Stage.COMPOSING
-                val card = withContext(Dispatchers.IO) {
-                    ShareCard.render(
-                        context,
-                        "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩",
-                        context.getString(R.string.g2_surah_prefix, surah.nameArabic) +
-                            " · ${surah.id.localizedDigits()}:${verse.ayah.localizedDigits()}",
-                        useQuranFont = true)
-                }
-                val video = AyahVideoComposer.compose(context, card, audio)
-                card.recycle()
+                val bitmap = withContext(Dispatchers.IO) { card() }
+                val video = ShareVideoComposer.compose(context, bitmap, file)
+                bitmap.recycle()
                 ShareCard.shareVideo(context, video)
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: AyahVideoException) {
-                Log.w("AyahVideoShare", "compose failed: ${e.kind}", e)
-                toast(if (e.kind == AyahVideoException.Kind.AUDIO_UNREADABLE && !isOnline())
-                    R.string.feat_video_offline else R.string.feat_video_failed)
+            } catch (e: ShareVideoException) {
+                Log.w("ShareVideoShare", "compose failed: ${e.kind}", e)
+                toast(if (e.kind == ShareVideoException.Kind.AUDIO_UNREADABLE && !isOnline())
+                    offlineRes else R.string.feat_video_failed)
             } catch (e: Exception) {
-                Log.w("AyahVideoShare", "share failed", e)
+                Log.w("ShareVideoShare", "share failed", e)
                 toast(R.string.feat_video_failed)
             } finally {
                 stage = null
@@ -104,21 +137,23 @@ class AyahVideoShare(private val context: Context, private val scope: CoroutineS
 }
 
 @Composable
-fun rememberAyahVideoShare(scope: CoroutineScope): AyahVideoShare {
+fun rememberShareVideoShare(scope: CoroutineScope): ShareVideoShare {
     // The Activity context: the share chooser is started from it (an
     // application context would need NEW_TASK and lose the caller's task).
     val context = LocalContext.current
-    return remember(scope, context) { AyahVideoShare(context, scope) }
+    return remember(scope, context) { ShareVideoShare(context, scope) }
 }
 
 /// Progress for the video share: spinner + stage line + cancel.
 @Composable
-fun AyahVideoProgressDialog(share: AyahVideoShare) {
+fun ShareVideoProgressDialog(share: ShareVideoShare) {
     val stage = share.stage ?: return
     Dialog(
         onDismissRequest = { share.cancel() },
         properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false),
     ) {
+      // Own window → no app language (see AyahActionsSheet).
+      NoorLocaleProvider {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -136,8 +171,8 @@ fun AyahVideoProgressDialog(share: AyahVideoShare) {
                 Text(
                     stringResource(
                         when (stage) {
-                            AyahVideoShare.Stage.DOWNLOADING -> R.string.feat_video_downloading
-                            AyahVideoShare.Stage.COMPOSING -> R.string.feat_video_composing
+                            ShareVideoShare.Stage.DOWNLOADING -> R.string.feat_video_downloading
+                            ShareVideoShare.Stage.COMPOSING -> R.string.feat_video_composing
                         }),
                     fontSize = 16.sp,
                     color = NoorColor.inkPrimary,
@@ -147,5 +182,6 @@ fun AyahVideoProgressDialog(share: AyahVideoShare) {
                 Text(stringResource(R.string.g2_cancel), color = NoorColor.accentPrimary, fontSize = 15.sp)
             }
         }
+      }
     }
 }

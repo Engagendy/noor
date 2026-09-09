@@ -31,6 +31,9 @@
     <string name="feat_video_composing">جارٍ إنشاء الفيديو…</string>
     <string name="feat_video_offline">اتصل بالإنترنت مرة واحدة لتنزيل تلاوة هذه الآية</string>
     <string name="feat_video_failed">تعذّر إنشاء الفيديو</string>
+    <string name="feat_video_offline_dhikr">اتصل بالإنترنت مرة واحدة لتنزيل تسجيل هذا الذكر</string>
+    <string name="feat_share_image">مشاركة كصورة</string>
+    <string name="feat_dhikr_reciter">حمد الدريهم</string>
     <!-- Athkar recordings (Hisn al-Muslim, Hamad Al-Duraihim) -->
     <string name="feat_athkar_play">تشغيل</string>
     <string name="feat_athkar_pause">إيقاف مؤقت</string>

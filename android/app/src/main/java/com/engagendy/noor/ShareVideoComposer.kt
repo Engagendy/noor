@@ -28,15 +28,15 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 /// Why a video could not be produced — surfaced as one short toast.
-class AyahVideoException(val kind: Kind, message: String, cause: Throwable? = null) :
+class ShareVideoException(val kind: Kind, message: String, cause: Throwable? = null) :
     Exception(message, cause) {
     enum class Kind { AUDIO_UNREADABLE, CODEC_UNAVAILABLE, ENCODE_FAILED, MUX_FAILED }
 }
 
 /// "Share as video": the ayah share card on paper with a gold equaliser
 /// under it that moves with the reciter's voice, muxed into a 1080×1920
-/// H.264 + AAC MP4 — 1:1 with the iOS AyahVideoComposer (numbers mirrored
-/// from Modules/QuranAudio/Sources/QuranAudio/AyahVideoComposer.swift).
+/// H.264 + AAC MP4 — 1:1 with the iOS ShareVideoComposer (numbers mirrored
+/// from Modules/QuranAudio/Sources/QuranAudio/ShareVideoComposer.swift).
 /// Platform codecs only (MediaCodec / MediaExtractor / MediaMuxer) — no
 /// ffmpeg, no third-party code. Runs entirely off-main.
 ///
@@ -47,7 +47,7 @@ class AyahVideoException(val kind: Kind, message: String, cause: Throwable? = nu
 /// re-converted in place before the frame is queued at 24 fps for (audio
 /// duration + 0.5 s). The muxer starts when the video encoder reports its
 /// output format, with audio samples interleaved by timestamp.
-object AyahVideoComposer {
+object ShareVideoComposer {
 
     const val WIDTH = 1080
     const val HEIGHT = 1920
@@ -85,7 +85,7 @@ object AyahVideoComposer {
     private class Layout(val card: RectF, val barArea: RectF)
 
     /// Produces the MP4 in cacheDir/shared (fresh name each time, old
-    /// share files pruned like ShareCard). Throws [AyahVideoException].
+    /// share files pruned like ShareCard). Throws [ShareVideoException].
     suspend fun compose(context: android.content.Context, card: Bitmap, audio: File): File =
         withContext(Dispatchers.Default) {
             val ctx = currentCoroutineContext()
@@ -104,7 +104,7 @@ object AyahVideoComposer {
             check()
             try {
                 encodeAndMux(yuv, layout, audioResult, out, check)
-            } catch (e: AyahVideoException) {
+            } catch (e: ShareVideoException) {
                 out.delete(); throw e
             } catch (e: Throwable) {
                 out.delete(); throw e
@@ -294,7 +294,7 @@ object AyahVideoComposer {
             try {
                 extractor.setDataSource(file.path)
             } catch (e: Exception) {
-                throw AyahVideoException(AyahVideoException.Kind.AUDIO_UNREADABLE, "cannot open recitation", e)
+                throw ShareVideoException(ShareVideoException.Kind.AUDIO_UNREADABLE, "cannot open recitation", e)
             }
             var trackIndex = -1
             var trackFormat: MediaFormat? = null
@@ -305,7 +305,7 @@ object AyahVideoComposer {
                 }
             }
             if (trackIndex < 0 || trackFormat == null) {
-                throw AyahVideoException(AyahVideoException.Kind.AUDIO_UNREADABLE, "no audio track")
+                throw ShareVideoException(ShareVideoException.Kind.AUDIO_UNREADABLE, "no audio track")
             }
             extractor.selectTrack(trackIndex)
             val mime = trackFormat.getString(MediaFormat.KEY_MIME)!!
@@ -314,7 +314,7 @@ object AyahVideoComposer {
                     configure(trackFormat, null, null, 0); start()
                 }
             } catch (e: Exception) {
-                throw AyahVideoException(AyahVideoException.Kind.CODEC_UNAVAILABLE, "no decoder for $mime", e)
+                throw ShareVideoException(ShareVideoException.Kind.CODEC_UNAVAILABLE, "no decoder for $mime", e)
             }
             decoder = dec
 
@@ -350,7 +350,7 @@ object AyahVideoComposer {
                         configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE); start()
                     }
                 } catch (e: Exception) {
-                    throw AyahVideoException(AyahVideoException.Kind.CODEC_UNAVAILABLE, "no AAC encoder", e)
+                    throw ShareVideoException(ShareVideoException.Kind.CODEC_UNAVAILABLE, "no AAC encoder", e)
                 }
             }
 
@@ -482,21 +482,21 @@ object AyahVideoComposer {
                 }
                 stalls = if (progressed) 0 else stalls + 1
                 if (stalls > MAX_STALLS) {
-                    throw AyahVideoException(AyahVideoException.Kind.ENCODE_FAILED, "audio codec stalled")
+                    throw ShareVideoException(ShareVideoException.Kind.ENCODE_FAILED, "audio codec stalled")
                 }
             }
             val format = encodedFormat ?: encoder?.outputFormat
-                ?: throw AyahVideoException(AyahVideoException.Kind.ENCODE_FAILED, "no AAC output format")
+                ?: throw ShareVideoException(ShareVideoException.Kind.ENCODE_FAILED, "no AAC output format")
             if (samples.isEmpty()) {
-                throw AyahVideoException(AyahVideoException.Kind.AUDIO_UNREADABLE, "recitation decoded to silence")
+                throw ShareVideoException(ShareVideoException.Kind.AUDIO_UNREADABLE, "recitation decoded to silence")
             }
             val durationUs = presentationUs(fedBytes, sampleRate, channels)
             val frameCount = frameCount(durationUs)
             return AudioResult(format, samples, durationUs, loudnessEnvelope(sums, counts, frameCount))
-        } catch (e: AyahVideoException) {
+        } catch (e: ShareVideoException) {
             throw e
         } catch (e: Exception) {
-            throw AyahVideoException(AyahVideoException.Kind.ENCODE_FAILED, "audio transcode failed", e)
+            throw ShareVideoException(ShareVideoException.Kind.ENCODE_FAILED, "audio transcode failed", e)
         } finally {
             runCatching { decoder?.stop() }; runCatching { decoder?.release() }
             runCatching { encoder?.stop() }; runCatching { encoder?.release() }
@@ -550,13 +550,13 @@ object AyahVideoComposer {
                 configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE); start()
             }
         } catch (e: Exception) {
-            throw AyahVideoException(AyahVideoException.Kind.CODEC_UNAVAILABLE, "no H.264 encoder", e)
+            throw ShareVideoException(ShareVideoException.Kind.CODEC_UNAVAILABLE, "no H.264 encoder", e)
         }
         val muxer = try {
             MediaMuxer(out.path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
         } catch (e: Exception) {
             runCatching { encoder.release() }
-            throw AyahVideoException(AyahVideoException.Kind.MUX_FAILED, "cannot create MP4", e)
+            throw ShareVideoException(ShareVideoException.Kind.MUX_FAILED, "cannot create MP4", e)
         }
         val inputColor = runCatching { encoder.inputFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT) }
             .getOrDefault(MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar)
@@ -614,7 +614,7 @@ object AyahVideoComposer {
                 when {
                     idx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         progressed = true
-                        if (started) throw AyahVideoException(AyahVideoException.Kind.ENCODE_FAILED, "format changed twice")
+                        if (started) throw ShareVideoException(ShareVideoException.Kind.ENCODE_FAILED, "format changed twice")
                         // Both output formats known (the video one carries
                         // csd-0/csd-1) — only now may the muxer start.
                         videoTrack = muxer.addTrack(encoder.outputFormat)
@@ -626,7 +626,7 @@ object AyahVideoComposer {
                         progressed = true
                         val isConfig = info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
                         if (info.size > 0 && !isConfig) {
-                            if (!started) throw AyahVideoException(AyahVideoException.Kind.ENCODE_FAILED, "video sample before format")
+                            if (!started) throw ShareVideoException(ShareVideoException.Kind.ENCODE_FAILED, "video sample before format")
                             val buf = encoder.getOutputBuffer(idx)!!
                             buf.position(info.offset); buf.limit(info.offset + info.size)
                             val flags = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM.inv()
@@ -640,20 +640,20 @@ object AyahVideoComposer {
                 }
                 stalls = if (progressed) 0 else stalls + 1
                 if (stalls > MAX_STALLS) {
-                    throw AyahVideoException(AyahVideoException.Kind.ENCODE_FAILED, "video encoder stalled")
+                    throw ShareVideoException(ShareVideoException.Kind.ENCODE_FAILED, "video encoder stalled")
                 }
             }
-            if (!started) throw AyahVideoException(AyahVideoException.Kind.ENCODE_FAILED, "no video output")
+            if (!started) throw ShareVideoException(ShareVideoException.Kind.ENCODE_FAILED, "no video output")
             writeAudioUpTo(Long.MAX_VALUE)
             try {
                 muxer.stop()
             } catch (e: Exception) {
-                throw AyahVideoException(AyahVideoException.Kind.MUX_FAILED, "finalising MP4 failed", e)
+                throw ShareVideoException(ShareVideoException.Kind.MUX_FAILED, "finalising MP4 failed", e)
             }
-        } catch (e: AyahVideoException) {
+        } catch (e: ShareVideoException) {
             throw e
         } catch (e: Exception) {
-            throw AyahVideoException(AyahVideoException.Kind.ENCODE_FAILED, "video encode failed", e)
+            throw ShareVideoException(ShareVideoException.Kind.ENCODE_FAILED, "video encode failed", e)
         } finally {
             region.bitmap.recycle()
             runCatching { encoder.stop() }; runCatching { encoder.release() }

@@ -45,6 +45,12 @@ fun AyahActionsSheet(
     onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
+      // A ModalBottomSheet renders in its OWN window, which re-provides
+      // LocalContext/LocalConfiguration from the Activity — so the app's
+      // in-process language (NoorLocaleProvider, applied around the app's
+      // content) does NOT reach here and every string fell back to the
+      // Arabic default resources while the UI was in English.
+      NoorLocaleProvider {
         Column(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier
@@ -85,11 +91,13 @@ fun AyahActionsSheet(
                 gold = isBookmarked,
                 onClick = onToggleBookmark)
         }
+      }
     }
 }
 
+/// Shared row style for the action sheets (ayah actions, dhikr share).
 @Composable
-private fun ActionRow(
+internal fun ActionRow(
     title: String,
     icon: Int? = null,
     glyph: String? = null,

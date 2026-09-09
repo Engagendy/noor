@@ -803,7 +803,7 @@ fun ReaderScreen(
     val prefs = remember { KhatmahPlan.prefs(context) }
     val scope = rememberCoroutineScope()
     // Video share state lives here, above the self-dismissing actions sheet.
-    val videoShare = rememberAyahVideoShare(scope)
+    val videoShare = rememberShareVideoShare(scope)
     var showOptions by remember { mutableStateOf(false) }
     var showGoToPage by remember { mutableStateOf(false) }
     var showSurahList by remember { mutableStateOf(false) }
@@ -954,7 +954,7 @@ fun ReaderScreen(
             onToggleBookmark = { onToggleBookmark(actionSurah.id, actionVerse.ayah) },
             onDismiss = { actionTarget = null })
     }
-    AyahVideoProgressDialog(videoShare)
+    ShareVideoProgressDialog(videoShare)
 
     tafsirTarget?.let { (tafsirSurah, verse) ->
         TafsirSheet(

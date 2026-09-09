@@ -220,7 +220,7 @@ object ShareCard {
     }
 
     /// Shares an MP4 already written under cacheDir/shared (by
-    /// AyahVideoComposer) through the same FileProvider, as video/mp4.
+    /// ShareVideoComposer) through the same FileProvider, as video/mp4.
     suspend fun shareVideo(context: Context, file: File, text: String? = null) {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val intent = Intent(Intent.ACTION_SEND).apply {

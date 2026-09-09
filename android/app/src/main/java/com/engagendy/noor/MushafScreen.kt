@@ -83,7 +83,7 @@ fun MushafScreen(
     val context = LocalContext.current
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     // "Share as video" state — screen level, so it outlives the actions sheet.
-    val videoShare = rememberAyahVideoShare(scope)
+    val videoShare = rememberShareVideoShare(scope)
     val pager = rememberPagerState(
         initialPage = (startPage - 1).coerceIn(0, PageLayoutDb.PAGE_COUNT - 1)
     ) { PageLayoutDb.PAGE_COUNT }
@@ -278,7 +278,7 @@ fun MushafScreen(
             onShareVideo = { verse, surah -> videoShare.start(verse, surah) },
             onDismiss = { actionRef = null })
     }
-    AyahVideoProgressDialog(videoShare)
+    ShareVideoProgressDialog(videoShare)
     tafsirRef?.let { ref -> MushafTafsir(ref, onDismiss = { tafsirRef = null }) }
     // Go-to-page (iOS GoToPageSheet): opened from the juz/page line in the
     // top bar; animates the pager like the iOS withAnimation currentPage set.

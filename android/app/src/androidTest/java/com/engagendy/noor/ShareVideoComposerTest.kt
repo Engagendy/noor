@@ -17,7 +17,7 @@ import kotlin.math.abs
 /// adhan — non-Quranic, so no Quran text is typed here either) → MP4 with
 /// one H.264 1080×1920 track and one AAC track, duration = audio + 0.5 s.
 @RunWith(AndroidJUnit4::class)
-class AyahVideoComposerTest {
+class ShareVideoComposerTest {
 
     @Test
     fun composesPortraitMp4WithBothTracks() {
@@ -38,7 +38,7 @@ class AyahVideoComposerTest {
         // Clearly non-Quranic placeholder Arabic for the card.
         val card = ShareCard.render(context, "نصّ تجريبي للبطاقة", "اختبار · 1:1", useQuranFont = true)
 
-        val out = AyahVideoComposer.compose(context, card, mp3)
+        val out = ShareVideoComposer.compose(context, card, mp3)
 
         assertTrue(out.exists() && out.length() > 10_000)
         assertTrue(out.name.endsWith(".mp4") && out.parentFile!!.name == "shared")
@@ -65,8 +65,8 @@ class AyahVideoComposerTest {
         var frames = 0
         while (extractor.sampleTrackIndex >= 0) { frames++; extractor.advance() }
         extractor.release()
-        val expectedFrames = Math.ceil((audioMs + 500) * AyahVideoComposer.FPS / 1000.0).toInt()
-        assertEquals(24, AyahVideoComposer.FPS)
+        val expectedFrames = Math.ceil((audioMs + 500) * ShareVideoComposer.FPS / 1000.0).toInt()
+        assertEquals(24, ShareVideoComposer.FPS)
         assertTrue("frames $frames vs expected $expectedFrames", abs(frames - expectedFrames) <= 2)
 
         // The equaliser moves: a mid-video frame differs from the first one.

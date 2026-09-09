@@ -29,6 +29,9 @@
     <string name="feat_video_composing">Composing video…</string>
     <string name="feat_video_offline">Connect once to download this ayah\'s recitation</string>
     <string name="feat_video_failed">Couldn\'t create the video</string>
+    <string name="feat_video_offline_dhikr">Connect once to download this dhikr\'s recording</string>
+    <string name="feat_share_image">Share as image</string>
+    <string name="feat_dhikr_reciter">Hamad Al-Duraihim</string>
     <!-- Athkar recordings (Hisn al-Muslim, Hamad Al-Duraihim) -->
     <string name="feat_athkar_play">Play</string>
     <string name="feat_athkar_pause">Pause</string>
