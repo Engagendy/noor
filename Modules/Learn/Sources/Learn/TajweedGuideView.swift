@@ -1,3 +1,4 @@
+import ContentDB
 import DesignSystem
 import SwiftUI
 
@@ -16,6 +17,29 @@ public struct TajweedGuideView: View {
         let meaningArabic: String
         let meaningEnglish: String
         var id: String { symbol + nameArabic }
+
+        /// Names taken from the shared `TajweedRule` so this guide and the
+        /// reader's tajweed colour legend can never describe the same rule
+        /// two different ways. `TajweedGuideRuleNamesTests` locks that in.
+        init(rule: TajweedRule, symbol: String,
+             meaningArabic: String, meaningEnglish: String) {
+            self.symbol = symbol
+            self.nameArabic = rule.nameArabic
+            self.nameEnglish = rule.nameEnglish
+            self.meaningArabic = meaningArabic
+            self.meaningEnglish = meaningEnglish
+        }
+
+        /// For marks that are not annotated rules (pause marks, symbols, and
+        /// izhar — which is the ABSENCE of a rule and so is never coloured).
+        init(symbol: String, nameArabic: String, nameEnglish: String,
+             meaningArabic: String, meaningEnglish: String) {
+            self.symbol = symbol
+            self.nameArabic = nameArabic
+            self.nameEnglish = nameEnglish
+            self.meaningArabic = meaningArabic
+            self.meaningEnglish = meaningEnglish
+        }
     }
 
     private let pauseMarks: [Mark] = [
@@ -61,19 +85,19 @@ public struct TajweedGuideView: View {
         Mark(symbol: "ء هـ ع ح غ خ", nameArabic: "الإظهار الحلقي", nameEnglish: "Iẓhār (clear pronunciation)",
              meaningArabic: "تُنطق النون الساكنة والتنوين بوضوح قبل حروف الحلق الستة.",
              meaningEnglish: "Noon sākinah/tanween is pronounced clearly before the six throat letters."),
-        Mark(symbol: "ي ن م و", nameArabic: "الإدغام بغنة", nameEnglish: "Idghām with ghunnah",
+        Mark(rule: .idghaamGhunnah, symbol: "ي ن م و",
              meaningArabic: "تُدغم النون في هذه الحروف مع غنة مقدارها حركتان.",
              meaningEnglish: "Noon merges into these letters with a two-count nasal sound."),
-        Mark(symbol: "ل ر", nameArabic: "الإدغام بغير غنة", nameEnglish: "Idghām without ghunnah",
+        Mark(rule: .idghaamNoGhunnah, symbol: "ل ر",
              meaningArabic: "تُدغم النون في اللام والراء دون غنة.",
              meaningEnglish: "Noon merges into lām and rā with no nasal sound."),
-        Mark(symbol: "ب", nameArabic: "الإقلاب", nameEnglish: "Iqlāb",
+        Mark(rule: .iqlab, symbol: "ب",
              meaningArabic: "تُقلب النون الساكنة والتنوين ميمًا مخفاة قبل الباء.",
              meaningEnglish: "Noon sākinah/tanween turns into a hidden meem before bā."),
-        Mark(symbol: "باقي الحروف", nameArabic: "الإخفاء الحقيقي", nameEnglish: "Ikhfāʾ (hiding)",
+        Mark(rule: .ikhfa, symbol: "باقي الحروف",
              meaningArabic: "تُخفى النون مع غنة قبل الحروف الخمسة عشر الباقية.",
              meaningEnglish: "Noon is hidden with a nasal sound before the remaining fifteen letters."),
-        Mark(symbol: "ق ط ب ج د", nameArabic: "القلقلة", nameEnglish: "Qalqalah (echoing)",
+        Mark(rule: .qalqalah, symbol: "ق ط ب ج د",
              meaningArabic: "اهتزاز الصوت عند سكون هذه الحروف الخمسة.",
              meaningEnglish: "A bouncing echo when these five letters carry sukūn."),
     ]

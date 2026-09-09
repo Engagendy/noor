@@ -104,6 +104,34 @@ Attributions are displayed in Settings → About.
 - **Attribution:** "Page layout and word-by-word data courtesy of
   Quran.com (Quran Foundation)."
 
+### Tajweed rule annotations (bundled)
+- **Source:** https://github.com/cpfair/quran-tajweed, file
+  `output/tajweed.hafs.uthmani-pause-sajdah.json` (riwayat Hafs).
+  Retrieved 2026-09-09.
+- **File:** `Core/ContentDB/Sources/ContentDB/Resources/tajweed.sqlite`, built
+  by `Tools/build_tajweed.py`.
+- **License:** Creative Commons Attribution 4.0 International (CC BY 4.0).
+  **The repository contains NO `LICENSE` file** — GitHub's licence API reports
+  none — so its README is the only licence statement. It reads, verbatim:
+  "This data file is licensed under a [Creative Commons Attribution 4.0
+  International License](https://creativecommons.org/licenses/by/4.0/), while
+  the original Tanzil.net text file linked above is made available under the
+  [Tanzil.net terms of use](https://tanzil.net/download/)."
+  CC BY 4.0 permits redistribution and adaptation (we adapt the offsets onto
+  our own Tanzil variant) provided attribution is given.
+- **Underlying text:** the annotations index Tanzil's Uthmani text, which is
+  covered by the Tanzil terms of use already recorded above. We do NOT bundle
+  that copy — only the derived rule offsets, remapped onto our own
+  Tanzil-sourced `quran.sqlite`, which is unmodified.
+- **Derivation:** the published offsets index the specific Tanzil copy the
+  README links (no waqf/sajdah marks); ours is the pause+sajdah variant, so
+  `Tools/build_tajweed.py` diffs each ayah and carries the offsets across.
+  It never edits the Quran text. 99.94% of the 60,057 annotations map with an
+  identical letter skeleton; the residual 34 are one spelling variant of the
+  small yeh (U+06E6 vs U+0640 U+06E7) that covers the same letter.
+- **Attribution:** "Tajweed rule annotations by cpfair/quran-tajweed, licensed
+  CC BY 4.0."
+
 ### Amiri Quran font (bundled — flow-mode Quran text)
 - **File:** `Core/DesignSystem/Sources/DesignSystem/Resources/AmiriQuran.ttf`
 - **Source:** Amiri project by Khaled Hosny (via google/fonts).

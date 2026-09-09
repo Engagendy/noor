@@ -181,4 +181,42 @@ public final class SurahReaderViewModel {
         flowCache[cacheKey] = items
         return items
     }
+
+    // MARK: Tajweed colouring
+
+    /// Opened on first use and kept: the reader only pays for it when the
+    /// reading option is actually switched on. `nil` if the bundled data is
+    /// missing or disagrees with `TajweedRule` — colouring then simply stays
+    /// off rather than colouring the wrong letters.
+    private var tajweedDatabase: TajweedDatabase??
+    private var tajweedCache: [Int: [Int: [TajweedSpan]]] = [:]
+
+    private var tajweed: TajweedDatabase? {
+        if let opened = tajweedDatabase { return opened }
+        let opened = try? TajweedDatabase()
+        tajweedDatabase = .some(opened)
+        return opened
+    }
+
+    /// Tajweed spans for everything on a mushaf page, keyed by
+    /// `surahId * 1000 + ayah`. One query per page, then cached — the pager
+    /// re-renders a page on every scroll tick.
+    public func tajweedSpans(forPage page: Int) -> [Int: [TajweedSpan]] {
+        if let cached = tajweedCache[page] { return cached }
+        guard let tajweed else { return [:] }
+        let verses = sections(forPage: page).flatMap(\.verses)
+        let spans = (try? tajweed.spans(for: verses)) ?? [:]
+        tajweedCache[page] = spans
+        return spans
+    }
+
+    /// Tajweed spans for the opened surah (ayah-by-ayah mode).
+    public func tajweedSpansForSurah() -> [Int: [TajweedSpan]] {
+        let key = -surahId
+        if let cached = tajweedCache[key] { return cached }
+        guard let tajweed else { return [:] }
+        let spans = (try? tajweed.spans(for: verses)) ?? [:]
+        tajweedCache[key] = spans
+        return spans
+    }
 }

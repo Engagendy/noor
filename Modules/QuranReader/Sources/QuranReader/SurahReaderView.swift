@@ -21,6 +21,14 @@ public struct SurahReaderView: View {
     @AppStorage("reader.wordByWord") private var wordByWord = false
     /// Hifz practice: ayah text hidden until tapped (ayah-list mode).
     @AppStorage("reader.hifz") private var hifzMode = false
+    /// Tajweed rule colouring in the text. Opt-in, off by default: colour is
+    /// a study aid, and the plain mushaf must stay the default reading view.
+    /// Applies to the flow and ayah-by-ayah modes only — see `TajweedLegendView`
+    /// and the note on `tajweedSpans` for why Madani print mode is excluded.
+    @AppStorage("reader.tajweed") private var tajweedColors = false
+    /// Screenshot/UI-test hook: NOOR_TAJWEED_LEGEND=1 opens the colour key.
+    @State private var showTajweedLegend =
+        ProcessInfo.processInfo.environment["NOOR_TAJWEED_LEGEND"] == "1"
     @State private var revealedKeys: Set<Int> = []
     @State private var selectedKey: Int?          // surah*1000 + ayah
     @State private var showGoToPage = false
@@ -303,6 +311,11 @@ public struct SurahReaderView: View {
             .environment(\.locale, locale)
             .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
         }
+        .sheet(isPresented: $showTajweedLegend) {
+            TajweedLegendView()
+                .environment(\.locale, locale)
+                .environment(\.layoutDirection, isArabicUI ? .rightToLeft : .leftToRight)
+        }
         .sheet(item: $actionVerses) { group in
             AyahActionsSheet(
                 verses: group.verses,
@@ -545,17 +558,19 @@ public struct SurahReaderView: View {
 
     /// Every word is tappable — tap selects ITS ayah; long-press = actions.
     private func tappableFlow(section: SurahReaderViewModel.PageSection, page: Int) -> some View {
-        RTLFlowLayout(horizontalSpacing: liveFontSize * 0.3,
-                      verticalSpacing: liveFontSize * NoorMetrics.quranLineSpacingFactor) {
+        // Resolved once per page, not per word: the view model caches the
+        // query, but the dictionary lookup would still be per fragment.
+        let spans = tajweedColors ? viewModel.tajweedSpans(forPage: page) : [:]
+        return RTLFlowLayout(horizontalSpacing: liveFontSize * 0.3,
+                             verticalSpacing: liveFontSize * NoorMetrics.quranLineSpacingFactor) {
             ForEach(viewModel.flowItems(section: section, page: page)) { item in
                 let key = item.surahId * 1000 + item.ayah
                 let isSelected = selectedKey == key
-                Text(verbatim: item.text)
-                    .font(NoorFont.quran(size: item.kind == .marker ? liveFontSize * 0.62 : liveFontSize))
-                    .foregroundStyle(
-                        item.kind == .word
-                            ? (recitingKey == key ? NoorColor.accentPrimary : NoorColor.inkPrimary)
-                            : NoorColor.accentGold)
+                QuranFlowWord(item: item,
+                              font: NoorFont.quran(size: item.kind == .marker
+                                                   ? liveFontSize * 0.62 : liveFontSize),
+                              isReciting: recitingKey == key,
+                              spans: spans[key] ?? [])
                     .padding(.horizontal, 2)
                     .background(
                         RoundedRectangle(cornerRadius: 5)
@@ -696,7 +711,10 @@ public struct SurahReaderView: View {
                     items: QuranFlow.items(verses: [verse],
                                            basmalaToStrip: viewModel.basmala),
                     fontSize: liveFontSize,
-                    highlightKey: isReciting ? key : nil)
+                    highlightKey: isReciting ? key : nil,
+                    // Whole-surah dictionary, looked up by ayah key inside —
+                    // filtering to this ayah would copy it on every render.
+                    tajweed: tajweedColors ? viewModel.tajweedSpansForSurah() : [:])
             }
             if showTranslation,
                let translation = translations?.translation(surah: verse.surahId, ayah: verse.ayah) {
@@ -906,6 +924,27 @@ public struct SurahReaderView: View {
                 Text("Hifz mode (hide text)")
             }
             .tint(NoorColor.accentPrimary)
+            // Madani print mode draws QCF page-font glyphs, which have no
+            // character-level correspondence to the ayah text the rules are
+            // annotated against, so the toggle is hidden there rather than
+            // silently doing nothing.
+            if mode != .page {
+                Toggle(isOn: deferred($tajweedColors)) {
+                    Text("Tajweed colours")
+                }
+                .tint(NoorColor.accentPrimary)
+                if tajweedColors {
+                    Button {
+                        showTajweedLegend = true
+                    } label: {
+                        Label("Colour key", systemImage: "list.bullet.rectangle")
+                            .font(.noorScaled(14, weight: .medium))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(NoorColor.accentPrimary)
+                    .frame(minHeight: 44)
+                }
+            }
             if let surah = viewModel.surah, let player {
                 Button {
                     Task {

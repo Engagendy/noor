@@ -52,6 +52,41 @@ Inspired by mushaf pages, prayer at fajr, and masjid interiors.
 | `accent/gold` | `#D8B25E` | Ornaments/highlights |
 | `state/reciting` | `#4FB3A0` at 16% | Recited ayah background |
 
+### Tajweed rule colours (reader option, off by default)
+
+Used only when "Tajweed colours" is on, to tint the letters a rule applies to.
+Hues follow the conventional tajweed-mushaf colouring (Dar al-Maarifah / the
+quran.com palette) rather than a bespoke one, so a reader who learned from a
+printed tajweed mushaf sees the same colours. Defined in `NoorColors.swift`;
+named in the reader's colour key and in the Learn tajweed guide from the one
+shared `TajweedRule` (Core/ContentDB).
+
+| Token | Mushaf | Tahajjud | Rules |
+|---|---|---|---|
+| `tajweed/ghunnah` | `#137A5E` | `#4FD1AC` | Ghunnah, idghām with ghunnah |
+| `tajweed/idghaam-no-ghunnah` | `#2E7D32` | `#7BD97F` | Idghām without ghunnah |
+| `tajweed/idghaam-shafawi` | `#4F7A00` | `#A8D84A` | Idghām shafawī |
+| `tajweed/idghaam-mutajanisayn` | `#6B6B6B` | `#8D8D8D` | Mutajānisayn, mutaqāribayn |
+| `tajweed/ikhfa` | `#8B1E9C` | `#D98FE6` | Ikhfāʾ |
+| `tajweed/ikhfa-shafawi` | `#A3007F` | `#F08CD3` | Ikhfāʾ shafawī |
+| `tajweed/iqlab` | `#0F6FA8` | `#63C8F0` | Iqlāb |
+| `tajweed/qalqalah` | `#C1121F` | `#FF8A87` | Qalqalah |
+| `tajweed/madd-2` | `#3B5BDB` | `#7E9AF0` | Natural madd, 2 counts |
+| `tajweed/madd-246` | `#2F45C5` | `#8FA8FF` | Madd al-ʿārid / al-līn |
+| `tajweed/madd-munfasil` | `#2438B0` | `#9FB6FF` | Madd munfasil |
+| `tajweed/madd-muttasil` | `#1B2C97` | `#B0C3FF` | Madd muttasil |
+| `tajweed/madd-6` | `#101F7A` | `#C2D2FF` | Madd lāzim, 6 counts |
+| `tajweed/unpronounced` | `#77706A` | `#8A8177` | Hamzat al-wasl, lām shamsiyyah, silent |
+
+Rules:
+- Every tajweed token is ≥ 4.5:1 on its own `bg/primary` AND ≥ ~30 CIELAB ΔE
+  from `ink/primary` — a tinted letter must read as tinted, not as off-black.
+- The madd ramp deepens with length in Mushaf and brightens with length in
+  Tahajjud: in both, a longer madd is the more emphatic ink.
+- Grey means "not pronounced", so it is deliberately dimmer than the body ink.
+- Colour is never the only cue: the option is off by default and the colour
+  key names every rule.
+
 Rules:
 - Contrast: body text ≥ 7:1, secondary ≥ 4.5:1 (WCAG AAA target for reading).
 - Gold is an *accent of honor* — surah headers, ayah-end markers, sajdah marks.

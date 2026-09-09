@@ -1013,6 +1013,16 @@
         }
       }
     },
+    "Colour key": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مفتاح الألوان"
+          }
+        }
+      }
+    },
     "Compact (~100 MB)": {
       "extractionState": "stale",
       "localizations": {
@@ -2075,6 +2085,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "التعلّم"
+          }
+        }
+      }
+    },
+    "Letters with no colour are read plainly (iẓhār). Colouring is a study aid — the Quran text itself is never changed.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحروف غير الملونة تُقرأ إظهارًا. التلوين وسيلة تعليمية، ونص القرآن نفسه لا يُغيَّر أبدًا."
           }
         }
       }
@@ -4135,6 +4155,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "دليل التجويد"
+          }
+        }
+      }
+    },
+    "Tajweed colours": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ألوان التجويد"
           }
         }
       }

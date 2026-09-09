@@ -274,6 +274,7 @@ struct SettingsView: View {
                 Text(verbatim: "Translation: Saheeh International (Tanzil)")
                 Text(verbatim: "Tafsir: Ibn Kathir, Al-Muyassar (spa5k/tafsir_api)")
                 Text(verbatim: "Recitations: EveryAyah.com")
+                Text(verbatim: "Tajweed annotations: cpfair/quran-tajweed (CC BY 4.0)")
                 Text(verbatim: "Prayer times: adhan-swift (Batoul Apps)")
                 Text(verbatim: "Adhan sounds: Wikimedia Commons (CC BY 3.0 / CC BY-SA)")
             } header: {

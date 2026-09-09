@@ -12,13 +12,21 @@ public struct QuranFlowItem: Identifiable, Hashable {
     public let ayah: Int
     public let text: String
     public let kind: Kind
+    /// Where this fragment starts inside its ayah's stored text, counted in
+    /// Unicode scalars — the coordinate system the bundled tajweed spans use.
+    /// Measured against the FULL stored text even when a leading basmala was
+    /// stripped for display, so the two always line up. `0` for `.marker` and
+    /// `.quarter`, which are not part of the stored text.
+    public let scalarStart: Int
 
-    public init(id: Int, surahId: Int, ayah: Int, text: String, kind: Kind) {
+    public init(id: Int, surahId: Int, ayah: Int, text: String, kind: Kind,
+                scalarStart: Int = 0) {
         self.id = id
         self.surahId = surahId
         self.ayah = ayah
         self.text = text
         self.kind = kind
+        self.scalarStart = scalarStart
     }
 
     /// Reciting/selection key used across the readers.
@@ -39,9 +47,11 @@ public enum QuranFlow {
                              isQuarterStart: (Int) -> Bool = { _ in false }) -> [QuranFlowItem] {
         var items: [QuranFlowItem] = []
         var index = 0
-        func add(_ surahId: Int, _ ayah: Int, _ text: String, _ kind: QuranFlowItem.Kind) {
+        func add(_ surahId: Int, _ ayah: Int, _ text: String,
+                 _ kind: QuranFlowItem.Kind, _ scalarStart: Int = 0) {
             items.append(QuranFlowItem(id: index, surahId: surahId, ayah: ayah,
-                                       text: text, kind: kind))
+                                       text: text, kind: kind,
+                                       scalarStart: scalarStart))
             index += 1
         }
         for verse in verses {
@@ -55,8 +65,16 @@ public enum QuranFlow {
             } else {
                 body = verse.text
             }
+            // The basmala (when stripped) is a prefix of the stored text, so
+            // every offset inside `body` sits this many scalars further into
+            // the stored ayah that the tajweed spans are indexed against.
+            let scalarShift = verse.text.unicodeScalars.count - body.unicodeScalars.count
+            let bodyScalars = body.unicodeScalars
             for word in body.split(separator: " ") {
-                add(verse.surahId, verse.ayah, String(word), .word)
+                let offset = bodyScalars.distance(from: bodyScalars.startIndex,
+                                                  to: word.startIndex)
+                add(verse.surahId, verse.ayah, String(word), .word,
+                    offset + scalarShift)
             }
             // No synthetic sajdah sign: the Tanzil text of every sajdah ayah
             // already ends with ۩ (U+06E9), so appending one would double it.
@@ -79,30 +97,77 @@ public struct QuranFlowText: View {
     public let fontSize: CGFloat
     /// `surahId * 1000 + ayah` of the ayah being recited, if any.
     public var highlightKey: Int?
+    /// Tajweed spans per `surahId * 1000 + ayah`. Empty = colouring off.
+    public var tajweed: [Int: [TajweedSpan]]
 
-    public init(items: [QuranFlowItem], fontSize: CGFloat, highlightKey: Int? = nil) {
+    public init(items: [QuranFlowItem], fontSize: CGFloat, highlightKey: Int? = nil,
+                tajweed: [Int: [TajweedSpan]] = [:]) {
         self.items = items
         self.fontSize = fontSize
         self.highlightKey = highlightKey
+        self.tajweed = tajweed
     }
 
     public var body: some View {
         RTLFlowLayout(horizontalSpacing: fontSize * 0.3,
                       verticalSpacing: fontSize * NoorMetrics.quranLineSpacingFactor) {
             ForEach(items) { item in
-                Text(verbatim: item.text)
-                    .font(NoorFont.quran(size: item.kind == .word
-                                         ? fontSize : fontSize * 0.62))
-                    .foregroundStyle(
-                        item.kind == .word
-                            ? (highlightKey == item.key
-                               ? NoorColor.accentPrimary : NoorColor.inkPrimary)
-                            : NoorColor.accentGold)
+                QuranFlowWord(item: item,
+                              font: NoorFont.quran(size: item.kind == .word
+                                                   ? fontSize : fontSize * 0.62),
+                              isReciting: highlightKey == item.key,
+                              spans: tajweed[item.key] ?? [])
             }
         }
         // Positions are computed right-to-left by the layout itself.
         .environment(\.layoutDirection, .leftToRight)
         .frame(maxWidth: .infinity)
+    }
+}
+
+/// One fragment of the flow, tinted.
+///
+/// Both flow renderers (`QuranFlowText` and the reader's tappable copy) go
+/// through this so the two can never drift apart on colouring. When there is
+/// nothing to tint it renders exactly the previous `Text(verbatim:)`; only
+/// when tajweed spans actually cover the word does it build an
+/// `AttributedString`, which keeps the whole word in ONE `Text` so shaping and
+/// the bidi run stay intact.
+struct QuranFlowWord: View {
+    let item: QuranFlowItem
+    /// Resolved by the call site: the two flow renderers size the hizb-quarter
+    /// sign differently and that predates this view, so neither is changed.
+    let font: Font
+    let isReciting: Bool
+    let spans: [TajweedSpan]
+
+    /// The recitation highlight deliberately wins over tajweed: knowing which
+    /// ayah is being played matters more than the rules while audio runs.
+    private var plainColor: Color {
+        guard item.kind == .word else { return NoorColor.accentGold }
+        return isReciting ? NoorColor.accentPrimary : NoorColor.inkPrimary
+    }
+
+    private var covering: [TajweedSpan] {
+        guard item.kind == .word, !isReciting, !spans.isEmpty else { return [] }
+        return TajweedColoring.spans(spans,
+                                     overlapping: item.scalarStart,
+                                     length: item.text.unicodeScalars.count)
+    }
+
+    var body: some View {
+        let covering = covering
+        if covering.isEmpty {
+            Text(verbatim: item.text)
+                .font(font)
+                .foregroundStyle(plainColor)
+        } else {
+            Text(TajweedColoring.attributed(word: item.text,
+                                            scalarStart: item.scalarStart,
+                                            spans: covering,
+                                            base: plainColor))
+                .font(font)
+        }
     }
 }
 

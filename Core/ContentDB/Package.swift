@@ -17,6 +17,7 @@ let package = Package(
             resources: [
                 .copy("Resources/quran.sqlite"),
                 .copy("Resources/page_layout.sqlite"),
+                .copy("Resources/tajweed.sqlite"),
                 .copy("Resources/cities.sqlite")
             ]
         ),
