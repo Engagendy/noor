@@ -908,17 +908,26 @@ public struct SurahReaderView: View {
             }
             .pickerStyle(.segmented)
 
-            if translations != nil {
-                Toggle(isOn: deferred($showTranslation)) {
-                    Text("Show translation")
+            // Neither a translation nor a word gloss can be drawn on a
+            // Madani page: it renders QCF page-font glyphs on a fixed
+            // 15-row grid with nowhere to put them. These toggles used to
+            // show there anyway and silently threw the reader into ayah
+            // mode — a surprising way to lose your page. Offer them only
+            // where they can actually take effect; the mode picker sits
+            // directly above if the reader wants to move.
+            if mode != .page {
+                if translations != nil {
+                    Toggle(isOn: deferred($showTranslation)) {
+                        Text("Show translation")
+                    }
+                    .tint(NoorColor.accentPrimary)
                 }
-                .tint(NoorColor.accentPrimary)
-            }
-            if layout != nil {
-                Toggle(isOn: deferred($wordByWord)) {
-                    Text("Word by word")
+                if layout != nil {
+                    Toggle(isOn: deferred($wordByWord)) {
+                        Text("Word by word")
+                    }
+                    .tint(NoorColor.accentPrimary)
                 }
-                .tint(NoorColor.accentPrimary)
             }
             Toggle(isOn: deferred($hifzMode)) {
                 Text("Hifz mode (hide text)")
