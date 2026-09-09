@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.async
 
 /// One EveryAyah reciter — 1:1 port of the iOS `Reciter` enum
 /// (Modules/QuranAudio/Sources/QuranAudio/Reciter.swift).
@@ -304,7 +305,7 @@ object NoorPlayer {
 
     /// Folders such as "warsh/…" or "translations/…" become one flat
     /// sub-directory ("warsh_…") so every voice is a single directory.
-    private fun cacheFile(folder: String, surah: Int, ayah: Int): java.io.File {
+    internal fun cacheFile(folder: String, surah: Int, ayah: Int): java.io.File {
         val dir = java.io.File(appContext!!.cacheDir,
             "recitations/${folder.replace('/', '_')}").apply { mkdirs() }
         return java.io.File(dir,
@@ -313,7 +314,7 @@ object NoorPlayer {
 
     /// Downloads one ayah to the cache (main host, then mirror). Quiet —
     /// failures just mean that ayah streams when its turn comes.
-    private fun download(folder: String, surah: Int, ayah: Int): Boolean {
+    internal fun download(folder: String, surah: Int, ayah: Int): Boolean {
         val target = cacheFile(folder, surah, ayah)
         if (target.length() > 1024) return true
         for (host in listOf("https://everyayah.com/data",
@@ -663,5 +664,75 @@ object NoorPlayer {
         val intent = Intent(context, NoorAudioService::class.java)
         if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(intent)
         else context.startService(intent)
+    }
+}
+
+/// Downloads every ayah of one surah for the current reciter (and the
+/// selected translated reading, so the pair still plays gaplessly) —
+/// 1:1 with the iOS QuranAudio SurahDownloader, on top of the same ayah
+/// cache the player already fills as it plays. Offline afterwards.
+object SurahDownloader {
+
+    enum class Phase { IDLE, DOWNLOADING, DONE, FAILED }
+
+    var phase by mutableStateOf(Phase.IDLE)
+        private set
+    var completed by androidx.compose.runtime.mutableIntStateOf(0)
+        private set
+    var total by androidx.compose.runtime.mutableIntStateOf(0)
+        private set
+
+    /// Every file the surah needs: the Arabic recitation, plus the
+    /// translated reading when a voice is selected.
+    private fun jobs(surah: Int, ayahCount: Int): List<Pair<String, Int>> {
+        val voice = NoorPlayer.translation
+        return (1..ayahCount.coerceAtLeast(1)).flatMap { ayah ->
+            buildList {
+                add(NoorPlayer.reciter.folder to ayah)
+                if (voice != TranslationVoice.NONE) add(voice.folder to ayah)
+            }
+        }
+    }
+
+    /// True when every file of the surah is already in the cache. Hits the
+    /// filesystem once per ayah — callers must stay off the main thread.
+    fun isDownloaded(surah: Int, ayahCount: Int): Boolean =
+        jobs(surah, ayahCount).all { (folder, ayah) ->
+            NoorPlayer.cacheFile(folder, surah, ayah).length() > 1024
+        }
+
+    /// Fetches the whole surah, three files at a time — EveryAyah is a
+    /// charity service, so the concurrency stays modest (as on iOS).
+    suspend fun download(surah: Int, ayahCount: Int) {
+        if (phase == Phase.DOWNLOADING) return
+        val work = jobs(surah, ayahCount)
+        completed = 0
+        total = work.size
+        phase = Phase.DOWNLOADING
+        val failures = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            var failed = 0
+            for (batch in work.chunked(3)) {
+                kotlinx.coroutines.coroutineScope {
+                    batch.map { (folder, ayah) ->
+                        async { NoorPlayer.download(folder, surah, ayah) }
+                    }.forEach { if (!it.await()) failed++ }
+                }
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    completed += batch.size
+                }
+            }
+            failed
+        }
+        phase = if (failures == 0) Phase.DONE else Phase.FAILED
+    }
+
+    /// The panel is reopened on another surah: forget the last run so its
+    /// state never describes a surah it did not download.
+    fun reset() {
+        if (phase != Phase.DOWNLOADING) {
+            phase = Phase.IDLE
+            completed = 0
+            total = 0
+        }
     }
 }

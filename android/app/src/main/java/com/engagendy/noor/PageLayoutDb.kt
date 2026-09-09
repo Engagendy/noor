@@ -17,6 +17,10 @@ data class PageWord(
 
 data class AyahRef(val surahId: Int, val ayah: Int)
 
+/// One word of an ayah with its English gloss, from the same layout DB —
+/// the word-by-word reader's unit (iOS PageWord text/translation).
+data class WordGloss(val position: Int, val text: String, val translation: String)
+
 /// Header/basmala lines are synthetic — the layout data only carries
 /// verse words; the reserved lines before a surah start are injected.
 sealed interface LineKind {
@@ -76,6 +80,21 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
             return PageLayoutDb(db)
         }
     }
+
+    /// The words of one ayah with their English glosses, in reading order —
+    /// feeds the word-by-word reader (iOS PageLayoutDatabase.words). Only
+    /// real words: the ayah-end marker (char_type 'end') is dropped, since
+    /// its "gloss" is just the ayah number.
+    fun words(surahId: Int, ayah: Int): List<WordGloss> =
+        db.rawQuery(
+            "SELECT position, text, translation FROM page_word " +
+                "WHERE surah_id = ? AND ayah = ? AND char_type = 'word' ORDER BY position",
+            arrayOf(surahId.toString(), ayah.toString())
+        ).use { c ->
+            buildList {
+                while (c.moveToNext()) add(WordGloss(c.getInt(0), c.getString(1), c.getString(2)))
+            }
+        }
 
     /// First printed page of a surah (Madani mode entry from the surah list).
     fun firstPage(surahId: Int): Int =

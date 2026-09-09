@@ -29,6 +29,16 @@
     <string name="g2_reading_mode_page">المدني</string>
     <string name="g2_reading_mode_ayah">آية آية</string>
     <string name="g2_quran_text_size">حجم نص القرآن</string>
+    <!-- Reader options panel -->
+    <string name="g2_show_translation">إظهار الترجمة</string>
+    <string name="g2_word_by_word">كلمة بكلمة</string>
+    <string name="g2_hifz_mode">وضع الحفظ (إخفاء النص)</string>
+    <string name="g2_translation_downloading">جارٍ تنزيل الترجمة…</string>
+    <string name="g2_translation_failed">تعذر تنزيل الترجمة — تحقق من الاتصال.</string>
+    <string name="g2_download_surah_audio">تنزيل صوت السورة</string>
+    <string name="g2_audio_downloaded">تم تنزيل الصوت</string>
+    <string name="g2_audio_downloading">جارٍ التنزيل %1$s/%2$s…</string>
+    <string name="g2_audio_download_failed">تعذر تنزيل بعض الآيات — أعد المحاولة.</string>
     <string name="g2_surah_prefix">سورة %1$s</string>
     <string name="g2_ayah_clip_label">آية</string>
 

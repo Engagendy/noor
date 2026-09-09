@@ -12,6 +12,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -813,6 +826,18 @@ fun ReaderScreen(
     androidx.activity.compose.BackHandler(enabled = showOptions) { showOptions = false }
     androidx.activity.compose.BackHandler(enabled = showSurahList) { showSurahList = false }
     var fontSize by remember { mutableFloatStateOf(prefs.getFloat("reader.fontSize", 26f)) }
+    // Reader options, mirrored from prefs exactly like iOS's @AppStorage
+    // (reader.translation / reader.wordByWord / reader.hifz). Prefs are read
+    // once into state and written only from the panel's click handlers.
+    var showTranslation by remember { mutableStateOf(prefs.getBoolean("reader.translation", false)) }
+    var wordByWord by remember { mutableStateOf(prefs.getBoolean("reader.wordByWord", false)) }
+    var hifzMode by remember { mutableStateOf(prefs.getBoolean("reader.hifz", false)) }
+    // Ayat the reader has tapped to reveal while hifz mode hides the text
+    // (iOS revealedKeys); cleared whenever the mode is flipped.
+    var revealedKeys by remember { mutableStateOf(emptySet<Int>()) }
+    // Fetch/parse the chosen Tanzil edition the moment a translation is
+    // wanted — downloaded once, then offline for good.
+    LaunchedEffect(showTranslation) { if (showTranslation) TranslationStore.ensure(context) }
     // Structure metadata (juz/quarter starts, sajdah ayat) keyed s*1000+a,
     // plus the basmala line straight from the verified DB (1:1), never typed.
     val meta = remember {
@@ -1057,6 +1082,11 @@ fun ReaderScreen(
                         scrollToAyah = if (pageSurah.id == surah.id) scrollToAyah else 0,
                         meta = meta,
                         versesFor = versesFor,
+                        showTranslation = showTranslation,
+                        wordByWord = wordByWord,
+                        hifzMode = hifzMode,
+                        revealedKeys = revealedKeys,
+                        onReveal = { key -> revealedKeys = revealedKeys + key },
                         onAyahTap = { s, verse -> actionTarget = s to verse })
                 }
             }
@@ -1078,6 +1108,30 @@ fun ReaderScreen(
                         fontSize = size
                         prefs.edit().putFloat("reader.fontSize", size).apply()
                     },
+                    // A translation line, a word gloss and a hifz blur are
+                    // all per-ayah furniture: they exist only in آية آية
+                    // mode, so switching one on takes the reader there
+                    // (iOS SurahReaderView.readerMenu does the same).
+                    showTranslation = showTranslation,
+                    onShowTranslation = { on ->
+                        showTranslation = on
+                        prefs.edit().putBoolean("reader.translation", on).apply()
+                        if (on && mode != "ayah") onModeChange("ayah")
+                    },
+                    wordByWord = wordByWord,
+                    onWordByWord = { on ->
+                        wordByWord = on
+                        prefs.edit().putBoolean("reader.wordByWord", on).apply()
+                        if (on && mode != "ayah") onModeChange("ayah")
+                    },
+                    hifzMode = hifzMode,
+                    onHifzMode = { on ->
+                        hifzMode = on
+                        revealedKeys = emptySet()
+                        prefs.edit().putBoolean("reader.hifz", on).apply()
+                        if (on && mode != "ayah") onModeChange("ayah")
+                    },
+                    downloadSurah = currentSurah,
                     modifier = Modifier.align(Alignment.TopCenter)
                 )
             }
@@ -1110,6 +1164,11 @@ private fun SurahPage(
     scrollToAyah: Int,
     meta: ReaderMeta,
     versesFor: suspend (Int) -> List<Verse>,
+    showTranslation: Boolean = false,
+    wordByWord: Boolean = false,
+    hifzMode: Boolean = false,
+    revealedKeys: Set<Int> = emptySet(),
+    onReveal: (Int) -> Unit = {},
     onAyahTap: (Surah, Verse) -> Unit,
 ) {
     val context = LocalContext.current
@@ -1203,43 +1262,70 @@ private fun SurahPage(
                                     modifier = Modifier.weight(1f))
                             }
                         }
-                        Text(
-                            buildAnnotatedString {
-                                if (key in meta.quarterKeys) {
-                                    withStyle(SpanStyle(color = NoorColor.accentGold)) {
-                                        append("۞ ")
-                                    }
-                                }
-                                // Same basmala de-duplication as the flow
-                                // layout (QuranDb KDoc).
-                                append(db.textWithoutLeadingBasmala(verse))
-                                if (key in meta.sajdaKeys) {
-                                    withStyle(SpanStyle(color = NoorColor.accentGold)) {
-                                        append(" ۩")
-                                    }
-                                }
-                                withStyle(SpanStyle(
-                                    color = NoorColor.accentGold,
-                                    fontSize = (fontSize * 0.62f).sp)) {
-                                    append("  ⁧﴿${verse.ayah.arabicIndic()}﴾⁩")
-                                }
-                            },
-                            fontFamily = QuranFont,
-                            fontSize = fontSize.sp,
-                            lineHeight = (fontSize * 2.2f).sp,
-                            color = NoorColor.inkPrimary,
-                            // RTL paragraph whatever the UI language: the
-                            // ayah-number chip lands at the line end (left).
-                            style = arabicText(),
-                            modifier = Modifier
+                        // Hifz mode hides every ayah except the one being
+                        // recited until it is tapped, so the reader can test
+                        // their memorisation (iOS blur + revealedKeys).
+                        val hidden = hifzMode && key !in revealedKeys &&
+                            verse.ayah != recitingAyah
+                        Column(
+                            Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(
                                     if (verse.ayah == highlightAyah) NoorColor.stateReciting
                                     else NoorColor.bgPrimary.copy(alpha = 0f))
-                                .clickable { onAyahTap(surah, verse) }
+                                .clickable {
+                                    // First tap on a hidden ayah reveals it;
+                                    // the actions sheet needs a second tap.
+                                    if (hidden) onReveal(key) else onAyahTap(surah, verse)
+                                }
                                 .padding(horizontal = 12.dp, vertical = 8.dp)
-                        )
+                                .hifzHidden(hidden)
+                        ) {
+                            if (wordByWord) {
+                                WordByWordAyah(
+                                    surahId = surah.id,
+                                    ayah = verse.ayah,
+                                    fontSize = fontSize)
+                            } else {
+                                Text(
+                                    buildAnnotatedString {
+                                        if (key in meta.quarterKeys) {
+                                            withStyle(SpanStyle(color = NoorColor.accentGold)) {
+                                                append("۞ ")
+                                            }
+                                        }
+                                        // Same basmala de-duplication as the flow
+                                        // layout (QuranDb KDoc).
+                                        append(db.textWithoutLeadingBasmala(verse))
+                                        if (key in meta.sajdaKeys) {
+                                            withStyle(SpanStyle(color = NoorColor.accentGold)) {
+                                                append(" ۩")
+                                            }
+                                        }
+                                        withStyle(SpanStyle(
+                                            color = NoorColor.accentGold,
+                                            fontSize = (fontSize * 0.62f).sp)) {
+                                            append("  ⁧﴿${verse.ayah.arabicIndic()}﴾⁩")
+                                        }
+                                    },
+                                    fontFamily = QuranFont,
+                                    fontSize = fontSize.sp,
+                                    lineHeight = (fontSize * 2.2f).sp,
+                                    color = NoorColor.inkPrimary,
+                                    // RTL paragraph whatever the UI language: the
+                                    // ayah-number chip lands at the line end (left).
+                                    style = arabicText(),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                            if (showTranslation) {
+                                // The translation reads in ITS own direction
+                                // (LTR for English, RTL for Urdu) inside the
+                                // Arabic block that wraps the whole page.
+                                TranslationLine(surah.id, verse.ayah)
+                            }
+                        }
                     }
                 }
             } else {
@@ -1278,9 +1364,18 @@ private fun SurahPage(
 }
 
 
-/// Floating elevated card under the top bar — the iOS reader options panel:
-/// segmented مصحف / المدني / آية آية picker + Quran text-size stepper
-/// (hidden in Madani page mode, whose printed geometry is fixed).
+/// Floating elevated card under the top bar — the iOS reader options panel
+/// (SurahReaderView.optionsPanel): segmented مصحف / المدني / آية آية picker,
+/// show-translation, word-by-word and hifz toggles, the surah-audio download
+/// button, and the Quran text-size stepper.
+///
+/// MADANI RULE (iOS parity, 2026-09): a Madani page draws QCF page-font
+/// glyphs on a rigid 15-row grid — it can show neither a translation line,
+/// nor a word gloss, nor a blurred ayah, and its geometry is fixed. Those
+/// controls used to be offered there and silently threw the reader into
+/// another mode, a surprising way to lose your page. In "page" mode the
+/// panel therefore shows only the mode picker and the audio download.
+///
 /// Shared by the flow reader and MushafScreen.
 @Composable
 fun ReaderOptionsPanel(
@@ -1289,6 +1384,14 @@ fun ReaderOptionsPanel(
     onMode: (String) -> Unit,
     onFontSize: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    showTranslation: Boolean = false,
+    onShowTranslation: ((Boolean) -> Unit)? = null,
+    wordByWord: Boolean = false,
+    onWordByWord: ((Boolean) -> Unit)? = null,
+    hifzMode: Boolean = false,
+    onHifzMode: ((Boolean) -> Unit)? = null,
+    /// The surah whose recitation the download button fetches — null hides it.
+    downloadSurah: Surah? = null,
 ) {
     Surface(
         shape = RoundedCornerShape(16.dp),
@@ -1315,6 +1418,38 @@ fun ReaderOptionsPanel(
                 ModeSegment(stringResource(R.string.g2_reading_mode_ayah), selected = mode == "ayah",
                             modifier = Modifier.weight(1f)) { onMode("ayah") }
             }
+            if (mode != "page") {
+                if (onShowTranslation != null) {
+                    // The download state of the chosen Tanzil edition is
+                    // reported under the switch: flipping it on with no
+                    // network would otherwise look like a dead toggle.
+                    OptionToggle(
+                        label = stringResource(R.string.g2_show_translation),
+                        checked = showTranslation,
+                        subtitle = when {
+                            !showTranslation -> null
+                            TranslationStore.state == TranslationStore.State.DOWNLOADING ->
+                                stringResource(R.string.g2_translation_downloading)
+                            TranslationStore.state == TranslationStore.State.FAILED ->
+                                stringResource(R.string.g2_translation_failed)
+                            else -> null
+                        },
+                        onChange = onShowTranslation)
+                }
+                if (onWordByWord != null) {
+                    OptionToggle(
+                        label = stringResource(R.string.g2_word_by_word),
+                        checked = wordByWord,
+                        onChange = onWordByWord)
+                }
+                if (onHifzMode != null) {
+                    OptionToggle(
+                        label = stringResource(R.string.g2_hifz_mode),
+                        checked = hifzMode,
+                        onChange = onHifzMode)
+                }
+            }
+            if (downloadSurah != null) DownloadAudioRow(downloadSurah)
             // The printed Madani page has fixed geometry — size buttons
             // only apply to the flow and ayah modes.
             if (mode != "page") {
@@ -1341,6 +1476,102 @@ fun ReaderOptionsPanel(
                 }
             }
         }
+    }
+}
+
+/// One switch row of the options panel, in the panel's own visual language
+/// (14sp secondary label, accent track) — 48dp tall, and the whole row is
+/// the target, so the label toggles it too.
+@Composable
+private fun OptionToggle(
+    label: String,
+    checked: Boolean,
+    onChange: (Boolean) -> Unit,
+    subtitle: String? = null,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .padding(top = 8.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onChange)
+    ) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(label, fontSize = 14.sp, color = NoorColor.inkPrimary)
+            if (subtitle != null) {
+                Text(subtitle, fontSize = 12.sp, lineHeight = 16.sp, color = NoorColor.inkSecondary)
+            }
+        }
+        Switch(
+            checked = checked,
+            // The row owns the gesture (and the accessibility state); the
+            // switch itself is decoration, so it is not a second target.
+            onCheckedChange = null,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = NoorColor.accentPrimary,
+                checkedThumbColor = NoorColor.bgElevated))
+    }
+}
+
+/// "Download surah audio" — the iOS optionsPanel button, on top of the
+/// player's own ayah cache: every ayah of the surah (and of the selected
+/// translated reading) fetched up front, so the surah plays offline.
+@Composable
+private fun DownloadAudioRow(surah: Surah) {
+    val scope = rememberCoroutineScope()
+    val phase = SurahDownloader.phase
+    // Opening the panel on another surah must not inherit the last run's
+    // "downloaded" state.
+    LaunchedEffect(surah.id) { SurahDownloader.reset() }
+    // Whether it is ALREADY on disk — one stat per ayah, off-main.
+    val onDisk by produceState(false, surah.id, phase, NoorPlayer.reciter, NoorPlayer.translation) {
+        value = withContext(Dispatchers.IO) {
+            SurahDownloader.isDownloaded(surah.id, surah.ayahCount)
+        }
+    }
+    val downloading = phase == SurahDownloader.Phase.DOWNLOADING
+    val done = phase == SurahDownloader.Phase.DONE || (!downloading && onDisk)
+    val label = when {
+        downloading -> stringResource(
+            R.string.g2_audio_downloading,
+            SurahDownloader.completed.localizedDigits(),
+            SurahDownloader.total.localizedDigits())
+        done -> stringResource(R.string.g2_audio_downloaded)
+        phase == SurahDownloader.Phase.FAILED -> stringResource(R.string.g2_audio_download_failed)
+        else -> stringResource(R.string.g2_download_surah_audio)
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .padding(top = 10.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(enabled = !downloading && !done) {
+                scope.launch { SurahDownloader.download(surah.id, surah.ayahCount) }
+            }
+            .semantics { contentDescription = label }
+    ) {
+        if (downloading) {
+            CircularProgressIndicator(
+                color = NoorColor.accentPrimary,
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(16.dp))
+        } else {
+            Icon(
+                painterResource(if (done) R.drawable.ic_check else R.drawable.ic_headphones),
+                contentDescription = null,
+                tint = NoorColor.accentPrimary,
+                modifier = Modifier.size(16.dp))
+        }
+        Text(
+            label,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = NoorColor.accentPrimary,
+            modifier = Modifier.padding(start = 10.dp))
     }
 }
 
@@ -1379,5 +1610,90 @@ private fun SizeButton(symbol: String, onClick: () -> Unit) {
             .clickable(onClick = onClick)
     ) {
         Text(symbol, fontSize = 18.sp, color = NoorColor.accentPrimary)
+    }
+}
+
+
+/// Hifz mode: hide an ayah until it is tapped. A real blur needs
+/// RenderEffect (API 31+); on older devices — minSdk here is 26 — the text
+/// is faded out instead, so the toggle is never a no-op on any device.
+private fun Modifier.hifzHidden(hidden: Boolean): Modifier =
+    if (!hidden) this
+    else if (android.os.Build.VERSION.SDK_INT >= 31) this.blur(7.dp)
+    else this.alpha(0.06f)
+
+/// The chosen translation of one ayah, under its Arabic text. Reads in its
+/// OWN direction (LTR for English, RTL for Urdu) inside the RTL Quran block.
+@Composable
+private fun TranslationLine(surahId: Int, ayah: Int) {
+    val text = TranslationStore.text(surahId, ayah) ?: return
+    CompositionLocalProvider(
+        LocalLayoutDirection provides
+            (if (TranslationStore.isRTL) LayoutDirection.Rtl else LayoutDirection.Ltr)
+    ) {
+        Text(
+            text,
+            fontSize = 14.sp,
+            lineHeight = 21.sp,
+            color = NoorColor.inkSecondary,
+            textAlign = TextAlign.Start,
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+    }
+}
+
+/// Word-by-word view of one ayah: every word in the Quran font with its
+/// English gloss beneath, wrapping right-to-left like the mushaf — the iOS
+/// WordByWordView, on the same page-layout DB (its `translation` column).
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun WordByWordAyah(surahId: Int, ayah: Int, fontSize: Float) {
+    val context = LocalContext.current
+    // Off-main: one small indexed query per ayah, cached by the state.
+    val words by produceState(emptyList<WordGloss>(), surahId, ayah) {
+        value = withContext(Dispatchers.IO) {
+            runCatching { PageLayoutDb.get(context).words(surahId, ayah) }.getOrDefault(emptyList())
+        }
+    }
+    androidx.compose.foundation.layout.FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // The enclosing ArabicDirection already lays the row out RTL, so the
+        // words wrap in reading order without any manual placement.
+        for (word in words) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(NoorColor.bgElevated.copy(alpha = 0.6f))
+                    .padding(horizontal = 6.dp, vertical = 4.dp)
+                    .widthIn(max = 130.dp)
+            ) {
+                Text(
+                    word.text,
+                    fontFamily = QuranFont,
+                    fontSize = (fontSize * 0.92f).sp,
+                    lineHeight = (fontSize * 1.5f).sp,
+                    color = NoorColor.inkPrimary,
+                    style = arabicText(TextAlign.Center))
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Text(
+                        word.translation,
+                        fontSize = 11.sp,
+                        lineHeight = 14.sp,
+                        color = NoorColor.inkSecondary,
+                        textAlign = TextAlign.Center)
+                }
+            }
+        }
+        // The ayah number closes the ayah, as in the plain ayah block.
+        Text(
+            "⁧﴿${ayah.arabicIndic()}﴾⁩",
+            fontFamily = QuranFont,
+            fontSize = (fontSize * 0.62f).sp,
+            color = NoorColor.accentGold,
+            style = arabicText(),
+            modifier = Modifier.padding(top = 4.dp))
     }
 }

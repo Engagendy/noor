@@ -238,13 +238,18 @@ fun MushafScreen(
                         .fillMaxSize()
                         .pointerInput(Unit) { detectTapGestures { showOptions = false } }
                 )
-                // Shared panel; mode "page" hides the text-size row — the
-                // printed Madani page has fixed QCF geometry.
+                // Shared panel. In "page" mode it shows only the reading-mode
+                // picker and the audio download: the printed Madani page has
+                // fixed QCF geometry on a rigid 15-row grid, so a translation
+                // line, a word gloss, a hifz blur and the text-size stepper
+                // have nowhere to land (iOS parity — those toggles used to
+                // appear here and silently threw the reader into ayah mode).
                 ReaderOptionsPanel(
                     mode = "page",
                     fontSize = 26f,
                     onMode = ::pickMode,
                     onFontSize = {},
+                    downloadSurah = titleSurah,
                     modifier = Modifier.align(Alignment.TopCenter)
                 )
             }
