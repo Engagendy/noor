@@ -1,8 +1,8 @@
 import AVFoundation
 import XCTest
-@testable import QuranAudio
+@testable import ShareVideo
 
-final class AyahVideoComposerTests: XCTestCase {
+final class ShareVideoComposerTests: XCTestCase {
     /// Composes a 1080×1920 MP4 from a synthetic card + 2 s tone and checks
     /// the result is a readable asset with one video and one audio track.
     func testMakeVideoProducesPlayableMP4() async throws {
@@ -10,7 +10,7 @@ final class AyahVideoComposerTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: tone) }
         let card = try XCTUnwrap(makeCard(width: 620, height: 400))
 
-        let url = try await AyahVideoComposer.makeVideo(card: card, audioURL: tone, baseName: "test")
+        let url = try await ShareVideoComposer.makeVideo(card: card, audioURL: tone, baseName: "test")
         defer { try? FileManager.default.removeItem(at: url) }
 
         XCTAssertEqual(url.pathExtension, "mp4")
@@ -23,7 +23,7 @@ final class AyahVideoComposerTests: XCTestCase {
         let size = try await video[0].load(.naturalSize)
         XCTAssertEqual(size, CGSize(width: 1080, height: 1920))
         let fps = try await video[0].load(.nominalFrameRate)
-        XCTAssertEqual(fps, Float(AyahVideoComposer.framesPerSecond), accuracy: 0.5)
+        XCTAssertEqual(fps, Float(ShareVideoComposer.framesPerSecond), accuracy: 0.5)
         let duration = try await asset.load(.duration).seconds
         XCTAssertEqual(duration, 2.5, accuracy: 0.15)
         let playable = try await asset.load(.isPlayable)
@@ -35,9 +35,9 @@ final class AyahVideoComposerTests: XCTestCase {
     func testFrameUsesPaperBackground() throws {
         let card = try XCTUnwrap(makeCard(width: 100, height: 50))
         let size = CGSize(width: 108, height: 192)
-        let lay = AyahVideoComposer.layout(card: card, size: size)
-        let base = try XCTUnwrap(AyahVideoComposer.renderBase(card: card, size: size, layout: lay))
-        let frame = try XCTUnwrap(AyahVideoComposer.renderFrame(
+        let lay = ShareVideoComposer.layout(card: card, size: size)
+        let base = try XCTUnwrap(ShareVideoComposer.renderBase(card: card, size: size, layout: lay))
+        let frame = try XCTUnwrap(ShareVideoComposer.renderFrame(
             base: base, size: size, layout: lay, envelope: [0.5], frameIndex: 0))
         CVPixelBufferLockBaseAddress(frame, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(frame, .readOnly) }
@@ -50,9 +50,9 @@ final class AyahVideoComposerTests: XCTestCase {
         let card = makeCard(width: 10, height: 10)!
         let missing = FileManager.default.temporaryDirectory.appendingPathComponent("nope.mp3")
         do {
-            _ = try await AyahVideoComposer.makeVideo(card: card, audioURL: missing)
+            _ = try await ShareVideoComposer.makeVideo(card: card, audioURL: missing)
             XCTFail("expected throw")
-        } catch let error as AyahVideoError {
+        } catch let error as ShareVideoError {
             XCTAssertEqual(error, .audioUnreadable)
         } catch {
             XCTFail("untyped error \(error)")
@@ -91,7 +91,7 @@ final class AyahVideoComposerTests: XCTestCase {
         let asset = AVURLAsset(url: url)
         let tracks = try await asset.loadTracks(withMediaType: .audio)
         let track = try XCTUnwrap(tracks.first)
-        let env = try await AyahVideoComposer.loudnessEnvelope(asset: asset, track: track, seconds: 1.5, fps: 24)
+        let env = try await ShareVideoComposer.loudnessEnvelope(asset: asset, track: track, seconds: 1.5, fps: 24)
         XCTAssertEqual(env.count, 36)
         XCTAssertTrue(env.allSatisfy { $0 >= 0 && $0 <= 1 })
         XCTAssertGreaterThan(env[12], 0.5, "tone should register as loud")

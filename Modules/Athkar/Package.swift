@@ -9,12 +9,13 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../../Core/DesignSystem"),
-        .package(path: "../../Core/ContentDB")
+        .package(path: "../../Core/ContentDB"),
+        .package(path: "../../Core/ShareVideo")
     ],
     targets: [
         .target(
             name: "Athkar",
-            dependencies: ["DesignSystem", "ContentDB"],
+            dependencies: ["DesignSystem", "ContentDB", "ShareVideo"],
             resources: [.copy("Resources/athkar.json")]
         ),
         .testTarget(name: "AthkarTests", dependencies: ["Athkar"])

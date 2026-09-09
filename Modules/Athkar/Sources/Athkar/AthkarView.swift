@@ -278,6 +278,7 @@ struct DhikrListView: View {
     @State private var flashing: Int?
     @State private var sharing: Dhikr?
     @Environment(\.locale) private var locale
+    private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
     private let audio = AthkarAudioPlayer.shared
 
     /// Player id for the whole-chapter recording (distinct from any dhikr id).
@@ -343,7 +344,10 @@ struct DhikrListView: View {
                 arabicText: dhikr.text,
                 reference: category.category,
                 attribution: "نور Noor · حصن المسلم",
-                useQuranFont: false)
+                useQuranFont: false,
+                // Only when this dhikr has a recording; the closure fetches it
+                // (cache → download) while the sheet shows its spinner.
+                videoOption: DhikrVideoComposer.shareOption(for: dhikr, arabicUI: isArabicUI))
                 .environment(\.locale, locale)
         }
         .environment(\.layoutDirection, .rightToLeft)

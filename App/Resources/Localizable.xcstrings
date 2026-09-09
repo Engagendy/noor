@@ -1047,23 +1047,6 @@
         }
       }
     },
-    "Connect once to download this ayah's recitation": {
-      "extractionState": "manual",
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اتصل بالإنترنت مرة واحدة لتنزيل تلاوة هذه الآية"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Connect once to download this ayah's recitation"
-          }
-        }
-      }
-    },
     "Connect once to download this dhikr": {
       "extractionState": "manual",
       "localizations": {
@@ -1077,6 +1060,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Connect once to download this dhikr"
+          }
+        }
+      }
+    },
+    "Connect once to download this recitation": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اتصل بالإنترنت مرة واحدة لتنزيل هذه التلاوة"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect once to download this recitation"
           }
         }
       }

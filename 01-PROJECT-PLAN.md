@@ -80,6 +80,7 @@ NoorApp/
 │   ├── APIClient/          # Quran Foundation + Sunnah.com clients
 │   ├── Downloads/          # Background download manager (audio, tafsir)
 │   ├── DesignSystem/       # Colors, typography, components (see design doc)
+│   ├── ShareVideo/         # Card + recitation → 9:16 MP4 (ayah AND dhikr)
 │   └── Localization/       # App UI strings (English + Arabic at minimum, RTL)
 └── Tests/
 ```
