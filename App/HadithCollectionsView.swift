@@ -1,10 +1,14 @@
+import ContentDB
 import DesignSystem
 import SwiftUI
 
 /// The major collections: download rows → books → hadiths → detail.
 struct HadithCollectionsView: View {
     let isArabicUI: Bool
-    @State private var library = HadithLibrary()
+    // The SHARED library: a pack downloaded through a private instance
+    // stayed invisible to the tab's global search, which then told the user
+    // to download books they already had.
+    @State private var library = HadithLibrary.shared
     @Environment(\.locale) private var locale
 
     var body: some View {
@@ -20,6 +24,7 @@ struct HadithCollectionsView: View {
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
         .navigationTitle(Text("Hadith library"))
+        .task { library.refreshStates() }
     }
 
     @ViewBuilder
@@ -88,9 +93,11 @@ struct HadithBooksView: View {
     private var filtered: [HadithBook] {
         let query = searchText.trimmingCharacters(in: .whitespaces)
         guard !query.isEmpty else { return books }
+        // Diacritic-insensitive, like every other search in the app: the
+        // titles are voweled and nobody types the marks.
         return books.filter {
-            $0.arabicTitle.contains(query)
-                || $0.englishTitle.localizedCaseInsensitiveContains(query)
+            ArabicSearch.contains(query, in: $0.arabicTitle)
+                || ArabicSearch.contains(query, in: $0.englishTitle)
         }
     }
 
@@ -150,10 +157,11 @@ struct HadithBookView: View {
     private var filtered: [LibraryHadith] {
         let query = searchText.trimmingCharacters(in: .whitespaces)
         guard !query.isEmpty else { return hadithList }
+        let folded = ArabicSearch.fold(query)
         return hadithList.filter {
-            $0.arabic.contains(query)
-                || $0.english.localizedCaseInsensitiveContains(query)
-                || $0.number == query
+            ArabicSearch.contains(query, in: $0.arabic)
+                || ArabicSearch.contains(query, in: $0.english)
+                || $0.number == folded  // ٤٢ typed in Arabic digits too
         }
     }
 

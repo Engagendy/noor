@@ -1,3 +1,4 @@
+import ContentDB
 import DesignSystem
 import SwiftUI
 
@@ -94,6 +95,9 @@ struct HadithTab: View {
                 .noorInterfaceDirection()
         }
         .task {
+            // A pack downloaded elsewhere (the library screen, a previous
+            // session) must count as searchable here.
+            library.refreshStates()
             if forty.isEmpty { forty = HadithStore.load() }
         }
     }
@@ -103,9 +107,12 @@ struct HadithTab: View {
     private var searchResults: some View {
         Section {
             if results.isEmpty {
-                Text(verbatim: isArabicUI
-                     ? "لا نتائج — نزّل الصحيحين للبحث فيهما"
-                     : "No results — download the Sahihs to search them")
+                // Two different problems, two different sentences: nothing
+                // matched, versus nothing downloaded to match against.
+                Text(verbatim: library.hasSearchableCollections
+                     ? (isArabicUI ? "لا نتائج لهذا البحث" : "No results for this search")
+                     : (isArabicUI ? "لا نتائج — نزّل الصحيحين للبحث فيهما"
+                        : "No results — download the Sahihs to search them"))
                     .font(.noorScaled(14))
                     .foregroundStyle(NoorColor.inkSecondary)
                     .listRowBackground(Color.clear)
@@ -114,20 +121,22 @@ struct HadithTab: View {
                 Button {
                     selectedHit = hit
                 } label: {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(verbatim: hit.hadith.arabic)
-                            .font(.noorScaled(15))
-                            .foregroundStyle(NoorColor.inkPrimary)
-                            .lineLimit(2)
-                            .arabicBlock()
-                        Text(verbatim: isArabicUI
-                             ? "\(hit.collection.arabicName) · \(hit.bookTitle) · \(hit.hadith.number)"
-                             : "\(hit.collection.englishName) · \(hit.bookTitle) · \(hit.hadith.number)")
-                            .font(NoorFont.caption)
-                            .foregroundStyle(NoorColor.accentGold)
-                    }
-                    .padding(.vertical, 4)
-                    .contentShape(Rectangle())
+                    // The window of text that matched, with the term
+                    // emphasised over its reference — the shared row every
+                    // other search screen in the app draws.
+                    let snippet = hit.snippet
+                        ?? ArabicSearch.Snippet(before: "", match: "", after: hit.hadith.arabic,
+                                                truncatedStart: false, truncatedEnd: false)
+                    SearchResultRow(
+                        before: snippet.before, match: snippet.match, after: snippet.after,
+                        truncatedStart: snippet.truncatedStart,
+                        truncatedEnd: snippet.truncatedEnd,
+                        reference: isArabicUI
+                            ? "\(hit.collection.arabicName) · \(hit.bookTitle) · \(hit.hadith.number)"
+                            : "\(hit.collection.englishName) · \(hit.bookTitle) · \(hit.hadith.number)",
+                        isArabic: !hit.snippetIsEnglish,
+                        font: .noorScaled(15))
+                        .padding(.vertical, 4)
                 }
                 .buttonStyle(.borderless)
                 .listRowBackground(Color.clear)

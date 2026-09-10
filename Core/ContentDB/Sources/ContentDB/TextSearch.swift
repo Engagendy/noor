@@ -10,6 +10,16 @@ import Foundation
 /// variants and alef-maqsura. `QuranDatabase.normalizeForSearch` is a thin
 /// wrapper over `ArabicSearch.fold` so the DB column and every in-memory
 /// search agree by construction.
+///
+/// Two rules go beyond the bundled-Quran pipeline, for text that comes from
+/// looser sources (the hadith packs): invisible bidi/zero-width controls are
+/// dropped and whitespace runs collapse to a single space. The hadith
+/// dataset sprinkles U+200F around punctuation — 74 511 of them in Bukhari
+/// alone, 3 047 of those sitting between two spaces — so a two-word query
+/// could never match across one. The bundled Quran column contains no such
+/// control scalar, and a *query* has no whitespace run to collapse, so
+/// `QuranDatabase.normalizeForSearch` still produces exactly what the built
+/// `verse_search.text_normalized` was indexed against.
 public enum ArabicSearch {
     /// How well a match sits inside the text it was found in — the ranking
     /// tier used to order results (lower is better).
@@ -39,6 +49,17 @@ public enum ArabicSearch {
             || value == 0x0670 || value == 0x0640 {
             return nil
         }
+        // Invisible formatting: zero-width joiners/spaces, the bidi marks and
+        // isolates, the soft hyphen and the BOM. They carry no meaning for a
+        // reader typing a query, but they split words for a matcher.
+        if (0x200B...0x200F).contains(value) || (0x2066...0x2069).contains(value)
+            || value == 0x00AD || value == 0x061C || value == 0x2060 || value == 0xFEFF {
+            return nil
+        }
+        // Every kind of whitespace becomes a plain space (runs collapse in
+        // the loops below), so a query typed with one space matches text
+        // where a dropped mark or a tab left several.
+        if scalar.properties.isWhitespace { return " " }
         switch value {
         case 0x0622, 0x0623, 0x0625, 0x0671:
             return UnicodeScalar(0x0627)!  // alef variants → bare alef
@@ -76,6 +97,7 @@ public enum ArabicSearch {
             if let folded = fold(scalar: scalar,
                                  caseInsensitive: caseInsensitive,
                                  foldingDigits: foldingDigits) {
+                if folded == " ", out.last == " " { continue }  // collapse runs
                 out.append(folded)
             }
         }
@@ -104,6 +126,7 @@ public enum ArabicSearch {
         while index < text.endIndex {
             for scalar in text[index].unicodeScalars {
                 if let folded = fold(scalar: scalar, caseInsensitive: true, foldingDigits: true) {
+                    if folded == " ", scalars.last == " " { continue }  // collapse runs
                     scalars.append(folded)
                     sources.append(index)
                 }
