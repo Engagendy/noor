@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Urdu. Generated 2026-09-10 from res/values-en/strings_prayer.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/ur.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="prayer_exact_alarm_title">اذان کی اطلاعات دیر سے آ سکتی ہیں</string>
+    <string name="prayer_exact_alarm_text">نور کو الارم اور یاد دہانیاں طے کرنے کی اجازت دیں تاکہ اذان بالکل وقت پر پہنچے۔</string>
+    <string name="prayer_exact_alarm_action">اجازت دیں</string>
+    <string name="prayer_high_latitude_unavailable">سال کے اس حصے میں اس مقام کے لیے نماز کے اوقات نہیں نکالے جا سکتے (بلند عرض بلد)۔ ترتیبات میں کوئی قریبی شہر منتخب کریں۔</string>
+    <string name="prayer_high_latitude_short">دستیاب نہیں</string>
+    <string name="prayer_fasting_white_day">ایامِ بیض میں سے (%1$d ہجری)</string>
+</resources>

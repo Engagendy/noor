@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spanish. Generated 2026-09-10 from res/values-en/strings_kids.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/es.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="kids_title">Modo niños</string>
+    <string name="kids_subtitle">Un Corán más sencillo para niños, con bloqueo para adultos.</string>
+    <string name="kids_age_question">¿Qué edad tiene tu hijo?</string>
+    <string name="kids_age_years">%1$s años</string>
+    <string name="kids_start">Empezar</string>
+    <string name="kids_gate_title">Pregunta a un adulto</string>
+    <string name="kids_gate_question">%1$s × %2$s = ?</string>
+    <string name="kids_gate_hint">No es esa: aquí va otra pregunta.</string>
+    <string name="kids_gate_check">Comprobar</string>
+    <string name="kids_gate_answer">Respuesta</string>
+    <string name="kids_tab_read">Leer</string>
+    <string name="kids_tab_athkar">Mis Adhkar</string>
+    <string name="kids_total_stars">Tus estrellas: %1$s</string>
+    <string name="kids_grownup">Adultos</string>
+    <string name="kids_stars_of_three">%1$s de 3 estrellas</string>
+    <string name="kids_ayah_count">%1$s aleyas</string>
+    <string name="kids_listen">Escuchar</string>
+    <string name="kids_pause">Pausa</string>
+    <string name="kids_repeat">Repetición %1$s de %2$s</string>
+    <string name="kids_well_done">¡Muy bien! Una nueva estrella</string>
+    <string name="kids_sound">Sonido</string>
+    <string name="kids_mode_listen">Escuchar</string>
+    <string name="kids_mode_listen_note">Cada aleya una vez</string>
+    <string name="kids_mode_memorise">Memorizar</string>
+    <string name="kids_mode_memorise_note">Cada aleya se repite %1$s veces</string>
+    <string name="kids_mode_memorise_note_none">Cada aleya una vez</string>
+    <string name="kids_reciter">Recitador</string>
+    <string name="kids_muallim_note">Lee despacio, para aprender</string>
+    <string name="kids_settings">Ajustes</string>
+    <string name="kids_language">Idioma</string>
+</resources>

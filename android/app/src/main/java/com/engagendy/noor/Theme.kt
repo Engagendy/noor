@@ -167,13 +167,42 @@ object NoorFont {
     private val current = mutableStateOf(NoorFontChoice.DEFAULT)
 
     val choice: NoorFontChoice get() = current.value
-    val family: FontFamily get() = current.value.family
+
+    /// The INTERFACE family.
+    ///
+    /// Urdu overrides the picker: Urdu is written in Nastaliq, and none of
+    /// the five Naskh families is acceptable for Urdu running text however
+    /// well they cover the letters. Same rule as iOS. Reads
+    /// `NoorLocale.choice` / `systemVersion` (both Compose state) through
+    /// `NoorLocale.language()`, so switching to or away from Urdu restyles
+    /// the app on the next frame, exactly as switching family does.
+    val family: FontFamily
+        get() {
+            NoorLocale.choice; NoorLocale.systemVersion  // reactive reads
+            return if (NoorLocale.language().forcesNastaliq) NastaliqFont
+                   else current.value.family
+        }
+
+    /// The family for ARABIC CONTENT (`arabicText()`): always the user's
+    /// choice, never Nastaliq. Quran/hadith/athkar Arabic reads the same in
+    /// all ten interface languages.
+    val arabicFamily: FontFamily get() = current.value.family
 
     /// Resolve the stored `ui.font` value and switch the family.
     fun apply(id: String?) {
         current.value = NoorFontChoice.from(id)
     }
 }
+
+/// Noto Nastaliq Urdu, bundled UNMODIFIED from google/fonts
+/// (`ofl/notonastaliqurdu`, SIL OFL 1.1, Copyright 2022 The Noto Project
+/// Authors) — recorded in LICENSES.md. One variable file, wght 400..700.
+///
+/// Its line box is about 2.5em against Readex Pro's ~1.3em, which is why
+/// `NoorLanguage.uiFontScale` sets Urdu interface text at 0.72x nominal:
+/// the rows in this app were measured for a Naskh face and a full-size
+/// Nastaliq kashida sweep clips against them top and bottom.
+val NastaliqFont: FontFamily by lazy { variableFamily(R.font.noto_nastaliq_urdu) }
 
 /// Material's default type scale with every style moved onto [family].
 /// (Material3's MaterialTheme provides `bodyLarge` as LocalTextStyle, so this

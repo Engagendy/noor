@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali. Generated 2026-09-10 from res/values-en/strings_misc.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/bn.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="misc_storage_recitations">তিলাওয়াত</string>
+    <string name="misc_storage_recitations_sub">অফলাইনে শোনার জন্য ডাউনলোড করা আয়াতের অডিও</string>
+    <string name="misc_go_to_reciting">যে আয়াত পড়া হচ্ছে সেখানে যান</string>
+    <string name="misc_channel_recitation">তিলাওয়াত</string>
+    <string name="misc_channel_recitation_desc">তিলাওয়াত চালানোর নিয়ন্ত্রণ</string>
+</resources>

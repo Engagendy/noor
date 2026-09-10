@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Persian. Generated 2026-09-10 from res/values-en/strings_kids.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/fa.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="kids_title">حالت کودکان</string>
+    <string name="kids_subtitle">قرآنی ساده‌تر برای کودکان، با قفلی برای بزرگ‌ترها.</string>
+    <string name="kids_age_question">فرزند شما چند ساله است؟</string>
+    <string name="kids_age_years">%1$s ساله</string>
+    <string name="kids_start">شروع</string>
+    <string name="kids_gate_title">از یک بزرگ‌تر بپرس</string>
+    <string name="kids_gate_question">%1$s × %2$s = ؟</string>
+    <string name="kids_gate_hint">درست نبود — این هم یک سؤال تازه.</string>
+    <string name="kids_gate_check">بررسی</string>
+    <string name="kids_gate_answer">پاسخ</string>
+    <string name="kids_tab_read">خواندن</string>
+    <string name="kids_tab_athkar">اذکار من</string>
+    <string name="kids_total_stars">ستاره‌های تو: %1$s</string>
+    <string name="kids_grownup">بزرگ‌ترها</string>
+    <string name="kids_stars_of_three">%1$s از ۳ ستاره</string>
+    <string name="kids_ayah_count">%1$s آیه</string>
+    <string name="kids_listen">شنیدن</string>
+    <string name="kids_pause">مکث</string>
+    <string name="kids_repeat">تکرار %1$s از %2$s</string>
+    <string name="kids_well_done">آفرین! یک ستارهٔ تازه</string>
+    <string name="kids_sound">صدا</string>
+    <string name="kids_mode_listen">شنیدن</string>
+    <string name="kids_mode_listen_note">هر آیه یک بار</string>
+    <string name="kids_mode_memorise">حفظ</string>
+    <string name="kids_mode_memorise_note">هر آیه %1$s بار تکرار می‌شود</string>
+    <string name="kids_mode_memorise_note_none">هر آیه یک بار</string>
+    <string name="kids_reciter">قاری</string>
+    <string name="kids_muallim_note">آهسته می‌خواند، برای آموزش</string>
+    <string name="kids_settings">تنظیمات</string>
+    <string name="kids_language">زبان</string>
+</resources>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali. Generated 2026-09-10 from res/values-en/strings_features.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/bn.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="feat_channel_athkar">জিকিরের রিমাইন্ডার</string>
+    <string name="feat_channel_athkar_desc">নামাজের পরের জিকির</string>
+    <string name="feat_athkar_after_salah">নামাজের পরের জিকির</string>
+    <string name="feat_athkar_after_salah_text">আল্লাহ আপনার নামাজ কবুল করুন · %1$s-এর পরের জিকির পড়তে ট্যাপ করুন</string>
+    <string name="feat_athkar_after_by">নামাজের কত পরে</string>
+    <string name="feat_minutes_short">%1$s মিনিট</string>
+    <string name="feat_choose_city">আপনার শহর বেছে নিন</string>
+    <string name="feat_nearby">কাছাকাছি</string>
+    <string name="feat_popular">জনপ্রিয়</string>
+    <string name="feat_browse_by_country">দেশ অনুযায়ী দেখুন</string>
+    <string name="feat_countries">দেশসমূহ</string>
+    <string name="feat_no_results">কোনো ফলাফল নেই</string>
+    <string name="feat_clear_search">সার্চ মুছুন</string>
+    <string name="feat_close">বন্ধ করুন</string>
+    <string name="feat_selected">নির্বাচিত</string>
+    <string name="feat_change_city">শহর পরিবর্তন</string>
+    <string name="feat_my_location">আমার লোকেশন</string>
+    <string name="feat_share_app">Noor শেয়ার করুন</string>
+    <string name="feat_share_app_text">Noor: কুরআন, নামাজের সময় ও জিকির — চিরকাল ফ্রি, কোনো বিজ্ঞাপন নেই, কোনো ট্র্যাকিং নেই।\nApp Store: https://apps.apple.com/ae/app/noor-al-muslim/id6807128479\nGoogle Play: https://play.google.com/store/apps/details?id=com.engagendy.noor</string>
+    <string name="feat_share_video">ভিডিও হিসেবে শেয়ার</string>
+    <string name="feat_share_video_caption">%1$s-এর তিলাওয়াতে</string>
+    <string name="feat_video_downloading">তিলাওয়াত ডাউনলোড হচ্ছে…</string>
+    <string name="feat_video_composing">ভিডিও তৈরি হচ্ছে…</string>
+    <string name="feat_video_offline">এই আয়াতের তিলাওয়াত ডাউনলোড করতে একবার ইন্টারনেটে যুক্ত হোন</string>
+    <string name="feat_video_failed">ভিডিও তৈরি করা গেল না</string>
+    <string name="feat_video_offline_dhikr">এই জিকিরের রেকর্ডিং ডাউনলোড করতে একবার ইন্টারনেটে যুক্ত হোন</string>
+    <string name="feat_share_image">ছবি হিসেবে শেয়ার</string>
+    <string name="feat_dhikr_reciter">Hamad Al-Duraihim</string>
+    <string name="feat_athkar_play">প্লে</string>
+    <string name="feat_athkar_pause">পজ</string>
+    <string name="feat_athkar_play_chapter">অধ্যায় প্লে করুন</string>
+    <string name="feat_athkar_pause_chapter">অধ্যায় পজ করুন</string>
+    <string name="feat_athkar_audio_offline">এই জিকিরটি ডাউনলোড করতে একবার ইন্টারনেটে যুক্ত হোন</string>
+    <string name="feat_athkar_audio_failed">এই রেকর্ডিং প্লে করা গেল না</string>
+    <string name="feat_storage_athkar_audio">জিকিরের অডিও</string>
+    <string name="feat_storage_athkar_audio_sub">অফলাইনে শোনার জন্য ডাউনলোড করা রেকর্ডিং</string>
+    <string name="feat_app_font">অ্যাপের ফন্ট</string>
+</resources>

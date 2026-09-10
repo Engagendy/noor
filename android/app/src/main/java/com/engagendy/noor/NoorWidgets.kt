@@ -120,12 +120,12 @@ private fun computeNextPrayer(context: Context): NextPrayerData {
     return NextPrayerData(
         todayLabel = context.getString(R.string.g1_today),
         city = city.displayName(),
-        nextName = next.displayName(),
+        nextName = next.displayName(context),
         nextTime = formatter.format(next.time),
         remaining = context.getString(R.string.g1_widget_in, clock),
         passedCount = if (tomorrowEntries.isEmpty()) entries.count { !it.time.after(now) } else 0,
         times = entries.map {
-            WidgetPrayer(it.displayName(), formatter.format(it.time), it.key == next.key)
+            WidgetPrayer(it.displayName(context), formatter.format(it.time), it.key == next.key)
         })
 }
 

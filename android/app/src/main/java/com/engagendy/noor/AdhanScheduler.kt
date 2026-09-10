@@ -195,7 +195,7 @@ object AdhanScheduler {
                 val enabled = notificationsEnabled && prefs.notificationEnabled(entry.key)
                 // Adhan itself.
                 val adhanPending = pending(adhanCode) {
-                    putExtra("nameArabic", entry.displayName())
+                    putExtra("nameArabic", entry.displayName(context))
                     putExtra("timeString", formatter.format(entry.time))
                 }
                 if (enabled && entry.time.after(now)) {
@@ -206,7 +206,7 @@ object AdhanScheduler {
                 // Gentle pre-adhan reminder.
                 val preTime = Date(entry.time.time - preAlert * 60_000L)
                 val prePending = pending(preCode) {
-                    putExtra("nameArabic", entry.displayName())
+                    putExtra("nameArabic", entry.displayName(context))
                     putExtra("timeString", formatter.format(entry.time))
                     putExtra("preAlertMinutes", preAlert)
                 }

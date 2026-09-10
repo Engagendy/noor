@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French. Generated 2026-09-10 from res/values-en/strings_misc.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/fr.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="misc_storage_recitations">Récitations</string>
+    <string name="misc_storage_recitations_sub">Audio des versets téléchargé pour l’écoute hors ligne</string>
+    <string name="misc_go_to_reciting">Aller au verset récité</string>
+    <string name="misc_channel_recitation">Récitation</string>
+    <string name="misc_channel_recitation_desc">Commandes de lecture de la récitation</string>
+</resources>

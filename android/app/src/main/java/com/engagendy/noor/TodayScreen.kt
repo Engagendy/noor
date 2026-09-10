@@ -168,11 +168,16 @@ fun TodayScreen(
 private fun TodayHeader(now: Date, onCalendar: () -> Unit, onSettings: () -> Unit) {
     // Umm al-Qura hijri + gregorian date line, like the iOS header.
     val dateLine = remember(now.time / 60_000) {
-        // Locale-aware like iOS: ar → ar-SA umm-al-qura, en → islamic-umalqura
-        // with the English locale.
-        val lang = if (isArabicLocale()) "ar-SA" else "en"
+        // Locale-aware like iOS: the hijri date is formatted in the
+        // INTERFACE language, not in Arabic-or-English — ar-SA carries the
+        // Saudi month spellings, every other language uses its own CLDR
+        // data (and its own digits, which is why Urdu/Persian/Bengali agree
+        // with `localizedDigits()` here).
+        val lang = if (isArabicLocale()) "ar-SA" else NoorLocale.language().bcp47
         val hijri = DateFormat.getDateInstance(
-            DateFormat.LONG, ULocale("$lang@calendar=islamic-umalqura"))
+            DateFormat.LONG,
+            ULocale.forLanguageTag(lang)
+                .setKeywordValue("calendar", "islamic-umalqura"))
         val greg = SimpleDateFormat("EEEE d MMM", Locale.getDefault())
         "${hijri.format(now)} · ${greg.format(now)}"
     }
@@ -180,8 +185,13 @@ private fun TodayHeader(now: Date, onCalendar: () -> Unit, onSettings: () -> Uni
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
     ) {
+        // Two lines, not one: the hijri + gregorian line is CLDR-formatted,
+        // and how long it comes out is the language's business, not ours.
+        // Bengali ("২৮ রবিউল আউয়াল, ১৪৪৮ যুগ · বৃহস্পতিবার ১০ সেপ্টেম্বর")
+        // and Indonesian both overrun a 6" phone at one line; every other
+        // language still fits on one, so nothing else moves.
         Text(dateLine, fontSize = 13.sp, color = NoorColor.inkSecondary,
-             maxLines = 1, overflow = TextOverflow.Ellipsis,
+             maxLines = 2, overflow = TextOverflow.Ellipsis,
              modifier = Modifier.weight(1f))
         // 44dp tinted circle — the hijri calendar entry.
         Icon(
@@ -258,7 +268,10 @@ private fun NextPrayerHero(entries: List<PrayerEntry>, now: Date, city: CityPres
                 // spacing the glyphs apart widens the natural gap after a
                 // non-joining letter (the alef of الفجر) into what reads as a
                 // word break. Never track Arabic.
-                letterSpacing = if (isArabicUi()) 0.sp else 1.5.sp,
+                // Tracking opens Latin capitals up; in a cursive or
+                // mark-stacking script it pulls the word apart instead.
+                // (iOS `NoorLanguage.usesLatinScript`.)
+                letterSpacing = if (noorUiLanguage().usesLatinScript) 1.5.sp else 0.sp,
                 color = Color.White.copy(alpha = 0.85f))
             Spacer(Modifier.weight(1f))
             if (next != null) {

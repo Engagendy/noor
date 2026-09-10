@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Indonesian. Generated 2026-09-10 from res/values-en/strings_learn.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/id.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="learn_title">Belajar</string>
+    <string name="learn_open">Belajar</string>
+    <string name="learn_search_hint">Cari semua di Belajar</string>
+    <string name="learn_no_matches">Tidak ada hasil di teks pembelajaran</string>
+    <string name="learn_section_matns">Matan hafalan</string>
+    <string name="learn_matns_footer">Syair klasik yang dihafal para pelajar: tajwid dan istilah hadis.</string>
+    <string name="learn_section_reference">Rujukan</string>
+    <string name="learn_tajweed_sub">Tanda waqaf, simbol mushaf, dan hukum-hukum huruf.</string>
+    <string name="learn_tafsir_title">Tafsir per surah</string>
+    <string name="learn_tafsir_sub">Pilih surah dan baca tafsirnya ayat per ayat.</string>
+    <string name="learn_gharib_title">Makna kata Al-Qur\'an</string>
+    <string name="learn_gharib_sub">Kata-kata dalam Al-Qur\'an yang sulit dipahami.</string>
+    <string name="learn_lines">%1$s bait</string>
+    <string name="learn_line_n">Bait %1$s</string>
+    <string name="learn_showing_of">Menampilkan %1$s dari %2$s — buka teksnya untuk melihat sisanya</string>
+    <string name="learn_settings_sub">Panduan tajwid dan matan hafalan — ada juga di tab Al-Qur\'an.</string>
+    <string name="learn_hint">Panduan tajwid dan matan hafalan</string>
+    <string name="matn_search_hint">Cari di matan ini</string>
+    <string name="matn_no_lines">Tidak ada bait yang cocok</string>
+    <string name="matn_count">%1$s dari %2$s bait</string>
+    <string name="matn_sections_editorial">Judul bagian berasal dari aplikasi, bukan dari sumbernya.</string>
+    <string name="matn_text_size">Ukuran teks</string>
+    <string name="matn_mark">Tandai bait ini</string>
+    <string name="matn_unmark">Hapus tanda</string>
+    <string name="matn_goto_marked">Lompat ke bait bertanda</string>
+    <string name="matn_search_a11y">Cari di matan ini</string>
+    <string name="matn_smaller">Lebih kecil</string>
+    <string name="matn_larger">Lebih besar</string>
+    <string name="tafsir_browse_title">Tafsir</string>
+    <string name="tafsir_choose_surah">Pilih surah</string>
+    <string name="tafsir_edition">Edisi tafsir</string>
+    <string name="tafsir_edition_footer">Pilihan Anda diingat, dan sama dengan yang dipakai lembar ayat.</string>
+    <string name="tafsir_search_hint">Cari di tafsir yang Anda punya</string>
+    <string name="gharib_search_hint">Cari di makna kata yang Anda punya</string>
+    <string name="tafsir_coverage_partial">Mencari di %1$s dari %2$s surah yang telah Anda unduh</string>
+    <string name="tafsir_coverage_complete">Mencari di semua %1$s surah — edisi ini terunduh lengkap</string>
+    <string name="tafsir_no_matches">Tidak ada hasil</string>
+    <string name="tafsir_no_matches_partial">Yang dicari hanya surah yang sudah Anda unduh — kata itu mungkin ada di surah lainnya.</string>
+    <string name="tafsir_preparing">Menyiapkan pencarian…</string>
+    <string name="tafsir_download_for_search">Unduh semua %1$s surah untuk mencarinya</string>
+    <string name="tafsir_download_offline">Unduh untuk offline</string>
+    <string name="tafsir_downloading_progress">Mengunduh tafsir %1$s/%2$s…</string>
+    <string name="tafsir_available_offline">Tersedia offline</string>
+    <string name="tafsir_downloading_surah">Mengunduh tafsir surah ini…</string>
+    <string name="tafsir_downloading_surah_sub">Disimpan di perangkat, sehingga surah ini terbuka offline lain kali.</string>
+    <string name="tafsir_empty_surah">Edisi ini tidak memuat apa pun untuk surah ini.</string>
+    <string name="tafsir_gharib_note">Hanya ayat yang memuat kata yang perlu dijelaskan yang muncul di sini.</string>
+    <string name="tafsir_surah_search_hint">Cari di surah ini</string>
+    <string name="tafsir_no_match_surah">Tidak ada hasil di surah ini</string>
+    <string name="tafsir_ayat_count">%1$s dari %2$s ayat</string>
+    <string name="tafsir_results">Hasil</string>
+    <string name="tafsir_group_gharib">Makna kata Al-Qur\'an — %1$s</string>
+    <string name="tafsir_group_tafsir">Tafsir — %1$s</string>
+    <string name="tafsir_unavailable">Tafsir tidak tersedia — periksa koneksi Anda.</string>
+    <string name="tafsir_ayat_n">%1$s ayat</string>
+</resources>

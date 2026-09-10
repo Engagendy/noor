@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali. Generated 2026-09-10 from res/values-en/strings_prayer.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/bn.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="prayer_exact_alarm_title">আজানের সতর্কবার্তা দেরিতে আসতে পারে</string>
+    <string name="prayer_exact_alarm_text">সঠিক সময়ে আজান পেতে Noor-কে অ্যালার্ম ও রিমাইন্ডার সেট করার অনুমতি দিন।</string>
+    <string name="prayer_exact_alarm_action">অনুমতি দিন</string>
+    <string name="prayer_high_latitude_unavailable">বছরের এই সময়ে এই অবস্থানের জন্য নামাজের সময় হিসাব করা যায় না (উচ্চ অক্ষাংশ)। সেটিংস থেকে কাছাকাছি একটি শহর বেছে নিন।</string>
+    <string name="prayer_high_latitude_short">পাওয়া যাচ্ছে না</string>
+    <string name="prayer_fasting_white_day">আইয়ামে বীজের দিন (%1$d হিজরি)</string>
+</resources>

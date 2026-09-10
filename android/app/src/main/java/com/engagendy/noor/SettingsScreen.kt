@@ -213,15 +213,20 @@ private fun SettingsMain(
 
         // General — language & appearance, like the top iOS section.
         SettingsCard {
-            ChoiceRow(
-                title = stringResource(R.string.g1_language),
-                options = listOf(
-                    "system" to stringResource(R.string.g1_lang_system),
-                    "ar" to "العربية", "en" to "English"),
-                selectedId = language,
-                // Applies immediately from our own pref; the per-app locale
-                // is still set for notifications/widgets/launcher label.
-                onSelect = { choice -> NoorLocale.set(context, choice) })
+            // Ten languages plus "system" cannot sit on one line, so the
+            // language row is a wrapping grid of endonyms rather than a
+            // ChoiceRow. Applies immediately from our own pref; the per-app
+            // locale is still set for notifications/widgets/launcher label.
+            Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+                Text(
+                    stringResource(R.string.g1_language),
+                    fontSize = 15.sp,
+                    color = NoorColor.inkPrimary,
+                    modifier = Modifier.padding(bottom = 8.dp))
+                NoorLanguageChips(selectedId = language) { choice ->
+                    NoorLocale.set(context, choice)
+                }
+            }
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             ChoiceRow(
                 title = stringResource(R.string.g1_appearance),

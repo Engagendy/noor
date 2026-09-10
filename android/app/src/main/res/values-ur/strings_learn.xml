@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Urdu. Generated 2026-09-10 from res/values-en/strings_learn.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/ur.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="learn_title">سیکھیں</string>
+    <string name="learn_open">سیکھیں</string>
+    <string name="learn_search_hint">سیکھیں میں ہر چیز تلاش کریں</string>
+    <string name="learn_no_matches">سیکھنے کے متون میں کوئی نتیجہ نہیں</string>
+    <string name="learn_section_matns">حفظ کے متون</string>
+    <string name="learn_matns_footer">کلاسیکی منظومات جو طلبہ یاد کرتے ہیں: تجوید اور اصطلاحاتِ حدیث میں۔</string>
+    <string name="learn_section_reference">حوالہ</string>
+    <string name="learn_tajweed_sub">وقف کی علامات، مصحف کی علامات اور حروف کے احکام۔</string>
+    <string name="learn_tafsir_title">سورہ کے اعتبار سے تفسیر</string>
+    <string name="learn_tafsir_sub">کوئی سورہ منتخب کریں اور اس کی تفسیر آیت بہ آیت پڑھیں۔</string>
+    <string name="learn_gharib_title">قرآنی الفاظ کے معانی</string>
+    <string name="learn_gharib_sub">قرآن کے وہ الفاظ جن کا سمجھنا مشکل ہے۔</string>
+    <string name="learn_lines">%1$s اشعار</string>
+    <string name="learn_line_n">شعر %1$s</string>
+    <string name="learn_showing_of">%2$s میں سے %1$s دکھائے جا رہے ہیں — باقی دیکھنے کے لیے متن کھولیں</string>
+    <string name="learn_settings_sub">تجوید کی رہنمائی اور حفظ کے متون — یہ قرآن کے ٹیب میں بھی ہیں۔</string>
+    <string name="learn_hint">تجوید کی رہنمائی اور حفظ کے متون</string>
+    <string name="matn_search_hint">اس متن میں تلاش کریں</string>
+    <string name="matn_no_lines">کوئی مطابق اشعار نہیں</string>
+    <string name="matn_count">%2$s میں سے %1$s اشعار</string>
+    <string name="matn_sections_editorial">حصوں کے عنوانات ایپ کے اپنے ہیں، اصل ماخذ کے نہیں۔</string>
+    <string name="matn_text_size">متن کا سائز</string>
+    <string name="matn_mark">اس شعر کو نشان زد کریں</string>
+    <string name="matn_unmark">نشان ہٹائیں</string>
+    <string name="matn_goto_marked">نشان زدہ شعر پر جائیں</string>
+    <string name="matn_search_a11y">اس متن میں تلاش کریں</string>
+    <string name="matn_smaller">چھوٹا</string>
+    <string name="matn_larger">بڑا</string>
+    <string name="tafsir_browse_title">تفسیر</string>
+    <string name="tafsir_choose_surah">کوئی سورہ منتخب کریں</string>
+    <string name="tafsir_edition">تفسیر کا نسخہ</string>
+    <string name="tafsir_edition_footer">آپ کا انتخاب یاد رکھا جاتا ہے، اور یہی آیت والی شیٹ میں بھی استعمال ہوتا ہے۔</string>
+    <string name="tafsir_search_hint">اپنی ڈاؤن لوڈ شدہ تفسیر میں تلاش کریں</string>
+    <string name="gharib_search_hint">اپنے ڈاؤن لوڈ شدہ لفظی معانی میں تلاش کریں</string>
+    <string name="tafsir_coverage_partial">آپ کی ڈاؤن لوڈ شدہ %2$s میں سے %1$s سورتوں میں تلاش</string>
+    <string name="tafsir_coverage_complete">تمام %1$s سورتوں میں تلاش — یہ نسخہ مکمل ڈاؤن لوڈ ہے</string>
+    <string name="tafsir_no_matches">کوئی نتیجہ نہیں</string>
+    <string name="tafsir_no_matches_partial">تلاش صرف ان سورتوں میں ہوئی جو آپ نے ڈاؤن لوڈ کی ہیں — یہ لفظ باقی سورتوں میں بھی ہو سکتا ہے۔</string>
+    <string name="tafsir_preparing">تلاش تیار ہو رہی ہے…</string>
+    <string name="tafsir_download_for_search">تلاش کے لیے تمام %1$s سورتیں ڈاؤن لوڈ کریں</string>
+    <string name="tafsir_download_offline">آف لائن کے لیے ڈاؤن لوڈ کریں</string>
+    <string name="tafsir_downloading_progress">تفسیر ڈاؤن لوڈ ہو رہی ہے %1$s/%2$s…</string>
+    <string name="tafsir_available_offline">آف لائن دستیاب</string>
+    <string name="tafsir_downloading_surah">اس سورہ کی تفسیر ڈاؤن لوڈ ہو رہی ہے…</string>
+    <string name="tafsir_downloading_surah_sub">یہ آلے پر محفوظ رہتی ہے، اس لیے اگلی بار یہ سورہ آف لائن کھل جائے گی۔</string>
+    <string name="tafsir_empty_surah">اس نسخے میں اس سورہ کے لیے کچھ نہیں ہے۔</string>
+    <string name="tafsir_gharib_note">یہاں صرف وہ آیات آتی ہیں جن میں وضاحت طلب الفاظ ہیں۔</string>
+    <string name="tafsir_surah_search_hint">اس سورہ میں تلاش کریں</string>
+    <string name="tafsir_no_match_surah">اس سورہ میں کوئی نتیجہ نہیں</string>
+    <string name="tafsir_ayat_count">%2$s میں سے %1$s آیات</string>
+    <string name="tafsir_results">نتائج</string>
+    <string name="tafsir_group_gharib">قرآنی الفاظ کے معانی — %1$s</string>
+    <string name="tafsir_group_tafsir">تفسیر — %1$s</string>
+    <string name="tafsir_unavailable">تفسیر لوڈ نہیں ہو سکی — اپنا انٹرنیٹ چیک کریں۔</string>
+    <string name="tafsir_ayat_n">%1$s آیات</string>
+</resources>

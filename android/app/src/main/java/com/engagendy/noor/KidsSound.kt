@@ -67,18 +67,9 @@ fun KidsSoundSheet(age: Int, onDismiss: () -> Unit) {
             // shell's own state is rememberSaveable.
             // Selection comes from the RESOLVED resource language, so it can
             // never disagree with what is on screen (no prefs read here).
-            val arabic = isArabicUi()
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ModeCard(
-                    title = "العربية",
-                    note = null,
-                    selected = arabic,
-                    modifier = Modifier.weight(1f)) { setKidsLanguage(context, "ar") }
-                ModeCard(
-                    title = "English",
-                    note = null,
-                    selected = !arabic,
-                    modifier = Modifier.weight(1f)) { setKidsLanguage(context, "en") }
+            val current = noorUiLanguage().code
+            NoorLanguageChips(selectedId = current, includeSystem = false) { id ->
+                setKidsLanguage(context, id)
             }
             Spacer(Modifier.height(18.dp))
             SectionLabel(stringResource(R.string.kids_sound))

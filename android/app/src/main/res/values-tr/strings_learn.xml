@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Turkish. Generated 2026-09-10 from res/values-en/strings_learn.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/tr.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="learn_title">Öğren</string>
+    <string name="learn_open">Öğren</string>
+    <string name="learn_search_hint">Öğren bölümünde her şeyi ara</string>
+    <string name="learn_no_matches">Öğrenme metinlerinde sonuç yok</string>
+    <string name="learn_section_matns">Ezber metinleri</string>
+    <string name="learn_matns_footer">Talebelerin ezberlediği klasik manzumeler: tecvid ve hadis usulü.</string>
+    <string name="learn_section_reference">Kaynak</string>
+    <string name="learn_tajweed_sub">Vakıf işaretleri, mushaf sembolleri ve harf kuralları.</string>
+    <string name="learn_tafsir_title">Sureye göre tefsir</string>
+    <string name="learn_tafsir_sub">Bir sure seçin ve tefsirini ayet ayet okuyun.</string>
+    <string name="learn_gharib_title">Kur\'an kelime anlamları</string>
+    <string name="learn_gharib_sub">Kur\'an\'da anlaşılması güç olan kelimeler.</string>
+    <string name="learn_lines">%1$s beyit</string>
+    <string name="learn_line_n">%1$s. beyit</string>
+    <string name="learn_showing_of">%2$s sonuçtan %1$s tanesi gösteriliyor — geri kalanı için metni açın</string>
+    <string name="learn_settings_sub">Tecvid rehberi ve ezber metinleri — Kur\'an sekmesinde de bulunur.</string>
+    <string name="learn_hint">Tecvid rehberi ve ezber metinleri</string>
+    <string name="matn_search_hint">Bu metinde ara</string>
+    <string name="matn_no_lines">Eşleşen beyit yok</string>
+    <string name="matn_count">%1$s / %2$s beyit</string>
+    <string name="matn_sections_editorial">Bölüm başlıkları kaynağa değil, uygulamaya aittir.</string>
+    <string name="matn_text_size">Yazı boyutu</string>
+    <string name="matn_mark">Bu beyti işaretle</string>
+    <string name="matn_unmark">İşareti kaldır</string>
+    <string name="matn_goto_marked">İşaretli beyte git</string>
+    <string name="matn_search_a11y">Bu metinde ara</string>
+    <string name="matn_smaller">Daha küçük</string>
+    <string name="matn_larger">Daha büyük</string>
+    <string name="tafsir_browse_title">Tefsir</string>
+    <string name="tafsir_choose_surah">Bir sure seçin</string>
+    <string name="tafsir_edition">Tefsir nüshası</string>
+    <string name="tafsir_edition_footer">Seçiminiz hatırlanır; ayet kartında da aynısı kullanılır.</string>
+    <string name="tafsir_search_hint">İndirdiğiniz tefsirde ara</string>
+    <string name="gharib_search_hint">İndirdiğiniz kelime anlamlarında ara</string>
+    <string name="tafsir_coverage_partial">İndirdiğiniz %2$s sureden %1$s tanesinde aranıyor</string>
+    <string name="tafsir_coverage_complete">%1$s surenin tamamında aranıyor — bu nüsha cihazınızda eksiksiz</string>
+    <string name="tafsir_no_matches">Sonuç yok</string>
+    <string name="tafsir_no_matches_partial">Yalnızca indirdiğiniz surelerde arama yapıldı — kelime diğerlerinde de geçiyor olabilir.</string>
+    <string name="tafsir_preparing">Arama hazırlanıyor…</string>
+    <string name="tafsir_download_for_search">İçlerinde arama yapmak için %1$s surenin tamamını indirin</string>
+    <string name="tafsir_download_offline">Çevrimdışı için indir</string>
+    <string name="tafsir_downloading_progress">Tefsir indiriliyor %1$s/%2$s…</string>
+    <string name="tafsir_available_offline">Çevrimdışı kullanılabilir</string>
+    <string name="tafsir_downloading_surah">Bu surenin tefsiri indiriliyor…</string>
+    <string name="tafsir_downloading_surah_sub">Cihazda saklanır, böylece bu sure bir dahaki sefere çevrimdışı açılır.</string>
+    <string name="tafsir_empty_surah">Bu nüshada bu sureye ait içerik yok.</string>
+    <string name="tafsir_gharib_note">Burada yalnızca açıklanmaya değer kelimeler içeren ayetler görünür.</string>
+    <string name="tafsir_surah_search_hint">Bu surede ara</string>
+    <string name="tafsir_no_match_surah">Bu surede sonuç yok</string>
+    <string name="tafsir_ayat_count">%1$s / %2$s ayet</string>
+    <string name="tafsir_results">Sonuçlar</string>
+    <string name="tafsir_group_gharib">Kur\'an kelime anlamları — %1$s</string>
+    <string name="tafsir_group_tafsir">Tefsir — %1$s</string>
+    <string name="tafsir_unavailable">Tefsir yüklenemedi — bağlantınızı kontrol edin.</string>
+    <string name="tafsir_ayat_n">%1$s ayet</string>
+</resources>

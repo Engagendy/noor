@@ -5,9 +5,23 @@
      Without this the language picker in onboarding and in Settings does
      nothing on API 33+, and the app is missing from
      Settings > System > Languages > App languages.
-     Arabic first: it is the default (unqualified values/), English is
-     values-en/. -->
+
+     EVERY language the app ships MUST be listed here. Adding a values-<code>/
+     bucket without adding the code here is silent: the strings exist, the
+     picker offers the language, and nothing changes on screen.
+
+     Arabic first: it is the default (unqualified values/). The other nine
+     have values-<code>/ buckets. Same list, same order, as the iOS
+     `NoorLanguage` enum. -->
 <locale-config xmlns:android="http://schemas.android.com/apk/res/android">
     <locale android:name="ar" />
     <locale android:name="en" />
+    <locale android:name="id" />
+    <locale android:name="ur" />
+    <locale android:name="fa" />
+    <locale android:name="tr" />
+    <locale android:name="ms" />
+    <locale android:name="bn" />
+    <locale android:name="fr" />
+    <locale android:name="es" />
 </locale-config>

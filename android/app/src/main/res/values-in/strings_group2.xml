@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Indonesian, LEGACY `in` bucket (byte-identical to values-id/).
+     Java still reports Indonesian as the obsolete code `in`, and that is
+     the code the runtime asks the resource table for, so `values-id/`
+     alone silently resolves to the default (Arabic) bucket. Both are
+     shipped: `id` for aapt2/locales_config, `in` for the runtime.
+     Regenerate the pair together — never hand-edit one.
+     Indonesian. Generated 2026-09-10 from res/values-en/strings_group2.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/id.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="g2_quran_title">Al-Qur\'an</string>
+    <string name="g2_mushaf">Mushaf</string>
+    <string name="g2_search_quran_hint">Surah, kata, atau 2:255</string>
+    <string name="g2_clear_search">Hapus pencarian</string>
+    <string name="g2_tab_surahs">Surah</string>
+    <string name="g2_tab_juz">Juz</string>
+    <string name="g2_tab_bookmarks">Markah</string>
+    <string name="g2_juz_n">Juz %1$s</string>
+    <string name="g2_hizb_n">Hizb %1$s</string>
+    <string name="g2_hizb_start">Awal hizb</string>
+    <string name="g2_hizb_quarter">¼ Hizb</string>
+    <string name="g2_hizb_half">½ Hizb</string>
+    <string name="g2_hizb_three_quarters">¾ Hizb</string>
+    <string name="g2_bookmarks_empty">Markah Anda akan terkumpul di sini.</string>
+    <string name="g2_remove_bookmark">Hapus markah</string>
+    <string name="g2_ayat">Ayat</string>
+    <string name="g2_surah_meta">%1$s ayat · %2$s</string>
+    <string name="g2_makki">Makkiyah</string>
+    <string name="g2_madani">Madaniyah</string>
+    <string name="g2_back">Kembali</string>
+    <string name="g2_play">Putar</string>
+    <string name="g2_reading_mode_mushaf">Mushaf</string>
+    <string name="g2_reading_mode_page">Madaniyah</string>
+    <string name="g2_reading_mode_ayah">Ayat per ayat</string>
+    <string name="g2_quran_text_size">Ukuran teks Al-Qur\'an</string>
+    <string name="g2_show_translation">Tampilkan terjemahan</string>
+    <string name="g2_word_by_word">Kata per kata</string>
+    <string name="g2_hifz_mode">Mode hafalan (sembunyikan teks)</string>
+    <string name="g2_translation_downloading">Mengunduh terjemahan…</string>
+    <string name="g2_translation_failed">Terjemahan tidak dapat diunduh — periksa koneksi Anda.</string>
+    <string name="g2_translation_retry">Terjemahan tidak tersedia — ketuk untuk coba lagi</string>
+    <string name="g2_download_surah_audio">Unduh audio surah</string>
+    <string name="g2_audio_downloaded">Audio terunduh</string>
+    <string name="g2_audio_downloading">Mengunduh %1$s/%2$s…</string>
+    <string name="g2_audio_download_failed">Sebagian ayat gagal diunduh — ketuk untuk coba lagi.</string>
+    <string name="g2_surah_prefix">Surah %1$s</string>
+    <string name="g2_ayah_clip_label">Ayat</string>
+    <string name="g2_juz_page_line">Juz %1$s · Halaman %2$s</string>
+    <string name="g2_page_font_unavailable">Font halaman tidak tersedia.\nSambungkan ke internet sekali untuk mengunduh halaman ini.</string>
+    <string name="g2_tafsir_title">Tafsir — %1$s:%2$s</string>
+    <string name="g2_load_failed">Gagal memuat</string>
+    <string name="g2_tafsir_error">Tafsir tidak dapat dimuat — periksa koneksi Anda. (%1$s)</string>
+    <string name="g2_ayah_ref">%1$s · Ayat %2$s</string>
+    <string name="g2_previous">Sebelumnya</string>
+    <string name="g2_next">Berikutnya</string>
+    <string name="g2_pause">Jeda</string>
+    <string name="g2_stop">Berhenti</string>
+    <string name="g2_playback_mode">Mode pemutaran</string>
+    <string name="g2_mode_continuous">Berkelanjutan</string>
+    <string name="g2_mode_repeat_ayah">Ulangi ayat</string>
+    <string name="g2_mode_page_only">Halaman ini saja</string>
+    <string name="g2_end_of_surah">Akhir surah</string>
+    <string name="g2_memorize_range">Hafalkan rentang ayat</string>
+    <string name="g2_from_ayah">Dari ayat</string>
+    <string name="g2_to_ayah">Sampai ayat</string>
+    <string name="g2_repeat_each_ayah">Ulangi tiap ayat</string>
+    <string name="g2_start_memorizing">Mulai menghafal</string>
+    <string name="g2_cancel">Batal</string>
+    <string name="g2_choose_reciter">Pilih qari</string>
+    <string name="g2_search_reciters">Cari qari…</string>
+    <string name="g2_section_hafs">Riwayat Hafs</string>
+    <string name="g2_section_warsh">Riwayat Warsh</string>
+    <string name="g2_warsh_note">Teks mushaf yang ditampilkan mengikuti riwayat Hafs; tilawahnya mengikuti riwayat Warsh.</string>
+    <string name="g2_translation_audio">Audio terjemahan</string>
+    <string name="g2_translation_audio_note">Terjemahan tiap ayat dibacakan setelah tilawah Arabnya.</string>
+    <string name="g2_hadith_title">Hadis</string>
+    <string name="g2_search_all_hadith">Cari di semua hadis</string>
+    <string name="g2_no_results_download">Tidak ada hasil — unduh dua kitab sahih untuk mencarinya</string>
+    <string name="g2_sahihain">Dua Kitab Sahih</string>
+    <string name="g2_forty_section">Kumpulan Arbain</string>
+    <string name="g2_download">Unduh</string>
+    <string name="g2_retry">Coba lagi</string>
+    <string name="g2_hadith_count">%1$s hadis</string>
+    <string name="g2_hadith_n">Hadis %1$s</string>
+    <string name="g2_search_books">Cari kitab</string>
+    <string name="g2_search_hadiths">Cari hadis</string>
+    <string name="g2_share">Bagikan</string>
+    <string name="g2_size_mb">~%1$s MB</string>
+    <string name="g2_forty_nawawi">Arbain An-Nawawi</string>
+    <string name="g2_forty_qudsi">Arbain Hadis Qudsi</string>
+    <string name="g2_athkar_title">Zikir</string>
+    <string name="g2_ruqyah">Ruqyah</string>
+    <string name="g2_selected_duas">Doa pilihan</string>
+    <string name="g2_names_of_allah">Asmaul Husna</string>
+    <string name="g2_tasbih">Tasbih</string>
+    <string name="g2_done">Selesai</string>
+    <string name="g2_ruqyah_note">Ayat ruqyah dibaca dengan tadabur disertai tiupan lembut, tiga kali atau lebih. Teksnya berasal dari mushaf yang terverifikasi.</string>
+    <string name="g2_prophetic_duas">Doa nabawi</string>
+    <string name="g2_duas_quran">Doa dari Al-Qur\'an</string>
+    <string name="g2_duas_sunnah">Doa dari Sunnah</string>
+    <string name="g2_from_names">Dari Asmaul Husna</string>
+    <string name="g2_reset">Atur ulang</string>
+    <string name="g2_zakat_title">Kalkulator Zakat</string>
+    <string name="g2_your_currency">Mata uang Anda</string>
+    <string name="g2_gold_price_today">Harga emas per gram</string>
+    <string name="g2_gold_price_note">Masukkan harga emas lokal hari ini — nisab adalah nilai 85 gram emas.</string>
+    <string name="g2_zakatable_wealth">Harta yang wajib dizakati</string>
+    <string name="g2_cash">Kas (tunai dan bank)</string>
+    <string name="g2_gold_grams">Emas (gram)</string>
+    <string name="g2_silver_grams">Perak (gram)</string>
+    <string name="g2_investments">Investasi / saham</string>
+    <string name="g2_business">Persediaan dagang</string>
+    <string name="g2_money_owed">Piutang</string>
+    <string name="g2_debts_due">Utang jatuh tempo (dikurangi)</string>
+    <string name="g2_enter_gold_price">Masukkan harga emas untuk menghitung nisab.</string>
+    <string name="g2_nisab">Nisab</string>
+    <string name="g2_net_wealth">Harta bersih</string>
+    <string name="g2_zakat_due" formatted="false">Zakat yang wajib (2,5%)</string>
+    <string name="g2_below_nisab">Di bawah nisab — tidak ada zakat yang wajib.</string>
+    <string name="g2_zakat_disclaimer">Zakat wajib bila harta bersih yang wajib dizakati bertahan pada atau di atas nisab selama satu tahun hijriah penuh. Kalkulator ini hanya panduan — tanyakan kepada ulama untuk kasus yang rumit. Semua angka tetap berada di perangkat Anda.</string>
+    <string name="g2_go_to_page">Lompat ke halaman</string>
+    <string name="g2_page_number_hint">Nomor halaman (1–604)</string>
+    <string name="g2_go">Buka</string>
+    <string name="g2_or_jump_juz">Atau lompat ke juz</string>
+    <string name="g2_listen_from_here">Putar dari sini</string>
+    <string name="g2_tafsir">Tafsir</string>
+    <string name="g2_copy">Salin</string>
+    <string name="g2_bookmarked">Tersimpan di markah</string>
+    <string name="g2_bookmark">Markah</string>
+    <string name="g2_surah_list">Daftar surah</string>
+    <string name="g2_back_to_quran">Kembali ke Al-Qur\'an</string>
+    <string name="g2_search_truncated">Menampilkan %1$s hasil pertama</string>
+    <string name="g2_search_athkar_hint">Cari zikir</string>
+    <string name="g2_search_chapters">Bab</string>
+    <string name="g2_search_athkar_results">Zikir</string>
+    <string name="g2_search_no_results">Tidak ada hasil</string>
+</resources>

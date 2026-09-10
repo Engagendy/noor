@@ -6,31 +6,50 @@ import android.content.res.Resources
 import android.os.LocaleList
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.view.ContextThemeWrapper
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.material3.Text
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.core.os.LocaleListCompat
 import java.util.Locale
 
-/// Locale-aware helpers for the bilingual (ar-first, en) UI.
+/// Locale-aware helpers for the ten-language (ar-first) UI.
 ///
 /// The UI language is whatever bucket Android resolved the resources to
-/// (values = ar default, values-en = English). In composition, read it via
+/// (values = ar default, values-<code> for the other nine — see
+/// `NoorLanguage`, and `res/xml/locales_config.xml`, which MUST list every
+/// one of them). In composition, read it via
 /// the `g1_locale` marker string; outside composition (widgets, receivers,
 /// formatters) `Locale.getDefault()` reflects the app language — `NoorLocale`
 /// keeps the process default in sync itself (see below), so it no longer
@@ -61,7 +80,7 @@ object NoorLocale {
     const val PREF_KEY = "app.language"
     const val SYSTEM = "system"
 
-    /// "system" | "ar" | "en" — reactive, so pickers and every
+    /// "system" or a `NoorLanguage.code` — reactive, so pickers and every
     /// `stringResource` reader recompose the instant it changes.
     var choice by mutableStateOf(SYSTEM)
         private set
@@ -111,14 +130,25 @@ object NoorLocale {
         else -> LocaleList(Locale.forLanguageTag(choice))
     }
 
-    /// The language the UI actually RENDERS in. The app ships exactly two
-    /// buckets, so anything that is not English resolves to Arabic — this is
-    /// what `Locale.getDefault()` is pinned to, keeping formatters, digits
-    /// and `displayName()` in step with the strings on screen.
+    /// The language the UI actually RENDERS in — always one of the ten
+    /// `NoorLanguage` cases. This is what `Locale.getDefault()` is pinned to,
+    /// keeping formatters, digits and `displayName()` in step with the
+    /// strings on screen.
+    ///
+    /// Anything the app has no bucket for resolves to Arabic, because
+    /// unqualified `values/` is Arabic: the fallback here and the fallback
+    /// the resource resolver performs must be the same language or the
+    /// direction and the strings disagree.
     fun uiLocale(): Locale {
-        val first = locales().let { if (it.isEmpty) Locale.getDefault() else it[0] }
-        return if (first.language == "en" || first.language == "ar") first else Locale("ar")
+        val list = locales()
+        for (i in 0 until list.size()) {
+            NoorLanguage.from(list[i])?.let { return it.locale }
+        }
+        return NoorLanguage.DEFAULT.locale
     }
+
+    /// The resolved interface language, outside composition.
+    fun language(): NoorLanguage = NoorLanguage.from(uiLocale()) ?: NoorLanguage.DEFAULT
 
     /// Pin the JVM default so non-composable code (widgets, notifications,
     /// `isArabicLocale()`, date/number formatters) agrees with the UI without
@@ -133,8 +163,9 @@ object NoorLocale {
     fun configuration(base: Context): Configuration =
         Configuration(base.resources.configuration).apply {
             setLocales(locales())
-            // setLocales resets the direction from locales[0]; the app only
-            // has ar/en buckets, so pin it to the bucket we resolve to.
+            // setLocales resets the direction from locales[0]; pin it to the
+            // bucket we actually resolve to, which for an unsupported device
+            // language is not locales[0] at all.
             setLayoutDirection(uiLocale())
         }
 
@@ -173,29 +204,76 @@ fun NoorLocaleProvider(content: @Composable () -> Unit) {
         NoorLocaleContext(base, NoorLocale.configuration(base))
     }
     val configuration = localized.resources.configuration
-    val direction =
-        if (localized.resources.getString(R.string.g1_locale) == "ar") LayoutDirection.Rtl
-        else LayoutDirection.Ltr
+    // Read the language from the RESOLVED resources, never from the pref:
+    // the two disagree whenever the device language has no bucket here, and
+    // the strings on screen are what the direction has to match.
+    val language = NoorLanguage.from(localized.resources.getString(R.string.g1_locale))
+        ?: NoorLanguage.DEFAULT
+    val direction = if (language.isRtl) LayoutDirection.Rtl else LayoutDirection.Ltr
+    // Urdu is drawn in Nastaliq, whose line box is ~2.5em. Scaling
+    // `fontScale` is the only lever that reaches every `fontSize = N.sp`
+    // written at a call site; `ArabicDirection`/`ArabicBlock` undo it for
+    // Arabic content, which is not in Nastaliq. 1f for the other nine, so
+    // this is a no-op everywhere else.
+    val baseDensity = LocalDensity.current
+    val density = remember(baseDensity, language) {
+        if (language.uiFontScale == 1f) baseDensity
+        else Density(baseDensity.density, baseDensity.fontScale * language.uiFontScale)
+    }
     CompositionLocalProvider(
         LocalContext provides localized,
         LocalConfiguration provides configuration,
         LocalLayoutDirection provides direction,
+        LocalDensity provides density,
+        LocalBaseDensity provides baseDensity,
+        LocalNoorLanguage provides language,
         content = content)
 }
 
-/// True when the RESOLVED resource language is Arabic — drives layout
-/// direction so strings and mirroring never disagree.
+/// The interface language, for composables. Provided by `NoorLocaleProvider`;
+/// the default is only ever seen by a preview that forgot the provider.
+val LocalNoorLanguage = staticCompositionLocalOf { NoorLanguage.DEFAULT }
+
+/// The base (unscaled) density, so Arabic content can opt out of the Urdu
+/// interface font scale. Provided alongside it above.
+private val LocalBaseDensity = compositionLocalOf<Density?> { null }
+
+/// The interface language, read from the RESOLVED resource bucket so it can
+/// never disagree with the strings on screen.
+@Composable
+fun noorUiLanguage(): NoorLanguage =
+    NoorLanguage.from(stringResource(R.string.g1_locale)) ?: NoorLanguage.DEFAULT
+
+/// True when the RESOLVED resource language is Arabic.
+///
+/// This is the ARABIC question, not the right-to-left question. Use it only
+/// where Arabic *content* is being chosen (Arabic hadith text vs its English
+/// translation, an Arabic name vs its transliteration). For layout, ask
+/// `isRtlUi()` — Urdu and Persian are right-to-left and are not Arabic.
 @Composable
 fun isArabicUi(): Boolean = stringResource(R.string.g1_locale) == "ar"
 
-/// Layout direction for the whole app: ar → RTL, en → LTR.
+/// True when the interface language is written right-to-left: ar, ur, fa.
+@Composable
+fun isRtlUi(): Boolean = noorUiLanguage().isRtl
+
+/// Layout direction for the whole app.
 @Composable
 fun noorLayoutDirection(): LayoutDirection =
-    if (isArabicUi()) LayoutDirection.Rtl else LayoutDirection.Ltr
+    if (isRtlUi()) LayoutDirection.Rtl else LayoutDirection.Ltr
 
-/// Arabic-Indic digits in Arabic UI, Western digits otherwise —
-/// the locale-aware counterpart of `Int.arabicIndic()`.
-fun Int.localizedDigits(): String = if (isArabicLocale()) arabicIndic() else toString()
+/// This number written in the interface language's own digits — the
+/// locale-aware counterpart of `Int.arabicIndic()`.
+///
+/// Arabic ٠١٢, Urdu and Persian the eastern forms ۰۱۲, Bengali ০১২, and
+/// Western digits for the five Latin-script languages. The set matches the
+/// digits the translated strings are written with, so a screen never shows
+/// two numeral systems side by side. See `NoorLanguage.digitZero`.
+fun Int.localizedDigits(): String {
+    val zero = NoorLanguage.current().digitZero ?: return toString()
+    if (zero == '\u0660') return arabicIndic()
+    return toString().map { if (it in '0'..'9') zero + (it - '0') else it }.joinToString("")
+}
 
 // MARK: - Arabic content inside an English UI
 //
@@ -220,7 +298,14 @@ fun Int.localizedDigits(): String = if (isArabicLocale()) arabicIndic() else toS
 /// drop-in inside any Row/Column/LazyColumn item.
 @Composable
 fun ArabicDirection(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl, content = content)
+    // Also undoes the Urdu interface font scale: this subtree is Arabic
+    // content in an Arabic face, not Nastaliq, so it must be set at the size
+    // the design asks for. A no-op in the other nine languages.
+    val base = LocalBaseDensity.current ?: LocalDensity.current
+    CompositionLocalProvider(
+        LocalLayoutDirection provides LayoutDirection.Rtl,
+        LocalDensity provides base,
+        content = content)
 }
 
 /// A full-width RTL Column for an Arabic content block.
@@ -238,9 +323,13 @@ fun ArabicBlock(modifier: Modifier = Modifier, content: @Composable ColumnScope.
 // has to be carried explicitly here or these call sites fall back to the
 // platform default. Call sites that render Quran text pass an explicit
 // `fontFamily =` param, which still wins over the style.
+// `arabicFamily`, NOT `family`: this is Arabic CONTENT. In an Urdu interface
+// `NoorFont.family` is Noto Nastaliq Urdu, which is a Nastaliq face for Urdu
+// running text — the Quran, hadith and athkar Arabic must stay in the Naskh
+// family the user chose, in every one of the ten interface languages.
 fun arabicText(align: TextAlign = TextAlign.Start): TextStyle =
     TextStyle(textDirection = TextDirection.Rtl, textAlign = align,
-              fontFamily = NoorFont.family)
+              fontFamily = NoorFont.arabicFamily)
 
 // MARK: - direction-aware arrows
 //
@@ -279,7 +368,26 @@ fun Surah.displayName(): String = if (isArabicLocale()) nameArabic else nameTran
 
 fun CityPreset.displayName(): String = if (isArabicLocale()) nameArabic else name
 
-fun PrayerEntry.displayName(): String = if (isArabicLocale()) nameArabic else nameEnglish
+/// Prayer names are the one "ar vs en data pair" that is NOT content: they
+/// are UI labels, they are in `Tools/i18n/GLOSSARY.md` for all ten languages,
+/// and `strings.xml` already carries them per bucket. So this resolves the
+/// resource rather than picking between the two hardcoded strings — Fajr is
+/// "Icha"/"Yatsı"/"এশা" in the interface language, not English-for-everyone.
+/// (`nameArabic`/`nameEnglish` stay on the model: the widget and the adhan
+/// notification are built outside the activity and pass them through.)
+val PrayerEntry.nameRes: Int
+    get() = when (key) {
+        "fajr" -> R.string.g1_fajr
+        "dhuhr" -> R.string.g1_dhuhr
+        "asr" -> R.string.g1_asr
+        "maghrib" -> R.string.g1_maghrib
+        else -> R.string.g1_isha
+    }
+
+fun PrayerEntry.displayName(context: Context): String = context.getString(nameRes)
+
+@Composable
+fun PrayerEntry.displayName(): String = stringResource(nameRes)
 
 fun CalculationMethodChoice.displayName(): String =
     if (isArabicLocale()) nameArabic else nameEnglish
@@ -298,4 +406,60 @@ fun hijriMonthName(month: Int): String = when {
     month !in 1..12 -> ""
     isArabicLocale() -> IslamicEvent.hijriMonthsArabic[month - 1]
     else -> hijriMonthsEnglish[month - 1]
+}
+
+// MARK: - the language picker
+//
+// One component, used by onboarding, Settings and the kids sheet, so the
+// three can never drift apart. Every language is written in ITS OWN language
+// and script (`NoorLanguage.endonym`) and is NEVER routed through
+// `strings.xml`: a picker that offers "Bengali" to a Bengali speaker who
+// cannot read the current interface language is useless.
+
+/// Wrapping grid of language chips. `selectedId` is `NoorLocale.choice`
+/// ("system" or a language code).
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun NoorLanguageChips(
+    selectedId: String,
+    includeSystem: Boolean = true,
+    onSelect: (String) -> Unit,
+) {
+    val options = buildList {
+        if (includeSystem) add(NoorLocale.SYSTEM to stringResource(R.string.g1_lang_system))
+        NoorLanguage.entries.forEach { add(it.code to it.endonym) }
+    }
+    // The chips are laid out in the READING direction of the current
+    // interface language, like every other row in the app.
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        options.forEach { (id, label) ->
+            val selected = id == selectedId
+            val language = NoorLanguage.from(id)
+            Text(
+                label,
+                // Endonyms are drawn in their own script. Urdu needs
+                // Nastaliq or اردو is set in a Naskh face on the very row
+                // whose job is to show the user what Urdu looks like.
+                fontFamily = if (language?.forcesNastaliq == true) NastaliqFont else null,
+                fontSize = (14 * (language?.pickerFontScale ?: 1f)).sp,
+                // Nastaliq draws far above and below the baseline; give the
+                // chip a line box that fits it rather than letting the row
+                // clip the kashida sweep.
+                lineHeight = if (language?.forcesNastaliq == true) 30.sp else TextUnit.Unspecified,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (selected) NoorColor.accentPrimary else NoorColor.inkSecondary,
+                modifier = Modifier
+                    // Clip BEFORE clickable so the ripple follows the corner.
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (selected) NoorColor.stateReciting else NoorColor.bgPrimary,
+                        RoundedCornerShape(10.dp))
+                    .clickable { onSelect(id) }
+                    .padding(horizontal = 10.dp, vertical = 7.dp))
+        }
+    }
 }

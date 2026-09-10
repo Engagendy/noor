@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Indonesian, LEGACY `in` bucket (byte-identical to values-id/).
+     Java still reports Indonesian as the obsolete code `in`, and that is
+     the code the runtime asks the resource table for, so `values-id/`
+     alone silently resolves to the default (Arabic) bucket. Both are
+     shipped: `id` for aapt2/locales_config, `in` for the runtime.
+     Regenerate the pair together — never hand-edit one.
+     Indonesian. Generated 2026-09-10 from res/values-en/strings_misc.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/id.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="misc_storage_recitations">Tilawah</string>
+    <string name="misc_storage_recitations_sub">Audio ayat yang diunduh untuk didengarkan offline</string>
+    <string name="misc_go_to_reciting">Lompat ke ayat yang sedang dibaca</string>
+    <string name="misc_channel_recitation">Tilawah</string>
+    <string name="misc_channel_recitation_desc">Kontrol pemutaran tilawah</string>
+</resources>

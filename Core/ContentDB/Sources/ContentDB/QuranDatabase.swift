@@ -50,6 +50,16 @@ public final class QuranDatabase: Sendable {
         try queue.read { try Surah.order(Column("id")).fetchAll($0) }
     }
 
+    /// Every ayah in one read. The per-surah call in a loop opens 114
+    /// separate reads, which is enough I/O to make SQLite fail transiently
+    /// when the whole test suite runs at once — a flaky test teaches people
+    /// to ignore failures, so whole-mushaf work should come through here.
+    public func allVerses() throws -> [Verse] {
+        try queue.read {
+            try Verse.order(Column("surah_id"), Column("ayah")).fetchAll($0)
+        }
+    }
+
     public func verses(surahId: Int) throws -> [Verse] {
         try queue.read {
             try Verse.filter(Column("surah_id") == surahId)

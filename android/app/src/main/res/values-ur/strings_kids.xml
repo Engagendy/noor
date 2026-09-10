@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Urdu. Generated 2026-09-10 from res/values-en/strings_kids.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/ur.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="kids_title">بچوں کا موڈ</string>
+    <string name="kids_subtitle">بچوں کے لیے سادہ قرآن، ساتھ میں بڑوں کا تالا۔</string>
+    <string name="kids_age_question">آپ کے بچے کی عمر کتنی ہے؟</string>
+    <string name="kids_age_years">%1$s سال</string>
+    <string name="kids_start">شروع کریں</string>
+    <string name="kids_gate_title">کسی بڑے سے پوچھیں</string>
+    <string name="kids_gate_question">%1$s × %2$s = ؟</string>
+    <string name="kids_gate_hint">یہ جواب درست نہیں — یہ لیجیے نیا سوال۔</string>
+    <string name="kids_gate_check">دیکھیں</string>
+    <string name="kids_gate_answer">جواب</string>
+    <string name="kids_tab_read">پڑھیں</string>
+    <string name="kids_tab_athkar">میرے اذکار</string>
+    <string name="kids_total_stars">آپ کے ستارے: %1$s</string>
+    <string name="kids_grownup">بڑوں کے لیے</string>
+    <string name="kids_stars_of_three">۳ میں سے %1$s ستارے</string>
+    <string name="kids_ayah_count">%1$s آیات</string>
+    <string name="kids_listen">سنیں</string>
+    <string name="kids_pause">وقفہ</string>
+    <string name="kids_repeat">تکرار %1$s / %2$s</string>
+    <string name="kids_well_done">شاباش! ایک نیا ستارہ</string>
+    <string name="kids_sound">آواز</string>
+    <string name="kids_mode_listen">سنیں</string>
+    <string name="kids_mode_listen_note">ہر آیت ایک بار</string>
+    <string name="kids_mode_memorise">حفظ کریں</string>
+    <string name="kids_mode_memorise_note">ہر آیت %1$s بار دہرائی جاتی ہے</string>
+    <string name="kids_mode_memorise_note_none">ہر آیت ایک بار</string>
+    <string name="kids_reciter">قاری</string>
+    <string name="kids_muallim_note">آہستہ پڑھتے ہیں، سیکھنے کے لیے</string>
+    <string name="kids_settings">ترتیبات</string>
+    <string name="kids_language">زبان</string>
+</resources>

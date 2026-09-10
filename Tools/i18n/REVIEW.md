@@ -63,6 +63,33 @@ sign the ENGLISH is the problem, not the translation.
    of context, and several languages cannot distinguish singular from plural
    here anyway. Each was flagged; each needs a glance at the screen.
 
+## The Android residue (added 2026-09-10)
+
+Android carries 439 strings against the iOS catalog's 359, because its
+`strings*.xml` grew screens and notification channels the Swift build states
+in code. Mapping Android string NAME → its `values-en/` English → the iOS key
+matched **276**; the remaining **162** (157 distinct English strings; five are
+duplicates under two names) were translated fresh to this same glossary and
+**written back into `translations/<code>.json`**, keyed by their English, so
+the two platforms stay in one file. That is what took each language from 359
+to 508 keys.
+
+Those 157 are the least-reviewed strings in this directory: they were
+translated in one pass, by one agent per language, and no iOS reviewer has
+seen them because iOS does not have these screens. Each translator's own
+flagged list is in the git history of this change rather than in
+`review/<code>.md`. Terms they settled that are not yet in `GLOSSARY.md` and
+that several languages hit independently — worth adding, and worth checking
+first:
+
+- **The Two Sahihs** (صحیحین / Sahihayn / Los dos Sahih / সহিহাইন …)
+- **The Forty Collections**, **An-Nawawi's Forty**, **Forty Hadith Qudsi**
+- **The white days** (الأيام البيض) — every language reached for the Arabic
+  phrase (ایامِ بیض, eyyâm-ı bîz, আইয়ামে বীজ) rather than a literal one
+- **Jumu'ah Mubarakah** — the everyday greeting form in each language
+- **Uthmani script**, **mirror** (of a data source), **AH** (hijri suffix)
+- **the daily khatmah portion** (ورد) — "vird", "Bacaan harian", …
+
 ## What is deliberately NOT translated
 
 - **`isArabicUI` content branches.** About 58 places in the Swift build a

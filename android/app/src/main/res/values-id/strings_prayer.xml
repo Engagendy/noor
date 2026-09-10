@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Indonesian. Generated 2026-09-10 from res/values-en/strings_prayer.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/id.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="prayer_exact_alarm_title">Peringatan azan bisa terlambat</string>
+    <string name="prayer_exact_alarm_text">Izinkan Noor menyetel alarm dan pengingat agar azan tiba tepat waktu.</string>
+    <string name="prayer_exact_alarm_action">Izinkan</string>
+    <string name="prayer_high_latitude_unavailable">Jadwal salat tidak dapat dihitung untuk lokasi ini pada waktu ini dalam setahun (lintang tinggi). Pilih kota terdekat di Setelan.</string>
+    <string name="prayer_high_latitude_short">Tidak tersedia</string>
+    <string name="prayer_fasting_white_day">ayyamul bidh (%1$d H)</string>
+</resources>

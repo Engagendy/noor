@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Turkish. Generated 2026-09-10 from res/values-en/strings_prayer.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/tr.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="prayer_exact_alarm_title">Ezan bildirimleri gecikebilir</string>
+    <string name="prayer_exact_alarm_text">Ezanın tam vaktinde ulaşması için Noor\'un alarm ve hatırlatma kurmasına izin verin.</string>
+    <string name="prayer_exact_alarm_action">İzin ver</string>
+    <string name="prayer_high_latitude_unavailable">Yılın bu döneminde bu konum için namaz vakitleri hesaplanamıyor (yüksek enlem). Ayarlar\'dan yakın bir şehir seçin.</string>
+    <string name="prayer_high_latitude_short">Kullanılamıyor</string>
+    <string name="prayer_fasting_white_day">eyyâm-ı bîz günü (hicri %1$d)</string>
+</resources>

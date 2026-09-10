@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French. Generated 2026-09-10 from res/values-en/strings_prayer.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/fr.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="prayer_exact_alarm_title">Les alertes d’adhan peuvent être en retard</string>
+    <string name="prayer_exact_alarm_text">Autorisez Noor à définir des alarmes et des rappels pour que l’adhan arrive à l’heure exacte.</string>
+    <string name="prayer_exact_alarm_action">Autoriser</string>
+    <string name="prayer_high_latitude_unavailable">Les horaires de prière ne peuvent pas être calculés pour ce lieu à cette période de l’année (latitude élevée). Choisissez une ville proche dans Réglages.</string>
+    <string name="prayer_high_latitude_short">Indisponible</string>
+    <string name="prayer_fasting_white_day">un jour blanc (%1$d H)</string>
+</resources>

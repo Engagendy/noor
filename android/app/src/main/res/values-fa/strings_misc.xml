@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Persian. Generated 2026-09-10 from res/values-en/strings_misc.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/fa.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="misc_storage_recitations">تلاوت‌ها</string>
+    <string name="misc_storage_recitations_sub">صوت آیه‌های دانلودشده برای شنیدن آفلاین</string>
+    <string name="misc_go_to_reciting">رفتن به آیه‌ای که تلاوت می‌شود</string>
+    <string name="misc_channel_recitation">تلاوت</string>
+    <string name="misc_channel_recitation_desc">کنترل پخش تلاوت</string>
+</resources>

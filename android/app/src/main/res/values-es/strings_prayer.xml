@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spanish. Generated 2026-09-10 from res/values-en/strings_prayer.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/es.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="prayer_exact_alarm_title">Los avisos del adán pueden retrasarse</string>
+    <string name="prayer_exact_alarm_text">Permite que Noor programe alarmas y recordatorios para que el adán llegue puntual.</string>
+    <string name="prayer_exact_alarm_action">Permitir</string>
+    <string name="prayer_high_latitude_unavailable">No se pueden calcular los horarios de oración para esta ubicación en esta época del año (latitud alta). Elige una ciudad cercana en Ajustes.</string>
+    <string name="prayer_high_latitude_short">No disponible</string>
+    <string name="prayer_fasting_white_day">un día blanco (%1$d H.)</string>
+</resources>

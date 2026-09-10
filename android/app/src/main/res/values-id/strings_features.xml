@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Indonesian. Generated 2026-09-10 from res/values-en/strings_features.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/id.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="feat_channel_athkar">Pengingat zikir</string>
+    <string name="feat_channel_athkar_desc">Zikir setelah salat</string>
+    <string name="feat_athkar_after_salah">Zikir setelah salat</string>
+    <string name="feat_athkar_after_salah_text">Semoga Allah menerima salat Anda · Ketuk untuk membaca zikir setelah salat %1$s</string>
+    <string name="feat_athkar_after_by">Setelah salat</string>
+    <string name="feat_minutes_short">%1$s mnt</string>
+    <string name="feat_choose_city">Pilih kota Anda</string>
+    <string name="feat_nearby">Terdekat</string>
+    <string name="feat_popular">Populer</string>
+    <string name="feat_browse_by_country">Jelajahi menurut negara</string>
+    <string name="feat_countries">Negara</string>
+    <string name="feat_no_results">Tidak ada hasil</string>
+    <string name="feat_clear_search">Hapus pencarian</string>
+    <string name="feat_close">Tutup</string>
+    <string name="feat_selected">Dipilih</string>
+    <string name="feat_change_city">Ganti kota</string>
+    <string name="feat_my_location">Lokasi saya</string>
+    <string name="feat_share_app">Bagikan Noor</string>
+    <string name="feat_share_app_text">Noor: Al-Qur\'an, jadwal salat, dan zikir, gratis selamanya tanpa iklan dan tanpa pelacakan.\nApp Store: https://apps.apple.com/ae/app/noor-al-muslim/id6807128479\nGoogle Play: https://play.google.com/store/apps/details?id=com.engagendy.noor</string>
+    <string name="feat_share_video">Bagikan sebagai video</string>
+    <string name="feat_share_video_caption">Tilawah oleh %1$s</string>
+    <string name="feat_video_downloading">Mengunduh tilawah…</string>
+    <string name="feat_video_composing">Membuat video…</string>
+    <string name="feat_video_offline">Sambungkan sekali untuk mengunduh tilawah ayat ini</string>
+    <string name="feat_video_failed">Video tidak dapat dibuat</string>
+    <string name="feat_video_offline_dhikr">Sambungkan sekali untuk mengunduh rekaman zikir ini</string>
+    <string name="feat_share_image">Bagikan sebagai gambar</string>
+    <string name="feat_dhikr_reciter">Hamad Al-Duraihim</string>
+    <string name="feat_athkar_play">Putar</string>
+    <string name="feat_athkar_pause">Jeda</string>
+    <string name="feat_athkar_play_chapter">Putar bab</string>
+    <string name="feat_athkar_pause_chapter">Jeda bab</string>
+    <string name="feat_athkar_audio_offline">Sambungkan sekali untuk mengunduh zikir ini</string>
+    <string name="feat_athkar_audio_failed">Rekaman ini tidak dapat diputar</string>
+    <string name="feat_storage_athkar_audio">Audio zikir</string>
+    <string name="feat_storage_athkar_audio_sub">Rekaman yang diunduh untuk didengarkan offline</string>
+    <string name="feat_app_font">Font aplikasi</string>
+</resources>

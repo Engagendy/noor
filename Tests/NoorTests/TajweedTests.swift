@@ -31,8 +31,12 @@ final class TajweedTests: XCTestCase {
     /// wrong place would colour the wrong letters.
     func testEverySpanFallsInsideItsAyah() throws {
         var checked = 0
-        for surah in try quran.allSurahs() {
-            let verses = try quran.verses(surahId: surah.id)
+        // One read for the whole mushaf, then one span lookup per surah:
+        // the old shape opened 114 reads and failed intermittently under
+        // full-suite I/O load.
+        let allVerses = try quran.allVerses()
+        for (_, verses) in Dictionary(grouping: allVerses, by: \.surahId)
+            .sorted(by: { $0.key < $1.key }) {
             let spansByAyah = try tajweed.spans(for: verses)
             for verse in verses {
                 let length = verse.text.unicodeScalars.count

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali. Generated 2026-09-10 from res/values-en/strings_kids.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/bn.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="kids_title">শিশু মোড</string>
+    <string name="kids_subtitle">শিশুদের জন্য সহজ কুরআন, সঙ্গে অভিভাবকের লক।</string>
+    <string name="kids_age_question">আপনার সন্তানের বয়স কত?</string>
+    <string name="kids_age_years">%1$s বছর</string>
+    <string name="kids_start">শুরু</string>
+    <string name="kids_gate_title">একজন বড়কে জিজ্ঞাসা করো</string>
+    <string name="kids_gate_question">%1$s × %2$s = ?</string>
+    <string name="kids_gate_hint">এটি সঠিক উত্তর নয় — এই নিন নতুন একটি।</string>
+    <string name="kids_gate_check">যাচাই</string>
+    <string name="kids_gate_answer">উত্তর</string>
+    <string name="kids_tab_read">পড়ুন</string>
+    <string name="kids_tab_athkar">আমার জিকির</string>
+    <string name="kids_total_stars">তোমার তারা: %1$s</string>
+    <string name="kids_grownup">অভিভাবক</string>
+    <string name="kids_stars_of_three">৩ তারার মধ্যে %1$s</string>
+    <string name="kids_ayah_count">%1$s আয়াত</string>
+    <string name="kids_listen">শুনুন</string>
+    <string name="kids_pause">পজ</string>
+    <string name="kids_repeat">পুনরাবৃত্তি %1$s / %2$s</string>
+    <string name="kids_well_done">চমৎকার! নতুন একটি তারা</string>
+    <string name="kids_sound">শব্দ</string>
+    <string name="kids_mode_listen">শুনুন</string>
+    <string name="kids_mode_listen_note">প্রতি আয়াত একবার</string>
+    <string name="kids_mode_memorise">মুখস্থ করুন</string>
+    <string name="kids_mode_memorise_note">প্রতি আয়াত %1$s বার</string>
+    <string name="kids_mode_memorise_note_none">প্রতি আয়াত একবার</string>
+    <string name="kids_reciter">ক্বারি</string>
+    <string name="kids_muallim_note">ধীরে পড়ে, শেখার জন্য</string>
+    <string name="kids_settings">সেটিংস</string>
+    <string name="kids_language">ভাষা</string>
+</resources>

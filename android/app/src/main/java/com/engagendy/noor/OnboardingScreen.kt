@@ -160,26 +160,10 @@ private fun LanguageStep(onContinue: () -> Unit) {
                 .background(NoorColor.bgElevated, RoundedCornerShape(14.dp))
                 .padding(8.dp)
         ) {
-            listOf(
-                "system" to stringResource(R.string.g1_lang_system),
-                "ar" to "العربية",
-                "en" to "English",
-            ).forEach { (id, label) ->
-                val selected = current == id
-                Text(
-                    label,
-                    fontSize = 17.sp,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (selected) NoorColor.accentPrimary else NoorColor.inkPrimary,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 2.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(
-                            if (selected) NoorColor.stateReciting else Color.Transparent,
-                            RoundedCornerShape(10.dp))
-                        .clickable { NoorLocale.set(context, id) }
-                        .padding(horizontal = 14.dp, vertical = 12.dp))
+            // Ten languages: a wrapping grid of endonyms, shared verbatim
+            // with Settings and the kids sheet (NoorLanguageChips).
+            NoorLanguageChips(selectedId = current) { id ->
+                NoorLocale.set(context, id)
             }
         }
         Text(

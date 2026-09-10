@@ -201,17 +201,21 @@ never touch Quran rendering, which stays on the verified Quran fonts above.
   - Cairo — Copyright 2009 The Cairo Project Authors. SIL OFL 1.1.
 
 ### Noto Nastaliq Urdu (bundled — Urdu interface text)
-- **File:** `Core/DesignSystem/Sources/DesignSystem/Resources/UIFonts/NotoNastaliqUrdu[wght].ttf`
-  (the upstream *variable* file).
+- **Files:** iOS `Core/DesignSystem/Sources/DesignSystem/Resources/UIFonts/NotoNastaliqUrdu[wght].ttf`;
+  Android `android/app/src/main/res/font/noto_nastaliq_urdu.ttf` — the same
+  upstream *variable* file, renamed only because Android's resource system
+  allows nothing but lowercase file names.
 - **Source:** google/fonts `ofl/notonastaliqurdu`, fetched from the `main`
   branch. Bundled unmodified — byte for byte the upstream binary, not
-  subset, not renamed, not re-generated.
+  subset, not renamed internally, not re-generated.
 - **License:** SIL Open Font License 1.1.
 - **Why:** Urdu is written in Nastaliq. All five families above are Naskh
   Arabic faces: they *render* Urdu, but to an Urdu reader the result reads
   as wrong-script. So when the interface language is Urdu the app draws its
   interface text in Noto Nastaliq Urdu whatever family is chosen in
   Settings; the picker itself keeps showing each family in its own face.
+  Arabic *content* (Quran, hadith, athkar) is explicitly exempt on both
+  platforms and stays in the chosen Naskh family.
 - **Copyright / attribution:** Copyright 2022 The Noto Project Authors
   (https://github.com/notofonts/nastaliq). SIL OFL 1.1.
 

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French. Generated 2026-09-10 from res/values-en/strings_kids.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/fr.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="kids_title">Mode enfants</string>
+    <string name="kids_subtitle">Un Coran plus simple pour les enfants, avec un verrou parental.</string>
+    <string name="kids_age_question">Quel âge a votre enfant ?</string>
+    <string name="kids_age_years">%1$s ans</string>
+    <string name="kids_start">Commencer</string>
+    <string name="kids_gate_title">Demande à un adulte</string>
+    <string name="kids_gate_question">%1$s × %2$s = ?</string>
+    <string name="kids_gate_hint">Ce n’est pas ça — voici une nouvelle question.</string>
+    <string name="kids_gate_check">Vérifier</string>
+    <string name="kids_gate_answer">Réponse</string>
+    <string name="kids_tab_read">Lire</string>
+    <string name="kids_tab_athkar">Mes Adhkar</string>
+    <string name="kids_total_stars">Tes étoiles : %1$s</string>
+    <string name="kids_grownup">Adultes</string>
+    <string name="kids_stars_of_three">%1$s étoiles sur 3</string>
+    <string name="kids_ayah_count">%1$s versets</string>
+    <string name="kids_listen">Écouter</string>
+    <string name="kids_pause">Pause</string>
+    <string name="kids_repeat">Répétition %1$s sur %2$s</string>
+    <string name="kids_well_done">Bravo ! Une nouvelle étoile</string>
+    <string name="kids_sound">Son</string>
+    <string name="kids_mode_listen">Écouter</string>
+    <string name="kids_mode_listen_note">Chaque verset une fois</string>
+    <string name="kids_mode_memorise">Mémoriser</string>
+    <string name="kids_mode_memorise_note">Chaque verset se répète %1$s fois</string>
+    <string name="kids_mode_memorise_note_none">Chaque verset une fois</string>
+    <string name="kids_reciter">Récitateur</string>
+    <string name="kids_muallim_note">Lecture lente, pour apprendre</string>
+    <string name="kids_settings">Réglages</string>
+    <string name="kids_language">Langue</string>
+</resources>

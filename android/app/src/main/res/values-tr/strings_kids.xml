@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Turkish. Generated 2026-09-10 from res/values-en/strings_kids.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/tr.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="kids_title">Çocuk modu</string>
+    <string name="kids_subtitle">Çocuklar için daha sade bir Kur\'an; büyüklere özel kilidiyle.</string>
+    <string name="kids_age_question">Çocuğunuz kaç yaşında?</string>
+    <string name="kids_age_years">%1$s yaş</string>
+    <string name="kids_start">Başla</string>
+    <string name="kids_gate_title">Bir büyüğüne sor</string>
+    <string name="kids_gate_question">%1$s × %2$s = ?</string>
+    <string name="kids_gate_hint">Tam değil — işte başka bir soru.</string>
+    <string name="kids_gate_check">Kontrol et</string>
+    <string name="kids_gate_answer">Cevap</string>
+    <string name="kids_tab_read">Oku</string>
+    <string name="kids_tab_athkar">Zikirlerim</string>
+    <string name="kids_total_stars">Yıldızların: %1$s</string>
+    <string name="kids_grownup">Büyükler</string>
+    <string name="kids_stars_of_three">%1$s / 3 yıldız</string>
+    <string name="kids_ayah_count">%1$s ayet</string>
+    <string name="kids_listen">Dinle</string>
+    <string name="kids_pause">Duraklat</string>
+    <string name="kids_repeat">Tekrar %1$s / %2$s</string>
+    <string name="kids_well_done">Aferin! Yeni bir yıldız</string>
+    <string name="kids_sound">Ses</string>
+    <string name="kids_mode_listen">Dinle</string>
+    <string name="kids_mode_listen_note">Her ayet bir kez</string>
+    <string name="kids_mode_memorise">Ezberle</string>
+    <string name="kids_mode_memorise_note">Her ayet %1$s kez tekrarlanır</string>
+    <string name="kids_mode_memorise_note_none">Her ayet bir kez</string>
+    <string name="kids_reciter">Kari</string>
+    <string name="kids_muallim_note">Öğrenmek için yavaş okur</string>
+    <string name="kids_settings">Ayarlar</string>
+    <string name="kids_language">Dil</string>
+</resources>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Indonesian. Generated 2026-09-10 from res/values-en/strings_kids.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/id.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="kids_title">Mode anak</string>
+    <string name="kids_subtitle">Al-Qur\'an yang lebih sederhana untuk anak, dengan kunci untuk orang dewasa.</string>
+    <string name="kids_age_question">Berapa usia anak Anda?</string>
+    <string name="kids_age_years">%1$s tahun</string>
+    <string name="kids_start">Mulai</string>
+    <string name="kids_gate_title">Tanya orang dewasa</string>
+    <string name="kids_gate_question">%1$s × %2$s = ?</string>
+    <string name="kids_gate_hint">Belum tepat — ini soal yang lain.</string>
+    <string name="kids_gate_check">Periksa</string>
+    <string name="kids_gate_answer">Jawaban</string>
+    <string name="kids_tab_read">Baca</string>
+    <string name="kids_tab_athkar">Zikir saya</string>
+    <string name="kids_total_stars">Bintang Anda: %1$s</string>
+    <string name="kids_grownup">Orang dewasa</string>
+    <string name="kids_stars_of_three">%1$s dari 3 bintang</string>
+    <string name="kids_ayah_count">%1$s ayat</string>
+    <string name="kids_listen">Dengar</string>
+    <string name="kids_pause">Jeda</string>
+    <string name="kids_repeat">Pengulangan %1$s dari %2$s</string>
+    <string name="kids_well_done">Bagus sekali! Bintang baru</string>
+    <string name="kids_sound">Suara</string>
+    <string name="kids_mode_listen">Dengar</string>
+    <string name="kids_mode_listen_note">Setiap ayat sekali</string>
+    <string name="kids_mode_memorise">Hafal</string>
+    <string name="kids_mode_memorise_note">Setiap ayat diulang %1$s kali</string>
+    <string name="kids_mode_memorise_note_none">Setiap ayat sekali</string>
+    <string name="kids_reciter">Qari</string>
+    <string name="kids_muallim_note">Dibaca perlahan, untuk belajar</string>
+    <string name="kids_settings">Setelan</string>
+    <string name="kids_language">Bahasa</string>
+</resources>

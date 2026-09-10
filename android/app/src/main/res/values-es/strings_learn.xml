@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spanish. Generated 2026-09-10 from res/values-en/strings_learn.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/es.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="learn_title">Aprender</string>
+    <string name="learn_open">Aprender</string>
+    <string name="learn_search_hint">Buscar en todo Aprender</string>
+    <string name="learn_no_matches">Sin resultados en los textos de aprendizaje</string>
+    <string name="learn_section_matns">Textos de memorización</string>
+    <string name="learn_matns_footer">Poemas clásicos que memorizan los estudiantes: taywid y términos del hadiz.</string>
+    <string name="learn_section_reference">Referencia</string>
+    <string name="learn_tajweed_sub">Signos de pausa, símbolos del mushaf y reglas de las letras.</string>
+    <string name="learn_tafsir_title">Tafsir por sura</string>
+    <string name="learn_tafsir_sub">Elige una sura y lee su tafsir aleya por aleya.</string>
+    <string name="learn_gharib_title">Palabras difíciles del Corán</string>
+    <string name="learn_gharib_sub">Las palabras del Corán que cuestan entender.</string>
+    <string name="learn_lines">%1$s versos</string>
+    <string name="learn_line_n">Verso %1$s</string>
+    <string name="learn_showing_of">Mostrando %1$s de %2$s: abre el texto para ver el resto</string>
+    <string name="learn_settings_sub">Guía de taywid y textos de memorización: también en la pestaña Corán.</string>
+    <string name="learn_hint">Guía de taywid y textos de memorización</string>
+    <string name="matn_search_hint">Buscar en este matn</string>
+    <string name="matn_no_lines">No hay versos coincidentes</string>
+    <string name="matn_count">%1$s de %2$s versos</string>
+    <string name="matn_sections_editorial">Los títulos de sección son de la app, no de la fuente.</string>
+    <string name="matn_text_size">Tamaño del texto</string>
+    <string name="matn_mark">Marcar este verso</string>
+    <string name="matn_unmark">Quitar marca</string>
+    <string name="matn_goto_marked">Ir al verso marcado</string>
+    <string name="matn_search_a11y">Buscar en este matn</string>
+    <string name="matn_smaller">Más pequeño</string>
+    <string name="matn_larger">Más grande</string>
+    <string name="tafsir_browse_title">Tafsir</string>
+    <string name="tafsir_choose_surah">Elige una sura</string>
+    <string name="tafsir_edition">Edición del tafsir</string>
+    <string name="tafsir_edition_footer">Tu elección se recuerda y es la misma que usa la ficha de la aleya.</string>
+    <string name="tafsir_search_hint">Buscar en el tafsir descargado</string>
+    <string name="gharib_search_hint">Buscar en los significados descargados</string>
+    <string name="tafsir_coverage_partial">Buscando en %1$s de %2$s suras descargadas</string>
+    <string name="tafsir_coverage_complete">Buscando en las %1$s suras: esta edición está descargada por completo</string>
+    <string name="tafsir_no_matches">Sin resultados</string>
+    <string name="tafsir_no_matches_partial">Solo se buscó en las suras que has descargado: la palabra puede estar en las demás.</string>
+    <string name="tafsir_preparing">Preparando la búsqueda…</string>
+    <string name="tafsir_download_for_search">Descarga las %1$s suras para poder buscarlas</string>
+    <string name="tafsir_download_offline">Descargar para usar sin conexión</string>
+    <string name="tafsir_downloading_progress">Descargando tafsir %1$s/%2$s…</string>
+    <string name="tafsir_available_offline">Disponible sin conexión</string>
+    <string name="tafsir_downloading_surah">Descargando el tafsir de esta sura…</string>
+    <string name="tafsir_downloading_surah_sub">Se guarda en el dispositivo, así esta sura se abrirá sin conexión la próxima vez.</string>
+    <string name="tafsir_empty_surah">Esta edición no tiene nada para esta sura.</string>
+    <string name="tafsir_gharib_note">Aquí solo aparecen las aleyas con palabras que necesitan explicación.</string>
+    <string name="tafsir_surah_search_hint">Buscar en esta sura</string>
+    <string name="tafsir_no_match_surah">Sin resultados en esta sura</string>
+    <string name="tafsir_ayat_count">%1$s de %2$s aleyas</string>
+    <string name="tafsir_results">Resultados</string>
+    <string name="tafsir_group_gharib">Palabras difíciles del Corán — %1$s</string>
+    <string name="tafsir_group_tafsir">Tafsir — %1$s</string>
+    <string name="tafsir_unavailable">Tafsir no disponible: revisa tu conexión.</string>
+    <string name="tafsir_ayat_n">%1$s aleyas</string>
+</resources>

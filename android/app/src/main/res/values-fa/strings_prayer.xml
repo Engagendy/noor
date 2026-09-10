@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Persian. Generated 2026-09-10 from res/values-en/strings_prayer.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/fa.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="prayer_exact_alarm_title">هشدارهای اذان ممکن است دیر برسند</string>
+    <string name="prayer_exact_alarm_text">به نور اجازه دهید زنگ و یادآوری تنظیم کند تا اذان دقیقاً سر وقت برسد.</string>
+    <string name="prayer_exact_alarm_action">اجازه</string>
+    <string name="prayer_high_latitude_unavailable">اوقات نماز برای این موقعیت در این زمان از سال قابل محاسبه نیست (عرض جغرافیایی بالا). از تنظیمات شهری نزدیک را انتخاب کنید.</string>
+    <string name="prayer_high_latitude_short">در دسترس نیست</string>
+    <string name="prayer_fasting_white_day">از ایام بیض (%1$d هجری)</string>
+</resources>

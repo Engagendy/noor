@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali. Generated 2026-09-10 from res/values-en/strings_learn.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/bn.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="learn_title">শিখুন</string>
+    <string name="learn_open">শিখুন</string>
+    <string name="learn_search_hint">শিখুন-এর সবকিছুতে খুঁজুন</string>
+    <string name="learn_no_matches">শেখার লেখাগুলোতে কিছু পাওয়া যায়নি</string>
+    <string name="learn_section_matns">হিফজের মতন</string>
+    <string name="learn_matns_footer">শিক্ষার্থীরা যে প্রাচীন কবিতাগুলো মুখস্থ করেন: তাজবিদ ও হাদিসের পরিভাষা।</string>
+    <string name="learn_section_reference">সূত্র</string>
+    <string name="learn_tajweed_sub">ওয়াকফের চিহ্ন, মুসহাফের প্রতীক ও হরফের বিধান।</string>
+    <string name="learn_tafsir_title">সূরা অনুযায়ী তাফসির</string>
+    <string name="learn_tafsir_sub">একটি সূরা বেছে নিয়ে আয়াত ধরে ধরে তার তাফসির পড়ুন।</string>
+    <string name="learn_gharib_title">কুরআনের শব্দার্থ</string>
+    <string name="learn_gharib_sub">কুরআনের যেসব শব্দের অর্থ বোঝা কঠিন।</string>
+    <string name="learn_lines">%1$s পঙক্তি</string>
+    <string name="learn_line_n">পঙক্তি %1$s</string>
+    <string name="learn_showing_of">%2$s-এর মধ্যে %1$s দেখানো হচ্ছে — বাকিটা দেখতে লেখাটি খুলুন</string>
+    <string name="learn_settings_sub">তাজবিদ গাইড ও হিফজের মতন — এগুলো কুরআন ট্যাবেও আছে।</string>
+    <string name="learn_hint">তাজবিদ গাইড ও হিফজের মতন</string>
+    <string name="matn_search_hint">এই মতনে খুঁজুন</string>
+    <string name="matn_no_lines">মিলে এমন কোনো পঙক্তি নেই</string>
+    <string name="matn_count">%2$s পঙক্তির মধ্যে %1$s</string>
+    <string name="matn_sections_editorial">অংশের শিরোনামগুলো অ্যাপের দেওয়া, মূল উৎসের নয়।</string>
+    <string name="matn_text_size">লেখার আকার</string>
+    <string name="matn_mark">এই পঙক্তি চিহ্নিত করুন</string>
+    <string name="matn_unmark">চিহ্ন সরান</string>
+    <string name="matn_goto_marked">চিহ্নিত পঙক্তিতে যান</string>
+    <string name="matn_search_a11y">এই মতনে খুঁজুন</string>
+    <string name="matn_smaller">ছোট</string>
+    <string name="matn_larger">বড়</string>
+    <string name="tafsir_browse_title">তাফসির</string>
+    <string name="tafsir_choose_surah">একটি সূরা বেছে নিন</string>
+    <string name="tafsir_edition">তাফসিরের সংস্করণ</string>
+    <string name="tafsir_edition_footer">আপনার পছন্দ মনে রাখা হয়, এবং আয়াতের শিটেও সেটিই ব্যবহার হয়।</string>
+    <string name="tafsir_search_hint">আপনার ডাউনলোড করা তাফসিরে খুঁজুন</string>
+    <string name="gharib_search_hint">আপনার ডাউনলোড করা শব্দার্থে খুঁজুন</string>
+    <string name="tafsir_coverage_partial">%2$s সূরার মধ্যে ডাউনলোড করা %1$sটিতে খোঁজা হচ্ছে</string>
+    <string name="tafsir_coverage_complete">সব %1$s সূরায় খোঁজা হচ্ছে — এই সংস্করণ পুরোটাই ডাউনলোড করা আছে</string>
+    <string name="tafsir_no_matches">কিছু পাওয়া যায়নি</string>
+    <string name="tafsir_no_matches_partial">কেবল আপনার ডাউনলোড করা সূরাগুলোতেই খোঁজা হয়েছে — শব্দটি বাকি সূরাগুলোতে থাকতে পারে।</string>
+    <string name="tafsir_preparing">সার্চ তৈরি হচ্ছে…</string>
+    <string name="tafsir_download_for_search">সব %1$sটি সূরায় সার্চ করতে সেগুলো ডাউনলোড করুন</string>
+    <string name="tafsir_download_offline">অফলাইনের জন্য ডাউনলোড</string>
+    <string name="tafsir_downloading_progress">তাফসির ডাউনলোড হচ্ছে %1$s/%2$s…</string>
+    <string name="tafsir_available_offline">অফলাইনে পাওয়া যাবে</string>
+    <string name="tafsir_downloading_surah">এই সূরার তাফসির ডাউনলোড হচ্ছে…</string>
+    <string name="tafsir_downloading_surah_sub">এটি ডিভাইসে রাখা হয়, তাই পরের বার এই সূরা অফলাইনেই খুলবে।</string>
+    <string name="tafsir_empty_surah">এই সংস্করণে এই সূরার জন্য কিছু নেই।</string>
+    <string name="tafsir_gharib_note">যেসব আয়াতে ব্যাখ্যার মতো শব্দ আছে কেবল সেগুলোই এখানে দেখা যায়।</string>
+    <string name="tafsir_surah_search_hint">এই সূরায় খুঁজুন</string>
+    <string name="tafsir_no_match_surah">এই সূরায় কিছু পাওয়া যায়নি</string>
+    <string name="tafsir_ayat_count">%2$s আয়াতের মধ্যে %1$s</string>
+    <string name="tafsir_results">ফলাফল</string>
+    <string name="tafsir_group_gharib">কুরআনের শব্দার্থ — %1$s</string>
+    <string name="tafsir_group_tafsir">তাফসির — %1$s</string>
+    <string name="tafsir_unavailable">তাফসির পাওয়া যাচ্ছে না — ইন্টারনেট সংযোগ দেখুন।</string>
+    <string name="tafsir_ayat_n">%1$s আয়াত</string>
+</resources>

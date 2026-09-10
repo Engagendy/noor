@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- French. Generated 2026-09-10 from res/values-en/strings_learn.xml.
+     Strings whose English matches a key in the iOS catalog carry the
+     translation shipped there (Tools/i18n/translations/fr.json);
+     the Android-only residue was translated to the same glossary and
+     written back into that file. Do not hand-edit one platform only. -->
+<resources>
+    <string name="learn_title">Apprendre</string>
+    <string name="learn_open">Apprendre</string>
+    <string name="learn_search_hint">Rechercher dans tout Apprendre</string>
+    <string name="learn_no_matches">Aucun résultat dans les textes d’apprentissage</string>
+    <string name="learn_section_matns">Textes de mémorisation</string>
+    <string name="learn_matns_footer">Poèmes que mémorisent les étudiants : Tajwid et terminologie du Hadith.</string>
+    <string name="learn_section_reference">Référence</string>
+    <string name="learn_tajweed_sub">Signes de pause, symboles du Mushaf et règles des lettres.</string>
+    <string name="learn_tafsir_title">Tafsir par sourate</string>
+    <string name="learn_tafsir_sub">Choisissez une sourate et lisez son Tafsir verset par verset.</string>
+    <string name="learn_gharib_title">Sens des mots coraniques</string>
+    <string name="learn_gharib_sub">Les mots du Coran difficiles à comprendre.</string>
+    <string name="learn_lines">%1$s vers</string>
+    <string name="learn_line_n">Vers %1$s</string>
+    <string name="learn_showing_of">%1$s sur %2$s affichés — ouvrez le texte pour la suite</string>
+    <string name="learn_settings_sub">Guide du Tajwid et textes de mémorisation — aussi dans l’onglet Coran.</string>
+    <string name="learn_hint">Guide du Tajwid et textes de mémorisation</string>
+    <string name="matn_search_hint">Rechercher dans ce matn</string>
+    <string name="matn_no_lines">Aucun vers correspondant</string>
+    <string name="matn_count">%1$s sur %2$s vers</string>
+    <string name="matn_sections_editorial">Les intertitres viennent de l’app, non de la source.</string>
+    <string name="matn_text_size">Taille du texte</string>
+    <string name="matn_mark">Marquer ce vers</string>
+    <string name="matn_unmark">Retirer la marque</string>
+    <string name="matn_goto_marked">Aller au vers marqué</string>
+    <string name="matn_search_a11y">Rechercher dans ce matn</string>
+    <string name="matn_smaller">Plus petit</string>
+    <string name="matn_larger">Plus grand</string>
+    <string name="tafsir_browse_title">Tafsir</string>
+    <string name="tafsir_choose_surah">Choisir une sourate</string>
+    <string name="tafsir_edition">Édition du Tafsir</string>
+    <string name="tafsir_edition_footer">Votre choix est mémorisé ; c’est celui qu’utilise la fiche du verset.</string>
+    <string name="tafsir_search_hint">Rechercher dans vos Tafsir</string>
+    <string name="gharib_search_hint">Rechercher dans vos sens de mots</string>
+    <string name="tafsir_coverage_partial">Recherche dans %1$s des %2$s sourates téléchargées</string>
+    <string name="tafsir_coverage_complete">Recherche dans les %1$s sourates — édition entièrement téléchargée</string>
+    <string name="tafsir_no_matches">Aucun résultat</string>
+    <string name="tafsir_no_matches_partial">La recherche n’a porté que sur les sourates téléchargées — le mot peut se trouver dans les autres.</string>
+    <string name="tafsir_preparing">Préparation de la recherche…</string>
+    <string name="tafsir_download_for_search">Téléchargez les %1$s sourates pour y chercher</string>
+    <string name="tafsir_download_offline">Télécharger hors ligne</string>
+    <string name="tafsir_downloading_progress">Téléchargement du Tafsir %1$s/%2$s…</string>
+    <string name="tafsir_available_offline">Disponible hors ligne</string>
+    <string name="tafsir_downloading_surah">Téléchargement du Tafsir de cette sourate…</string>
+    <string name="tafsir_downloading_surah_sub">Elle reste sur l’appareil : cette sourate s’ouvrira hors ligne la prochaine fois.</string>
+    <string name="tafsir_empty_surah">Cette édition ne contient rien pour cette sourate.</string>
+    <string name="tafsir_gharib_note">Seuls les versets contenant des mots à expliquer apparaissent ici.</string>
+    <string name="tafsir_surah_search_hint">Rechercher dans cette sourate</string>
+    <string name="tafsir_no_match_surah">Aucun résultat dans cette sourate</string>
+    <string name="tafsir_ayat_count">%1$s sur %2$s versets</string>
+    <string name="tafsir_results">Résultats</string>
+    <string name="tafsir_group_gharib">Sens des mots coraniques — %1$s</string>
+    <string name="tafsir_group_tafsir">Tafsir — %1$s</string>
+    <string name="tafsir_unavailable">Tafsir indisponible — vérifiez votre connexion.</string>
+    <string name="tafsir_ayat_n">%1$s versets</string>
+</resources>
