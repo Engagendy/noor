@@ -5373,6 +5373,64 @@
         }
       }
     },
+    "Couldn't get your location. Try again, or pick a city manually.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذر تحديد موقعك. أعد المحاولة، أو اختر مدينة يدويًا."
+          }
+        },
+        "bn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "আপনার লোকেশন পাওয়া গেল না। আবার চেষ্টা করুন, অথবা নিজে একটি শহর বেছে নিন।"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo obtener tu ubicación. Inténtalo de nuevo o elige una ciudad manualmente."
+          }
+        },
+        "fa": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "موقعیت شما به‌دست نیامد. دوباره تلاش کنید، یا شهری را دستی انتخاب کنید."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Position introuvable. Réessayez, ou choisissez une ville manuellement."
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tidak bisa mendapatkan lokasi Anda. Coba lagi, atau pilih kota secara manual."
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lokasi anda tidak dapat diperoleh. Cuba lagi, atau pilih bandar secara manual."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konumunuz alınamadı. Tekrar deneyin veya bir şehri elle seçin."
+          }
+        },
+        "ur": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "آپ کا مقام معلوم نہیں ہو سکا۔ دوبارہ کوشش کریں، یا خود کوئی شہر منتخب کریں۔"
+          }
+        }
+      }
+    },
     "Count": {
       "extractionState": "manual",
       "localizations": {
@@ -6779,7 +6837,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Çeviri indiriliyor…"
+            "value": "Meal indiriliyor…"
           }
         },
         "ur": {
@@ -10107,6 +10165,180 @@
         }
       }
     },
+    "Locating…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ تحديد موقعك…"
+          }
+        },
+        "bn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "লোকেশন খোঁজা হচ্ছে…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscando tu ubicación…"
+          }
+        },
+        "fa": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "در حال یافتن موقعیت…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Localisation…"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mencari lokasi…"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mencari lokasi…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konum bulunuyor…"
+          }
+        },
+        "ur": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مقام معلوم کیا جا رہا ہے…"
+          }
+        }
+      }
+    },
+    "Location Services are off. Turn them on in Settings, or pick a city manually.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خدمات الموقع مُعطَّلة. شغّلها من الإعدادات، أو اختر مدينة يدويًا."
+          }
+        },
+        "bn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "লোকেশন সার্ভিস বন্ধ আছে। সেটিংস থেকে চালু করুন, অথবা নিজে একটি শহর বেছে নিন।"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los Servicios de ubicación están desactivados. Actívalos en Ajustes o elige una ciudad manualmente."
+          }
+        },
+        "fa": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "خدمات موقعیت مکانی خاموش است. آن را در تنظیمات روشن کنید، یا شهری را دستی انتخاب کنید."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La localisation est désactivée. Activez-la dans Réglages, ou choisissez une ville manuellement."
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Layanan Lokasi nonaktif. Aktifkan di Setelan, atau pilih kota secara manual."
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perkhidmatan Lokasi dimatikan. Hidupkannya dalam Tetapan, atau pilih bandar secara manual."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konum Servisleri kapalı. Ayarlar'dan açın veya bir şehri elle seçin."
+          }
+        },
+        "ur": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مقام کی سروسز بند ہیں۔ انہیں ترتیبات میں آن کریں، یا خود کوئی شہر منتخب کریں۔"
+          }
+        }
+      }
+    },
+    "Location access is restricted on this device. Pick a city manually.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الوصول إلى الموقع مقيّد على هذا الجهاز. اختر مدينة يدويًا."
+          }
+        },
+        "bn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "এই ডিভাইসে লোকেশনের অনুমতি সীমিত। নিজে একটি শহর বেছে নিন।"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El acceso a la ubicación está restringido en este dispositivo. Elige una ciudad manualmente."
+          }
+        },
+        "fa": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "دسترسی به موقعیت مکانی در این دستگاه محدود شده است. شهری را دستی انتخاب کنید."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’accès à la position est restreint sur cet appareil. Choisissez une ville manuellement."
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Akses lokasi dibatasi di perangkat ini. Pilih kota secara manual."
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Akses lokasi disekat pada peranti ini. Pilih bandar secara manual."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu cihazda konum erişimi kısıtlı. Bir şehri elle seçin."
+          }
+        },
+        "ur": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اس ڈیوائس پر مقام کی رسائی محدود ہے۔ خود کوئی شہر منتخب کریں۔"
+          }
+        }
+      }
+    },
     "Lock screen and Dynamic Island": {
       "extractionState": "stale",
       "localizations": {
@@ -12097,6 +12329,64 @@
         }
       }
     },
+    "No city found near your location. Search for the nearest city.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم نجد مدينة قريبة من موقعك. ابحث عن أقرب مدينة."
+          }
+        },
+        "bn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "আপনার লোকেশনের কাছে কোনো শহর পাওয়া যায়নি। নিকটতম শহর খুঁজুন।"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró ninguna ciudad cerca de tu ubicación. Busca la ciudad más cercana."
+          }
+        },
+        "fa": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "شهری نزدیک موقعیت شما پیدا نشد. نزدیک‌ترین شهر را جستجو کنید."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune ville trouvée près de votre position. Recherchez la ville la plus proche."
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tidak ada kota yang ditemukan dekat lokasi Anda. Cari kota terdekat."
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiada bandar ditemui berhampiran lokasi anda. Cari bandar terdekat."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konumunuzun yakınında şehir bulunamadı. En yakın şehri arayın."
+          }
+        },
+        "ur": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "آپ کے مقام کے قریب کوئی شہر نہیں ملا۔ قریب ترین شہر تلاش کریں۔"
+          }
+        }
+      }
+    },
     "No matches": {
       "extractionState": "manual",
       "localizations": {
@@ -13056,6 +13346,64 @@
           "stringUnit": {
             "state": "translated",
             "value": "تلاش صرف ان سورتوں میں ہوئی جو آپ نے ڈاؤن لوڈ کی ہیں — یہ لفظ باقی سورتوں میں بھی ہو سکتا ہے۔"
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح الإعدادات"
+          }
+        },
+        "bn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "সেটিংস খুলুন"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Ajustes"
+          }
+        },
+        "fa": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "باز کردن تنظیمات"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir Réglages"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buka Setelan"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buka Tetapan"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarlar'ı aç"
+          }
+        },
+        "ur": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ترتیبات کھولیں"
           }
         }
       }
@@ -20529,13 +20877,13 @@
         "bn": {
           "stringUnit": {
             "state": "translated",
-            "value": "অনুবাদ পাওয়া যায়নি — আবার চেষ্টা করতে ট্যাপ করুন"
+            "value": "অনুবাদ পাওয়া যাচ্ছে না — আবার চেষ্টা করতে ট্যাপ করুন"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Traducción no disponible — toca para reintentar"
+            "value": "Traducción no disponible: toca para reintentar"
           }
         },
         "fa": {
@@ -20565,7 +20913,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Çeviri kullanılamıyor — yeniden denemek için dokunun"
+            "value": "Meal yüklenemedi — tekrar denemek için dokunun"
           }
         },
         "ur": {

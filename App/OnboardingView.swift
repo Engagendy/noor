@@ -46,6 +46,15 @@ struct OnboardingView: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
             #endif
             .animation(.easeInOut(duration: 0.3), value: step)
+            // The CARDS are re-identified on the language, not the whole
+            // screen: the city picker is a `List` inside a `NavigationStack`
+            // and the UIKit views underneath them keep the writing direction
+            // they were built with, so an `\.environment` flip alone leaves
+            // an English screen laid out right-to-left. `step` lives outside
+            // this id (in OnboardingView itself), so the reader stays on the
+            // card they were reading and the TabView takes the selection
+            // back from the binding.
+            .id(resolved.rawValue)
 
             // Progress dots
             HStack(spacing: 7) {
@@ -93,6 +102,14 @@ struct OnboardingView: View {
         let isOn = resolved == option
         return Button {
             language = option.rawValue
+            // The app shell re-identifies itself on this key and rebuilds,
+            // but onboarding is deliberately outside that (RootView) so the
+            // reader does not lose their place — so it refreshes the
+            // imperative caches itself. The face and the direction have to
+            // land on this very frame: this screen exists to change them.
+            NoorAppFont.invalidateCache()
+            NoorLanguage.invalidateCache()
+            NoorAppFont.applyChromeAppearance()
         } label: {
             Text(verbatim: option.endonym)
                 .font(NoorAppFont.font(showing: option, size: 18, weight: .semibold))

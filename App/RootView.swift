@@ -51,6 +51,21 @@ struct RootView: View {
             }
         }
         .background(NoorColor.bgPrimary)
+        // Live language switch via environment only (never AppleLanguages —
+        // process/environment direction mismatch mirrors the rendering).
+        // .id forces a full re-layout so the direction flip is immediate.
+        // The font family is part of the identity for the same reason as the
+        // language: NoorFont's tokens are read imperatively, so only a full
+        // re-layout makes a change land everywhere at once.
+        //
+        // It is applied to the app shell ONLY, and deliberately BEFORE the
+        // overlay: onboarding is the one screen whose whole job is to change
+        // this identity. Inside it, the id changed on every tap of the
+        // language grid, so SwiftUI tore the onboarding down and built a new
+        // one — `step` went back to the first card and the tap read as
+        // "nothing happened". Onboarding carries its own locale and
+        // direction (see OnboardingView) and so needs no re-identification.
+        .id("\(language)|\(uiFontRaw)")
         .overlay {
             if !onboarded && !showSplash {
                 OnboardingView(done: Binding(
@@ -65,13 +80,6 @@ struct RootView: View {
                     .zIndex(2)
             }
         }
-        // Live language switch via environment only (never AppleLanguages —
-        // process/environment direction mismatch mirrors the rendering).
-        // .id forces a full re-layout so the direction flip is immediate.
-        // The font family is part of the identity for the same reason as the
-        // language: NoorFont's tokens are read imperatively, so only a full
-        // re-layout makes a change land everywhere at once.
-        .id("\(language)|\(uiFontRaw)")
         // Not `Locale.current` even for "system": the resolved language is
         // the one whose strings are shown, so it must also be the one that
         // formats the numbers and dates beside them.

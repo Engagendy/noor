@@ -435,3 +435,37 @@ public struct SearchResultRow: View {
         }
     }
 }
+
+// MARK: - Readable measure on a big screen
+
+/// Caps a reading column (or a one-column list) at a comfortable measure
+/// when the window is regular width, and centres it. A 13-inch iPad is
+/// nearly 1400pt wide: text set edge to edge there is a phone layout
+/// stretched, not an iPad layout. Compact widths are untouched, so the
+/// phone keeps exactly the layout it had.
+public struct NoorReadableWidth: ViewModifier {
+    let limit: CGFloat
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var isRegular: Bool { sizeClass == .regular }
+    #else
+    private var isRegular: Bool { true }
+    #endif
+
+    public func body(content: Content) -> some View {
+        content
+            .frame(maxWidth: isRegular ? limit : .infinity)
+            // Re-expand so the capped column sits in the MIDDLE of the
+            // window, and carry the app background across the margins it
+            // leaves (the window's own is not the reading surface).
+            .frame(maxWidth: .infinity)
+            .background(NoorColor.bgPrimary)
+    }
+}
+
+public extension View {
+    /// See `NoorReadableWidth`.
+    func noorReadableWidth(_ limit: CGFloat = 820) -> some View {
+        modifier(NoorReadableWidth(limit: limit))
+    }
+}

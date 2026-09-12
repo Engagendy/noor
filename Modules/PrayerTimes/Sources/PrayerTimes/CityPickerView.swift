@@ -1,11 +1,16 @@
 import ContentDB
 import DesignSystem
 import SwiftUI
+#if os(iOS)
+import UIKit
+#endif
 
 /// Offline city picker over the bundled GeoNames database (34k places).
-/// Empty query: Nearby (from a cached device fix), Popular (the curated
-/// presets), and Browse by country. Typing searches Latin names by word
-/// start or Arabic names by substring. Nothing here touches the network.
+/// A "use my location" row on top, then, for an empty query: Nearby (from a
+/// cached device fix), Popular (the curated presets), and Browse by country.
+/// Typing searches Latin names by word start or Arabic names by substring.
+/// Nothing here touches the network — the fix is named against the bundled
+/// database, never geocoded (CLAUDE.md rule 3).
 public struct CityPickerView: View {
     /// Pop back to the caller after a pick (Settings). Onboarding embeds
     /// the picker in its own page and keeps it on screen instead.
@@ -19,6 +24,13 @@ public struct CityPickerView: View {
     @State private var results: [City] = []
     @State private var nearby: [City] = []
     @State private var popular: [City] = []
+    /// Auto-locate. The same one-shot fetcher the prayer settings sheet uses.
+    @State private var fetcher = OneShotLocationFetcher()
+    @State private var locating = false
+    @State private var locateProblem: CityLocateProblem?
+    /// The city the last fix resolved to, so the row can name it at once
+    /// (`prayer.useCustom` may already have been true).
+    @State private var locatedName: String?
     @FocusState private var searchFocused: Bool
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
@@ -74,7 +86,14 @@ public struct CityPickerView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(NoorColor.bgPrimary)
-        .safeAreaInset(edge: .top, spacing: 0) { searchField }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            VStack(spacing: 8) {
+                searchField
+                locateRow
+            }
+            .padding(.bottom, 8)
+            .background(NoorColor.bgPrimary)
+        }
         .navigationTitle(Text("City"))
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
@@ -119,8 +138,64 @@ public struct CityPickerView: View {
         .frame(minHeight: 44)
         .background(RoundedRectangle(cornerRadius: 10).fill(NoorColor.bgElevated))
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(NoorColor.bgPrimary)
+        .padding(.top, 8)
+    }
+
+    // MARK: - Auto-locate
+    //
+    // Mirrors Android's onboarding city step: one tap, one coarse fix, named
+    // from the offline table, and a visible outcome for every failure — the
+    // reader can always fall back to the search field above.
+    private var locateRow: some View {
+        CityLocateRow(state: locateState, action: locate)
+            .padding(.horizontal, 16)
+    }
+
+    private var locateState: CityLocateState {
+        if locating { return .locating }
+        if let locateProblem { return .problem(locateProblem) }
+        if useCustomLocation { return .located(locatedCityName) }
+        return .idle
+    }
+
+    private var locatedCityName: String? {
+        guard useCustomLocation else { return nil }
+        if let locatedName, !locatedName.isEmpty { return locatedName }
+        let name = PrayerLocation.current().displayName(arabicUI: isArabicUI)
+        return name.isEmpty ? nil : name
+    }
+
+    /// One coarse fix, resolved against the bundled database. Never leaves
+    /// the spinner running: every branch clears `locating`.
+    private func locate() {
+        locateProblem = nil
+        locating = true
+        Task {
+            let outcome = await fetcher.fetchDetailed()
+            switch outcome {
+            case .coordinate(let coordinate):
+                if let db,
+                   let city = (try? db.nearest(latitude: coordinate.latitude,
+                                               longitude: coordinate.longitude,
+                                               limit: 1))?.first {
+                    PrayerLocation.saveCustom(latitude: coordinate.latitude,
+                                              longitude: coordinate.longitude,
+                                              label: city.name,
+                                              labelArabic: city.nameArabic)
+                    useCustomLocation = true
+                    locatedName = city.displayName(arabicUI: isArabicUI)
+                    // Nearby has a fix to work from now.
+                    loadSuggestions()
+                } else {
+                    // A fix we cannot name is not a location the reader can
+                    // confirm, so say so and leave the search field to them.
+                    locateProblem = .noCityNearby
+                }
+            case .failure(let failure):
+                locateProblem = CityLocateProblem(failure)
+            }
+            locating = false
+        }
     }
 
     private func loadSuggestions() {
@@ -306,6 +381,166 @@ struct CityListView: View {
             }
         }
     }
+}
+
+/// Everything that can go wrong when asking the device where it is, and
+/// what the reader is told. A silent failure here is the bug this screen
+/// has shipped before, so every case carries a sentence.
+enum CityLocateProblem: Equatable {
+    case denied, restricted, servicesOff, noFix, noCityNearby
+
+    init(_ failure: LocationFixFailure) {
+        switch failure {
+        case .permissionDenied: self = .denied
+        case .permissionRestricted: self = .restricted
+        case .servicesOff: self = .servicesOff
+        case .noFix: self = .noFix
+        }
+    }
+
+    var message: LocalizedStringKey {
+        switch self {
+        case .denied: "Allow location access in Settings, or pick a city manually."
+        case .restricted: "Location access is restricted on this device. Pick a city manually."
+        case .servicesOff: "Location Services are off. Turn them on in Settings, or pick a city manually."
+        case .noFix: "Couldn't get your location. Try again, or pick a city manually."
+        case .noCityNearby: "No city found near your location. Search for the nearest city."
+        }
+    }
+
+    /// Only offer Settings where Settings can actually fix it — a restricted
+    /// device (Screen Time, MDM) has no switch for the reader to flip.
+    var offersSettings: Bool { self == .denied || self == .servicesOff }
+}
+
+/// The four things the auto-locate row can be showing.
+enum CityLocateState: Equatable {
+    case idle
+    case locating
+    /// A device fix is in use, named from the offline database when known.
+    case located(String?)
+    case problem(CityLocateProblem)
+}
+
+/// "Use my current location", with its outcome underneath. A separate view
+/// so every state can be rendered on its own (previews, snapshot checks)
+/// instead of only after a real fix on a real device.
+struct CityLocateRow: View {
+    let state: CityLocateState
+    let action: () -> Void
+
+    private var isLocated: Bool {
+        if case .located = state { return true }
+        return false
+    }
+
+    private var cityName: String? {
+        if case .located(let name) = state { return name }
+        return nil
+    }
+
+    private var problem: CityLocateProblem? {
+        if case .problem(let problem) = state { return problem }
+        return nil
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Button(action: action) {
+                HStack(spacing: 10) {
+                    Image(systemName: isLocated ? "location.fill" : "location")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(isLocated ? "Using current location" : "Use my current location")
+                            .font(NoorFont.body)
+                            .foregroundStyle(NoorColor.accentPrimary)
+                        if let cityName {
+                            Text("Near \(cityName)")
+                                .font(NoorFont.caption)
+                                .foregroundStyle(NoorColor.inkSecondary)
+                        }
+                    }
+                    Spacer(minLength: 8)
+                    if state == .locating {
+                        ProgressView()
+                            #if os(iOS)
+                            .controlSize(.small)
+                            #endif
+                    } else if isLocated {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 10).fill(NoorColor.stateReciting))
+                .contentShape(RoundedRectangle(cornerRadius: 10))
+            }
+            .buttonStyle(.plain)
+            .disabled(state == .locating)
+            .accessibilityLabel(state == .locating
+                                ? Text("Locating…")
+                                : Text(isLocated ? "Using current location"
+                                                 : "Use my current location"))
+            .accessibilityValue(cityName.map { Text("Near \($0)") } ?? Text(verbatim: ""))
+            .accessibilityAddTraits(.isButton)
+            if let problem {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(problem.message)
+                        .font(NoorFont.caption)
+                        .foregroundStyle(NoorColor.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    #if os(iOS)
+                    if problem.offersSettings {
+                        Button {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        } label: {
+                            Text("Open Settings")
+                                .font(NoorFont.caption)
+                                .foregroundStyle(NoorColor.accentPrimary)
+                                .frame(minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    #endif
+                }
+            }
+        }
+    }
+}
+
+#Preview("Locate row states") {
+    VStack(spacing: 14) {
+        CityLocateRow(state: .idle) {}
+        CityLocateRow(state: .locating) {}
+        CityLocateRow(state: .located("Cairo")) {}
+        CityLocateRow(state: .problem(.denied)) {}
+        CityLocateRow(state: .problem(.restricted)) {}
+        CityLocateRow(state: .problem(.servicesOff)) {}
+        CityLocateRow(state: .problem(.noFix)) {}
+        CityLocateRow(state: .problem(.noCityNearby)) {}
+    }
+    .padding(16)
+    .background(NoorColor.bgPrimary)
+}
+
+#Preview("Locate row states — Arabic RTL") {
+    VStack(spacing: 14) {
+        CityLocateRow(state: .located("القاهرة")) {}
+        CityLocateRow(state: .problem(.denied)) {}
+        CityLocateRow(state: .problem(.noCityNearby)) {}
+    }
+    .padding(16)
+    .background(NoorColor.bgPrimary)
+    .environment(\.locale, Locale(identifier: "ar"))
+    .environment(\.layoutDirection, .rightToLeft)
 }
 
 #Preview {

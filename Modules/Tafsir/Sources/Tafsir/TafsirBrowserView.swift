@@ -355,6 +355,9 @@ public struct TafsirSurahView: View {
                     content(proxy: proxy)
                 }
                 .padding(20)
+                // A 13-inch iPad would otherwise run tafsir prose edge to
+                // edge; the column stays a readable measure and centres.
+                .noorReadableWidth()
                 // Clears the floating tab bar the Quran tab draws over the page.
                 .padding(.bottom, 80)
             }
@@ -525,16 +528,7 @@ public struct TafsirSurahView: View {
 
     private func entryView(_ entry: TafsirService.Entry) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                AyahEndMarker(entry.ayah, size: 26)
-                Text(verbatim: "\(surahId):\(entry.ayah)")
-                    .font(NoorFont.caption.monospacedDigit())
-                    .foregroundStyle(NoorColor.inkSecondary)
-            }
-            // `.leading` only: it is already direction-aware, so
-            // `isArabicUI ? .trailing : .leading` would flip twice and strand
-            // Arabic against the left edge (the lesson from the matn reader).
-            .frame(maxWidth: .infinity, alignment: .leading)
+            entryHeader(entry)
 
             // One Text per paragraph: a single multi-thousand-character
             // Arabic string hits a SwiftUI layout path that drops shaping
@@ -549,6 +543,29 @@ public struct TafsirSurahView: View {
                     ? NoorColor.accentPrimary.opacity(0.10) : Color.clear)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text("Ayah \(entry.ayah)"))
+    }
+
+    /// The ayah marker labels the prose under it, so it takes the EDITION's
+    /// direction, never the interface's: an Arabic edition is an
+    /// `arabicBlock` (right-anchored whatever the UI language), and a plain
+    /// `.leading` header stranded the marker against the LEFT edge in the
+    /// English interface above right-aligned Arabic tafsir — verified on a
+    /// 13-inch iPad. `arabicBlock` is the right tool here (its doc says so
+    /// for exactly this badge-beside-Arabic case); `isArabicUI ? .trailing
+    /// : .leading` is NOT — inside an RTL environment it flips twice.
+    @ViewBuilder
+    private func entryHeader(_ entry: TafsirService.Entry) -> some View {
+        let row = HStack(spacing: 8) {
+            AyahEndMarker(entry.ayah, size: 26)
+            Text(verbatim: ayahReference(entry.ayah))
+                .font(NoorFont.caption.monospacedDigit())
+                .foregroundStyle(NoorColor.inkSecondary)
+        }
+        if edition.isArabic {
+            row.arabicBlock()
+        } else {
+            row.frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 
     /// The deliberate serif of `NoorFont.tafsir` (design §3) in both scripts;

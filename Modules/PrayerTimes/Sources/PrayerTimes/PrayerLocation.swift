@@ -152,12 +152,32 @@ extension CityPreset {
     }
 }
 
+/// Why a one-shot fix could not be taken. Every case has to reach the
+/// reader: a spinner that stops with no explanation is the failure this
+/// screen has shipped before.
+public enum LocationFixFailure: Sendable, Equatable {
+    /// The reader said no (or said no in the past).
+    case permissionDenied
+    /// Denied by policy (Screen Time / MDM) — Settings will not help.
+    case permissionRestricted
+    /// Permission is fine but Location Services are switched off device-wide.
+    case servicesOff
+    /// Authorised, asked, and nothing arrived before the timeout.
+    case noFix
+}
+
+/// The outcome of `OneShotLocationFetcher.fetchDetailed()`.
+public enum LocationFixOutcome: Sendable {
+    case coordinate(CLLocationCoordinate2D)
+    case failure(LocationFixFailure)
+}
+
 /// One-shot when-in-use location fetch. The coordinate is stored locally and
 /// reused offline; no continuous tracking, no geocoding — nothing leaves the
 /// device.
 public final class OneShotLocationFetcher: NSObject, CLLocationManagerDelegate, @unchecked Sendable {
     private let manager = CLLocationManager()
-    private var continuation: CheckedContinuation<CLLocationCoordinate2D?, Never>?
+    private var continuation: CheckedContinuation<LocationFixOutcome, Never>?
 
     public override init() {
         super.init()
@@ -174,11 +194,19 @@ public final class OneShotLocationFetcher: NSObject, CLLocationManagerDelegate, 
     /// services degraded — and without this the caller waits forever.
     private static let timeout: TimeInterval = 10
 
+    /// The coordinate, or nil for any failure. Kept for callers that only
+    /// ever showed one generic error (the prayer settings sheet).
     public func fetch() async -> CLLocationCoordinate2D? {
+        guard case .coordinate(let coordinate) = await fetchDetailed() else { return nil }
+        return coordinate
+    }
+
+    /// The same single coarse fix, with the reason when there isn't one.
+    public func fetchDetailed() async -> LocationFixOutcome {
         // Fast path: a recent fix answers instantly, no spinner at all.
         if let cached = manager.location,
            -cached.timestamp.timeIntervalSinceNow < Self.freshEnough {
-            return cached.coordinate
+            return .coordinate(cached.coordinate)
         }
         return await withCheckedContinuation { continuation in
             self.continuation = continuation
@@ -186,8 +214,10 @@ public final class OneShotLocationFetcher: NSObject, CLLocationManagerDelegate, 
             case .notDetermined:
                 // Wait for the grant; didChangeAuthorization requests the fix.
                 manager.requestWhenInUseAuthorization()
-            case .denied, .restricted:
-                resume(nil)
+            case .denied:
+                resume(.failure(.permissionDenied))
+            case .restricted:
+                resume(.failure(.permissionRestricted))
             default:
                 manager.requestLocation()
             }
@@ -195,24 +225,45 @@ public final class OneShotLocationFetcher: NSObject, CLLocationManagerDelegate, 
             // stored fix, however old, before giving up entirely.
             DispatchQueue.main.asyncAfter(deadline: .now() + Self.timeout) { [weak self] in
                 guard let self, self.continuation != nil else { return }
-                self.resume(self.manager.location?.coordinate)
+                self.resume(self.stale ?? .failure(.noFix))
             }
         }
     }
 
-    private func resume(_ coordinate: CLLocationCoordinate2D?) {
-        continuation?.resume(returning: coordinate)
+    /// An older fix, if there is one: it still names the right city.
+    private var stale: LocationFixOutcome? {
+        manager.location.map { .coordinate($0.coordinate) }
+    }
+
+    private func resume(_ outcome: LocationFixOutcome) {
+        continuation?.resume(returning: outcome)
         continuation = nil
     }
 
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        resume(locations.first?.coordinate)
+        guard let coordinate = locations.first?.coordinate else {
+            resume(stale ?? .failure(.noFix))
+            return
+        }
+        resume(.coordinate(coordinate))
     }
 
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         // A failure does not mean we know nothing: an earlier fix still names
         // the right city for prayer times.
-        resume(manager.location?.coordinate)
+        if let stale {
+            resume(stale)
+            return
+        }
+        // kCLErrorDenied with permission granted means Location Services are
+        // off device-wide — a different Settings switch, so a different
+        // message.
+        if (error as? CLError)?.code == .denied {
+            resume(.failure(manager.authorizationStatus == .denied
+                            ? .permissionDenied : .servicesOff))
+        } else {
+            resume(.failure(.noFix))
+        }
     }
 
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -225,8 +276,10 @@ public final class OneShotLocationFetcher: NSObject, CLLocationManagerDelegate, 
         #endif
         if authorized {
             manager.requestLocation()
-        } else if status == .denied || status == .restricted {
-            resume(nil)
+        } else if status == .denied {
+            resume(.failure(.permissionDenied))
+        } else if status == .restricted {
+            resume(.failure(.permissionRestricted))
         }
     }
 }

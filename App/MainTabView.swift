@@ -386,11 +386,14 @@ struct QuranTab: View {
     @State private var selection: Int?
     @State private var targetAyah: Int?
     /// Type-erased so the Quran stack can push both the reader and the
-    /// learning area from one path.
-    @State private var compactPath = NavigationPath()
-    /// iPad/Mac: the learning area is a sheet — the split view's detail pane
+    /// learning area from one path. One stack at every width on iOS — see
+    /// `body`.
+    @State private var path = NavigationPath()
+    #if !os(iOS)
+    /// Mac: the learning area is a sheet — the split view's detail pane
     /// belongs to the reader.
     @State private var showLearn = false
+    #endif
     /// Written by `SurahReaderView` as the user toggles the chrome.
     private let readerChrome = ReaderChrome.shared
     /// Cross-source search for the learning area: Learn folds its own matns,
@@ -398,9 +401,6 @@ struct QuranTab: View {
     /// its indexes — and any pack download started from a result — outlive
     /// the search field.
     @State private var learnSearch = LearnTafsirSearch()
-    #if os(iOS)
-    @Environment(\.horizontalSizeClass) private var sizeClass
-    #endif
 
     /// Screenshot/UI-test hook: NOOR_OPEN=<surahId> pushes the reader.
     private var autoOpenSurah: Int? {
@@ -411,8 +411,8 @@ struct QuranTab: View {
         lastSurah = surahId
         targetAyah = ayah
         selection = surahId
-        compactPath = NavigationPath()
-        compactPath.append(ReaderTarget(surahId: surahId, ayah: ayah))
+        path = NavigationPath()
+        path.append(ReaderTarget(surahId: surahId, ayah: ayah))
     }
 
     private func listView(onLearn: @escaping () -> Void) -> some View {
@@ -435,6 +435,10 @@ struct QuranTab: View {
             // Bars are declared per screen (stack-level modifiers don't
             // reach pushed destinations): index = own header + tabs.
             .toolbar(.hidden, for: .navigationBar)
+            // The index is the Quran tab's ROOT now (no sidebar), so on an
+            // iPad it would otherwise be one phone-width row stretched
+            // across 13 inches.
+            .noorReadableWidth(880)
             #endif
     }
 
@@ -459,48 +463,56 @@ struct QuranTab: View {
     var body: some View {
         Group {
             #if os(iOS)
-            if sizeClass == .compact {
-                NavigationStack(path: $compactPath) {
-                    listView(onLearn: { compactPath.append(LearnRoute.home) })
-                        .navigationDestination(for: ReaderTarget.self) { target in
-                            reader(surahId: target.surahId, ayah: target.ayah,
-                                   exit: { compactPath = NavigationPath() })
-                        }
-                        .learnDestinations { topic in tafsirScreen(topic) }
-                }
-                // On the STACK, not on its root: a pushed `LearnView` reads
-                // the stack's environment, and set inside it the provider
-                // never reached the destination.
-                .learnSearch(learnSearch)
-                // The reader is immersive, but its tab bar follows the
-                // reader's CHROME rather than the whole session — a
-                // deliberate divergence from Android, which hides its bar
-                // for the entire session because it has a system back
-                // button. iOS has none, and with the navigation bar hidden
-                // the interactive edge-swipe back is gone too, so the fully
-                // immersive state would leave the drawer's "Back to Quran"
-                // row as the only way out. Tap the page and the top strip
-                // and the tab bar come back together; tap again and both go.
-                // Do not "fix" the two platforms back into symmetry.
-                //
-                // `.toolbar(…, for: .tabBar)` declared INSIDE the pushed
-                // reader never took effect (the index below it declares
-                // .visible in the same stack, and iOS 26's floating tab bar
-                // keeps winning), so the tab's own root drives it.
-                // `ReaderChrome` is the single source of truth the reader
-                // itself writes — the iOS twin of Android's `ReaderChrome`.
-                // `readerOpen` guards the hidden case: a `.hidden`
-                // preference declared here applies to the TabView as a
-                // whole, even while another tab is selected, so tapping a
-                // tab from inside the reader would otherwise leave EVERY
-                // tab without a bar.
-                .toolbar(compactPath.isEmpty || !readerChrome.readerOpen
-                         || readerChrome.chromeVisible ? .visible : .hidden,
-                         for: .tabBar)
-
-            } else {
-                splitView
+            // ONE column at every width. The iPad used to get a
+            // `NavigationSplitView`, whose sidebar is permanently open at
+            // regular width and took a third of the reading surface — a
+            // mushaf page is the content here, so the page gets the whole
+            // window and the surah index is reached from the reader's own
+            // drawer button (`SurahListButton` → `SurahDrawerView`), which
+            // the reader already carries. The split view could have been
+            // kept with `columnVisibility == .detailOnly`, but its
+            // re-open affordance lives in the navigation bar the reader
+            // hides, and its detail pane has nothing to pop, so the
+            // drawer's "Back to Quran" row (a `dismiss()` there) would
+            // have stranded the reader. The stack keeps one code path,
+            // one verified drawer edge, and a real way out.
+            NavigationStack(path: $path) {
+                listView(onLearn: { path.append(LearnRoute.home) })
+                    .navigationDestination(for: ReaderTarget.self) { target in
+                        reader(surahId: target.surahId, ayah: target.ayah,
+                               exit: { path = NavigationPath() })
+                    }
+                    .learnDestinations { topic in tafsirScreen(topic) }
             }
+            // On the STACK, not on its root: a pushed `LearnView` reads
+            // the stack's environment, and set inside it the provider
+            // never reached the destination.
+            .learnSearch(learnSearch)
+            // The reader is immersive, but its tab bar follows the
+            // reader's CHROME rather than the whole session — a
+            // deliberate divergence from Android, which hides its bar
+            // for the entire session because it has a system back
+            // button. iOS has none, and with the navigation bar hidden
+            // the interactive edge-swipe back is gone too, so the fully
+            // immersive state would leave the drawer's "Back to Quran"
+            // row as the only way out. Tap the page and the top strip
+            // and the tab bar come back together; tap again and both go.
+            // Do not "fix" the two platforms back into symmetry.
+            //
+            // `.toolbar(…, for: .tabBar)` declared INSIDE the pushed
+            // reader never took effect (the index below it declares
+            // .visible in the same stack, and iOS 26's floating tab bar
+            // keeps winning), so the tab's own root drives it.
+            // `ReaderChrome` is the single source of truth the reader
+            // itself writes — the iOS twin of Android's `ReaderChrome`.
+            // `readerOpen` guards the hidden case: a `.hidden`
+            // preference declared here applies to the TabView as a
+            // whole, even while another tab is selected, so tapping a
+            // tab from inside the reader would otherwise leave EVERY
+            // tab without a bar.
+            .toolbar(path.isEmpty || !readerChrome.readerOpen
+                     || readerChrome.chromeVisible ? .visible : .hidden,
+                     for: .tabBar)
             #else
             splitView
             #endif
@@ -541,18 +553,18 @@ struct QuranTab: View {
     /// =matn its first matn (or =<matn id> a named one), =tajweed the guide,
     /// =tafsir the tafsir browser, =gharib the word meanings.
     private func openLearnForScreenshots() {
-        guard compactPath.isEmpty,
+        guard path.isEmpty,
               let mode = ProcessInfo.processInfo.environment["NOOR_LEARN"]
         else { return }
-        compactPath.append(LearnRoute.home)
+        path.append(LearnRoute.home)
         switch mode {
         case "matn":
-            if let id = MatnStore.load().first?.id { compactPath.append(LearnRoute.matn(id)) }
+            if let id = MatnStore.load().first?.id { path.append(LearnRoute.matn(id)) }
         case "tajweed":
-            compactPath.append(LearnRoute.tajweed)
+            path.append(LearnRoute.tajweed)
         case "tafsir", "gharib":
             let wordMeanings = mode == "gharib"
-            compactPath.append(LearnRoute.tafsir(wordMeanings ? .wordMeanings : .browse))
+            path.append(LearnRoute.tafsir(wordMeanings ? .wordMeanings : .browse))
             // NOOR_TAFSIR_SURAH=2 also opens that surah, for the screenshots.
             if let surah = ProcessInfo.processInfo.environment["NOOR_TAFSIR_SURAH"]
                 .flatMap(Int.init) {
@@ -561,14 +573,17 @@ struct QuranTab: View {
                     : (ProcessInfo.processInfo.environment["NOOR_TAFSIR_EDITION"]
                        ?? UserDefaults.standard.string(forKey: "tafsir.edition")
                        ?? TafsirEdition.all[0].slug)
-                compactPath.append(TafsirSurahRoute(surahId: surah, slug: slug))
+                path.append(TafsirSurahRoute(surahId: surah, slug: slug))
             }
         default:
             // Any matn by id, e.g. NOOR_LEARN=bayquniyyah.
-            if MatnStore.matn(id: mode) != nil { compactPath.append(LearnRoute.matn(mode)) }
+            if MatnStore.matn(id: mode) != nil { path.append(LearnRoute.matn(mode)) }
         }
     }
 
+    #if !os(iOS)
+    /// macOS only: on the Mac a permanent sidebar is the platform idiom and
+    /// there is a real window title bar to toggle it from.
     private var splitView: some View {
         NavigationSplitView {
             listView(onLearn: { showLearn = true })
@@ -585,10 +600,11 @@ struct QuranTab: View {
             }
         }
         .onChange(of: selection) { _, new in
-            // Sidebar taps on iPad write the binding directly.
+            // Sidebar taps write the binding directly.
             if let new { lastSurah = new }
         }
     }
+    #endif
 }
 
 

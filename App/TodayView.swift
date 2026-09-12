@@ -70,6 +70,14 @@ struct TodayView: View {
     @AppStorage("reader.lastSurah") private var lastSurah = 1
     @AppStorage("khatmah.maxPage") private var khatmahMaxPage = 0
     @Environment(\.locale) private var locale
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    /// iPad (and any regular-width window) gets the dashboard layout; the
+    /// phone keeps the single column exactly as it was.
+    private var isRegularWidth: Bool { horizontalSizeClass == .regular }
+    #else
+    private var isRegularWidth: Bool { true }
+    #endif
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
 
@@ -78,6 +86,17 @@ struct TodayView: View {
         var resource = resource
         resource.locale = locale
         return String(localized: resource)
+    }
+
+    /// Where a filling card's content sits: centred inside the phone's
+    /// carousel slot (it fills the slot), pinned to the top in the iPad's
+    /// columns, where a card is much taller than its text.
+    private var fillAlignment: Alignment { isRegularWidth ? .topLeading : .center }
+
+    /// How much of a long text a card shows. The iPad's columns are tall, so
+    /// the room goes to the text rather than to white space.
+    private func cardLines(_ compact: Int, _ regular: Int) -> Int {
+        isRegularWidth ? regular : compact
     }
 
     /// Clearly visible page dots in app colors.
@@ -114,38 +133,13 @@ struct TodayView: View {
 
     var body: some View {
         TimelineView(.everyMinute) { context in
-            // The important cards stay fixed; the daily extras share one
-            // compact swipeable slot that rotates slowly with page dots.
-            VStack(alignment: .leading, spacing: 12) {
-                header(now: context.date)
-                if let day = prayerDay(date: context.date) {
-                    nextPrayerHero(day: day, now: context.date)
+            Group {
+                if isRegularWidth {
+                    regularLayout(now: context.date)
+                } else {
+                    compactLayout(now: context.date)
                 }
-                if inRamadan(context.date) {
-                    ramadanCard(now: context.date)
-                }
-                jumuahCard(now: context.date)
-                continueReadingCard
-                khatmahCard(now: context.date)
-                TabView(selection: $cardPage) {
-                    carouselPage { dailyAyahCard(now: context.date) }.tag(0)
-                    carouselPage { dailyDhikrCard(now: context.date) }.tag(1)
-                    carouselPage { dailyHadithCard(now: context.date) }.tag(2)
-                    carouselPage { onThisDayCard(now: context.date) }.tag(3)
-                }
-                #if os(iOS)
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                #endif
-                .onReceive(cardTimer) { _ in
-                    withAnimation(.easeInOut(duration: 0.6)) {
-                        cardPage = (cardPage + 1) % 4
-                    }
-                }
-                .frame(maxHeight: .infinity)
-                carouselDots
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 12)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(NoorColor.bgPrimary)
         }
@@ -263,6 +257,87 @@ struct TodayView: View {
         }
     }
 
+    /// Phone: the important cards stay fixed; the daily extras share one
+    /// compact swipeable slot that rotates slowly with page dots.
+    private func compactLayout(now: Date) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            header(now: now)
+            if let day = prayerDay(date: now) {
+                nextPrayerHero(day: day, now: now)
+            }
+            if inRamadan(now) {
+                ramadanCard(now: now)
+            }
+            jumuahCard(now: now)
+            continueReadingCard
+            khatmahCard(now: now)
+            TabView(selection: $cardPage) {
+                carouselPage { dailyAyahCard(now: now) }.tag(0)
+                carouselPage { dailyDhikrCard(now: now) }.tag(1)
+                carouselPage { dailyHadithCard(now: now) }.tag(2)
+                carouselPage { onThisDayCard(now: now) }.tag(3)
+            }
+            #if os(iOS)
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            #endif
+            .onReceive(cardTimer) { _ in
+                withAnimation(.easeInOut(duration: 0.6)) {
+                    cardPage = (cardPage + 1) % 4
+                }
+            }
+            .frame(maxHeight: .infinity)
+            carouselDots
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+    }
+
+    /// iPad / regular width: one dashboard instead of a stretched phone
+    /// column. The next-prayer hero is a full-width banner across the top
+    /// (it is the one thing read at a glance), and everything the phone
+    /// hides behind the swipeable slot is on screen at once in two
+    /// columns — so the daily ayah, dhikr, hadith and "on this day" cards
+    /// need no carousel here. Same cards, same actions, no paging.
+    ///
+    /// Column ORDER is left to the layout direction on purpose: a plain
+    /// `HStack` puts its first child on the right in Arabic, which is the
+    /// correct mirroring (verified in both languages on a 13-inch iPad).
+    private func regularLayout(now: Date) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            header(now: now)
+            if let day = prayerDay(date: now) {
+                nextPrayerHero(day: day, now: now, large: true)
+            }
+            HStack(alignment: .top, spacing: 16) {
+                VStack(spacing: 16) {
+                    if inRamadan(now) {
+                        ramadanCard(now: now)
+                    }
+                    jumuahCard(now: now)
+                    continueReadingCard
+                    khatmahCard(now: now)
+                    // The long-text cards are the ones that stretch: they
+                    // have text to put in the room, so the column fills
+                    // without leaving white inside a short card.
+                    dailyHadithCard(now: now)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                VStack(spacing: 16) {
+                    // Natural height: one ayah in a 600pt-tall card is a
+                    // sea of white, so it takes only what it needs.
+                    dailyAyahCard(now: now)
+                        .fixedSize(horizontal: false, vertical: true)
+                    dailyDhikrCard(now: now)
+                    onThisDayCard(now: now)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.top, 12)
+        .padding(.bottom, 20)
+    }
+
     /// Time-aware dhikr: morning after Fajr, evening from Dhuhr, sleep
     /// after Isha — keyed to the user's actual prayer times.
     private func dhikrSlot(now: Date) -> (title: LocalizedStringKey, pool: [Dhikr]) {
@@ -304,10 +379,10 @@ struct TodayView: View {
             }
             if let dhikr {
                 Text(verbatim: dhikr.text)
-                    .font(.noorScaled(16))
+                    .font(.noorScaled(isRegularWidth ? 18 : 16))
                     .foregroundStyle(NoorColor.inkPrimary)
-                    .lineSpacing(6)
-                    .lineLimit(4)
+                    .lineSpacing(isRegularWidth ? 9 : 6)
+                    .lineLimit(cardLines(4, 14))
                     .arabicBlock()
                 if dhikr.count > 1 {
                     Text("Repeat \(dhikr.count)×")
@@ -317,8 +392,7 @@ struct TodayView: View {
             }
         }
         .padding(16)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: fillAlignment)
         .contentShape(Rectangle())
         .onTapGesture(perform: openAthkar)
         .noorCard()
@@ -355,12 +429,15 @@ struct TodayView: View {
                         .buttonStyle(.borderless)
                         .accessibilityLabel("Share")
                     }
-                    Spacer(minLength: 0)
+                    // iPad: the text sits under its label and the CTA keeps
+                    // the bottom, instead of a centred block with white
+                    // above and below it in a very tall card.
+                    if !isRegularWidth { Spacer(minLength: 0) }
                     Text(verbatim: daily.hadith.arabic)
                         .font(.noorScaled(16))
                         .foregroundStyle(NoorColor.inkPrimary)
-                        .lineSpacing(7)
-                        .lineLimit(4)
+                        .lineSpacing(isRegularWidth ? 9 : 7)
+                        .lineLimit(cardLines(4, 16))
                         .arabicBlock()
                     Spacer(minLength: 0)
                     Text(isArabicUI ? "اقرأ الحديث كاملًا" : "Read the full hadith")
@@ -400,12 +477,12 @@ struct TodayView: View {
                         .buttonStyle(.borderless)
                         .accessibilityLabel("Share")
                     }
-                    Spacer(minLength: 0)
+                    if !isRegularWidth { Spacer(minLength: 0) }
                     Text(verbatim: hadith.arabic)
                         .font(.noorScaled(16))
                         .foregroundStyle(NoorColor.inkPrimary)
-                        .lineSpacing(7)
-                        .lineLimit(4)
+                        .lineSpacing(isRegularWidth ? 9 : 7)
+                        .lineLimit(cardLines(4, 16))
                         .arabicBlock()
                     Spacer(minLength: 0)
                     HStack(spacing: 14) {
@@ -491,16 +568,16 @@ struct TodayView: View {
                     .buttonStyle(.borderless)
                     .accessibilityLabel("Share")
                 }
-                Spacer(minLength: 0)
+                if !isRegularWidth { Spacer(minLength: 0) }
                 ForEach(Array(events.enumerated()), id: \.offset) { _, event in
                     Button {
                         detailEvent = event
                     } label: {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(verbatim: isArabicUI ? event.arabic : event.english)
-                            .font(.noorScaled(15))
+                            .font(.noorScaled(isRegularWidth ? 17 : 15))
                             .foregroundStyle(NoorColor.inkPrimary)
-                            .lineSpacing(5)
+                            .lineSpacing(isRegularWidth ? 7 : 5)
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .noorInterfaceDirection()
@@ -603,7 +680,7 @@ struct TodayView: View {
             date: date)
     }
 
-    private func nextPrayerHero(day: PrayerDay, now: Date) -> some View {
+    private func nextPrayerHero(day: PrayerDay, now: Date, large: Bool = false) -> some View {
         // After Isha, roll over to tomorrow's Fajr so the countdown never stalls
         // (mirrors the widget's fallback in NoorWidgets.swift).
         let today = day.next(at: now)
@@ -611,7 +688,8 @@ struct TodayView: View {
         let isTomorrow = today == nil && next != nil
         let passed = day.passedCount(at: now)
         return Button(action: openPrayer) {
-            nextPrayerHeroContent(next: next, isTomorrow: isTomorrow, passed: passed, day: day)
+            nextPrayerHeroContent(next: next, isTomorrow: isTomorrow, passed: passed,
+                                  day: day, large: large)
         }
         // .plain: no tint on the content; the whole card is the target
         // (well above the 44pt minimum).
@@ -625,11 +703,12 @@ struct TodayView: View {
     }
 
     private func nextPrayerHeroContent(next: PrayerDay.Entry?, isTomorrow: Bool,
-                                       passed: Int, day: PrayerDay) -> some View {
+                                       passed: Int, day: PrayerDay,
+                                       large: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(verbatim: next.map { localizedName($0.name).uppercased() } ?? localizedName("Isha").uppercased())
-                    .font(.noorScaled(13, weight: .semibold))
+                    .font(.noorScaled(large ? 15 : 13, weight: .semibold))
                     .noorTracking(1.5)
                     .opacity(0.85)
                 if isTomorrow {
@@ -640,16 +719,16 @@ struct TodayView: View {
                 Spacer()
                 if let next {
                     Text(next.time, format: cityTimeFormat)
-                        .font(.noorScaled(13).monospacedDigit())
+                        .font(.noorScaled(large ? 15 : 13).monospacedDigit())
                         .opacity(0.85)
                 }
             }
             if let next {
                 Text(next.time, format: .relative(presentation: .numeric))
-                    .font(.noorScaled(34, weight: .semibold))
+                    .font(.noorScaled(large ? 46 : 34, weight: .semibold))
             } else {
                 Text("All prayers done for today")
-                    .font(.noorScaled(22, weight: .semibold))
+                    .font(.noorScaled(large ? 30 : 22, weight: .semibold))
             }
             HStack(spacing: 6) {
                 ForEach(0..<5, id: \.self) { index in
@@ -662,7 +741,7 @@ struct TodayView: View {
             HStack {
                 ForEach(day.entries) { entry in
                     Text(entry.name)
-                        .font(.noorScaled(10.5))
+                        .font(.noorScaled(large ? 13 : 10.5))
                         .opacity(0.8)
                     if entry.prayer != .isha { Spacer() }
                 }
@@ -670,7 +749,7 @@ struct TodayView: View {
             .padding(.top, 2)
         }
         .foregroundStyle(.white)
-        .padding(20)
+        .padding(large ? 28 : 20)
         .background(
             RoundedRectangle(cornerRadius: 18)
                 .fill(NoorColor.accentPrimary)
@@ -1031,9 +1110,9 @@ struct TodayView: View {
             }
             if let daily {
                 Text(verbatim: daily.verse.text)
-                    .font(NoorFont.quran(size: 21))
+                    .font(NoorFont.quran(size: isRegularWidth ? 27 : 21))
                     .foregroundStyle(NoorColor.inkPrimary)
-                    .lineSpacing(12)
+                    .lineSpacing(isRegularWidth ? 18 : 12)
                     .arabicBlock()
                 Text(verbatim: "\u{200F}\(daily.surah.displayName(arabicUI: isArabicUI)) \(daily.verse.surahId):\(daily.verse.ayah)")
                     .font(NoorFont.caption)
@@ -1041,8 +1120,7 @@ struct TodayView: View {
             }
         }
         .padding(16)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: fillAlignment)
         .noorCard()
     }
 

@@ -48,9 +48,37 @@ struct SettingsView: View {
     /// The learning area is reachable from Settings too, so its cross-source
     /// search needs the same provider the Quran tab gives it.
     @State private var learnSearch = LearnTafsirSearch()
+    #if os(iOS)
+    /// Screenshot/UI-test hooks: NOOR_LANG_PICKER=1 and NOOR_FONT_PICKER=1
+    /// push the language / font list at launch. They are pushed screens
+    /// rather than `Picker` pages now (see the first section), and a
+    /// simulator cannot be tapped from a script.
+    @State private var pushedList: PushedList? = {
+        switch ProcessInfo.processInfo.environment {
+        case let env where env["NOOR_LANG_PICKER"] == "1": .language
+        case let env where env["NOOR_FONT_PICKER"] == "1": .appFont
+        default: nil
+        }
+    }()
+    enum PushedList: Hashable { case language, appFont }
+    #endif
     @Environment(\.locale) private var locale
 
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
+
+    /// The stored language, written in its own language and script — the
+    /// same face the row in the pushed list uses, so Urdu stays Nastaliq.
+    @ViewBuilder private var languageValueLabel: some View {
+        if let option = NoorLanguage(rawValue: language) {
+            Text(verbatim: option.endonym)
+                .font(NoorAppFont.font(showing: option, size: 15))
+                .environment(\.layoutDirection, option.layoutDirection)
+                .foregroundStyle(NoorColor.inkSecondary)
+        } else {
+            Text("System")
+                .foregroundStyle(NoorColor.inkSecondary)
+        }
+    }
 
     var body: some View {
         Form {
@@ -69,26 +97,48 @@ struct SettingsView: View {
             }
 
             Section {
+                // Ten languages and five font families, each row drawn in
+                // its OWN face (and, for the languages, its own writing
+                // direction): a picker that says "Bengali" to someone who
+                // cannot read the current interface language is no picker at
+                // all, and a font you cannot see is not a choice either.
+                //
+                // These are NOT `Picker`s any more. `.pickerStyle(
+                // .navigationLink)` builds the pushed page itself, and that
+                // page renders NOTHING for a row that is more than a bare,
+                // unmodified `Text`: on an iPad Pro 13-inch (iPadOS 26.5,
+                // verified 2026-09-12) the pushed "Language" list drew the
+                // "System" row and then ten rows that were completely blank
+                // — only the checkmark showed a row was there at all. The
+                // very same rows draw perfectly inline in this Form, and in
+                // a list we push ourselves, so it is the picker's own pushed
+                // page and not the rows or the order of their modifiers
+                // (every ordering was tried). The font picker had the same
+                // shape — `.navigationLink` over a two-line `VStack` row,
+                // which is even further from a bare `Text` — so it is moved
+                // with it rather than left to fail the same way.
+                // macOS keeps a pop-up Picker: it is the native idiom there
+                // and it never pushes a page.
+                #if os(iOS)
+                NavigationLink {
+                    LanguageChoiceList(selection: $language)
+                } label: {
+                    HStack {
+                        Text("Language")
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Spacer(minLength: 12)
+                        languageValueLabel
+                    }
+                }
+                #else
                 Picker(selection: $language) {
                     Text("System").tag(NoorLanguage.systemValue)
-                    // Every language written in its OWN language and script:
-                    // a picker that says "Bengali" to someone who cannot
-                    // read the current interface language is no picker at
-                    // all. Never localised, never in the catalog.
                     ForEach(NoorLanguage.allCases, id: \.rawValue) { option in
-                        Text(verbatim: option.endonym)
-                            .font(NoorAppFont.font(showing: option))
-                            .environment(\.layoutDirection, option.layoutDirection)
-                            .tag(option.rawValue)
+                        Text(verbatim: option.endonym).tag(option.rawValue)
                     }
                 } label: {
                     Text("Language")
                 }
-                // Ten languages: a pop-up menu would cover the screen, and
-                // the rows carry their own faces (Nastaliq for Urdu), which
-                // a menu will not draw. Same treatment as the font picker.
-                #if os(iOS)
-                .pickerStyle(.navigationLink)
                 #endif
                 Picker(selection: $theme) {
                     Text("System").tag("system")
@@ -97,20 +147,27 @@ struct SettingsView: View {
                 } label: {
                     Text("Appearance")
                 }
+                #if os(iOS)
+                NavigationLink {
+                    AppFontChoiceList(selection: $uiFontRaw)
+                } label: {
+                    HStack {
+                        Text("App font")
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Spacer(minLength: 12)
+                        Text(verbatim: NoorAppFont(rawValue: uiFontRaw)?.displayName
+                            ?? NoorAppFont.fallback.displayName)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                    }
+                }
+                #else
                 Picker(selection: $uiFontRaw) {
                     ForEach(NoorAppFont.allCases, id: \.rawValue) { family in
-                        AppFontRow(family: family)
-                            .tag(family.rawValue)
+                        Text(verbatim: family.displayName).tag(family.rawValue)
                     }
                 } label: {
                     Text("App font")
                 }
-                // Five families, each previewing itself, so on iOS the picker
-                // must push to a full list rather than collapse to a menu.
-                // `.navigationLink` is iOS-only; macOS keeps the default
-                // (a pop-up menu), which is the native idiom there anyway.
-                #if os(iOS)
-                .pickerStyle(.navigationLink)
                 #endif
             }
 
@@ -356,6 +413,14 @@ struct SettingsView: View {
                 .environment(\.locale, locale)
                 .noorInterfaceDirection()
         }
+        #if os(iOS)
+        .navigationDestination(item: $pushedList) { list in
+            switch list {
+            case .language: LanguageChoiceList(selection: $language)
+            case .appFont: AppFontChoiceList(selection: $uiFontRaw)
+            }
+        }
+        #endif
         .navigationTitle(Text("Settings"))
         // The learning area is reachable from here too (see the Learn row).
         .learnDestinations { topic in
@@ -374,6 +439,102 @@ struct SettingsView: View {
         // direction with the environment forcing the other renders mirrored.
     }
 }
+
+#if os(iOS)
+/// One row of a pushed choice list: the option, drawn however it wants to be
+/// drawn, plus a checkmark when it is the current one.
+///
+/// Hand-rolled because SwiftUI's `.pickerStyle(.navigationLink)` page cannot
+/// render a styled row (see the comment in `SettingsView`'s first section).
+/// `Button` + `.buttonStyle(.plain)` keeps the row's own colours instead of
+/// tinting the whole label with the accent.
+struct NoorChoiceListRow<Content: View>: View {
+    let isSelected: Bool
+    let select: () -> Void
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        Button(action: select) {
+            HStack(spacing: 12) {
+                content
+                Spacer(minLength: 0)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(NoorColor.accentPrimary)
+                    .opacity(isSelected ? 1 : 0)
+            }
+            .frame(minHeight: 32)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+    }
+}
+
+/// The interface-language list: every language written in its own language,
+/// script and direction, because its reader may not understand a single
+/// other word on the screen. Never localised, never in the string catalog.
+struct LanguageChoiceList: View {
+    @Binding var selection: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        List {
+            NoorChoiceListRow(isSelected: NoorLanguage(rawValue: selection) == nil,
+                              select: { choose(NoorLanguage.systemValue) }) {
+                Text("System")
+                    .foregroundStyle(NoorColor.inkPrimary)
+            }
+            ForEach(NoorLanguage.allCases, id: \.rawValue) { option in
+                NoorChoiceListRow(isSelected: selection == option.rawValue,
+                                  select: { choose(option.rawValue) }) {
+                    Text(verbatim: option.endonym)
+                        .font(NoorAppFont.font(showing: option))
+                        .environment(\.layoutDirection, option.layoutDirection)
+                        .foregroundStyle(NoorColor.inkPrimary)
+                }
+                .accessibilityLabel(Text(verbatim: option.endonym))
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(NoorColor.bgPrimary)
+        .navigationTitle(Text("Language"))
+    }
+
+    private func choose(_ value: String) {
+        // Write first, dismiss second: the whole view tree is rebuilt on a
+        // language change (RootView keys its identity on it), so this screen
+        // is on its way out either way.
+        selection = value
+        dismiss()
+    }
+}
+
+/// The interface-font list: five families, each previewing itself in both
+/// scripts (see `AppFontRow`).
+struct AppFontChoiceList: View {
+    @Binding var selection: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        List {
+            ForEach(NoorAppFont.allCases, id: \.rawValue) { family in
+                NoorChoiceListRow(isSelected: selection == family.rawValue,
+                                  select: {
+                                      selection = family.rawValue
+                                      dismiss()
+                                  }) {
+                    AppFontRow(family: family)
+                }
+                .accessibilityLabel(Text(verbatim: family.displayName))
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(NoorColor.bgPrimary)
+        .navigationTitle(Text("App font"))
+    }
+}
+#endif
 
 /// One row of the App-font picker, drawn in the family it offers so the
 /// choice can be judged before it is made — in both scripts, since the app
@@ -400,6 +561,26 @@ struct AppFontRow: View {
 #Preview {
     NavigationStack { SettingsView() }
 }
+
+#if os(iOS)
+#Preview("Language list — AR RTL") {
+    NavigationStack { LanguageChoiceList(selection: .constant("ar")) }
+        .environment(\.locale, Locale(identifier: "ar"))
+        .environment(\.layoutDirection, .rightToLeft)
+}
+
+#Preview("Language list — EN LTR") {
+    NavigationStack { LanguageChoiceList(selection: .constant("system")) }
+        .environment(\.locale, Locale(identifier: "en"))
+        .environment(\.layoutDirection, .leftToRight)
+}
+
+#Preview("App font list — AR RTL") {
+    NavigationStack { AppFontChoiceList(selection: .constant(NoorAppFont.cairo.rawValue)) }
+        .environment(\.locale, Locale(identifier: "ar"))
+        .environment(\.layoutDirection, .rightToLeft)
+}
+#endif
 
 #Preview("App font rows — EN LTR") {
     List {
