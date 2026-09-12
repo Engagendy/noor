@@ -42,4 +42,9 @@
     <string name="feat_storage_athkar_audio">Audio zikir</string>
     <string name="feat_storage_athkar_audio_sub">Rekaman yang diunduh untuk didengarkan offline</string>
     <string name="feat_app_font">Font aplikasi</string>
+    <!-- Favourite athkar (pref "athkar.favorites", keyed on the dhikr audio filename) -->
+    <string name="feat_athkar_favorites">Favorit</string>
+    <string name="feat_athkar_favorite_add">Tambahkan ke favorit</string>
+    <string name="feat_athkar_favorite_remove">Hapus dari favorit</string>
+    <string name="feat_athkar_favorites_empty">Belum ada zikir favorit — ketuk ikon hati di samping zikir mana pun untuk menambahkannya di sini.</string>
 </resources>

@@ -19,6 +19,11 @@ public struct AthkarView: View {
     /// destination from the closure captured with the state update that set
     /// the item, so a second, separate @State would arrive stale (nil).
     @State private var pushedChapter: ChapterTarget?
+    /// Screenshot/UI-test hook, same family as NOOR_TAB / NOOR_OPEN:
+    /// NOOR_ATHKAR_FAVORITES=1 pushes the Favourites screen; =jump also
+    /// opens the first favourite's chapter from it.
+    @State private var hookShowFavorites = false
+    @State private var favorites = AthkarFavorites.shared
 
     private struct ChapterTarget: Identifiable, Hashable {
         let category: DhikrCategory
@@ -84,6 +89,11 @@ public struct AthkarView: View {
         .navigationDestination(item: $pushedChapter) { target in
             DhikrListView(category: target.category, highlightIndex: target.highlightIndex)
         }
+        .navigationDestination(isPresented: $hookShowFavorites) {
+            AthkarFavoritesView(
+                categories: categories,
+                autoOpenFirst: ProcessInfo.processInfo.environment["NOOR_ATHKAR_FAVORITES"] == "jump")
+        }
         .task {
             if categories.isEmpty {
                 categories = AthkarStore.load()
@@ -91,6 +101,7 @@ public struct AthkarView: View {
             }
             consumeOpenRequest()
             await openFirstHitHook()
+            await openFavoritesHook()
         }
         .onAppear(perform: consumeOpenRequest)
         .onChange(of: openCategory) { _, _ in consumeOpenRequest() }
@@ -108,10 +119,45 @@ public struct AthkarView: View {
         pushedChapter = ChapterTarget(category: first.category, highlightIndex: first.itemIndex)
     }
 
+    private func openFavoritesHook() async {
+        guard let raw = ProcessInfo.processInfo.environment["NOOR_ATHKAR_FAVORITES"],
+              raw == "1" || raw == "jump"
+        else { return }
+        try? await Task.sleep(nanoseconds: 3_500_000_000)
+        hookShowFavorites = true
+    }
+
     /// The fixed tools above the chapter list (hidden while searching:
     /// a query should return matches, not furniture).
     @ViewBuilder
     private var toolRows: some View {
+            NavigationLink {
+                AthkarFavoritesView(categories: categories)
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(NoorColor.accentGold)
+                        .frame(width: 30)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Favourites")
+                            .font(.noorScaled(16, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                        Text(verbatim: "أذكارك المفضّلة من حصن المسلم")
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                    }
+                    Spacer()
+                    if !favorites.keys.isEmpty {
+                        Text(verbatim: "\(favorites.keys.count)")
+                            .font(NoorFont.caption)
+                            .foregroundStyle(NoorColor.inkSecondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .listRowBackground(Color.clear)
+
             NavigationLink {
                 TasbihView()
             } label: {
@@ -277,6 +323,7 @@ struct DhikrListView: View {
     /// Position of the flashing item; cleared after a beat so the tint fades.
     @State private var flashing: Int?
     @State private var sharing: Dhikr?
+    @State private var favorites = AthkarFavorites.shared
     @Environment(\.locale) private var locale
     private var isArabicUI: Bool { locale.language.languageCode?.identifier == "ar" }
     private let audio = AthkarAudioPlayer.shared
@@ -302,6 +349,7 @@ struct DhikrListView: View {
                             isPlaying: audio.nowPlaying == dhikr.id && audio.isPlaying,
                             isLoading: audio.nowPlaying == dhikr.id && audio.isLoading,
                             failed: audio.failed == dhikr.id),
+                        isFavorite: AthkarFavorites.key(for: dhikr).map { favorites.isFavorite($0) },
                         onTap: {
                             let current = progress[dhikr.id] ?? 0
                             if current < dhikr.count {
@@ -318,7 +366,8 @@ struct DhikrListView: View {
                         onShare: { sharing = dhikr },
                         onPlay: dhikr.audio.map { file in
                             { audio.play(file: file, id: dhikr.id) }
-                        })
+                        },
+                        onFavorite: { favorites.toggle(dhikr) })
                         .id(index)
                 }
             }
@@ -431,12 +480,18 @@ struct DhikrCard: View {
     /// Brief tint after a search hit opened this chapter at this dhikr.
     var highlighted = false
     var audioState: AudioState?
+    /// The "done / count" counter; off on the Favourites screen, where a
+    /// tap opens the chapter instead of counting.
+    var showsProgress = true
+    /// Favourite state; nil hides the heart (rows that cannot be keyed).
+    var isFavorite: Bool?
     let onTap: () -> Void
     var onShare: (() -> Void)?
     /// Play/pause this dhikr's recording; nil hides the button.
     var onPlay: (() -> Void)?
+    var onFavorite: (() -> Void)?
 
-    private var isComplete: Bool { done >= dhikr.count }
+    private var isComplete: Bool { showsProgress && done >= dhikr.count }
     private var isReciting: Bool { audioState?.isActive ?? false }
 
     var body: some View {
@@ -455,7 +510,7 @@ struct DhikrCard: View {
                     }
                     .font(.noorScaled(13, weight: .semibold))
                     .foregroundStyle(NoorColor.accentPrimary)
-                } else {
+                } else if showsProgress {
                     Text(verbatim: "\(done) / \(dhikr.count)")
                         .font(.noorScaled(13, weight: .semibold).monospacedDigit())
                         .foregroundStyle(NoorColor.inkSecondary)
@@ -465,6 +520,19 @@ struct DhikrCard: View {
                     Text("Repeat \(dhikr.count)×")
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.accentGold)
+                }
+                if let isFavorite, let onFavorite {
+                    Button(action: onFavorite) {
+                        Image(systemName: isFavorite ? "heart.fill" : "heart")
+                            .font(.system(size: 15))
+                            .foregroundStyle(isFavorite ? NoorColor.accentGold : NoorColor.accentPrimary)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel(isFavorite ? Text("Remove from favourites") : Text("Add to favourites"))
+                    .accessibilityAddTraits(isFavorite ? .isSelected : [])
+                    .animation(.easeInOut(duration: 0.2), value: isFavorite)
                 }
                 if let onShare {
                     Button(action: onShare) {
@@ -516,9 +584,9 @@ struct DhikrCard: View {
         .animation(.easeInOut(duration: 0.2), value: done)
         .animation(.easeInOut(duration: 0.2), value: isReciting)
         .animation(.easeInOut(duration: 0.35), value: highlighted)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: showsProgress ? .combine : .contain)
         .accessibilityLabel(dhikr.text)
-        .accessibilityValue("\(done) of \(dhikr.count)")
+        .accessibilityValue(showsProgress ? Text("\(done) of \(dhikr.count)") : Text(verbatim: ""))
         .accessibilityAddTraits(.isButton)
     }
 

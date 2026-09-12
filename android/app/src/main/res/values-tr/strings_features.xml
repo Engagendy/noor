@@ -42,4 +42,9 @@
     <string name="feat_storage_athkar_audio">Zikir sesleri</string>
     <string name="feat_storage_athkar_audio_sub">Çevrimdışı dinlemek için indirilen kayıtlar</string>
     <string name="feat_app_font">Uygulama yazı tipi</string>
+    <!-- Favourite athkar (pref "athkar.favorites", keyed on the dhikr audio filename) -->
+    <string name="feat_athkar_favorites">Favoriler</string>
+    <string name="feat_athkar_favorite_add">Favorilere ekle</string>
+    <string name="feat_athkar_favorite_remove">Favorilerden çıkar</string>
+    <string name="feat_athkar_favorites_empty">Henüz favori zikir yok — buraya eklemek için herhangi bir zikrin yanındaki kalbe dokunun.</string>
 </resources>

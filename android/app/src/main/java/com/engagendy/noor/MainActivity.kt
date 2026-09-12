@@ -117,6 +117,7 @@ class MainActivity : AppCompatActivity() {
         // Kids mode: the stored flag decides which shell the app opens in,
         // resolved before the first frame (never read from composition).
         KidsStore.load(this)
+        AthkarFavorites.load(this)
         val onboarded = KhatmahPlan.prefs(this).getBoolean("onboarding.done", false)
         if (onboarded) {
             requestNotificationPermission()

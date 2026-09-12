@@ -45,4 +45,9 @@
     <string name="feat_storage_athkar_audio_sub">أذكار مسموعة تم تنزيلها للاستماع دون اتصال</string>
     <!-- Interface font picker (pref "ui.font") -->
     <string name="feat_app_font">خط التطبيق</string>
+    <!-- Favourite athkar (pref "athkar.favorites", keyed on the dhikr audio filename) -->
+    <string name="feat_athkar_favorites">المفضّلة</string>
+    <string name="feat_athkar_favorite_add">إضافة إلى المفضّلة</string>
+    <string name="feat_athkar_favorite_remove">إزالة من المفضّلة</string>
+    <string name="feat_athkar_favorites_empty">لا توجد أذكار مفضّلة بعد — اضغط رمز القلب بجانب أي ذكر لإضافته هنا.</string>
 </resources>

@@ -138,6 +138,9 @@ fun AthkarScreen(
     val categories = remember { AthkarStore.load(context) }
     var open by remember { mutableStateOf<DhikrCategory?>(null) }
     var extra by remember { mutableStateOf<AthkarExtra?>(null) }
+    // The Favourites section; a chapter opened from one of its rows sits on
+    // top of it, so back returns here first, then to the tab.
+    var favorites by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
     // Item to scroll to + highlight when a category is opened from a dhikr
     // hit; the serial re-triggers it for a repeated tap on the same row.
@@ -152,6 +155,7 @@ fun AthkarScreen(
         if (openSerial == 0 || openCategoryTitle == null) return@LaunchedEffect
         categories.firstOrNull { it.title == openCategoryTitle }?.let {
             extra = null
+            favorites = false
             openCategory(it)
         }
         // Consumed: a later visit to the tab must not re-open it.
@@ -160,10 +164,11 @@ fun AthkarScreen(
 
     // System back closes the open tool/category, same as its back button.
     androidx.activity.compose.BackHandler(
-        enabled = extra != null || open != null || searchText.isNotEmpty()
+        enabled = extra != null || open != null || favorites || searchText.isNotEmpty()
     ) {
         if (extra != null) extra = null
         else if (open != null) open = null
+        else if (favorites) favorites = false
         else searchText = ""
     }
 
@@ -179,6 +184,12 @@ fun AthkarScreen(
     if (current != null) {
         DhikrListScreen(current, onBack = { open = null }, modifier = modifier,
                         scrollToIndex = targetItem, scrollSerial = targetSerial)
+        return
+    }
+    if (favorites) {
+        FavoriteAthkarScreen(categories, onBack = { favorites = false },
+                             onOpen = { category, index -> openCategory(category, index) },
+                             modifier = modifier)
         return
     }
 
@@ -208,6 +219,37 @@ fun AthkarScreen(
             )
         }
         if (!searching) {
+            item(key = "favorites") {
+                // Favourites section, above the tool cards (iOS parity).
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 5.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(NoorColor.stateReciting, RoundedCornerShape(14.dp))
+                        .clickable { favorites = true }
+                        .padding(horizontal = 14.dp, vertical = 16.dp)
+                ) {
+                    Icon(painterResource(R.drawable.ic_heart_fill), contentDescription = null,
+                         tint = NoorColor.accentPrimary, modifier = Modifier.size(20.dp))
+                    Text(
+                        stringResource(R.string.feat_athkar_favorites),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = NoorColor.accentPrimary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    val count = AthkarFavorites.keys.size
+                    if (count > 0) {
+                        Text(count.localizedDigits(), fontSize = 13.sp,
+                             color = NoorColor.inkSecondary)
+                    }
+                    Icon(painterResource(NoorIcons.chevronForward()), contentDescription = null,
+                         tint = NoorColor.inkSecondary, modifier = Modifier.size(18.dp))
+                }
+            }
             item {
                 // Two-per-row cards for the extra tools.
                 AthkarExtra.entries.chunked(2).forEach { pair ->
@@ -468,10 +510,13 @@ fun DhikrListScreen(
                                     loading = active && AthkarPlayer.isLoading,
                                     onClick = { playOrToggle(id, audio) })
                             }
-                            // Branded image card, or the same card as a video
-                            // with this dhikr's recitation — like the iOS
-                            // AthkarView NoorShareSheet.
+                            // Favourite + share are the grown-up affordances;
+                            // kids mode (showShare = false) keeps neither.
                             if (showShare) {
+                                if (dhikr.audio != null) FavoriteButton(dhikr)
+                                // Branded image card, or the same card as a
+                                // video with this dhikr's recitation — like
+                                // the iOS AthkarView NoorShareSheet.
                                 ShareIconButton { sharing = index }
                             }
                         }
@@ -496,6 +541,149 @@ fun DhikrListScreen(
             },
             onShareVideo = { videoShare.start(dhikr, category.title) },
             onDismiss = { sharing = -1 })
+    }
+    ShareVideoProgressDialog(videoShare)
+}
+
+/// 48dp heart toggle with a clipped ripple; filled while favourited. Reads
+/// the store's Compose state so every screen flips together.
+@Composable
+private fun FavoriteButton(dhikr: Dhikr) {
+    val context = LocalContext.current
+    val on = AthkarFavorites.isFavorite(dhikr)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable { AthkarFavorites.toggle(context, dhikr) }
+    ) {
+        Icon(
+            painterResource(if (on) R.drawable.ic_heart_fill else R.drawable.ic_heart),
+            contentDescription = stringResource(if (on) R.string.feat_athkar_favorite_remove
+                                                else R.string.feat_athkar_favorite_add),
+            tint = NoorColor.accentPrimary,
+            modifier = Modifier.size(22.dp))
+    }
+}
+
+/// One favourited dhikr and where it lives, in mushaf order.
+private data class FavoriteDhikr(val category: DhikrCategory, val index: Int, val dhikr: Dhikr)
+
+/// The Favourites section: every favourited dhikr with its chapter beneath,
+/// each row keeping play / share / the heart (so it can be removed here).
+/// Tapping the row opens its chapter scrolled to that dhikr, flashed gold
+/// like a search landing. Mirrors the iOS Athkar favourites screen.
+@Composable
+private fun FavoriteAthkarScreen(
+    categories: List<DhikrCategory>,
+    onBack: () -> Unit,
+    onOpen: (DhikrCategory, Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val keys = AthkarFavorites.keys
+    val rows = remember(keys, categories) {
+        buildList {
+            categories.forEach { category ->
+                category.items.forEachIndexed { index, dhikr ->
+                    if (dhikr.audio != null && dhikr.audio in keys) add(FavoriteDhikr(category, index, dhikr))
+                }
+            }
+        }
+    }
+    val failed = remember { mutableStateMapOf<String, Boolean>() }
+    DisposableEffect(Unit) { onDispose { AthkarPlayer.stop() } }
+    var sharing by remember { mutableStateOf<FavoriteDhikr?>(null) }
+    val videoShare = rememberShareVideoShare(scope)
+
+    fun playOrToggle(id: String, file: String) {
+        if (AthkarPlayer.nowPlayingId == id) {
+            if (!AthkarPlayer.isLoading) AthkarPlayer.toggle()
+            return
+        }
+        failed.remove(id)
+        AthkarPlayer.beginLoading(context, id)
+        scope.launch {
+            val local = AthkarAudio.ensureLocal(context, file)
+            if (AthkarPlayer.nowPlayingId != id) return@launch
+            if (local == null) {
+                AthkarPlayer.cancelLoading(id)
+                failed[id] = true
+            } else if (!AthkarPlayer.play(context, local, id)) {
+                Toast.makeText(context, R.string.feat_athkar_audio_failed, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    Column(modifier.fillMaxSize()) {
+        ExtraHeader(stringResource(R.string.feat_athkar_favorites), onBack)
+        if (rows.isEmpty()) {
+            Text(
+                stringResource(R.string.feat_athkar_favorites_empty),
+                fontSize = 15.sp,
+                lineHeight = 24.sp,
+                color = NoorColor.inkSecondary,
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
+            )
+            return
+        }
+        LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+            items(rows, key = { it.dhikr.audio!! }) { row ->
+                val dhikr = row.dhikr
+                val id = dhikr.audio!!
+                val active = AthkarPlayer.nowPlayingId == id
+                val playing = active && AthkarPlayer.isPlaying
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (active) NoorColor.stateReciting else NoorColor.bgElevated,
+                                    RoundedCornerShape(14.dp))
+                        .clickable { onOpen(row.category, row.index) }
+                        .padding(16.dp)
+                ) {
+                    Text(dhikr.text, fontSize = 18.sp, lineHeight = 32.sp,
+                         color = NoorColor.inkPrimary, style = arabicText(),
+                         modifier = Modifier.fillMaxWidth())
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                    ) {
+                        Text(row.category.displayTitle(), fontSize = 13.sp,
+                             color = NoorColor.inkSecondary,
+                             modifier = Modifier.weight(1f).padding(end = 8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            DhikrPlayButton(
+                                playing = playing,
+                                loading = active && AthkarPlayer.isLoading,
+                                onClick = { playOrToggle(id, id) })
+                            FavoriteButton(dhikr)
+                            ShareIconButton { sharing = row }
+                        }
+                    }
+                    if (failed[id] == true) {
+                        Text(stringResource(R.string.feat_athkar_audio_offline), fontSize = 12.sp,
+                             color = NoorColor.inkSecondary,
+                             modifier = Modifier.padding(top = 4.dp))
+                    }
+                }
+            }
+        }
+    }
+
+    sharing?.let { row ->
+        DhikrShareSheet(
+            hasVideo = true,
+            onShareImage = {
+                shareRendered(context, row.dhikr.text, row.category.title,
+                              attribution = "نور Noor · حصن المسلم")
+            },
+            onShareVideo = { videoShare.start(row.dhikr, row.category.title) },
+            onDismiss = { sharing = null })
     }
     ShareVideoProgressDialog(videoShare)
 }

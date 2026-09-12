@@ -42,4 +42,9 @@
     <string name="feat_storage_athkar_audio">اذکار کی آڈیو</string>
     <string name="feat_storage_athkar_audio_sub">آف لائن سننے کے لیے ڈاؤن لوڈ شدہ ریکارڈنگز</string>
     <string name="feat_app_font">ایپ کا فونٹ</string>
+    <!-- Favourite athkar (pref "athkar.favorites", keyed on the dhikr audio filename) -->
+    <string name="feat_athkar_favorites">پسندیدہ</string>
+    <string name="feat_athkar_favorite_add">پسندیدہ میں شامل کریں</string>
+    <string name="feat_athkar_favorite_remove">پسندیدہ سے ہٹائیں</string>
+    <string name="feat_athkar_favorites_empty">ابھی کوئی پسندیدہ ذکر نہیں — کسی بھی ذکر کے ساتھ دل کے نشان پر ٹیپ کریں تاکہ وہ یہاں شامل ہو جائے۔</string>
 </resources>

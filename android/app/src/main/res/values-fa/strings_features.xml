@@ -42,4 +42,9 @@
     <string name="feat_storage_athkar_audio">صوت اذکار</string>
     <string name="feat_storage_athkar_audio_sub">صوت‌های دانلودشده برای شنیدن آفلاین</string>
     <string name="feat_app_font">قلم برنامه</string>
+    <!-- Favourite athkar (pref "athkar.favorites", keyed on the dhikr audio filename) -->
+    <string name="feat_athkar_favorites">برگزیده‌ها</string>
+    <string name="feat_athkar_favorite_add">افزودن به برگزیده‌ها</string>
+    <string name="feat_athkar_favorite_remove">حذف از برگزیده‌ها</string>
+    <string name="feat_athkar_favorites_empty">هنوز ذکر برگزیده‌ای ندارید — روی نماد قلب کنار هر ذکر بزنید تا اینجا افزوده شود.</string>
 </resources>
