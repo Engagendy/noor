@@ -131,4 +131,7 @@
     <string name="g2_search_chapters">Bölümler</string>
     <string name="g2_search_athkar_results">Zikir</string>
     <string name="g2_search_no_results">Sonuç yok</string>
+    <!-- Translation edition picker: the "follow the interface language" row and its subtitle -->
+    <string name="g2_translation_follow_language">Uygulama dilini izle</string>
+    <string name="g2_translation_default_for">%1$s için varsayılan: %2$s</string>
 </resources>

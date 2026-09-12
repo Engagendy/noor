@@ -39,8 +39,11 @@ struct MainTabView: View {
     @State private var quranOpenTarget: ReaderTarget?
     /// Athkar category to push after a reminder tap (exact json title).
     @State private var athkarOpenCategory: String?
-    @State private var translations = TranslationStore()
-    @AppStorage("translation.id") private var translationId = "en.sahih"
+    @State private var translations = TranslationStore(
+        edition: TranslationStore.selectedEdition(interfaceLanguage: NoorLanguage.current.rawValue))
+    /// Observed (with `appLanguage` below) so `resolvedEdition` is
+    /// re-evaluated: nil means the edition follows the interface language.
+    @AppStorage(TranslationStore.defaultsKey) private var translationId: String?
     @State private var library = LibraryStore.sharedInstance
 
     // Prayer settings — observed so adhan notifications reschedule on change.
@@ -80,6 +83,12 @@ struct MainTabView: View {
     @AppStorage(AthkarReminderScheduler.minutesKey) private var athkarAfterSalahMinutes
         = AthkarReminderScheduler.defaultMinutes
 
+    /// The edition to load: pinned in Settings, else the interface
+    /// language's default (`NoorLanguage.current` honours NOOR_LANG too).
+    private var resolvedEdition: TranslationStore.Edition {
+        TranslationStore.selectedEdition(interfaceLanguage: NoorLanguage.current.rawValue)
+    }
+
     var body: some View {
         mainTabs
             .tint(NoorColor.accentPrimary)
@@ -95,9 +104,11 @@ struct MainTabView: View {
                     isArabicUI: arabicUI)
                     .noorInterfaceDirection()
             }
-            .onChange(of: translationId) { _, _ in
-                // Swap the loaded edition and fetch it right away.
-                translations = TranslationStore()
+            .onChange(of: resolvedEdition.id) { _, _ in
+                // Swap the loaded edition and fetch it right away — whether
+                // the user pinned a different one or, with none pinned,
+                // changed the interface language.
+                translations = TranslationStore(edition: resolvedEdition)
                 Task { await translations.download() }
             }
             .modifier(TabLifecycle(

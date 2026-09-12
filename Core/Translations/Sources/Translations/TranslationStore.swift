@@ -14,44 +14,119 @@ public final class TranslationStore {
         case failed(String)
     }
 
-    /// Saheeh International English.
+    /// Saheeh International English — the edition the app has always
+    /// defaulted to, and still the fallback for any language without one
+    /// of its own (Arabic, and anything unknown).
     public nonisolated static let defaultEdition = Edition(
         id: "en.sahih",
+        language: "en",
         displayName: "English — Saheeh International",
         // Saheeh International is the Umm Muhammad (Emily Assami,
         // Mary Kennedy, Amatullah Bantley) translation — same text.
         mirrorFile: "eng-ummmuhammad")
 
-    /// All offered translations. Every one has an equivalent on both hosts
-    /// (mirror files verified live 2026-09-09: 6236 ayat each).
+    /// All offered translations — one per interface language, in the
+    /// `NoorLanguage` order, Somali last (no interface language yet; its
+    /// default only applies once `so` joins the picker). 1:1 with Android's
+    /// `TanzilEditions`. Every one has an equivalent on both hosts (mirror
+    /// files verified live: the first five 2026-09-09, the last five
+    /// 2026-09-12 — 6236 ayat each, none empty).
+    ///
+    /// Display names are the edition's OWN language and script (endonyms,
+    /// like the language picker — never routed through the string catalog),
+    /// because a Bengali reader must find "বাংলা" whatever the interface
+    /// language is.
     public nonisolated static let allEditions: [Edition] = [
         defaultEdition,
-        Edition(id: "ur.jalandhry", displayName: "اردو — جالندہری",
-                mirrorFile: "urd-fatehmuhammadja"),
-        Edition(id: "fr.hamidullah", displayName: "Français — Hamidullah",
-                mirrorFile: "fra-muhammadhamidul"),
-        Edition(id: "id.indonesian", displayName: "Indonesia — Kemenag",
+        Edition(id: "id.indonesian", language: "id", displayName: "Indonesia — Kemenag",
                 mirrorFile: "ind-indonesianislam"),
-        Edition(id: "tr.diyanet", displayName: "Türkçe — Diyanet",
+        Edition(id: "ur.jalandhry", language: "ur", displayName: "اردو — جالندہری",
+                mirrorFile: "urd-fatehmuhammadja", isRTL: true),
+        // Mohammad Mahdi Fooladvand — the same work as the Persian
+        // translation AUDIO (TranslationVoice.persian), so text and voice
+        // agree ayah for ayah. Catalogue key fas_mohammadmahdifo.
+        Edition(id: "fa.fooladvand", language: "fa", displayName: "فارسی — فولادوند",
+                mirrorFile: "fas-mohammadmahdifo", isRTL: true),
+        Edition(id: "tr.diyanet", language: "tr", displayName: "Türkçe — Diyanet",
                 mirrorFile: "tur-diyanetisleri"),
+        // Abdullah Muhammad Basmeih (Tafsir Pimpinan Ar-Rahman) — the only
+        // Malay edition the mirror carries. Catalogue key msa_abdullahmuhamma.
+        Edition(id: "ms.basmeih", language: "ms", displayName: "Bahasa Melayu — Basmeih",
+                mirrorFile: "msa-abdullahmuhamma"),
+        // Dr. Abu Bakr Muhammad Zakaria (KFGQPC edition). Catalogue key
+        // ben_abubakrzakaria; not on tanzil.net, so that source 404s —
+        // harmless, it is the last try.
+        Edition(id: "bn.zakaria", language: "bn", displayName: "বাংলা — আবু বকর যাকারিয়া",
+                mirrorFile: "ben-abubakrzakaria"),
+        Edition(id: "fr.hamidullah", language: "fr", displayName: "Français — Hamidullah",
+                mirrorFile: "fra-muhammadhamidul"),
+        // Muhammad Isa García. Catalogue key spa_muhammadisagarc.
+        Edition(id: "es.garcia", language: "es", displayName: "Español — Isa García",
+                mirrorFile: "spa-muhammadisagarc"),
+        // Mahmud Muhammad Abduh. Catalogue key som_mahmudmuhammada.
+        Edition(id: "so.abduh", language: "so", displayName: "Soomaali — Maxamuud Maxamed Cabduh",
+                mirrorFile: "som-mahmudmuhammada"),
     ]
 
-    /// The user's chosen edition (defaults to English).
-    public nonisolated static func selectedEdition() -> Edition {
-        let id = UserDefaults.standard.string(forKey: "translation.id") ?? defaultEdition.id
-        return allEditions.first { $0.id == id } ?? defaultEdition
+    /// UserDefaults key. It holds an edition id only once the user has
+    /// picked one in Settings; while it is ABSENT the edition follows the
+    /// interface language. Absence is the "never chosen" sentinel (same
+    /// idea, same key, on Android), so an explicit choice — English
+    /// included — survives every language change, and "Follow app
+    /// language" in Settings is simply removing the key.
+    public nonisolated static let defaultsKey = "translation.id"
+
+    /// The edition an interface language reads by default. Arabic has no
+    /// translation to follow (the Arabic reader reads the Quran itself), so
+    /// it — and anything unknown — keeps the English default the app has
+    /// always had.
+    public nonisolated static func defaultEdition(forLanguage language: String) -> Edition {
+        allEditions.first { $0.language == language } ?? defaultEdition
     }
 
-    /// RTL translations (Urdu) align right.
-    public var isRTL: Bool { edition.id.hasPrefix("ur") }
+    /// The edition the user pinned in Settings, or nil when they never
+    /// chose one (or the stored id is no longer offered).
+    public nonisolated static func explicitEdition(
+        defaults: UserDefaults = .standard
+    ) -> Edition? {
+        guard let id = defaults.string(forKey: defaultsKey) else { return nil }
+        return allEditions.first { $0.id == id }
+    }
 
-    public struct Edition: Sendable {
+    /// The edition to load: the pinned one, else the default for the
+    /// interface language (a `NoorLanguage` raw value, e.g. "tr").
+    public nonisolated static func selectedEdition(
+        interfaceLanguage: String, defaults: UserDefaults = .standard
+    ) -> Edition {
+        explicitEdition(defaults: defaults) ?? defaultEdition(forLanguage: interfaceLanguage)
+    }
+
+    /// The direction the LOADED edition's text reads in (Urdu and Persian
+    /// right to left; the rest LTR) — from the edition table, so an edition
+    /// can never be listed without saying which way it reads.
+    public var isRTL: Bool { edition.isRTL }
+
+    public struct Edition: Sendable, Equatable {
         public let id: String
+        /// The `NoorLanguage` raw value this edition is the default for.
+        public let language: String
         public let displayName: String
         /// Its file name in fawazahmed0/quran-api. NOTE: that repo's
         /// editions.json KEYS use underscores while the FILES use hyphens —
         /// these are the file names.
         let mirrorFile: String
+        /// Whether its text reads right to left.
+        public let isRTL: Bool
+
+        init(id: String, language: String, displayName: String, mirrorFile: String, isRTL: Bool = false) {
+            self.id = id
+            self.language = language
+            self.displayName = displayName
+            self.mirrorFile = mirrorFile
+            self.isRTL = isRTL
+        }
+
+        public static func == (lhs: Edition, rhs: Edition) -> Bool { lhs.id == rhs.id }
 
         /// Where the edition is fetched from, in order; first success wins.
         ///
@@ -78,7 +153,10 @@ public final class TranslationStore {
     private var texts: [Int: String] = [:]  // key: surah*1000 + ayah
     private let edition: Edition
 
-    public init(edition: Edition = TranslationStore.selectedEdition()) {
+    /// `edition` is what `selectedEdition(interfaceLanguage:)` resolves —
+    /// required rather than defaulted so a caller can never forget that the
+    /// choice depends on the interface language.
+    public init(edition: Edition) {
         self.edition = edition
         // NEVER parse in init: view structs re-init on every body pass and
         // a synchronous multi-MB parse on main blew the launch watchdog.

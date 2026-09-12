@@ -149,4 +149,7 @@
     <string name="g2_search_chapters">الأبواب</string>
     <string name="g2_search_athkar_results">الأذكار</string>
     <string name="g2_search_no_results">لا توجد نتائج</string>
+    <!-- Translation edition picker: the "follow the interface language" row and its subtitle -->
+    <string name="g2_translation_follow_language">اتباع لغة التطبيق</string>
+    <string name="g2_translation_default_for">الافتراضي للغة %1$s: %2$s</string>
 </resources>

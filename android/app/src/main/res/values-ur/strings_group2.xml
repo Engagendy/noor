@@ -131,4 +131,7 @@
     <string name="g2_search_chapters">ابواب</string>
     <string name="g2_search_athkar_results">اذکار</string>
     <string name="g2_search_no_results">کوئی نتیجہ نہیں</string>
+    <!-- Translation edition picker: the "follow the interface language" row and its subtitle -->
+    <string name="g2_translation_follow_language">ایپ کی زبان کے مطابق</string>
+    <string name="g2_translation_default_for">%1$s کے لیے طے شدہ: %2$s</string>
 </resources>

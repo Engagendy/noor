@@ -15,6 +15,38 @@ import java.net.URL
 /// Tanzil line format ("surah|ayah|text"), then fully offline for good.
 /// Never mixed with the Arabic text: the Quran itself always comes from the
 /// bundled verified DB, this file only ever feeds the gloss line under it.
+/// One offered translation edition. `id` is the Tanzil id where Tanzil
+/// carries the work (it is also the on-disk file name and the value of the
+/// "translation.id" pref); `language` is the `NoorLanguage.code` the edition
+/// is the default for; `displayName` is the edition's OWN language and
+/// script (an endonym, like the language picker — never routed through
+/// strings.xml, because a Bengali reader must find "বাংলা" whatever the UI
+/// language is); `isRtl` is the direction its text reads in.
+data class TranslationEdition(
+    val id: String,
+    val language: String,
+    val displayName: String,
+    val isRtl: Boolean = false,
+)
+
+/// The offered editions — 1:1 with the iOS Core/Translations
+/// TranslationStore.allEditions ("translation.id"), in the NoorLanguage
+/// order, Somali last (no interface language yet; its default only applies
+/// once `so` joins the picker). Where each one is actually fetched from
+/// (jsDelivr mirror first, tanzil.net last) lives in TranslationStore.
+val TanzilEditions = listOf(
+    TranslationEdition("en.sahih", "en", "English — Saheeh International"),
+    TranslationEdition("id.indonesian", "id", "Indonesia — Kemenag"),
+    TranslationEdition("ur.jalandhry", "ur", "اردو — جالندہری", isRtl = true),
+    TranslationEdition("fa.fooladvand", "fa", "فارسی — فولادوند", isRtl = true),
+    TranslationEdition("tr.diyanet", "tr", "Türkçe — Diyanet"),
+    TranslationEdition("ms.basmeih", "ms", "Bahasa Melayu — Basmeih"),
+    TranslationEdition("bn.zakaria", "bn", "বাংলা — আবু বকর যাকারিয়া"),
+    TranslationEdition("fr.hamidullah", "fr", "Français — Hamidullah"),
+    TranslationEdition("es.garcia", "es", "Español — Isa García"),
+    TranslationEdition("so.abduh", "so", "Soomaali — Maxamuud Maxamed Cabduh"),
+)
+
 object TranslationStore {
 
     enum class State { NOT_DOWNLOADED, DOWNLOADING, READY, FAILED }
@@ -29,13 +61,24 @@ object TranslationStore {
     /// file finishes parsing, without the reader having to be reopened.
     private var texts by mutableStateOf<Map<Int, String>>(emptyMap())
 
-    /// Urdu reads right to left; the rest of the editions are LTR.
-    val isRTL: Boolean get() = loadedId?.startsWith("ur") == true
+    /// The direction of the LOADED edition's text (Urdu and Persian read
+    /// right to left; the rest are LTR) — from the edition table, so a new
+    /// edition can never be listed without saying which way it reads.
+    val isRTL: Boolean get() = TanzilEditions.firstOrNull { it.id == loadedId }?.isRtl == true
+
+    /// The edition an interface language reads by default. Arabic has no
+    /// translation to follow (the Arabic reader reads the Quran itself), so
+    /// it — and anything unknown — keeps the English default the app has
+    /// always had.
+    fun defaultFor(language: String): String =
+        TanzilEditions.firstOrNull { it.language == language }?.id ?: TanzilEditions[0].id
 
     /// Our edition id → the equivalent file in fawazahmed0/quran-api.
-    /// Verified live 2026-09-09: every one of the five returns 200 with a
-    /// complete 6236-ayah file. Note the repo's editions.json KEYS use
-    /// underscores while the FILES use hyphens — these are the file names.
+    /// Verified live 2026-09-09 (first five) and 2026-09-12 (last five):
+    /// every one returns 200 with a complete 6236-ayah file. Note the repo's
+    /// editions.json KEYS use underscores (`fas_mohammadmahdifo`) while the
+    /// FILES use hyphens — these are the file names, read from each
+    /// catalogue entry's `link`, never derived from the key.
     private val MirrorFile = mapOf(
         // Saheeh International is the Umm Muhammad (Emily Assami,
         // Mary Kennedy, Amatullah Bantley) translation — same text.
@@ -44,6 +87,20 @@ object TranslationStore {
         "fr.hamidullah" to "fra-muhammadhamidul",
         "id.indonesian" to "ind-indonesianislam",
         "tr.diyanet" to "tur-diyanetisleri",
+        // Mohammad Mahdi Fooladvand — the same work as the Persian
+        // translation AUDIO (TranslationVoice.PERSIAN), so text and voice
+        // agree ayah for ayah. Catalogue key fas_mohammadmahdifo.
+        "fa.fooladvand" to "fas-mohammadmahdifo",
+        // Dr. Abu Bakr Muhammad Zakaria (KFGQPC edition) — the widely read
+        // modern Bengali. Catalogue key ben_abubakrzakaria; not on tanzil.net.
+        "bn.zakaria" to "ben-abubakrzakaria",
+        // Abdullah Muhammad Basmeih (Tafsir Pimpinan Ar-Rahman) — the only
+        // Malay edition the mirror carries. Catalogue key msa_abdullahmuhamma.
+        "ms.basmeih" to "msa-abdullahmuhamma",
+        // Muhammad Isa García. Catalogue key spa_muhammadisagarc.
+        "es.garcia" to "spa-muhammadisagarc",
+        // Mahmud Muhammad Abduh. Catalogue key som_mahmudmuhammada.
+        "so.abduh" to "som-mahmudmuhammada",
     )
 
     /// Where an edition is fetched from, in order, first success wins.
@@ -66,9 +123,18 @@ object TranslationStore {
         add("https://tanzil.net/trans/$id")
     }
 
+    /// The pref holds an edition id only once the user has picked one in
+    /// Settings; while it is ABSENT the edition follows the interface
+    /// language (a Turkish interface reads Diyanet, a Persian one
+    /// Fooladvand, …). Absence is the "never chosen" sentinel, so an
+    /// explicit choice — English included — survives every language change,
+    /// and "Follow app language" in Settings is simply removing the key.
+    fun explicitId(context: Context): String? =
+        KhatmahPlan.prefs(context).getString("translation.id", null)
+            ?.takeIf { id -> TanzilEditions.any { it.id == id } }
+
     fun selectedId(context: Context): String =
-        KhatmahPlan.prefs(context).getString("translation.id", TanzilEditions[0].id)
-            ?: TanzilEditions[0].id
+        explicitId(context) ?: defaultFor(NoorLanguage.current().code)
 
     private fun file(context: Context, id: String): File =
         File(File(context.filesDir, "translations").apply { mkdirs() }, "$id.txt")

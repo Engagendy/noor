@@ -56,20 +56,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/// The five offered translation editions — 1:1 with the iOS
-/// Core/Translations TranslationStore.allEditions ("translation.id"). The
-/// ids stay Tanzil's; where each one is actually fetched from (jsDelivr
-/// mirror first, tanzil.net last) lives in TranslationStore.sources.
-data class TranslationEdition(val id: String, val displayName: String)
-
-val TanzilEditions = listOf(
-    TranslationEdition("en.sahih", "English — Saheeh International"),
-    TranslationEdition("ur.jalandhry", "اردو — جالندہری"),
-    TranslationEdition("fr.hamidullah", "Français — Hamidullah"),
-    TranslationEdition("id.indonesian", "Indonesia — Kemenag"),
-    TranslationEdition("tr.diyanet", "Türkçe — Diyanet"),
-)
-
 /// App settings — 1:1 port of the iOS App/SettingsView.swift: general
 /// (language/appearance), prayer, tools, Quran, and about. Prefs live in
 /// the shared "noor" store and are written only inside click handlers.
@@ -120,7 +106,13 @@ private fun SettingsMain(
     val athkarAfterSalah = remember(version) { prefs.getBoolean("athkar.afterSalah", false) }
     val athkarMinutes = remember(version) { prefs.getInt("athkar.afterSalahMinutes", 20) }
     val sound = remember(version) { PrayerPrefs(context).sound }
-    val translationId = remember(version) { prefs.getString("translation.id", "en.sahih") ?: "en.sahih" }
+    // null = never chosen: the edition follows the interface language
+    // (TranslationStore.defaultFor). Keyed on `language` too, so the
+    // "Follow app language" row re-labels the moment the language changes.
+    val explicitTranslationId = remember(version, language) { TranslationStore.explicitId(context) }
+    val defaultTranslationId = remember(version, language) {
+        TranslationStore.defaultFor(NoorLanguage.current().code)
+    }
     // Same pref the reader's options sheet writes ("reader.translation"),
     // so the two places can never disagree about whether the gloss is on.
     val showTranslation = remember(version) { prefs.getBoolean("reader.translation", false) }
@@ -360,33 +352,37 @@ private fun SettingsMain(
                     if (on) scope.launch { TranslationStore.ensure(context) }
                 })
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
-            TanzilEditions.forEachIndexed { index, edition ->
-                if (index > 0) {
-                    HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
-                }
-                val selected = edition.id == translationId
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            prefs.edit().putString("translation.id", edition.id).apply()
-                            version++
-                            // Swap editions live: `ensure` reloads because the
-                            // selected id no longer matches the loaded one.
-                            if (showTranslation) scope.launch { TranslationStore.ensure(context) }
-                        }
-                        .padding(horizontal = 16.dp, vertical = 13.dp)
-                ) {
-                    Text(edition.displayName, fontSize = 15.sp,
-                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                         color = if (selected) NoorColor.accentPrimary else NoorColor.inkPrimary)
-                    if (selected) {
-                        Icon(painterResource(R.drawable.ic_check), contentDescription = null,
-                             tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
-                    }
-                }
+            // First row: follow the interface language (the state a fresh
+            // install is in), saying which edition that currently means so
+            // a user who changed the language understands why the gloss
+            // changed with it. Picking an edition below pins it; picking
+            // this row again un-pins (removes the pref) — see
+            // TranslationStore.explicitId.
+            val defaultEdition = TanzilEditions.first { it.id == defaultTranslationId }
+            EditionRow(
+                title = stringResource(R.string.g2_translation_follow_language),
+                subtitle = stringResource(R.string.g2_translation_default_for,
+                                          NoorLanguage.current().endonym,
+                                          defaultEdition.displayName),
+                selected = explicitTranslationId == null,
+                onClick = {
+                    prefs.edit().remove("translation.id").apply()
+                    version++
+                    if (showTranslation) scope.launch { TranslationStore.ensure(context) }
+                })
+            TanzilEditions.forEach { edition ->
+                HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
+                EditionRow(
+                    title = edition.displayName,
+                    subtitle = null,
+                    selected = edition.id == explicitTranslationId,
+                    onClick = {
+                        prefs.edit().putString("translation.id", edition.id).apply()
+                        version++
+                        // Swap editions live: `ensure` reloads because the
+                        // selected id no longer matches the loaded one.
+                        if (showTranslation) scope.launch { TranslationStore.ensure(context) }
+                    })
             }
         }
 
@@ -791,6 +787,38 @@ private fun AppFontSheet(
                     }
                 }
             }
+        }
+    }
+}
+
+/// One row of the translation-edition picker: a title (the edition's own
+/// name), an optional explanatory subtitle, and the check when selected.
+@Composable
+private fun EditionRow(
+    title: String,
+    subtitle: String?,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 13.dp)
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(title, fontSize = 15.sp,
+                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                 color = if (selected) NoorColor.accentPrimary else NoorColor.inkPrimary)
+            if (subtitle != null) {
+                Text(subtitle, fontSize = 12.5.sp, color = NoorColor.inkSecondary)
+            }
+        }
+        if (selected) {
+            Icon(painterResource(R.drawable.ic_check), contentDescription = null,
+                 tint = NoorColor.accentPrimary, modifier = Modifier.size(16.dp))
         }
     }
 }

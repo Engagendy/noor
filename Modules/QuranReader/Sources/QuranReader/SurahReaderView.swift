@@ -760,9 +760,14 @@ public struct SurahReaderView: View {
                 .font(NoorFont.translation)
                 .foregroundStyle(NoorColor.inkSecondary)
                 .lineSpacing(4)
-                .environment(\.layoutDirection, translations?.isRTL == true ? .rightToLeft : .leftToRight)
                 .multilineTextAlignment(.leading)
+                // The frame sits INSIDE the direction override (below) so
+                // `.leading` is the edition's own start edge: a short
+                // Turkish line at the left, a Persian one at the right.
+                // Outside it, `.leading` resolved against the RTL Quran
+                // block and pushed every LTR gloss to the right edge.
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .environment(\.layoutDirection, translations?.isRTL == true ? .rightToLeft : .leftToRight)
         } else if let translations {
             switch translations.state {
             case .downloading:

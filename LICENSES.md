@@ -34,15 +34,27 @@ Attributions are displayed in Settings → About.
   Complex."
 
 ### Quran translations (downloaded on demand)
-The five offered editions and the ids they are stored under:
+The ten offered editions and the ids they are stored under (one per
+interface language; the edition follows the interface language until the
+user pins one in Settings — Arabic has none and reads English):
 
-| App id | Translation | tanzil.net id | fawazahmed0/quran-api file |
+| App id | Translation | tanzil.net id | fawazahmed0/quran-api key → file |
 |---|---|---|---|
-| `en.sahih` | Saheeh International (Umm Muhammad et al.) | `en.sahih` | `eng-ummmuhammad` |
-| `ur.jalandhry` | Fateh Muhammad Jalandhry (Urdu) | `ur.jalandhry` | `urd-fatehmuhammadja` |
-| `fr.hamidullah` | Muhammad Hamidullah (French) | `fr.hamidullah` | `fra-muhammadhamidul` |
-| `id.indonesian` | Indonesian Ministry of Religious Affairs (Kemenag) | `id.indonesian` | `ind-indonesianislam` |
-| `tr.diyanet` | Diyanet İşleri (Turkish) | `tr.diyanet` | `tur-diyanetisleri` |
+| `en.sahih` | Saheeh International (Umm Muhammad et al.) | `en.sahih` | `eng_ummmuhammad` → `eng-ummmuhammad` |
+| `ur.jalandhry` | Fateh Muhammad Jalandhry (Urdu) | `ur.jalandhry` | `urd_fatehmuhammadja` → `urd-fatehmuhammadja` |
+| `fr.hamidullah` | Muhammad Hamidullah (French) | `fr.hamidullah` | `fra_muhammadhamidul` → `fra-muhammadhamidul` |
+| `id.indonesian` | Indonesian Ministry of Religious Affairs (Kemenag) | `id.indonesian` | `ind_indonesianislam` → `ind-indonesianislam` |
+| `tr.diyanet` | Diyanet İşleri (Turkish) | `tr.diyanet` | `tur_diyanetisleri` → `tur-diyanetisleri` |
+| `fa.fooladvand` | Mohammad Mahdi Fooladvand (Persian; same work as the Persian translation audio) | `fa.fooladvand` | `fas_mohammadmahdifo` → `fas-mohammadmahdifo` |
+| `bn.zakaria` | Dr. Abu Bakr Muhammad Zakaria (Bengali; KFGQPC edition, mirror source qurancomplex.gov.sa) | — (not on Tanzil) | `ben_abubakrzakaria` → `ben-abubakrzakaria` |
+| `ms.basmeih` | Abdullah Muhammad Basmeih, Tafsir Pimpinan Ar-Rahman (Malay) | `ms.basmeih` | `msa_abdullahmuhamma` → `msa-abdullahmuhamma` |
+| `es.garcia` | Muhammad Isa García (Spanish) | `es.garcia` | `spa_muhammadisagarc` → `spa-muhammadisagarc` |
+| `so.abduh` | Mahmud Muhammad Abduh (Somali) | `so.abduh` | `som_mahmudmuhammada` → `som-mahmudmuhammada` |
+
+All ten files verified complete (6236 ayat, none empty) on jsDelivr —
+first five on 2026-09-09, last five on 2026-09-12. Catalogue keys use
+underscores while file names use hyphens; the file name is taken from each
+catalogue entry's `link`, never derived from the key.
 
 - **Access:** downloaded once on demand (Application Support on iOS,
   `filesDir/translations` on Android), stored as Tanzil "surah|ayah|text"
@@ -65,6 +77,12 @@ The five offered editions and the ids they are stored under:
   underlying works are used on the same terms as via Tanzil below.
 - **Tanzil terms:** free for non-commercial use with source cited; this app is
   free and non-commercial.
+- **Individual works:** each translation remains the work of its translator /
+  publisher (Saheeh International; Jalandhry; Hamidullah; Kemenag; Diyanet;
+  Fooladvand; Zakaria / King Fahd Glorious Quran Printing Complex; Basmeih;
+  Isa García; Abduh), distributed for free non-commercial use as part of the
+  Tanzil collection or the KFGQPC translation programme; the app is free,
+  non-commercial and cites the translator by name in the edition picker.
 - **Attribution:** "Quran translations: Saheeh International and the Tanzil
   translations collection, mirrored via fawazahmed0/quran-api (Unlicense)."
 

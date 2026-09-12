@@ -837,7 +837,12 @@ fun ReaderScreen(
     var revealedKeys by remember { mutableStateOf(emptySet<Int>()) }
     // Fetch/parse the chosen Tanzil edition the moment a translation is
     // wanted — downloaded once, then offline for good.
-    LaunchedEffect(showTranslation) { if (showTranslation) TranslationStore.ensure(context) }
+    // Keyed on the language too: with no edition pinned in Settings the
+    // edition follows the interface language, so a language change while
+    // the reader is open must swap the gloss as well.
+    LaunchedEffect(showTranslation, NoorLocale.choice) {
+        if (showTranslation) TranslationStore.ensure(context)
+    }
     // Structure metadata (juz/quarter starts, sajdah ayat) keyed s*1000+a,
     // plus the basmala line straight from the verified DB (1:1), never typed.
     val meta = remember {
@@ -1321,8 +1326,8 @@ private fun SurahPage(
                             }
                             if (showTranslation) {
                                 // The translation reads in ITS own direction
-                                // (LTR for English, RTL for Urdu) inside the
-                                // Arabic block that wraps the whole page.
+                                // (LTR for English, RTL for Urdu/Persian)
+                                // inside the Arabic block that wraps the page.
                                 TranslationLine(surah.id, verse.ayah)
                             }
                         }
@@ -1623,7 +1628,8 @@ private fun Modifier.hifzHidden(hidden: Boolean): Modifier =
     else this.alpha(0.06f)
 
 /// The chosen translation of one ayah, under its Arabic text. Reads in its
-/// OWN direction (LTR for English, RTL for Urdu) inside the RTL Quran block.
+/// OWN direction (LTR for English, RTL for Urdu/Persian — per the edition
+/// table, `TranslationStore.isRTL`) inside the RTL Quran block.
 ///
 /// This slot is NEVER allowed to render nothing while the reader has asked
 /// for a translation. It used to `?: return` on a missing text, so a store

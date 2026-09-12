@@ -148,4 +148,7 @@
     <string name="g2_search_chapters">Chapters</string>
     <string name="g2_search_athkar_results">Athkar</string>
     <string name="g2_search_no_results">No results</string>
+    <!-- Translation edition picker: the "follow the interface language" row and its subtitle -->
+    <string name="g2_translation_follow_language">Follow app language</string>
+    <string name="g2_translation_default_for">Default for %1$s: %2$s</string>
 </resources>

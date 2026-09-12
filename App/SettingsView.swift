@@ -22,7 +22,11 @@ struct SettingsView: View {
     @AppStorage("reader.mode") private var readerMode = "mushaf"
     @AppStorage("audio.reciter") private var reciterRaw = Reciter.alafasy.rawValue
     @AppStorage(TranslationVoice.defaultsKey) private var translationVoiceRaw = TranslationVoice.none.rawValue
-    @AppStorage("translation.id") private var translationId = "en.sahih"
+    /// nil = never chosen: the edition follows the interface language
+    /// (`TranslationStore.defaultEdition(forLanguage:)`); writing nil removes
+    /// the key, which is how "Follow app language" un-pins. Same sentinel,
+    /// same key, on Android.
+    @AppStorage(TranslationStore.defaultsKey) private var translationId: String?
     /// Same key the reader's options panel writes, so the two places can
     /// never disagree about whether the gloss is on.
     @AppStorage("reader.showTranslation") private var showTranslation = false
@@ -343,7 +347,14 @@ struct SettingsView: View {
                     Text("Show translation")
                 }
                 .tint(NoorColor.accentPrimary)
-                Picker(selection: $translationId) {
+                // WHICH: "Follow app language" first (the state a fresh
+                // install is in — the key absent), then the ten editions.
+                // Picking an edition pins it across language changes;
+                // picking the first row again un-pins.
+                Picker(selection: Binding(
+                    get: { translationId ?? "" },
+                    set: { translationId = $0.isEmpty ? nil : $0 })) {
+                    Text("Follow app language").tag("")
                     ForEach(TranslationStore.allEditions, id: \.id) { edition in
                         Text(verbatim: edition.displayName).tag(edition.id)
                     }
@@ -352,6 +363,12 @@ struct SettingsView: View {
                 }
             } header: {
                 Text("Quran")
+            } footer: {
+                // Says which edition "follow" currently means, so a user who
+                // changed the language understands why the gloss changed.
+                let interface = NoorLanguage.current
+                let fallback = TranslationStore.defaultEdition(forLanguage: interface.rawValue)
+                Text("Default for \(interface.endonym): \(fallback.displayName)")
             }
 
             Section {

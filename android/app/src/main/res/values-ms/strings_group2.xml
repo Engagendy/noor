@@ -131,4 +131,7 @@
     <string name="g2_search_chapters">Bab</string>
     <string name="g2_search_athkar_results">Zikir</string>
     <string name="g2_search_no_results">Tiada hasil</string>
+    <!-- Translation edition picker: the "follow the interface language" row and its subtitle -->
+    <string name="g2_translation_follow_language">Ikut bahasa aplikasi</string>
+    <string name="g2_translation_default_for">Lalai untuk %1$s: %2$s</string>
 </resources>

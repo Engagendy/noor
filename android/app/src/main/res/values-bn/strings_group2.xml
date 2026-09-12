@@ -131,4 +131,7 @@
     <string name="g2_search_chapters">অধ্যায়</string>
     <string name="g2_search_athkar_results">জিকির</string>
     <string name="g2_search_no_results">কোনো ফলাফল নেই</string>
+    <!-- Translation edition picker: the "follow the interface language" row and its subtitle -->
+    <string name="g2_translation_follow_language">অ্যাপের ভাষা অনুসরণ করুন</string>
+    <string name="g2_translation_default_for">%1$s-এর জন্য ডিফল্ট: %2$s</string>
 </resources>
