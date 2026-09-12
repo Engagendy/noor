@@ -156,19 +156,28 @@ struct MadaniPageView: View {
             let contentWidth = geometry.size.width - Self.pageMargin * 2
             let rowHeight = geometry.size.height / CGFloat(max(lines.count, 15))
             let fontSize = min(contentWidth / 9.8, rowHeight * 0.72)
-            // One glyph size for the whole page, measured once per
-            // (page, variant, size, column width) — never per redraw.
-            let pageScale = GlyphMetrics.pageScale(lines,
-                                                   page: page,
-                                                   size: fontSize,
-                                                   target: contentWidth * 0.995,
-                                                   words: lineWords)
             // How far the page's ink really reaches above and below the
-            // baseline — cached alongside the scale, same measurement pass.
+            // baseline — measured once per (page, variant, size) and cached.
             let pageInk = GlyphMetrics.pageInk(lines,
                                                page: page,
                                                size: fontSize,
                                                words: lineWords)
+            // One glyph size for the whole page: the tightest of the
+            // column fit and the ROW fit. `fontSize` above is only a nominal
+            // bound (ascent + descent ≈ 1.2 × size); the real ink of a dense
+            // page reaches ~2 × size, so on a wide page like an iPad — where
+            // the column never forces a shrink — every row's ink overran the
+            // row and consecutive lines cut each other. The phone was merely
+            // lucky: its narrow column shrank pages to ~0.67, which happened
+            // to fit. Measured once per (page, variant, size, column width,
+            // row height) — never per redraw.
+            let pageScale = GlyphMetrics.pageScale(lines,
+                                                   page: page,
+                                                   size: fontSize,
+                                                   target: contentWidth * 0.995,
+                                                   rowHeight: rowHeight,
+                                                   ink: pageInk,
+                                                   words: lineWords)
             Group {
                 if fontReady && !lines.isEmpty {
                     VStack(spacing: 0) {
@@ -281,7 +290,8 @@ private enum GlyphMetrics {
     private static var inkCache: [String: (top: CGFloat, bottom: CGFloat)] = [:]
 
     /// The single scale the whole page prints at: the tightest any one of its
-    /// lines needs to fit the column, applied to every line.
+    /// lines needs to fit the column, OR to fit its row — whichever is
+    /// smaller — applied to every line.
     ///
     /// A mushaf page is set in ONE glyph size — justification comes from the
     /// spaces between words, never from resizing a line. Scaling each line on
@@ -289,18 +299,28 @@ private enum GlyphMetrics {
     /// kept scale 1) visibly larger than the full-width lines that had been
     /// shrunk to fit.
     ///
-    /// Measured once per (page, variant, size, column width) and kept: the
-    /// reader re-renders on every animation frame, and the cache is consulted
-    /// before the per-line word split is even built.
+    /// The row bound is the vertical twin of the column bound. A row is a
+    /// fixed fifteenth of the page and each row's Canvas clips to itself, so
+    /// the page's ink box (`pageInk`, top + bottom) must fit within
+    /// `rowHeight` at the applied scale. Width alone was never enough: the
+    /// ink of a dense page stands ~2 × the nominal size, and on a column wide
+    /// enough that no line needs shrinking (iPad) the rows cut each other.
+    ///
+    /// Measured once per (page, variant, size, column width, row height) and
+    /// kept: the reader re-renders on every animation frame, and the cache
+    /// is consulted before the per-line word split is even built.
     static func pageScale(_ lines: [PageLine],
                           page: Int,
                           size: CGFloat,
                           target: CGFloat,
+                          rowHeight: CGFloat,
+                          ink: (top: CGFloat, bottom: CGFloat),
                           words: (PageLine) -> [String]) -> CGFloat {
         // No font yet: measuring would yield nothing, and caching that "1"
         // would stick once the download lands.
-        guard target > 0, PageFontStore.measurementFont(page: page, size: size) != nil else { return 1 }
-        let key = "\(page)|\(Int(size * 10))|\(Int(target * 10))|\(PageFontStore.variant)"
+        guard target > 0, rowHeight > 0,
+              PageFontStore.measurementFont(page: page, size: size) != nil else { return 1 }
+        let key = "\(page)|\(Int(size * 10))|\(Int(target * 10))|\(Int(rowHeight * 10))|\(PageFontStore.variant)"
         if let hit = scaleCache[key] { return hit }
         var scale: CGFloat = 1
         var measured = false
@@ -314,6 +334,8 @@ private enum GlyphMetrics {
         // lines. Caching that empty pass would pin the page at scale 1 —
         // exactly the per-line sizing this exists to remove.
         guard measured else { return 1 }
+        let inkHeight = ink.top + ink.bottom
+        if inkHeight > rowHeight { scale = min(scale, rowHeight / inkHeight) }
         scaleCache[key] = scale
         return scale
     }
