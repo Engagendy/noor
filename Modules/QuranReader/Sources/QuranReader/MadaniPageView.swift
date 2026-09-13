@@ -39,6 +39,12 @@ struct MadaniPageView: View {
     /// algorithm the Android reader uses, so both platforms match the print.
     /// Short closing lines stay centered rather than being stretched apart.
     ///
+    /// `width` is the page's column (see `columnWidth` in `body`), which is
+    /// narrower than the screen when the page is height-bound; both the
+    /// justification target and the 55 % centring threshold are measured
+    /// against it, and the line is centred in the row, so a narrow page
+    /// sits as a centred block like the print's frame.
+    ///
     /// `pageScale` is the ONE scale the whole page prints at (see
     /// `GlyphMetrics.pageScale`). Sizing each line on its own made a surah's
     /// short closing line — which never needs shrinking — tower over the
@@ -67,7 +73,7 @@ struct MadaniPageView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
         } else {
-            let target = width * 0.995
+            let target = width * Self.columnFill
             // The page's shared scale already fits every line; the second
             // branch is a float-rounding safety net so a line can never clip.
             let scale = total * pageScale > target ? target / total : pageScale
@@ -130,6 +136,9 @@ struct MadaniPageView: View {
 
     /// Side margin of the printed page.
     private static let pageMargin: CGFloat = 16
+    /// Share of the column a justified line reaches: a hair short of the
+    /// edge so antialiasing never grazes the margin.
+    private static let columnFill: CGFloat = 0.995
 
     @State private var lines: [PageLine] = []
     /// Read from the observable store (not @State copies) so the page
@@ -174,10 +183,25 @@ struct MadaniPageView: View {
             let pageScale = GlyphMetrics.pageScale(lines,
                                                    page: page,
                                                    size: fontSize,
-                                                   target: contentWidth * 0.995,
+                                                   target: contentWidth * Self.columnFill,
                                                    rowHeight: rowHeight,
                                                    ink: pageInk,
                                                    words: lineWords)
+            // The column the lines justify to is the PAGE's width, not the
+            // screen's. The print sets every line of a page to one frame,
+            // and the page font carries that frame as the advance of its
+            // widest line; so the column is that line's width at the scale
+            // the page is drawn at. On a width-bound page (the phone) that is
+            // the screen column itself, to the point. On a height-bound page
+            // (any page on a 13-inch iPad) the glyphs shrink to fit the rows
+            // and the column shrinks with them, keeping the print's
+            // proportions and centred in the screen; justifying a shrunken
+            // page to the full screen width spread page 1's lines across
+            // 1000 points with gaps wider than the words.
+            let widest = GlyphMetrics.widestLine(lines, page: page, size: fontSize, words: lineWords)
+            let columnWidth = widest > 0
+                ? min(contentWidth, widest / Self.columnFill * pageScale)
+                : contentWidth
             Group {
                 if fontReady && !lines.isEmpty {
                     VStack(spacing: 0) {
@@ -210,7 +234,7 @@ struct MadaniPageView: View {
                             case .words:
                                 justifiedLine(line,
                                               fontSize: fontSize,
-                                              width: contentWidth,
+                                              width: columnWidth,
                                               pageScale: pageScale,
                                               pageInk: pageInk)
                                     .frame(maxWidth: .infinity)
@@ -288,6 +312,7 @@ private enum GlyphMetrics {
     private static var cache: [String: Outline] = [:]
     private static var scaleCache: [String: CGFloat] = [:]
     private static var inkCache: [String: (top: CGFloat, bottom: CGFloat)] = [:]
+    private static var widestCache: [String: CGFloat] = [:]
 
     /// The single scale the whole page prints at: the tightest any one of its
     /// lines needs to fit the column, OR to fit its row — whichever is
@@ -322,22 +347,38 @@ private enum GlyphMetrics {
               PageFontStore.measurementFont(page: page, size: size) != nil else { return 1 }
         let key = "\(page)|\(Int(size * 10))|\(Int(target * 10))|\(Int(rowHeight * 10))|\(PageFontStore.variant)"
         if let hit = scaleCache[key] { return hit }
-        var scale: CGFloat = 1
-        var measured = false
-        for line in lines where line.kind == .words {
-            let total = total(words(line), page: page, size: size)
-            guard total > 0 else { continue }
-            measured = true
-            if total > target { scale = min(scale, target / total) }
-        }
         // The first body pass runs before `.task` has loaded the page's
         // lines. Caching that empty pass would pin the page at scale 1 —
         // exactly the per-line sizing this exists to remove.
-        guard measured else { return 1 }
+        let widest = widestLine(lines, page: page, size: size, words: words)
+        guard widest > 0 else { return 1 }
+        var scale: CGFloat = 1
+        if widest > target { scale = target / widest }
         let inkHeight = ink.top + ink.bottom
         if inkHeight > rowHeight { scale = min(scale, rowHeight / inkHeight) }
         scaleCache[key] = scale
         return scale
+    }
+
+    /// The natural advance of the page's widest line at `size` — the page's
+    /// own column width, which the print's frame and the font's advances
+    /// agree on. 0 when nothing could be measured (font not ready, or the
+    /// lines not loaded yet), which callers must treat as "unknown", never
+    /// cache. Cached per (page, variant, size) like `pageInk`.
+    static func widestLine(_ lines: [PageLine],
+                           page: Int,
+                           size: CGFloat,
+                           words: (PageLine) -> [String]) -> CGFloat {
+        guard PageFontStore.measurementFont(page: page, size: size) != nil else { return 0 }
+        let key = "\(page)|\(Int(size * 10))|\(PageFontStore.variant)"
+        if let hit = widestCache[key] { return hit }
+        var widest: CGFloat = 0
+        for line in lines where line.kind == .words {
+            widest = max(widest, total(words(line), page: page, size: size))
+        }
+        guard widest > 0 else { return 0 }
+        widestCache[key] = widest
+        return widest
     }
 
     /// The page's true ink extent above and below the baseline, at `size`.
