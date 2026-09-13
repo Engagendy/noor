@@ -21,6 +21,7 @@ struct RootView: View {
         ProcessInfo.processInfo.environment["NOOR_LANG"] ?? storedLanguage
     }
     @AppStorage("app.theme") private var theme = "system"
+    @Environment(\.scenePhase) private var scenePhase
     /// Interface font family (Settings → App font). Shared key with Android.
     @AppStorage(NoorAppFont.defaultsKey) private var uiFontRaw = NoorAppFont.fallback.rawValue
     @AppStorage(KidsMode.enabledKey) private var kidsEnabled = false
@@ -28,6 +29,11 @@ struct RootView: View {
     /// The resolved interface language — one type owns the direction, the
     /// endonym, the formatting locale and the face (see `NoorLanguage`).
     private var resolvedLanguage: NoorLanguage { NoorLanguage.resolve(language) }
+
+    private var isReady: Bool {
+        if case .ready = state { return true }
+        return false
+    }
 
     var body: some View {
         Group {
@@ -97,6 +103,18 @@ struct RootView: View {
         }
         .environment(\.layoutDirection, resolvedLanguage.layoutDirection)
         .preferredColorScheme(theme == "light" ? .light : theme == "dark" ? .dark : nil)
+        // The automatic mushaf download starts once the main app is on
+        // screen — after onboarding, never during it — and re-runs on every
+        // launch until all 604 pages are on disk.
+        .onChange(of: "\(onboarded)|\(showSplash)|\(isReady)", initial: true) { _, _ in
+            guard onboarded, !showSplash, isReady else { return }
+            MushafBackgroundDownloader.shared.startIfEnabled()
+        }
+        // Leaving the screen widens the download window so the transfer
+        // daemon keeps going without waking the app for every page.
+        .onChange(of: scenePhase) { _, phase in
+            MushafBackgroundDownloader.shared.isInBackground = (phase == .background)
+        }
         .task {
             let start = ContinuousClock.now
             do {

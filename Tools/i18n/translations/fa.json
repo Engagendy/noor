@@ -524,5 +524,8 @@
   "¾ Hizb": "سه‌چهارم حزب",
   "العربية": "العربية",
   "Follow app language": "مطابق زبان برنامه",
-  "Default for %@: %@": "پیش‌فرض برای %1$@: %2$@"
+  "Default for %@: %@": "پیش‌فرض برای %1$@: %2$@",
+  "Download the mushaf automatically": "دانلود خودکار مصحف",
+  "Only on Wi-Fi": "فقط با Wi-Fi",
+  "Downloading page %lld…": "در حال دانلود صفحهٔ %lld…"
 }

@@ -523,5 +523,8 @@
  "¾ Hizb": "¾ Hizb",
  "العربية": "العربية",
  "Follow app language": "Ikuti bahasa aplikasi",
- "Default for %@: %@": "Bawaan untuk %1$@: %2$@"
+ "Default for %@: %@": "Bawaan untuk %1$@: %2$@",
+ "Download the mushaf automatically": "Unduh mushaf secara otomatis",
+ "Only on Wi-Fi": "Hanya lewat Wi-Fi",
+ "Downloading page %lld…": "Mengunduh halaman %lld…"
 }

@@ -524,5 +524,8 @@
  "¾ Hizb": "¾ হিজব",
  "العربية": "العربية",
  "Follow app language": "অ্যাপের ভাষা অনুসরণ করুন",
- "Default for %@: %@": "%1$@-এর জন্য ডিফল্ট: %2$@"
+ "Default for %@: %@": "%1$@-এর জন্য ডিফল্ট: %2$@",
+ "Download the mushaf automatically": "মুসহাফ স্বয়ংক্রিয়ভাবে ডাউনলোড করুন",
+ "Only on Wi-Fi": "শুধু Wi-Fi-তে",
+ "Downloading page %lld…": "পৃষ্ঠা %lld ডাউনলোড হচ্ছে…"
 }

@@ -513,5 +513,8 @@
  "¾ Hizb": "¾ Xizib",
  "العربية": "العربية",
  "Follow app language": "Raac luqadda abka",
- "Default for %@: %@": "Caadi ahaan %1$@: %2$@"
+ "Default for %@: %@": "Caadi ahaan %1$@: %2$@",
+ "Download the mushaf automatically": "Mus'hafka si toos ah u soo deji",
+ "Only on Wi-Fi": "Wi-Fi kaliya",
+ "Downloading page %lld…": "Bogga %lld waa la soo dejinayaa…"
 }

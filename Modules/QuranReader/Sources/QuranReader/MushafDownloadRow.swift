@@ -1,19 +1,21 @@
 import DesignSystem
 import SwiftUI
 
-/// Settings row: download the full printed mushaf (all 604 page fonts,
-/// ~350 MB) for complete offline reading.
+/// Settings rows: the mushaf typeface, the automatic background download
+/// (on by default, Wi-Fi only by default) and its live `n / 604` progress,
+/// plus the manual button that drives the very same queue.
 public struct MushafDownloadRow: View {
-    @State private var fontStore = PageFontStore()
-    @State private var cached = PageFontStore.cachedCount()
-    @State private var task: Task<Void, Never>?
+    @State private var downloader = MushafBackgroundDownloader.shared
     @AppStorage("mushaf.font") private var fontVariant = "v2"
+    @AppStorage(MushafBackgroundDownloader.autoKey) private var automatic = true
+    @AppStorage(MushafBackgroundDownloader.wifiOnlyKey) private var wifiOnly = true
 
     public init() {}
 
     private var sizeLabel: String { fontVariant == "v1" ? "~100 MB" : "~350 MB" }
 
-    private var isComplete: Bool { cached >= 604 }
+    private var cached: Int { downloader.cachedCount }
+    private var isComplete: Bool { cached >= MushafBackgroundDownloader.totalPages }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -23,18 +25,13 @@ public struct MushafDownloadRow: View {
             } label: {
                 Text("Mushaf typeface")
             }
-            .onChange(of: fontVariant) { _, _ in
-                task?.cancel()
-                task = nil
-                cached = PageFontStore.cachedCount()
-            }
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Download full mushaf")
                         .foregroundStyle(NoorColor.inkPrimary)
                     Text(verbatim: isComplete
                          ? String(localized: "All 604 pages are offline")
-                         : "\(cached) / 604 · \(sizeLabel)")
+                         : "\(cached) / \(MushafBackgroundDownloader.totalPages) · \(sizeLabel)")
                         .font(NoorFont.caption)
                         .foregroundStyle(NoorColor.inkSecondary)
                 }
@@ -42,10 +39,9 @@ public struct MushafDownloadRow: View {
                 if isComplete {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(NoorColor.accentPrimary)
-                } else if fontStore.bulkRunning {
+                } else if downloader.isRunning {
                     Button {
-                        task?.cancel()
-                        task = nil
+                        downloader.stop()
                     } label: {
                         Image(systemName: "stop.circle")
                             .font(.system(size: 20))
@@ -55,10 +51,7 @@ public struct MushafDownloadRow: View {
                     .accessibilityLabel("Stop download")
                 } else {
                     Button {
-                        task = Task {
-                            await fontStore.downloadAll()
-                            cached = PageFontStore.cachedCount()
-                        }
+                        downloader.startManually()
                     } label: {
                         Image(systemName: "arrow.down.circle")
                             .font(.system(size: 20))
@@ -68,11 +61,21 @@ public struct MushafDownloadRow: View {
                     .accessibilityLabel("Download")
                 }
             }
-            if fontStore.bulkRunning {
-                ProgressView(value: Double(fontStore.bulkProgress), total: 604)
+            if downloader.isRunning {
+                ProgressView(value: Double(cached), total: Double(MushafBackgroundDownloader.totalPages))
                     .tint(NoorColor.accentPrimary)
-                    .onChange(of: fontStore.bulkProgress) { _, new in cached = new }
             }
         }
+        // The downloader re-targets itself on these (it watches the
+        // defaults); the toggles only need to persist.
+        Toggle(isOn: $automatic) {
+            Text("Download the mushaf automatically")
+                .foregroundStyle(NoorColor.inkPrimary)
+        }
+        Toggle(isOn: $wifiOnly) {
+            Text("Only on Wi-Fi")
+                .foregroundStyle(NoorColor.inkPrimary)
+        }
+        .disabled(!automatic && !downloader.isRunning)
     }
 }

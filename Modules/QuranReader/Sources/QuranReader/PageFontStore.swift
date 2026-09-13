@@ -15,16 +15,39 @@ public final class PageFontStore {
     /// page (e.g. the page's own view arriving while a neighbour's prefetch
     /// is running) awaits the existing task instead of returning early.
     private var inFlight: [Int: Task<Void, Never>] = [:]
+    @ObservationIgnored nonisolated(unsafe) private var downloadObserver: (any NSObjectProtocol)?
 
-    // Full-mushaf background download state.
-    public private(set) var bulkProgress: Int = 0     // pages on disk
-    public private(set) var bulkRunning = false
+    public init() {
+        // A page the background job (`MushafBackgroundDownloader`) lands
+        // while its view is on the spinner — or on the failed placeholder —
+        // is registered here the moment it arrives, so the view renders
+        // instead of waiting for a retry to notice the file.
+        downloadObserver = NotificationCenter.default.addObserver(
+            forName: MushafBackgroundDownloader.pageDownloaded, object: nil, queue: .main
+        ) { [weak self] note in
+            guard let page = note.userInfo?["page"] as? Int else { return }
+            MainActor.assumeIsolated { self?.registerIfOnDisk(page: page) }
+        }
+    }
 
-    public init() {}
+    deinit {
+        if let downloadObserver { NotificationCenter.default.removeObserver(downloadObserver) }
+    }
+
+    private func registerIfOnDisk(page: Int) {
+        refreshVariantIfNeeded()
+        guard !readyPages.contains(page), inFlight[page] == nil else { return }
+        let local = Self.localURL(page: page)
+        guard FileManager.default.fileExists(atPath: local.path) else { return }
+        if Self.register(url: local) {
+            failedPages.remove(page)
+            readyPages.insert(page)
+        }
+    }
 
     /// Mushaf typeface quality: "v1" = compact (~45 MB total, QCF v1.5),
     /// "v2" = high (~350 MB, QCF v2 print). Both official KFGQPC.
-    public static var variant: String {
+    nonisolated public static var variant: String {
         UserDefaults.standard.string(forKey: "mushaf.font") ?? "v2"
     }
 
@@ -59,12 +82,27 @@ public final class PageFontStore {
     /// Parsing the file on every measurement would be far too slow.
     nonisolated(unsafe) private static var descriptorCache: [Int: CTFontDescriptor] = [:]
 
-    private static func localURL(page: Int) -> URL {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        // v1b: cache key bumped after the v1.5 mispairing (resequenced
-        // glyph codes rendered shifted text — files must not be reused).
+    /// On-disk cache file name for a page under a typeface variant.
+    /// v1b: cache key bumped after the v1.5 mispairing (resequenced glyph
+    /// codes rendered shifted text — files must not be reused).
+    nonisolated public static func fileName(page: Int, variant: String) -> String {
         let prefix = variant == "v1" ? "v1b" : variant
-        return base.appendingPathComponent("pagefonts/\(prefix)_page_\(page).ttf")
+        return "\(prefix)_page_\(page).ttf"
+    }
+
+    /// The page-font cache directory (Application Support/pagefonts).
+    nonisolated public static var cacheDirectory: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("pagefonts")
+    }
+
+    nonisolated static func localURL(page: Int, variant: String = PageFontStore.variant) -> URL {
+        cacheDirectory.appendingPathComponent(fileName(page: page, variant: variant))
+    }
+
+    /// Whether the page's font file is already cached for the variant.
+    nonisolated public static func isCached(page: Int, variant: String = PageFontStore.variant) -> Bool {
+        FileManager.default.fileExists(atPath: localURL(page: page, variant: variant).path)
     }
 
     /// One-time cleanup of caches from the v1.5 experiment.
@@ -77,7 +115,7 @@ public final class PageFontStore {
         }
     }
 
-    private static func remoteURL(page: Int) -> URL {
+    nonisolated static func remoteURL(page: Int, variant: String = PageFontStore.variant) -> URL {
         variant == "v1"
             ? URL(string: String(format:
                 "https://raw.githubusercontent.com/mustafa0x/qpc-fonts/master/mushaf/QCF_P%03d.TTF", page))!
@@ -103,29 +141,20 @@ public final class PageFontStore {
     }
 
     /// How many page fonts are already on disk (cheap directory scan).
-    public static func cachedCount() -> Int {
-        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("pagefonts")
-        let files = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
-        let prefix = variant == "v1" ? "v1b" : variant
-        return files.filter { $0.hasPrefix("\(prefix)_page_") }.count
+    nonisolated public static func cachedCount(variant: String = PageFontStore.variant) -> Int {
+        cachedPages(variant: variant).count
     }
 
-    /// Downloads every remaining page font (~600 KB each, ≤604 total) so
-    /// the whole printed mushaf is available offline. Resumable: already
-    /// cached pages are skipped instantly.
-    public func downloadAll() async {
-        guard !bulkRunning else { return }
-        bulkRunning = true
-        defer { bulkRunning = false }
-        bulkProgress = Self.cachedCount()
-        for page in 1...604 {
-            if Task.isCancelled { return }
-            let local = Self.localURL(page: page)
-            if FileManager.default.fileExists(atPath: local.path) { continue }
-            await ensure(page: page)
-            bulkProgress = Self.cachedCount()
+    /// The pages whose font file is on disk for the variant.
+    nonisolated public static func cachedPages(variant: String = PageFontStore.variant) -> Set<Int> {
+        let files = (try? FileManager.default.contentsOfDirectory(atPath: cacheDirectory.path)) ?? []
+        let prefix = variant == "v1" ? "v1b" : variant
+        var pages: Set<Int> = []
+        for file in files where file.hasPrefix("\(prefix)_page_") && file.hasSuffix(".ttf") {
+            let number = file.dropFirst(prefix.count + "_page_".count).dropLast(".ttf".count)
+            if let page = Int(number) { pages.insert(page) }
         }
+        return pages
     }
 
     /// Ensures the font for `page` is downloaded and registered. Returns
@@ -161,9 +190,14 @@ public final class PageFontStore {
             try? FileManager.default.createDirectory(
                 at: local.deletingLastPathComponent(), withIntermediateDirectories: true)
             try? FileManager.default.removeItem(at: local)
-            guard (try? FileManager.default.moveItem(at: temp, to: local)) != nil else {
-                failedPages.insert(page)
-                return
+            if (try? FileManager.default.moveItem(at: temp, to: local)) == nil {
+                // The background job may have landed the very same page a
+                // moment ago (its move raced ours); the file being there is
+                // the only thing that matters.
+                guard FileManager.default.fileExists(atPath: local.path) else {
+                    failedPages.insert(page)
+                    return
+                }
             }
         }
         guard Self.register(url: local) else {

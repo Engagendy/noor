@@ -524,5 +524,8 @@
  "¾ Hizb": "¾ de hizb",
  "العربية": "العربية",
  "Follow app language": "Seguir el idioma de la app",
- "Default for %@: %@": "Predeterminada para %1$@: %2$@"
+ "Default for %@: %@": "Predeterminada para %1$@: %2$@",
+ "Download the mushaf automatically": "Descargar el mushaf automáticamente",
+ "Only on Wi-Fi": "Solo con Wi-Fi",
+ "Downloading page %lld…": "Descargando la página %lld…"
 }

@@ -7,6 +7,10 @@ import UserNotifications
 
 @main
 struct NoorApp: App {
+    #if os(iOS)
+    @UIApplicationDelegateAdaptor(NoorAppDelegate.self) private var appDelegate
+    #endif
+
     init() {
         FontRegistrar.registerQuranFont()
         // Migration: we briefly wrote AppleLanguages for in-app language;
@@ -139,3 +143,24 @@ final class NoorNotificationDelegate: NSObject, UNUserNotificationCenterDelegate
         return [.banner, .sound, .list]
     }
 }
+
+#if os(iOS)
+/// The mushaf page fonts download in a background `URLSession`; when the
+/// transfers finish while the app is suspended (or gone), the system
+/// relaunches it here. Recreating the session lets its delegate collect the
+/// events; the handler is called once they are all delivered.
+final class NoorAppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication,
+                     handleEventsForBackgroundURLSession identifier: String,
+                     completionHandler: @escaping () -> Void) {
+        guard identifier == MushafBackgroundDownloader.sessionIdentifier else {
+            completionHandler()
+            return
+        }
+        Task { @MainActor in
+            MushafBackgroundDownloader.shared.backgroundCompletionHandler = completionHandler
+            MushafBackgroundDownloader.shared.reconnect()
+        }
+    }
+}
+#endif

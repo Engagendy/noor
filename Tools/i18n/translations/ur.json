@@ -524,5 +524,8 @@
  "¾ Hizb": "تین چوتھائی حزب",
  "العربية": "العربية",
  "Follow app language": "ایپ کی زبان کے مطابق",
- "Default for %@: %@": "%1$@ کے لیے طے شدہ: %2$@"
+ "Default for %@: %@": "%1$@ کے لیے طے شدہ: %2$@",
+ "Download the mushaf automatically": "مصحف خود بخود ڈاؤن لوڈ کریں",
+ "Only on Wi-Fi": "صرف Wi-Fi پر",
+ "Downloading page %lld…": "صفحہ %lld ڈاؤن لوڈ ہو رہا ہے…"
 }

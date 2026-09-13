@@ -254,6 +254,10 @@ struct MadaniPageView: View {
                     .contentShape(Rectangle())
                     .onTapGesture { onTap?() }
                 } else if fontFailed {
+                    // Only a FAILED fetch lands here. A page still being
+                    // fetched (by this view, a neighbour's prefetch or the
+                    // background job) shows the spinner below instead — the
+                    // offline placeholder used to cover both.
                     ContentUnavailableView {
                         Label("Page font unavailable", systemImage: "wifi.slash")
                     } description: {
@@ -262,6 +266,8 @@ struct MadaniPageView: View {
                         Button("Retry") { attempt += 1 }
                             .buttonStyle(.borderedProminent)
                     }
+                    .contentShape(Rectangle())
+                    .onTapGesture { attempt += 1 }
                     // A transient network hiccup must not strand the page on
                     // the offline placeholder: retry quietly a few times with
                     // backoff (4s, 8s, 16s), then leave it to the Retry button
@@ -275,7 +281,9 @@ struct MadaniPageView: View {
                 } else {
                     VStack(spacing: 10) {
                         ProgressView()
-                        Text("Preparing page \(page)…")
+                        Text(PageFontStore.isCached(page: page)
+                             ? "Preparing page \(page)…"
+                             : "Downloading page \(page)…")
                             .font(NoorFont.caption)
                             .foregroundStyle(NoorColor.inkSecondary)
                     }

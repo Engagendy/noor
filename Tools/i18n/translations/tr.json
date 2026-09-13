@@ -524,5 +524,8 @@
  "¾ Hizb": "¾ hizip",
  "العربية": "العربية",
  "Follow app language": "Uygulama dilini izle",
- "Default for %@: %@": "%1$@ için varsayılan: %2$@"
+ "Default for %@: %@": "%1$@ için varsayılan: %2$@",
+ "Download the mushaf automatically": "Mushafı otomatik olarak indir",
+ "Only on Wi-Fi": "Yalnızca Wi-Fi ile",
+ "Downloading page %lld…": "%lld. sayfa indiriliyor…"
 }
