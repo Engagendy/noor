@@ -83,6 +83,12 @@
     <string name="g1_all_pages_offline">%1$s sayfanın tamamı çevrimdışı</string>
     <string name="g1_mushaf_progress">%1$s / %2$s · ~350 MB</string>
     <string name="g1_stop">Durdur</string>
+    <string name="g1_mushaf_auto_download">Mushafı otomatik indir</string>
+    <string name="g1_mushaf_auto_download_sub">Sayfaları, tümü çevrimdışı kullanılabilir olana kadar arka planda indirir.</string>
+    <string name="g1_mushaf_wifi_only">Yalnızca Wi-Fi ile</string>
+    <string name="g1_mushaf_downloading">Arka planda indiriliyor…</string>
+    <string name="g1_mushaf_waiting_wifi">Wi-Fi bekleniyor…</string>
+    <string name="g1_mushaf_waiting_network">Bağlantı bekleniyor…</string>
     <string name="g1_download">İndir</string>
     <string name="g1_section_translation">Meal</string>
     <string name="g1_section_about">Hakkında</string>

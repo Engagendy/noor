@@ -44,6 +44,7 @@
     <string name="g2_ayah_clip_label">آیه</string>
     <string name="g2_juz_page_line">جزء %1$s · صفحهٔ %2$s</string>
     <string name="g2_page_font_unavailable">قلم صفحه در دسترس نیست.\nبرای دانلود این صفحه یک‌بار به اینترنت وصل شوید.</string>
+    <string name="g2_page_downloading">در حال دانلود صفحه…</string>
     <string name="g2_tafsir_title">تفسیر — %1$s:%2$s</string>
     <string name="g2_load_failed">بارگذاری ناموفق بود</string>
     <string name="g2_tafsir_error">بارگذاری تفسیر ممکن نشد — اتصال خود را بررسی کنید. (%1$s)</string>

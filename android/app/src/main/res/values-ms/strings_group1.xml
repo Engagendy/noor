@@ -83,6 +83,12 @@
     <string name="g1_all_pages_offline">Kesemua %1$s halaman tersedia luar talian</string>
     <string name="g1_mushaf_progress">%1$s / %2$s · ~350 MB</string>
     <string name="g1_stop">Henti</string>
+    <string name="g1_mushaf_auto_download">Muat turun mushaf secara automatik</string>
+    <string name="g1_mushaf_auto_download_sub">Memuat turun halaman di latar belakang sehingga semuanya tersedia luar talian.</string>
+    <string name="g1_mushaf_wifi_only">Wi-Fi sahaja</string>
+    <string name="g1_mushaf_downloading">Memuat turun di latar belakang…</string>
+    <string name="g1_mushaf_waiting_wifi">Menunggu Wi-Fi…</string>
+    <string name="g1_mushaf_waiting_network">Menunggu sambungan…</string>
     <string name="g1_download">Muat turun</string>
     <string name="g1_section_translation">Terjemahan</string>
     <string name="g1_section_about">Perihal</string>

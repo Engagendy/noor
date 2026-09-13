@@ -44,6 +44,7 @@
     <string name="g2_ayah_clip_label">Ayet</string>
     <string name="g2_juz_page_line">%1$s. cüz · %2$s. sayfa</string>
     <string name="g2_page_font_unavailable">Sayfa yazı tipi kullanılamıyor.\nBu sayfayı indirmek için bir kez internete bağlanın.</string>
+    <string name="g2_page_downloading">Sayfa indiriliyor…</string>
     <string name="g2_tafsir_title">Tefsir — %1$s:%2$s</string>
     <string name="g2_load_failed">Yüklenemedi</string>
     <string name="g2_tafsir_error">Tefsir yüklenemedi — bağlantınızı kontrol edin. (%1$s)</string>

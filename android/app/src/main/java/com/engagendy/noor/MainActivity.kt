@@ -205,6 +205,9 @@ class MainActivity : AppCompatActivity() {
 fun NoorApp(openRequest: OpenRequest? = null) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
+    // Background Madani download: queued once the main shell is up (never
+    // during onboarding). Unique + KEEP, so repeated launches never stack.
+    LaunchedEffect(Unit) { MushafDownloader.syncOnLaunch(context) }
     // Athkar category requested by a notification tap; the serial changes
     // per tap so the same category re-opens on a second tap.
     var athkarCategory by rememberSaveable { mutableStateOf<String?>(null) }

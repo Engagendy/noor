@@ -33,7 +33,9 @@ import androidx.compose.runtime.LaunchedEffect
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.withContext
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.work.WorkInfo
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -116,6 +118,8 @@ private fun SettingsMain(
     // Same pref the reader's options sheet writes ("reader.translation"),
     // so the two places can never disagree about whether the gloss is on.
     val showTranslation = remember(version) { prefs.getBoolean("reader.translation", false) }
+    val mushafAuto = remember(version) { MushafDownloader.autoEnabled(prefs) }
+    val mushafWifiOnly = remember(version) { MushafDownloader.wifiOnly(prefs) }
 
     // Kids mode: the toggle reflects KidsStore's live state (never a prefs
     // read from composition). ON opens the age sheet; OFF asks a grown-up.
@@ -319,7 +323,31 @@ private fun SettingsMain(
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
             LearnPointerRow(onClick = openLearn)
             HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
-            MushafDownloadRow()
+            MushafDownloadRow(prefs = prefs, version = version)
+            HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
+            // Background download of the printed pages (WorkManager — keeps
+            // going after the app is closed). On by default; cellular is an
+            // explicit opt-in. Written from the click handlers only.
+            ToggleRow(
+                title = stringResource(R.string.g1_mushaf_auto_download),
+                subtitle = stringResource(R.string.g1_mushaf_auto_download_sub),
+                checked = mushafAuto,
+                onChange = { on ->
+                    prefs.edit().putBoolean(MushafDownloader.KEY_AUTO, on).apply()
+                    version++
+                    MushafDownloader.onSettingsChanged(context)
+                })
+            if (mushafAuto) {
+                HorizontalDivider(color = NoorColor.inkPrimary.copy(alpha = 0.06f))
+                ToggleRow(
+                    title = stringResource(R.string.g1_mushaf_wifi_only),
+                    checked = mushafWifiOnly,
+                    onChange = { on ->
+                        prefs.edit().putBoolean(MushafDownloader.KEY_WIFI_ONLY, on).apply()
+                        version++
+                        MushafDownloader.onSettingsChanged(context)
+                    })
+            }
         }
 
         SectionTitle(stringResource(R.string.g1_section_translation))
@@ -596,60 +624,25 @@ private fun FontSizeRow(prefs: android.content.SharedPreferences) {
     }
 }
 
-/// Process-scoped owner of the full-mushaf download so it survives the
-/// Settings row leaving composition (back/Done, tab switch, activity
-/// recreation on language/theme change). The row only observes this state.
-object MushafDownloader {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var job: Job? = null
-
-    /// Pages cached on disk; -1 until first counted.
-    var cached by mutableIntStateOf(-1)
-        private set
-    var running by mutableStateOf(false)
-        private set
-
-    fun refresh(context: Context) {
-        val app = context.applicationContext
-        scope.launch { cached = PageFontStore.cachedCount(app) }
-    }
-
-    fun start(context: Context) {
-        if (running) return
-        val app = context.applicationContext
-        val total = PageLayoutDb.PAGE_COUNT
-        running = true
-        job = scope.launch {
-            try {
-                for (page in 1..total) {
-                    if (!isActive) break
-                    PageFontStore.ensure(app, page)
-                    if (page % 5 == 0 || page == total) {
-                        cached = PageFontStore.cachedCount(app)
-                    }
-                }
-            } finally {
-                cached = PageFontStore.cachedCount(app)
-                running = false
-            }
-        }
-    }
-
-    fun stop() {
-        job?.cancel()
-        job = null
-    }
-}
-
 /// Download the full printed mushaf — all 604 QCF v2 page fonts (~350 MB),
-/// like the iOS MushafDownloadRow. Cancellable; progress is page count.
-/// The job lives in MushafDownloader, not this composable's scope.
+/// like the iOS MushafDownloadRow. Drives the same WorkManager job as the
+/// automatic background download (MushafDownloader), and reads its state
+/// live: running (with the page count), waiting for the network the
+/// constraint asks for, or idle.
 @Composable
-private fun MushafDownloadRow() {
+private fun MushafDownloadRow(prefs: android.content.SharedPreferences, version: Int) {
     val context = LocalContext.current
     val cached = MushafDownloader.cached
-    val running = MushafDownloader.running
-    LaunchedEffect(Unit) { MushafDownloader.refresh(context) }
+    val infos by remember { MushafDownloader.workInfos(context) }
+        .collectAsState(initial = emptyList())
+    val state = infos.firstOrNull { !it.state.isFinished }?.state
+    val running = state == WorkInfo.State.RUNNING
+    val waiting = state == WorkInfo.State.ENQUEUED || state == WorkInfo.State.BLOCKED
+    val wifiOnly = remember(version) { MushafDownloader.wifiOnly(prefs) }
+    // Re-count on every state change and every landed file (worker or
+    // reader), so the figure is never a page behind when a job stops.
+    val landed = PageFontStore.landedGeneration
+    LaunchedEffect(state, landed) { MushafDownloader.refresh(context) }
     val total = PageLayoutDb.PAGE_COUNT
     val complete = cached >= total
     Row(
@@ -657,7 +650,7 @@ private fun MushafDownloadRow() {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp)
     ) {
-        Column {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
             Text(stringResource(R.string.g1_download_full_mushaf), fontSize = 15.sp, color = NoorColor.inkPrimary)
             Text(
                 when {
@@ -668,18 +661,31 @@ private fun MushafDownloadRow() {
                                            cached.localizedDigits(), total.localizedDigits())
                 },
                 fontSize = 12.sp, color = NoorColor.inkSecondary)
+            if (!complete && (running || waiting)) {
+                Text(
+                    when {
+                        running -> stringResource(R.string.g1_mushaf_downloading)
+                        wifiOnly -> stringResource(R.string.g1_mushaf_waiting_wifi)
+                        else -> stringResource(R.string.g1_mushaf_waiting_network)
+                    },
+                    fontSize = 12.sp,
+                    color = if (running) NoorColor.accentPrimary else NoorColor.accentGold)
+            }
         }
         when {
             complete -> Icon(painterResource(R.drawable.ic_check), contentDescription = null,
                              tint = NoorColor.accentPrimary, modifier = Modifier.size(17.dp))
-            running -> Text(stringResource(R.string.g1_stop), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                            color = NoorColor.accentGold,
-                            modifier = Modifier
-                                .clickable { MushafDownloader.stop() }
-                                .padding(6.dp))
+            running || waiting ->
+                Text(stringResource(R.string.g1_stop), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                     color = NoorColor.accentGold,
+                     modifier = Modifier
+                         .clip(RoundedCornerShape(8.dp))
+                         .clickable { MushafDownloader.stop(context) }
+                         .padding(6.dp))
             else -> Text(stringResource(R.string.g1_download), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                          color = NoorColor.accentPrimary,
                          modifier = Modifier
+                             .clip(RoundedCornerShape(8.dp))
                              .clickable { MushafDownloader.start(context) }
                              .padding(6.dp))
         }

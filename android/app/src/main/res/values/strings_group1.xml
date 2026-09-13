@@ -92,6 +92,12 @@
     <string name="g1_all_pages_offline">كل الصفحات (%1$s) متاحة دون اتصال</string>
     <string name="g1_mushaf_progress">%1$s / %2$s · ‏~٣٥٠ م.ب</string>
     <string name="g1_stop">إيقاف</string>
+    <string name="g1_mushaf_auto_download">تنزيل المصحف تلقائيًا</string>
+    <string name="g1_mushaf_auto_download_sub">يُنزِّل صفحات المصحف في الخلفية حتى تصبح كلها متاحة دون اتصال.</string>
+    <string name="g1_mushaf_wifi_only">عبر Wi-Fi فقط</string>
+    <string name="g1_mushaf_downloading">جارٍ التنزيل في الخلفية…</string>
+    <string name="g1_mushaf_waiting_wifi">بانتظار اتصال Wi-Fi…</string>
+    <string name="g1_mushaf_waiting_network">بانتظار الاتصال بالإنترنت…</string>
     <string name="g1_download">تنزيل</string>
     <string name="g1_section_translation">الترجمة</string>
     <string name="g1_section_about">حول التطبيق</string>

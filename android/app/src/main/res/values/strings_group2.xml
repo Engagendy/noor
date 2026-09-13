@@ -46,6 +46,7 @@
     <!-- Mushaf chrome -->
     <string name="g2_juz_page_line">الجزء %1$s · صفحة %2$s</string>
     <string name="g2_page_font_unavailable">خط الصفحة غير متاح.\nاتصل بالإنترنت مرة واحدة لتنزيل هذه الصفحة.</string>
+    <string name="g2_page_downloading">جارٍ تنزيل الصفحة…</string>
 
     <!-- Tafsir sheet -->
     <string name="g2_tafsir_title">التفسير · %1$s:%2$s</string>

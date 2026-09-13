@@ -89,6 +89,9 @@ dependencies {
     implementation("androidx.glance:glance-appwidget:1.1.1")
     // Prayer time calculations — same engine family as the iOS app.
     implementation("com.batoulapps.adhan:adhan:1.2.1")
+    // Background Madani page-font download that survives process death
+    // (MushafDownloadWorker) — unique work, network-constrained, backoff.
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
     // On-device checks (media codecs have no JVM equivalent).
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

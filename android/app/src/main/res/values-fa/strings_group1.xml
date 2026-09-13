@@ -83,6 +83,12 @@
     <string name="g1_all_pages_offline">هر %1$s صفحه آفلاین در دسترس است</string>
     <string name="g1_mushaf_progress">%1$s / %2$s · ~۳۵۰ مگابایت</string>
     <string name="g1_stop">توقف</string>
+    <string name="g1_mushaf_auto_download">دانلود خودکار مصحف</string>
+    <string name="g1_mushaf_auto_download_sub">صفحات را در پس‌زمینه دانلود می‌کند تا همه آفلاین در دسترس باشند.</string>
+    <string name="g1_mushaf_wifi_only">فقط با Wi-Fi</string>
+    <string name="g1_mushaf_downloading">در حال دانلود در پس‌زمینه…</string>
+    <string name="g1_mushaf_waiting_wifi">در انتظار Wi-Fi…</string>
+    <string name="g1_mushaf_waiting_network">در انتظار اتصال…</string>
     <string name="g1_download">دانلود</string>
     <string name="g1_section_translation">ترجمه</string>
     <string name="g1_section_about">درباره</string>

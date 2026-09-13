@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Normal permission: the Madani reader tells "no connection" apart
+         from "download failed", and WorkManager gates the page-font
+         download on Wi-Fi / any network. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Exact adhan alarms. On API 33+ USE_EXACT_ALARM is granted at install
          (Play policy allows it for prayer/alarm core functionality); on

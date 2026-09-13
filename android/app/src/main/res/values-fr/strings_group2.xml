@@ -44,6 +44,7 @@
     <string name="g2_ayah_clip_label">Verset</string>
     <string name="g2_juz_page_line">Juz %1$s · Page %2$s</string>
     <string name="g2_page_font_unavailable">Police de page indisponible.\nConnectez-vous à Internet une fois pour télécharger cette page.</string>
+    <string name="g2_page_downloading">Téléchargement de la page…</string>
     <string name="g2_tafsir_title">Tafsir — %1$s:%2$s</string>
     <string name="g2_load_failed">Échec du chargement</string>
     <string name="g2_tafsir_error">Impossible de charger le Tafsir — vérifiez votre connexion. (%1$s)</string>

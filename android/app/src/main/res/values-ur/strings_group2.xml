@@ -44,6 +44,7 @@
     <string name="g2_ayah_clip_label">آیت</string>
     <string name="g2_juz_page_line">پارہ %1$s · صفحہ %2$s</string>
     <string name="g2_page_font_unavailable">صفحے کا فونٹ دستیاب نہیں۔\nیہ صفحہ ڈاؤن لوڈ کرنے کے لیے ایک بار انٹرنیٹ سے جڑیں۔</string>
+    <string name="g2_page_downloading">صفحہ ڈاؤن لوڈ ہو رہا ہے…</string>
     <string name="g2_tafsir_title">تفسیر — %1$s:%2$s</string>
     <string name="g2_load_failed">لوڈ نہیں ہو سکا</string>
     <string name="g2_tafsir_error">تفسیر لوڈ نہیں ہو سکی — اپنا انٹرنیٹ چیک کریں۔ (%1$s)</string>

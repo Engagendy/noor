@@ -44,6 +44,7 @@
     <string name="g2_ayah_clip_label">আয়াত</string>
     <string name="g2_juz_page_line">পারা %1$s · পৃষ্ঠা %2$s</string>
     <string name="g2_page_font_unavailable">পৃষ্ঠার ফন্ট পাওয়া যাচ্ছে না।\nএই পৃষ্ঠাটি ডাউনলোড করতে একবার ইন্টারনেটে যুক্ত হোন।</string>
+    <string name="g2_page_downloading">পৃষ্ঠা ডাউনলোড হচ্ছে…</string>
     <string name="g2_tafsir_title">তাফসির — %1$s:%2$s</string>
     <string name="g2_load_failed">লোড করা গেল না</string>
     <string name="g2_tafsir_error">তাফসির লোড করা গেল না — ইন্টারনেট সংযোগ দেখুন। (%1$s)</string>

@@ -83,6 +83,12 @@
     <string name="g1_all_pages_offline">সব %1$s পৃষ্ঠাই অফলাইনে আছে</string>
     <string name="g1_mushaf_progress">%1$s / %2$s · ~৩৫০ MB</string>
     <string name="g1_stop">থামান</string>
+    <string name="g1_mushaf_auto_download">মুসহাফ স্বয়ংক্রিয়ভাবে ডাউনলোড করুন</string>
+    <string name="g1_mushaf_auto_download_sub">সব পৃষ্ঠা অফলাইনে পাওয়া না যাওয়া পর্যন্ত পটভূমিতে ডাউনলোড করে।</string>
+    <string name="g1_mushaf_wifi_only">শুধু Wi-Fi-তে</string>
+    <string name="g1_mushaf_downloading">পটভূমিতে ডাউনলোড হচ্ছে…</string>
+    <string name="g1_mushaf_waiting_wifi">Wi-Fi-এর অপেক্ষায়…</string>
+    <string name="g1_mushaf_waiting_network">সংযোগের অপেক্ষায়…</string>
     <string name="g1_download">ডাউনলোড</string>
     <string name="g1_section_translation">অনুবাদ</string>
     <string name="g1_section_about">অ্যাপ সম্পর্কে</string>

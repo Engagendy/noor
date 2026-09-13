@@ -44,6 +44,7 @@
     <string name="g2_ayah_clip_label">Aleya</string>
     <string name="g2_juz_page_line">Yuz %1$s · Página %2$s</string>
     <string name="g2_page_font_unavailable">Fuente de página no disponible.\nConéctate a internet una vez para descargar esta página.</string>
+    <string name="g2_page_downloading">Descargando la página…</string>
     <string name="g2_tafsir_title">Tafsir — %1$s:%2$s</string>
     <string name="g2_load_failed">Error al cargar</string>
     <string name="g2_tafsir_error">No se pudo cargar el tafsir: revisa tu conexión. (%1$s)</string>

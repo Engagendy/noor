@@ -44,6 +44,7 @@
     <string name="g2_ayah_clip_label">Ayat</string>
     <string name="g2_juz_page_line">Juzuk %1$s · Halaman %2$s</string>
     <string name="g2_page_font_unavailable">Fon halaman tidak tersedia.\nSambung ke internet sekali untuk memuat turun halaman ini.</string>
+    <string name="g2_page_downloading">Memuat turun halaman…</string>
     <string name="g2_tafsir_title">Tafsir — %1$s:%2$s</string>
     <string name="g2_load_failed">Gagal dimuatkan</string>
     <string name="g2_tafsir_error">Tafsir tidak dapat dimuatkan — semak sambungan anda. (%1$s)</string>

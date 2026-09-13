@@ -83,6 +83,12 @@
     <string name="g1_all_pages_offline">Las %1$s páginas están disponibles sin conexión</string>
     <string name="g1_mushaf_progress">%1$s / %2$s · ~350 MB</string>
     <string name="g1_stop">Detener</string>
+    <string name="g1_mushaf_auto_download">Descargar el mushaf automáticamente</string>
+    <string name="g1_mushaf_auto_download_sub">Descarga las páginas en segundo plano hasta que todas estén disponibles sin conexión.</string>
+    <string name="g1_mushaf_wifi_only">Solo con Wi-Fi</string>
+    <string name="g1_mushaf_downloading">Descargando en segundo plano…</string>
+    <string name="g1_mushaf_waiting_wifi">Esperando Wi-Fi…</string>
+    <string name="g1_mushaf_waiting_network">Esperando conexión…</string>
     <string name="g1_download">Descargar</string>
     <string name="g1_section_translation">Traducción</string>
     <string name="g1_section_about">Acerca de</string>

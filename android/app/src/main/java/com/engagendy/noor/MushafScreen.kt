@@ -540,6 +540,11 @@ private class PageContent(
 /// tap-to-retry placeholder.
 private const val AUTO_RETRIES = 3
 
+/// What the placeholder should say. "Downloading" (spinner) and
+/// "unavailable" (failed — tap to retry) used to look identical, which is
+/// most of why the reader seemed to say "not available" so often.
+private enum class PagePhase { LOADING, DOWNLOADING, UNAVAILABLE, READY }
+
 @Composable
 private fun MadaniPage(
     page: Int,
@@ -547,13 +552,18 @@ private fun MadaniPage(
     onAyahLongPress: (AyahRef) -> Unit = {},
 ) {
     val context = LocalContext.current
-    // Bumped to refetch after a failed font download (tap or auto retry).
+    // `attempt` counts the quiet automatic retries inside one cycle; a tap
+    // on Retry (or a worker delivering the file) starts a new `cycle`.
     var attempt by remember(page) { mutableStateOf(0) }
+    var cycle by remember(page) { mutableStateOf(0) }
+    var phase by remember(page) { mutableStateOf(PagePhase.LOADING) }
     // Layout rows + the ~600 KB page font parse off the main thread.
-    val content by produceState<PageContent?>(initialValue = null, page, attempt) {
-        // Spinner on the first load only — during an auto-retry the offline
+    val content by produceState<PageContent?>(initialValue = null, page, cycle, attempt) {
+        // Spinner on the first load only — during an auto-retry the
         // placeholder stays put instead of flashing back to a spinner.
         if (attempt == 0) value = null
+        val onDisk = withContext(Dispatchers.IO) { PageFontStore.isCached(context, page) }
+        phase = if (onDisk) PagePhase.LOADING else PagePhase.DOWNLOADING
         value = withContext(Dispatchers.IO) {
             PageContent(
                 lines = PageLayoutDb.get(context).lines(page),
@@ -575,20 +585,35 @@ private fun MadaniPage(
     // re-fire).
     val loaded = content
     LaunchedEffect(loaded) {
-        // Bounded with backoff (4s, 8s, 16s) so a genuinely offline device
-        // does not re-download and re-spin forever; the tap-to-retry text
-        // below stays available without a limit.
-        if (loaded != null && loaded.fontFamily == null && attempt < AUTO_RETRIES) {
-            delay(4000L shl attempt)
+        if (loaded == null) return@LaunchedEffect
+        if (loaded.fontFamily != null) { phase = PagePhase.READY; return@LaunchedEffect }
+        // No network at all: say so at once rather than spin through the
+        // retries into the void. Otherwise bounded with backoff (3s, 6s,
+        // 12s) so a genuinely broken link does not re-download forever; the
+        // tap-to-retry below stays available without a limit.
+        val online = withContext(Dispatchers.IO) { PageFontStore.isOnline(context) }
+        if (online && attempt < AUTO_RETRIES) {
+            phase = PagePhase.DOWNLOADING
+            delay(3000L shl attempt)
             attempt++
+        } else {
+            phase = PagePhase.UNAVAILABLE
+        }
+    }
+    // The background worker (or a neighbour prefetch) may land this page's
+    // file while the placeholder is up — reload the moment it does.
+    val landed = PageFontStore.landedGeneration
+    LaunchedEffect(landed, phase) {
+        if (phase == PagePhase.UNAVAILABLE &&
+            withContext(Dispatchers.IO) { PageFontStore.isCached(context, page) }) {
+            attempt = 0; cycle++
         }
     }
 
     when {
-        loaded == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = NoorColor.accentPrimary)
-        }
-        loaded.fontFamily == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        loaded != null && loaded.fontFamily != null ->
+            MadaniPageBody(loaded, page, { attempt = 0; cycle++ }, onTap, onAyahLongPress)
+        phase == PagePhase.UNAVAILABLE -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     stringResource(R.string.g2_page_font_unavailable),
@@ -606,12 +631,24 @@ private fun MadaniPage(
                         .padding(top = 14.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .background(NoorColor.stateReciting, RoundedCornerShape(10.dp))
-                        .clickable { attempt++ }
+                        .clickable { attempt = 0; cycle++ }
                         .padding(horizontal = 18.dp, vertical = 10.dp)
                 )
             }
         }
-        else -> MadaniPageBody(loaded, page, { attempt++ }, onTap, onAyahLongPress)
+        else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = NoorColor.accentPrimary)
+                if (phase == PagePhase.DOWNLOADING) {
+                    Text(
+                        stringResource(R.string.g2_page_downloading),
+                        fontSize = 14.sp,
+                        color = NoorColor.inkSecondary,
+                        modifier = Modifier.padding(top = 14.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
