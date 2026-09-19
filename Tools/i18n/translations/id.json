@@ -526,5 +526,8 @@
  "Default for %@: %@": "Bawaan untuk %1$@: %2$@",
  "Download the mushaf automatically": "Unduh mushaf secara otomatis",
  "Only on Wi-Fi": "Hanya lewat Wi-Fi",
- "Downloading page %lld…": "Mengunduh halaman %lld…"
+ "Downloading page %lld…": "Mengunduh halaman %lld…",
+ "Ayat to share": "Ayat yang dibagikan",
+ "Add an ayah": "Tambah ayat",
+ "Remove an ayah": "Hapus ayat"
 }

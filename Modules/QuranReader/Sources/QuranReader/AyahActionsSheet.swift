@@ -33,12 +33,15 @@ struct AyahActionsSheet: View {
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
+            // ONE group, with back declared FIRST so it takes the leading
+            // edge. As two separate items ("Done" in `.cancellationAction`,
+            // back in `.navigation`) the system packed them into a single
+            // capsule with Done outermost, which left the back chevron inboard
+            // pointing INTO the Done button rather than out of the view —
+            // plainly wrong in Arabic, where leading is the right-hand side.
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
-                }
-                if picked != nil && verses.count > 1 {
-                    ToolbarItem(placement: .navigation) {
+                ToolbarItemGroup(placement: .cancellationAction) {
+                    if picked != nil && verses.count > 1 {
                         Button {
                             picked = nil
                         } label: {
@@ -46,6 +49,7 @@ struct AyahActionsSheet: View {
                         }
                         .accessibilityLabel("Back")
                     }
+                    Button("Done") { dismiss() }
                 }
             }
         }

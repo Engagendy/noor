@@ -527,5 +527,8 @@
  "Default for %@: %@": "%1$@ için varsayılan: %2$@",
  "Download the mushaf automatically": "Mushafı otomatik olarak indir",
  "Only on Wi-Fi": "Yalnızca Wi-Fi ile",
- "Downloading page %lld…": "%lld. sayfa indiriliyor…"
+ "Downloading page %lld…": "%lld. sayfa indiriliyor…",
+ "Ayat to share": "Paylaşılacak ayetler",
+ "Add an ayah": "Ayet ekle",
+ "Remove an ayah": "Ayet çıkar"
 }

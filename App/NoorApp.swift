@@ -109,6 +109,17 @@ struct MenuBarPrayerView: View {
 
 /// Presents adhan notifications (banner + sound) while the app is open and
 /// routes taps (after-salah athkar reminder → Athkar tab, category pushed).
+///
+/// `@MainActor` is load-bearing, not tidiness. These are the `async` spellings
+/// of the delegate methods, and the compiler synthesises the `@objc`
+/// completion-handler versions UserNotifications actually calls. That thunk
+/// fires the ObjC completion block on whatever executor the async body
+/// finished on — a concurrency worker thread for an unisolated class. UIKit
+/// then runs `_updateSnapshotAndStateRestorationWithAction:` off the main
+/// thread and trips a UIApplication assertion: SIGABRT within half a second
+/// of a cold launch from tapping the notification (2.0.2 (98), iOS 18.7).
+/// Pinning the class to the main actor makes the thunk resume there.
+@MainActor
 final class NoorNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NoorNotificationDelegate()
 
@@ -124,9 +135,7 @@ final class NoorNotificationDelegate: NSObject, UNUserNotificationCenterDelegate
         switch route {
         case AthkarReminderScheduler.openRoute:
             UserDefaults.standard.set(route, forKey: "pending.openRoute")
-            await MainActor.run {
-                NotificationCenter.default.post(name: .noorOpenPendingPage, object: nil)
-            }
+            NotificationCenter.default.post(name: .noorOpenPendingPage, object: nil)
         default:
             break
         }

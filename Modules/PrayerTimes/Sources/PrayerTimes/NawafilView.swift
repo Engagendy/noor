@@ -63,11 +63,31 @@ struct NawafilItem: Identifiable {
 
     static let avoidArabic = "أوقات النهي: بعد صلاة الفجر حتى ترتفع الشمس، وعند قيامها في كبد السماء حتى تزول، وبعد صلاة العصر حتى تغرب — إلا ذوات الأسباب."
     static let avoidEnglish = "Times to avoid voluntary prayer: after Fajr until the sun has risen, when it is at its zenith until it passes, and after Asr until sunset — except prayers with a specific cause."
+
+    // MARK: Sharing
+
+    /// Headline of the share card: the name, how many rak'ahs, and when —
+    /// the part someone reads off a status and can act on.
+    func shareHeadline(arabicUI: Bool) -> String {
+        arabicUI
+            ? "\(nameArabic)\n\(rakahsArabic)\n\(timeArabic)"
+            : "\(nameEnglish)\n\(rakahsEnglish)\n\(timeEnglish)"
+    }
+
+    /// The evidence, set below the headline in the card's quieter serif.
+    func shareNote(arabicUI: Bool) -> String { arabicUI ? noteArabic : noteEnglish }
+
+    func shareReference(arabicUI: Bool) -> String {
+        arabicUI ? "النوافل" : "Voluntary prayers"
+    }
 }
 
 struct NawafilView: View {
     let isArabicUI: Bool
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
+    /// The nawafil being shared as a card, if any.
+    @State private var shareItem: NawafilItem?
 
     var body: some View {
         NavigationStack {
@@ -87,6 +107,17 @@ struct NawafilView: View {
                                 Text(verbatim: isArabicUI ? item.rakahsArabic : item.rakahsEnglish)
                                     .font(.noorScaled(13, weight: .semibold))
                                     .foregroundStyle(NoorColor.accentPrimary)
+                                Button {
+                                    shareItem = item
+                                } label: {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundStyle(NoorColor.accentPrimary)
+                                        .frame(width: 44, height: 44)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.borderless)
+                                .accessibilityLabel("Share")
                             }
                             HStack(alignment: .firstTextBaseline, spacing: 6) {
                                 Image(systemName: "clock")
@@ -134,6 +165,18 @@ struct NawafilView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
                 }
+            }
+            .sheet(item: $shareItem) { item in
+                // The name/rak'ahs/time go in the card's main block (system
+                // font — this is not Quranic text), the evidence underneath.
+                NoorShareSheet(
+                    arabicText: item.shareHeadline(arabicUI: isArabicUI),
+                    translation: item.shareNote(arabicUI: isArabicUI),
+                    reference: item.shareReference(arabicUI: isArabicUI),
+                    attribution: "نور Noor",
+                    useQuranFont: false)
+                    .presentationDetents([.medium, .large])
+                    .environment(\.locale, locale)
             }
         }
     }

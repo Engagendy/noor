@@ -32,6 +32,46 @@ final class ShareVideoComposerTests: XCTestCase {
         XCTAssertEqual(format.map { CMFormatDescriptionGetMediaSubType($0) }, kAudioFormatMPEG4AAC)
     }
 
+    /// Several ayat in one video: the recitations must play end to end, so the
+    /// result runs for their SUM (plus the tail), not just the first one.
+    func testMakeVideoJoinsSeveralRecitations() async throws {
+        let first = try makeToneFile(seconds: 2)
+        let second = try makeToneFile(seconds: 1.5)
+        let third = try makeToneFile(seconds: 1)
+        defer { [first, second, third].forEach { try? FileManager.default.removeItem(at: $0) } }
+        let card = try XCTUnwrap(makeCard(width: 620, height: 400))
+
+        let url = try await ShareVideoComposer.makeVideo(
+            card: card, audioURLs: [first, second, third], baseName: "test-run")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let asset = AVURLAsset(url: url)
+        let duration = try await asset.load(.duration).seconds
+        XCTAssertEqual(duration, 2 + 1.5 + 1 + ShareVideoComposer.trailingPadding, accuracy: 0.2)
+        // One track carrying the lot, not three stacked on top of each other.
+        let audio = try await asset.loadTracks(withMediaType: .audio)
+        XCTAssertEqual(audio.count, 1)
+        let audioDuration = try await audio[0].load(.timeRange).duration.seconds
+        XCTAssertEqual(audioDuration, 4.5, accuracy: 0.2)
+        let video = try await asset.loadTracks(withMediaType: .video)
+        XCTAssertEqual(video.count, 1)
+    }
+
+    /// One unavailable ayah in a run fails the whole compose rather than
+    /// silently dropping it — a video missing an ayah is worse than none.
+    func testMakeVideoRejectsRunWithAnUnreadableClip() async throws {
+        let good = try makeToneFile(seconds: 1)
+        defer { try? FileManager.default.removeItem(at: good) }
+        let missing = FileManager.default.temporaryDirectory.appendingPathComponent("nope.mp3")
+        let card = try XCTUnwrap(makeCard(width: 100, height: 100))
+        do {
+            _ = try await ShareVideoComposer.makeVideo(card: card, audioURLs: [good, missing])
+            XCTFail("expected throw")
+        } catch let error as ShareVideoError {
+            XCTAssertEqual(error, .audioUnreadable)
+        }
+    }
+
     func testFrameUsesPaperBackground() throws {
         let card = try XCTUnwrap(makeCard(width: 100, height: 50))
         let size = CGSize(width: 108, height: 192)

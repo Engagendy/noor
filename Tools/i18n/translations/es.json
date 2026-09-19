@@ -527,5 +527,8 @@
  "Default for %@: %@": "Predeterminada para %1$@: %2$@",
  "Download the mushaf automatically": "Descargar el mushaf automáticamente",
  "Only on Wi-Fi": "Solo con Wi-Fi",
- "Downloading page %lld…": "Descargando la página %lld…"
+ "Downloading page %lld…": "Descargando la página %lld…",
+ "Ayat to share": "Versículos a compartir",
+ "Add an ayah": "Añadir un versículo",
+ "Remove an ayah": "Quitar un versículo"
 }

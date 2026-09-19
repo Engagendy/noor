@@ -527,5 +527,8 @@
  "Default for %@: %@": "%1$@ کے لیے طے شدہ: %2$@",
  "Download the mushaf automatically": "مصحف خود بخود ڈاؤن لوڈ کریں",
  "Only on Wi-Fi": "صرف Wi-Fi پر",
- "Downloading page %lld…": "صفحہ %lld ڈاؤن لوڈ ہو رہا ہے…"
+ "Downloading page %lld…": "صفحہ %lld ڈاؤن لوڈ ہو رہا ہے…",
+ "Ayat to share": "اشتراک کے لیے آیات",
+ "Add an ayah": "ایک آیت شامل کریں",
+ "Remove an ayah": "ایک آیت ہٹائیں"
 }

@@ -20,12 +20,20 @@ struct MainTabView: View {
 
     let database: QuranDatabase
     // NOOR_TAB launch env var selects the initial tab (UI tests, screenshots).
-    @State private var tab: Tab = switch ProcessInfo.processInfo.environment["NOOR_TAB"] {
+    // Read through a function, NOT an inline switch expression: the @State
+    // macro re-emits its initial value in a statement position the Swift 6.3
+    // compiler rejects there ("'switch' may only be used as expression in
+    // return, throw, or as the source of an assignment").
+    @State private var tab: Tab = MainTabView.launchTab()
+
+    private static func launchTab() -> Tab {
+        switch ProcessInfo.processInfo.environment["NOOR_TAB"] {
         case "quran": .quran
         case "prayer": .prayer
         case "athkar": .athkar
         case "hadith": .hadith
         default: .today
+        }
     }
     @State private var player = QuranAudioPlayer()
     /// Screenshot/UI-test hook: NOOR_RECITER_SHEET=1 opens the reciter

@@ -5,7 +5,13 @@ from bidi.algorithm import get_display
 
 import sys
 STORE = sys.argv[1] if len(sys.argv) > 1 else "ios"
-LINK = "https://play.google.com/store/apps/details?id=com.engagendy.noor" if STORE == "play" else "https://apps.apple.com/ae/app/noor-al-muslim/id6807128479"
+IOS_LINK = "https://apps.apple.com/ae/app/noor-al-muslim/id6807128479"
+# Same destination, four modules smaller — used only where two QRs share a row.
+IOS_LINK_SHORT = "https://apps.apple.com/app/id6807128479"
+PLAY_LINK = "https://play.google.com/store/apps/details?id=com.engagendy.noor"
+# "both" is the poster the APPS bundle: one image a recipient can act on
+# whichever phone they hold, so an Android friend is not sent to the App Store.
+LINK = PLAY_LINK if STORE == "play" else IOS_LINK
 PAPER, INK, INK2, GREEN, GOLD = "#FAF6EE", "#1F2933", "#5C6670", "#0E6B5C", "#B98A2F"
 AR = "/System/Library/Fonts/SFArabic.ttf"
 LAT = "/System/Library/Fonts/SFNS.ttf"
@@ -39,12 +45,19 @@ def hero_pattern(w, h):
             star8(d, x+off, y, 42, (255,255,255,10))
     return layer
 
-def qr_image(size, logo):
-    q = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=12, border=2)
-    q.add_data(LINK); q.make(fit=True)
-    im = q.make_image(fill_color=GREEN, back_color="white").convert("RGBA").resize((size,size), Image.NEAREST)
+def qr_image(size, logo, link=None, ec=qrcode.constants.ERROR_CORRECT_H):
+    q = qrcode.QRCode(error_correction=ec, box_size=1, border=2)
+    q.add_data(link or LINK); q.make(fit=True)
+    im = q.make_image(fill_color=GREEN, back_color="white").convert("RGBA")
+    # Scale by a WHOLE number of pixels per module. Resizing a fixed-box_size
+    # render to an arbitrary width lands module edges on fractions of a pixel,
+    # and the uneven columns that produces are what stopped the pair decoding
+    # once the image is downscaled — which is exactly what chat apps do.
+    factor = max(1, size // im.width)
+    size = im.width * factor
+    im = im.resize((size, size), Image.NEAREST)
     # Small icon in the centre — H-level correction tolerates it comfortably.
-    l = rounded_icon(int(size*0.2), 0.25)
+    l = rounded_icon(int(size*(0.18 if logo == "small" else 0.2)), 0.25)
     pad = 10
     plate = Image.new("RGBA", (l.width+pad*2, l.height+pad*2), "white")
     ImageDraw.Draw(plate).rounded_rectangle([0,0,plate.width-1,plate.height-1], radius=24, fill="white")
@@ -83,13 +96,34 @@ def dotted_line(d, cx, y, parts, font, fill, dot=GOLD, gap=34):
             d.ellipse([x-5, y+font.size*0.42, x+5, y+font.size*0.42+10], fill=dot)
             x -= gap
 
+def play_mark(d, x, cy, s):
+    """The Play triangle, four colours around its horizontal axis. Drawn, not
+    bundled: neither store badge ships as artwork here (see README)."""
+    top, bot, tip = cy - s*0.52, cy + s*0.52, x + s*0.92
+    d.polygon([(x, top), (x, cy), (x + s*0.46, cy - s*0.26)], fill="#00A0FF")
+    d.polygon([(x, cy), (x, bot), (x + s*0.46, cy + s*0.26)], fill="#00E676")
+    d.polygon([(x + s*0.46, cy - s*0.26), (tip, cy), (x + s*0.46, cy + s*0.26)], fill="#FFCE00")
+    d.polygon([(x, top), (x + s*0.46, cy - s*0.26), (x + s*0.20, cy - s*0.40)], fill="#FF3A44")
+
 def play_badge(d, cx, cy, w=420, h=104):
     x0, y0 = cx - w//2, cy - h//2
     d.rounded_rectangle([x0,y0,x0+w,y0+h], radius=h//2, fill="#111111", outline="#A6A6A6", width=2)
-    # simple play triangle
-    d.polygon([(x0+44, cy-26), (x0+44, cy+26), (x0+92, cy)], fill="#34A853")
-    d.text((x0+112, cy-24), "GET IT ON", font=F(LAT, 22), fill="white", anchor="lm")
-    d.text((x0+112, cy+16), "Google Play", font=F(LAT, 40), fill="white", anchor="lm")
+    play_mark(d, x0 + int(w*0.085), cy, h*0.52)
+    tx = x0 + int(w*0.27)
+    d.text((tx, cy-24), "GET IT ON", font=F(LAT, int(h*0.21)), fill="white", anchor="lm")
+    d.text((tx, cy+16), "Google Play", font=F(LAT, int(h*0.38)), fill="white", anchor="lm")
+
+def store_badge(d, cx, cy, store, w=420, h=104):
+    """One badge, explicitly chosen — `apple_badge` switches on the global."""
+    if store == "play":
+        play_badge(d, cx, cy, w, h)
+        return
+    x0, y0 = cx - w//2, cy - h//2
+    d.rounded_rectangle([x0,y0,x0+w,y0+h], radius=h//2, fill="#111111", outline="#A6A6A6", width=2)
+    d.text((x0+int(w*0.085), cy), "\uF8FF", font=F(LAT, int(h*0.56)), fill="white", anchor="lm")
+    tx = x0 + int(w*0.27)
+    d.text((tx, cy-24), "Download on the", font=F(LAT, int(h*0.21)), fill="white", anchor="lm")
+    d.text((tx, cy+16), "App Store", font=F(LAT, int(h*0.38)), fill="white", anchor="lm")
 
 def render(W, H, out):
     im = Image.new("RGBA", (W, H), PAPER)
@@ -97,10 +131,24 @@ def render(W, H, out):
     footer_h = 140
     # Pick the largest QR that still leaves the hero a sensible height, then
     # give the hero whatever remains (capped) and spread any slack.
-    for qr_size in (440, 400, 360, 330):
-        card_h = 40 + qr_size + 24 + 56 + 60 + 104 + 40
-        hero_h = H - (m + 32 + card_h + 30 + footer_h + m)
-        if hero_h >= 430: break
+    if STORE == "both":
+        # Two QRs side by side, a badge under each. Sized so the pair plus the
+        # gutter still clears the card's inner margins.
+        # Two QRs must each stay as readable as the single one they replace:
+        # the original rendered ~9.8 px per module, and a chat app halving the
+        # image is the case that matters. Lower correction (M) buys back the
+        # versions the pair costs, so the pixels-per-module survives; the hero
+        # gives up the height instead, being the decorative half.
+        for qr_size in (410, 380, 350, 320):
+            badge_w = min(int((W - 2*m - 220) / 2), 400)
+            card_h = 40 + 46 + qr_size + 18 + 34 + 16 + 100 + 40
+            hero_h = H - (m + 32 + card_h + 30 + footer_h + m)
+            if hero_h >= 340: break
+    else:
+        for qr_size in (440, 400, 360, 330):
+            card_h = 40 + qr_size + 24 + 56 + 60 + 104 + 40
+            hero_h = H - (m + 32 + card_h + 30 + footer_h + m)
+            if hero_h >= 430: break
     hero_h = min(hero_h, 600)
     used = m + hero_h + 32 + card_h + 30 + footer_h + m
     extra = max(0, H - used)
@@ -130,23 +178,50 @@ def render(W, H, out):
     top = hero[3] + gap_a
     card = [m, top, W-m, top+card_h]
     shadow_card(im, card, 40)
-    qr = qr_image(qr_size, True)
-    im.alpha_composite(qr, ((W-qr_size)//2, top + 40)); d = ImageDraw.Draw(im)
-    y = top + 40 + qr_size + 24
-    d.text((W//2, y), ar("امسح الرمز لتحميل التطبيق"), font=F(AR, 38), fill=INK, anchor="mt")
-    y += 56
-    d.text((W//2, y), ("Scan to download on Google Play" if STORE == "play" else "Scan to download on the App Store"), font=F(LAT, 28), fill=INK2, anchor="mt")
-    y += 60
-    apple_badge(d, W//2, y + 52)
+    if STORE == "both":
+        d = ImageDraw.Draw(im)
+        y = top + 40
+        d.text((W//2, y), ar("امسح الرمز لتحميل التطبيق"), font=F(AR, 34), fill=INK, anchor="mt")
+        y += 46
+        # Right column is iOS, left is Android: the card reads right-to-left
+        # like the rest of the poster.
+        gutter = 60
+        cols = [(W//2 - (qr_size + gutter)//2, "play"),
+                (W//2 + (qr_size + gutter)//2, "ios")]
+        for cx, store in cols:
+            link = PLAY_LINK if store == "play" else IOS_LINK_SHORT
+            # M (15%) still swallows the centre logo (~4% of the area) many
+            # times over, and the versions it saves are what keep these
+            # readable once a chat app has downscaled the poster.
+            qr = qr_image(qr_size, "small", link, ec=qrcode.constants.ERROR_CORRECT_M)
+            im.alpha_composite(qr, (cx - qr.width//2, y + (qr_size - qr.height)//2))
+            d = ImageDraw.Draw(im)
+            label = "Google Play" if store == "play" else "App Store"
+            d.text((cx, y + qr_size + 18), label, font=F(LAT, 26), fill=INK2, anchor="mt")
+            store_badge(d, cx, y + qr_size + 18 + 34 + 16 + 50, store,
+                        w=badge_w, h=100)
+    else:
+        qr = qr_image(qr_size, True)
+        im.alpha_composite(qr, ((W-qr.width)//2, top + 40 + (qr_size - qr.height)//2))
+        d = ImageDraw.Draw(im)
+        y = top + 40 + qr_size + 24
+        d.text((W//2, y), ar("امسح الرمز لتحميل التطبيق"), font=F(AR, 38), fill=INK, anchor="mt")
+        y += 56
+        d.text((W//2, y), ("Scan to download on Google Play" if STORE == "play" else "Scan to download on the App Store"), font=F(LAT, 28), fill=INK2, anchor="mt")
+        y += 60
+        apple_badge(d, W//2, y + 52)
 
     # ---- footer --------------------------------------------------------
     fy = card[3] + gap_b
     dotted_line(d, W//2, fy, ["مجانًا للأبد", "بلا إعلانات", "بلا تتبّع"], F(AR, 32), GREEN)
     d.text((W//2, fy+48), "Free forever  ·  No ads  ·  No tracking", font=F(LAT, 25), fill=GOLD, anchor="mt")
-    d.text((W//2, fy+92), LINK.replace("https://",""), font=F(LAT, 23), fill=INK2, anchor="mt")
+    if STORE == "both":
+        d.text((W//2, fy+92), "apps.apple.com  \u00b7  play.google.com", font=F(LAT, 23), fill=INK2, anchor="mt")
+    else:
+        d.text((W//2, fy+92), LINK.replace("https://",""), font=F(LAT, 23), fill=INK2, anchor="mt")
     im.convert("RGB").save(out, quality=95)
     print("wrote", out, im.size, "slack", extra)
 
-tag = "play" if STORE == "play" else "appstore"
+tag = {"play": "play", "both": "both"}.get(STORE, "appstore")
 render(1080, 1350, f"/tmp/noorpromo/noor-{tag}-share.jpg")
 render(1080, 1920, f"/tmp/noorpromo/noor-{tag}-status.jpg")

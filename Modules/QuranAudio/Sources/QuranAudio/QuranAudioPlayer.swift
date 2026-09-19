@@ -90,6 +90,11 @@ public final class QuranAudioPlayer {
     /// across surah boundaries (set by the reader, which owns the DB).
     public var surahAdvance: ((Int) -> (ayahCount: Int, title: String, arabicTitle: String)?)?
 
+    /// Verified DB text of an ayah, for the lock screen / Control Center
+    /// title (set by the reader, which owns the DB). Passed through
+    /// VERBATIM — the Now Playing title is never a reshaped Quran string.
+    public var ayahText: ((Int, Int) -> String?)?
+
     /// Set by the reader so the player knows the surah bounds and titles.
     public var surahTitle = ""
     /// Arabic surah name — what the lock screen / Control Center shows.
@@ -154,10 +159,19 @@ public final class QuranAudioPlayer {
     /// inside AVFoundation, so there is no fetch-then-swap pause.
     private var queuedNext: (item: AVPlayerItem, ref: Reference)?
     private var endObserver: NSObjectProtocol?
+    /// 1 Hz ticker that keeps the lock-screen scrubber honest, and the
+    /// player it belongs to (a time observer MUST be removed from the exact
+    /// player it was added to).
+    private var progressObserver: Any?
+    private var progressPlayer: AVPlayer?
     private var interruptionObserver: NSObjectProtocol?
     private var routeChangeObserver: NSObjectProtocol?
     private var resumeAfterInterruption = false
     private var commandsConfigured = false
+    /// Bumped by every start and every `stop()`. A fetch that was in flight
+    /// when the user pressed stop carries a stale token and must not start
+    /// audio they already cancelled.
+    private var playbackToken = 0
 
     public init() {
         let stored = UserDefaults.standard.float(forKey: "audio.rate")
@@ -178,6 +192,7 @@ public final class QuranAudioPlayer {
         surahTitleArabic = arabicTitle ?? title
         self.ayahCount = ayahCount
         self.pageEndAyah = pageEndAyah
+        resetAyahLengthEstimate()
         configureSessionAndCommands()
         playAyah(Reference(surah: surah, ayah: ayah))
     }
@@ -235,20 +250,34 @@ public final class QuranAudioPlayer {
             updateNowPlaying()
             return
         }
-        guard let player else { return }
-        if isPlaying { player.pause() } else { player.play(); player.rate = rate }
-        isPlaying.toggle()
+        // NO `guard let player`: the ayah's file may still be downloading, so
+        // there is either no AVPlayer yet or one still holding the PREVIOUS
+        // ayah. Flipping the flag is still the honest answer — `startPlayer`
+        // reads it before it starts anything, so a pause during the fetch is
+        // respected instead of being overridden when the file lands.
+        if isPlaying {
+            player?.pause()
+            isPlaying = false
+        } else {
+            player?.play()
+            player?.rate = rate
+            isPlaying = true
+        }
         updateNowPlaying()
     }
 
     public func stop() {
+        playbackToken &+= 1
         setSleepTimer(minutes: nil)
         stopAfterSurah = false
         stopFollowAlong()
+        removeProgressObserver()
         player?.pause()
         player?.removeAllItems()
         queuedNext = nil
         clearTranslationState()
+        ownedItems.removeAll()
+        resetAyahLengthEstimate()
         player = nil
         current = nil
         isPlaying = false
@@ -297,6 +326,7 @@ public final class QuranAudioPlayer {
             surahTitle = next.title
             surahTitleArabic = next.arabicTitle
             ayahCount = next.ayahCount
+            resetAyahLengthEstimate()
             playAyah(Reference(surah: current.surah + 1, ayah: 1))
         } else {
             stop()
@@ -311,17 +341,25 @@ public final class QuranAudioPlayer {
 
     // MARK: - Follow-along (word-level highlight, Alafasy gapless)
 
-    /// Plays the gapless surah with word tracking. Falls back to normal
-    /// ayah playback when timings/audio are unavailable.
+    /// Plays the gapless surah with word tracking.
+    ///
+    /// `false` means "I could not do this — fall back to ayah playback".
+    /// Being cancelled mid-fetch returns `true`: nothing is playing, and that
+    /// is exactly what the user asked for, so the caller must NOT fall back.
     public func playFollowAlong(surah: Int, ayahCount: Int, from ayah: Int,
                                 title: String, arabicTitle: String,
                                 qfReciterId: Int = WordTimingService.alafasyReciterId) async -> Bool {
+        playbackToken &+= 1
+        let token = playbackToken
         surahTitle = title
         surahTitleArabic = arabicTitle
         self.ayahCount = ayahCount
         configureSessionAndCommands()
+        // Timings come off the network on a cold surah; stopping during that
+        // wait used to be overridden by the audio starting when it landed.
         guard let timings = await WordTimingService.timings(reciter: qfReciterId, surah: surah)
-        else { return false }
+        else { return playbackToken != token }
+        guard playbackToken == token else { return true }
         followReciterId = qfReciterId
         // Play immediately: cached file if present, else STREAM the remote
         // (long surahs run to ~100 MB — downloading first meant silence).
@@ -355,6 +393,7 @@ public final class QuranAudioPlayer {
         ) { [weak self] time in
             Task { @MainActor in self?.followTick(ms: Int(time.seconds * 1000), surah: surah) }
         }
+        installProgressObserver(on: avPlayer)
         avPlayer.play()
         avPlayer.rate = rate
         isPlaying = true
@@ -408,6 +447,7 @@ public final class QuranAudioPlayer {
         if let followObserver, let followPlayer {
             followPlayer.removeTimeObserver(followObserver)
         }
+        if progressPlayer === followPlayer { removeProgressObserver() }
         followObserver = nil
         followPlayer?.pause()
         followPlayer = nil
@@ -421,6 +461,13 @@ public final class QuranAudioPlayer {
     // MARK: - Internals
 
     private func playAyah(_ reference: Reference) {
+        playbackToken &+= 1
+        let token = playbackToken
+        // Never two voices at once. Switching sheikh mid-recitation (the
+        // `reciter` setter) lands here while a gapless follow-along surah is
+        // still running — without this the two played over each other, and
+        // the pill's play/pause then only controlled one of them.
+        if isFollowAlong { stopFollowAlong() }
         current = reference
         isPlaying = true
         UserDefaults.standard.set(reference.surah, forKey: "audio.lastSurah")
@@ -431,6 +478,7 @@ public final class QuranAudioPlayer {
         player?.removeAllItems()
         queuedNext = nil
         clearTranslationState()
+        ownedItems.removeAll()
         let reciter = self.reciter
         let voice = self.translationVoice
         // Fetch-then-play: tries EveryAyah then the mirror, caches the file
@@ -443,7 +491,9 @@ public final class QuranAudioPlayer {
             }
             let local = await AudioCache.ensureLocal(
                 reciter: reciter, surah: reference.surah, ayah: reference.ayah)
-            guard let self, self.current == reference else { return }
+            // The token also covers a stop-then-replay of the SAME ayah,
+            // which `current == reference` alone would wave through.
+            guard let self, self.playbackToken == token, self.current == reference else { return }
             guard let local else {
                 self.stop()  // all sources unreachable and not cached
                 return
@@ -453,19 +503,25 @@ public final class QuranAudioPlayer {
     }
 
     private func startPlayer(with url: URL) {
-        let item = AVPlayerItem(url: url)
+        let item = makeItem(url: url)
         queuedNext = nil
         clearTranslationState()
         if let player {
             player.removeAllItems()
             player.insert(item, after: nil)
         } else {
-            player = AVQueuePlayer(items: [item])
+            let queue = AVQueuePlayer(items: [item])
+            player = queue
         }
+        if let player, progressPlayer !== player { installProgressObserver(on: player) }
         installEndObserver()
-        player?.play()
-        player?.rate = rate
-        isPlaying = true
+        // Honour a pause the user made WHILE this file was downloading — do
+        // not resurrect playback they already stopped. `playAyah` set
+        // `isPlaying` when the fetch began; only a tap since then clears it.
+        if isPlaying {
+            player?.play()
+            player?.rate = rate
+        }
         updateNowPlaying()
         stageAfterArabic()
     }
@@ -498,7 +554,7 @@ public final class QuranAudioPlayer {
                 }
                 return
             }
-            let item = AVPlayerItem(url: local)
+            let item = makeItem(url: local)
             player.insert(item, after: nil)
             self.translationItem = item
             if self.awaitingTranslation {
@@ -526,6 +582,21 @@ public final class QuranAudioPlayer {
         }
     }
 
+    /// Identities of the AVPlayerItems WE made. `.AVPlayerItemDidPlayToEndTime`
+    /// is observed with `object: nil` (the item that ends is often already
+    /// gone from the queue by the time it posts, so there is nothing stable to
+    /// scope it to), which means an athkar recording or an adhan preview
+    /// finishing also lands in `itemDidEnd` — and used to silently advance the
+    /// recitation by one ayah. Entries are dropped as they end, so this holds
+    /// three at most.
+    private var ownedItems: Set<ObjectIdentifier> = []
+
+    private func makeItem(url: URL) -> AVPlayerItem {
+        let item = AVPlayerItem(url: url)
+        ownedItems.insert(ObjectIdentifier(item))
+        return item
+    }
+
     /// One persistent end-of-item observer for whatever we play.
     private func installEndObserver() {
         guard endObserver == nil else { return }
@@ -539,6 +610,9 @@ public final class QuranAudioPlayer {
 
     private func itemDidEnd(_ item: AVPlayerItem?) {
         guard current != nil, !isFollowAlong else { return }
+        // Somebody else's audio (an athkar recording, an adhan preview) —
+        // not ours to advance on. See `ownedItems`.
+        guard let item, ownedItems.remove(ObjectIdentifier(item)) != nil else { return }
         if isPlayingTranslation {
             // Translated reading finished: the pair is complete.
             clearTranslationState()
@@ -598,7 +672,7 @@ public final class QuranAudioPlayer {
             guard let self, self.current == cur, self.queuedNext == nil,
                   self.reciter == reciter, self.translationVoice == .none,
                   self.player != nil else { return }
-            let item = AVPlayerItem(url: local)
+            let item = makeItem(url: local)
             self.player?.insert(item, after: nil)
             self.queuedNext = (item, nextRef)
         }
@@ -631,6 +705,14 @@ public final class QuranAudioPlayer {
         }
         commands.previousTrackCommand.addTarget { [weak self] _ in
             Task { @MainActor in self?.previous() }
+            return .success
+        }
+        // Dragging the lock-screen scrubber.
+        commands.changePlaybackPositionCommand.isEnabled = true
+        commands.changePlaybackPositionCommand.addTarget { [weak self] event in
+            guard let event = event as? MPChangePlaybackPositionCommandEvent
+            else { return .commandFailed }
+            Task { @MainActor in self?.seek(toSeconds: event.positionTime) }
             return .success
         }
     }
@@ -700,18 +782,130 @@ public final class QuranAudioPlayer {
         #endif
     }()
 
+    // MARK: Surah-wide progress
+
+    /// Rolling mean length of an ayah in the surah being recited. Ayah-by-ayah
+    /// playback has no single file to measure, so the surah's total length is
+    /// estimated as `mean × ayahCount` and refined as ayat play. Seeded by the
+    /// first ayah, so the bar is sensible from the very first second.
+    private var measuredSeconds: Double = 0
+    private var measuredAyat: Set<Int> = []
+    private var meanAyahSeconds: Double? {
+        measuredAyat.isEmpty ? nil : measuredSeconds / Double(measuredAyat.count)
+    }
+
+    /// Starts the estimate over — a different surah has different ayat.
+    private func resetAyahLengthEstimate() {
+        measuredSeconds = 0
+        measuredAyat.removeAll()
+    }
+
+    /// Folds the audible ayah's real length into the mean, once per ayah.
+    /// Translated readings are deliberately excluded: they are a second file
+    /// over the same ayah, not a unit of the surah.
+    private func measureCurrentAyah() {
+        guard !isFollowAlong, !isPlayingTranslation,
+              let current, !measuredAyat.contains(current.ayah),
+              let seconds = player?.currentItem?.duration.seconds,
+              seconds.isFinite, seconds > 0 else { return }
+        measuredAyat.insert(current.ayah)
+        measuredSeconds += seconds
+    }
+
+    /// Where the scrubber sits and how long the "track" runs — the WHOLE
+    /// surah in both modes. Following along that is literal (one gapless
+    /// file); ayah by ayah it is the estimate above, because a bar that
+    /// measured one ayah refilled every few seconds and told the user nothing
+    /// about where in the surah they were.
+    private var nowPlayingTimes: (elapsed: Double, duration: Double)? {
+        if isFollowAlong {
+            guard let followPlayer, let item = followPlayer.currentItem else { return nil }
+            let duration = item.duration.seconds
+            let elapsed = followPlayer.currentTime().seconds
+            guard duration.isFinite, duration > 0, elapsed.isFinite else { return nil }
+            return (max(0, min(elapsed, duration)), duration)
+        }
+        guard let player, let current else { return nil }
+        let intoAyah = player.currentTime().seconds
+        guard intoAyah.isFinite else { return nil }
+        guard ayahCount > 0, let mean = meanAyahSeconds else { return nil }
+        let duration = mean * Double(ayahCount)
+        // Cap the within-ayah part at one mean so a long ayah can never push
+        // the bar into the next ayah's share and then jump backwards.
+        let elapsed = mean * Double(current.ayah - 1) + max(0, min(intoAyah, mean))
+        return (min(elapsed, duration), duration)
+    }
+
     private func updateNowPlaying() {
         guard let current else { return }
-        let title = surahTitleArabic.isEmpty ? surahTitle : surahTitleArabic
+        measureCurrentAyah()
+        let surahName = surahTitleArabic.isEmpty ? surahTitle : surahTitleArabic
+        let reference = "\(surahName) · \(current.ayah.arabicIndicDigits)"
+        // The recited ayah itself is the title, so the lock screen scrolls
+        // the words being read; DB text, passed through untouched.
         var info: [String: Any] = [
-            MPMediaItemPropertyTitle: "\(title) · \(current.ayah.arabicIndicDigits)",
+            MPMediaItemPropertyTitle: ayahText?(current.surah, current.ayah) ?? reference,
+            MPMediaItemPropertyAlbumTitle: reference,
             MPMediaItemPropertyArtist: isPlayingTranslation ? translationVoice.arabicName : reciter.arabicName,
-            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? Double(rate) : 0.0,
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: 1.0,
+            MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue,
         ]
+        if ayahCount > 0 {
+            info[MPNowPlayingInfoPropertyPlaybackQueueCount] = ayahCount
+            info[MPNowPlayingInfoPropertyPlaybackQueueIndex] = max(0, current.ayah - 1)
+        }
+        // Without BOTH of these the lock screen draws no progress bar at all.
+        // iOS interpolates between updates using the playback rate above, so
+        // 1 Hz is plenty.
+        if let times = nowPlayingTimes {
+            info[MPMediaItemPropertyPlaybackDuration] = times.duration
+            info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = times.elapsed
+        }
         if let artwork = Self.lockScreenArtwork {
             info[MPMediaItemPropertyArtwork] = artwork
         }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
+    /// Keeps the scrubber alive: an item's duration only becomes known once
+    /// it is ready to play, and gapless roll-overs swap the item without any
+    /// call of ours, so neither is covered by the explicit update points.
+    private func installProgressObserver(on player: AVPlayer) {
+        removeProgressObserver()
+        progressPlayer = player
+        progressObserver = player.addPeriodicTimeObserver(
+            forInterval: CMTime(value: 1, timescale: 1), queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.updateNowPlaying() }
+        }
+    }
+
+    private func removeProgressObserver() {
+        if let progressObserver, let progressPlayer {
+            progressPlayer.removeTimeObserver(progressObserver)
+        }
+        progressObserver = nil
+        progressPlayer = nil
+    }
+
+    /// Lock-screen / Control Center scrub. The position is on the SURAH
+    /// timeline the bar shows, so ayah by ayah it has to be converted back
+    /// into an ayah — seeking the few-second file to minute 12 would just end
+    /// it. Dragging the bar therefore moves through the surah, which is what
+    /// the bar promises.
+    public func seek(toSeconds seconds: Double) {
+        let position = max(0, seconds)
+        if isFollowAlong {
+            followPlayer?.seek(to: CMTime(seconds: position, preferredTimescale: 1000),
+                               toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
+            updateNowPlaying()
+            return
+        }
+        guard let current, ayahCount > 0, let mean = meanAyahSeconds, mean > 0 else { return }
+        let target = min(max(Int(position / mean) + 1, 1), ayahCount)
+        guard target != current.ayah else { return }
+        playAyah(Reference(surah: current.surah, ayah: target))
     }
 }
 

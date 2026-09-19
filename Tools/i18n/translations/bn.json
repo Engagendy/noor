@@ -527,5 +527,8 @@
  "Default for %@: %@": "%1$@-এর জন্য ডিফল্ট: %2$@",
  "Download the mushaf automatically": "মুসহাফ স্বয়ংক্রিয়ভাবে ডাউনলোড করুন",
  "Only on Wi-Fi": "শুধু Wi-Fi-তে",
- "Downloading page %lld…": "পৃষ্ঠা %lld ডাউনলোড হচ্ছে…"
+ "Downloading page %lld…": "পৃষ্ঠা %lld ডাউনলোড হচ্ছে…",
+ "Ayat to share": "শেয়ার করার আয়াত",
+ "Add an ayah": "একটি আয়াত যোগ করুন",
+ "Remove an ayah": "একটি আয়াত সরান"
 }

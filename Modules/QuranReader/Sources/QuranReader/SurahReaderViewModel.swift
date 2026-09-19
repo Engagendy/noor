@@ -141,6 +141,38 @@ public final class SurahReaderViewModel {
         allSurahs.first { $0.id == id }
     }
 
+    /// Verified DB text of any ayah — what the lock screen shows while it is
+    /// being recited. Cached per surah (the Now Playing title is refreshed on
+    /// every ayah change, across surah boundaries).
+    ///
+    /// Ayah 1 carries the basmala in the stored text for 111 surahs while the
+    /// recording of ayah 1 does not; strip the leading copy FOR DISPLAY only,
+    /// exactly as the reader does (see `BasmalaPrefix` — the DB is untouched).
+    public func text(surahId: Int, ayah: Int) -> String? {
+        guard let text = allVerses(surahId: surahId).first(where: { $0.ayah == ayah })?.text
+        else { return nil }
+        guard ayah == 1, surahId != 1, let basmalaAny else { return text }
+        return BasmalaPrefix.strippingLeadingBasmala(from: text, basmala: basmalaAny)
+    }
+
+    /// A run of consecutive verses starting at `ayah` — what the share sheet
+    /// offers when several short ayat belong together.
+    public func run(surahId: Int, from ayah: Int, count: Int) -> [Verse] {
+        allVerses(surahId: surahId)
+            .filter { $0.ayah >= ayah && $0.ayah < ayah + max(1, count) }
+    }
+
+    /// How many verses a surah has, for bounding that run.
+    public func ayahCount(surahId: Int) -> Int { allVerses(surahId: surahId).count }
+
+    private func allVerses(surahId: Int) -> [Verse] {
+        if let cached = versesCache[surahId] { return cached }
+        let loaded = (try? database.verses(surahId: surahId)) ?? []
+        versesCache[surahId] = loaded
+        return loaded
+    }
+    private var versesCache: [Int: [Verse]] = [:]
+
     /// Full page content across surah boundaries — the mushaf flows on.
     public func sections(forPage page: Int) -> [PageSection] {
         if let cached = pageCache[page] { return cached }
@@ -181,6 +213,23 @@ public final class SurahReaderViewModel {
         flowCache[cacheKey] = items
         return items
     }
+
+    /// Ids of the fragments that BEGIN an ayah — the flowing mushaf hangs a
+    /// scroll anchor on each, so arriving at any ayah (a surah pick, a search
+    /// hit, a bookmark, a juz) can bring that exact line to the top of the
+    /// page. Cached: the pager re-renders a page on every scroll tick.
+    public func ayahStartItemIDs(section: PageSection, page: Int) -> Set<Int> {
+        let cacheKey = page * 1000 + section.id
+        if let cached = anchorCache[cacheKey] { return cached }
+        var seenAyat: Set<Int> = []
+        var anchors: Set<Int> = []
+        for item in flowItems(section: section, page: page) {
+            if seenAyat.insert(item.key).inserted { anchors.insert(item.id) }
+        }
+        anchorCache[cacheKey] = anchors
+        return anchors
+    }
+    private var anchorCache: [Int: Set<Int>] = [:]
 
     // MARK: Tajweed colouring
 

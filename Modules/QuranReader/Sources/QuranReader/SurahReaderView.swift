@@ -58,6 +58,35 @@ public struct SurahReaderView: View {
     /// Ayah to scroll to in ayah mode: the arrival ayah, then ayah 1 after
     /// a drawer jump. Nil once there is nothing left to jump to.
     @State private var arrivalAyah: Int?
+    /// `surah * 1000 + ayah` the flowing mushaf should bring to the TOP of the
+    /// page on arrival — a surah pick (ayah 1), a search hit, a bookmark, a
+    /// juz. Most surahs begin halfway down a page, under the tail of the
+    /// previous one; the page is a ScrollView here, so unlike the rigid Madani
+    /// grid it can actually be scrolled there. Cleared by the page that
+    /// honours it.
+    @State private var scrollToKey: Int?
+    /// Page currently granted room to scroll past its own end. Without it an
+    /// ayah starting near the FOOT of a page can never reach the top — there
+    /// is nothing below to pull up, so the ScrollView clamps and the arrival
+    /// stays stranded mid-screen. That was the "sometimes" in the bug: it
+    /// depended entirely on how far down the page the surah began. Granted
+    /// only to the page being arrived at, and dropped on the next swipe, so
+    /// ordinary reading never scrolls into empty space.
+    @State private var overscrollPage: Int?
+
+    /// Most ayat one share card / video may carry.
+    private static let maxSharedAyat = 10
+
+    /// Scroll id of an ayah's first fragment. Keyed globally (surah × 1000 +
+    /// ayah), so it stays unique on a page that carries two surahs.
+    private static func ayahAnchor(_ key: Int) -> String { "ayah-\(key)" }
+    /// Scroll id of a surah's opening block (rule + basmala + first verses).
+    private static func surahAnchor(_ surahId: Int) -> String { "surah-\(surahId)" }
+    /// What to scroll to for an arrival. A surah's opening prefers the whole
+    /// block so the basmala line is on screen too, not just ayah 1's words.
+    private static func arrivalAnchor(_ key: Int) -> String {
+        key % 1000 == 1 ? surahAnchor(key / 1000) : ayahAnchor(key)
+    }
     @State private var downloader = SurahDownloader()
     @State private var fontStore = PageFontStore()
     @GestureState private var pinchScale: CGFloat = 1
@@ -105,11 +134,26 @@ public struct SurahReaderView: View {
         self.bookmarkedRefs = bookmarkedRefs
         self.onToggleBookmark = onToggleBookmark
         // Position the pager before the first frame — no page-1 flash.
-        _currentPage = State(initialValue: SurahReaderViewModel.initialPage(
-            database: database, surahId: surahId, ayah: scrollToAyah))
-        // Arriving at a specific ayah (search/juz/bookmark): highlight it.
+        let initial = SurahReaderViewModel.initialPage(
+            database: database, surahId: surahId, ayah: scrollToAyah)
+        _currentPage = State(initialValue: initial)
         if let ayah = scrollToAyah {
+            // Arriving at a specific ayah (search/juz/bookmark): highlight it.
             _selectedKey = State(initialValue: surahId * 1000 + ayah)
+            _scrollToKey = State(initialValue: surahId * 1000 + ayah)
+        } else if SurahReaderViewModel.sharedStructure(database)?
+                    .page(surahId: surahId, ayah: 1) == initial {
+            // Opened AT a surah with no ayah — tapping it in the index, which
+            // is how most reading starts. Same treatment as a drawer pick:
+            // highlight its first ayah, and in the flowing mushaf scroll that
+            // opening line to the top instead of leaving it stranded halfway
+            // down under the previous surah's tail.
+            //
+            // Skipped when `initialPage` resumed a page further into the
+            // surah: that is a resume, and dragging it back to ayah 1 would
+            // throw away where the reader actually was.
+            _selectedKey = State(initialValue: surahId * 1000 + 1)
+            _scrollToKey = State(initialValue: surahId * 1000 + 1)
         }
     }
 
@@ -133,7 +177,16 @@ public struct SurahReaderView: View {
         return current.surah * 1000 + current.ayah
     }
     private var titleSurah: Surah? {
-        mode == .ayah ? viewModel.surah : viewModel.surah(forPage: currentPage)
+        if mode == .ayah { return viewModel.surah }
+        // A page can straddle two surahs. When one of them is what we're
+        // reciting or what the user just jumped to, name THAT one — landing
+        // on 22:1 under the title "Al-Anbiya" reads like the jump missed.
+        if let key = recitingKey ?? selectedKey,
+           viewModel.page(surahId: key / 1000, ayah: key % 1000) == currentPage,
+           let surah = viewModel.surahInfo(key / 1000) {
+            return surah
+        }
+        return viewModel.surah(forPage: currentPage)
     }
 
     /// Background tap: close the options panel, else toggle chrome.
@@ -275,6 +328,8 @@ public struct SurahReaderView: View {
             currentPage = page
         }
         .onChange(of: currentPage) { _, page in
+            // Swiping off the arrival page takes its over-scroll room back.
+            overscrollPage = nil
             guard mode != .ayah else { return }
             persistPosition(page: page)
         }
@@ -350,7 +405,13 @@ public struct SurahReaderView: View {
             ShareAyahSheet(
                 verse: verse,
                 surahName: viewModel.surahInfo(verse.surahId)?.nameTransliterated ?? "",
-                translation: showTranslation ? translations?.translation(surah: verse.surahId, ayah: verse.ayah) : nil)
+                run: { viewModel.run(surahId: verse.surahId, from: verse.ayah, count: $0) },
+                // Capped: past a handful the card's text shrinks to nothing in
+                // a 9:16 frame, and a status has a length limit anyway.
+                available: min(Self.maxSharedAyat,
+                               max(1, viewModel.ayahCount(surahId: verse.surahId) - verse.ayah + 1)),
+                translation: { showTranslation
+                    ? translations?.translation(surah: $0.surahId, ayah: $0.ayah) : nil })
                 .presentationDetents([.medium, .large])
                 .environment(\.locale, locale)
                 .environment(\.layoutDirection, appDirection)
@@ -519,40 +580,95 @@ public struct SurahReaderView: View {
     }
 
     private func mushafPage(_ page: Int) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(viewModel.sections(forPage: page)) { section in
-                    // Surah name lives in the top bar — pages show only the
-                    // basmala at a surah start (At-Tawbah has none).
-                    if section.headerSurah != nil && section.basmala == nil {
-                        Rectangle()
-                            .fill(NoorColor.accentGold.opacity(0.35))
-                            .frame(height: 0.7)
-                            .padding(.vertical, 10)
+        GeometryReader { geometry in
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(viewModel.sections(forPage: page)) { section in
+                        // Grouped (not loose siblings) so a surah's whole
+                        // stretch — rule, basmala, verses — stays together.
+                        VStack(alignment: .leading, spacing: 6) {
+                            // Anchor on the section itself, not only on the
+                            // words: a surah start is the common arrival, and
+                            // a plain VStack is a far more dependable scroll
+                            // target than a fragment inside a custom Layout.
+                            // Surah name lives in the top bar — pages show only
+                            // the basmala at a surah start (At-Tawbah has none).
+                            if section.headerSurah != nil && section.basmala == nil {
+                                Rectangle()
+                                    .fill(NoorColor.accentGold.opacity(0.35))
+                                    .frame(height: 0.7)
+                                    .padding(.vertical, 10)
+                            }
+                            if let basmala = section.basmala {
+                                Text(verbatim: basmala)
+                                    .font(NoorFont.quran(size: liveFontSize * 0.92))
+                                    .foregroundStyle(NoorColor.inkPrimary)
+                                    .arabicBlock(alignment: .center)
+                                    .padding(.bottom, 12)
+                            }
+                            tappableFlow(section: section, page: page)
+                        }
+                        // Only where the surah actually BEGINS — a section
+                        // that merely continues one from the previous page
+                        // must not advertise itself as that surah's opening.
+                        .id(section.headerSurah != nil
+                            ? Self.surahAnchor(section.id) : "sec-\(section.id)")
                     }
-                    if let basmala = section.basmala {
-                        Text(verbatim: basmala)
-                            .font(NoorFont.quran(size: liveFontSize * 0.92))
-                            .foregroundStyle(NoorColor.inkPrimary)
-                            .arabicBlock(alignment: .center)
-                            .padding(.bottom, 12)
+                    HStack(spacing: 10) {
+                        Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
+                        Text(verbatim: page.arabicIndic)
+                            .font(.noorScaled(12))
+                            .foregroundStyle(NoorColor.accentGold)
+                        Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
                     }
-                    tappableFlow(section: section, page: page)
+                    .padding(.top, 10)
+                    .accessibilityLabel("Page \(page)")
                 }
-                HStack(spacing: 10) {
-                    Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
-                    Text(verbatim: page.arabicIndic)
-                        .font(.noorScaled(12))
-                        .foregroundStyle(NoorColor.accentGold)
-                    Rectangle().fill(NoorColor.accentGold.opacity(0.35)).frame(height: 0.5)
-                }
-                .padding(.top, 10)
-                .accessibilityLabel("Page \(page)")
+                .padding(.horizontal, 14)
+                .padding(.vertical, 18)
+                .padding(.bottom, page == overscrollPage ? geometry.size.height : 0)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: backgroundTapped)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 18)
-            .contentShape(Rectangle())
-            .onTapGesture(perform: backgroundTapped)
+            // Runs on appear (the lazy pager BUILDS the target page on a jump)
+            // and again whenever a new arrival is requested for a page already
+            // on screen.
+            .task(id: scrollToKey) { await scrollToArrivalAyah(on: page, proxy: proxy) }
+        }
+        }
+    }
+
+    /// Brings the ayah we arrived at to the top of the flowing page — a picked
+    /// surah's opening, a search hit, a bookmark, a juz start.
+    ///
+    /// This waits rather than firing once: opening the reader cold, the page
+    /// is on screen BEFORE `load()` has run, so for a moment there is no
+    /// structure to resolve the anchor against and no view carrying it —
+    /// scrolling then is a silent no-op. The anchor is only consumed once the
+    /// content is really there.
+    private func scrollToArrivalAyah(on page: Int, proxy: ScrollViewProxy) async {
+        guard scrollToKey != nil else { return }
+        for _ in 0..<40 {
+            guard let key = scrollToKey else { return }   // another page took it
+            if page == currentPage,
+               viewModel.page(surahId: key / 1000, ayah: key % 1000) == page,
+               !viewModel.sections(forPage: page).isEmpty {
+                scrollToKey = nil
+                // Room to pull a late-page ayah all the way up, granted BEFORE
+                // the scroll: scrolling into padding that does not exist yet
+                // just clamps short.
+                overscrollPage = page
+                let anchor = Self.arrivalAnchor(key)
+                // Twice, either side of a frame: the first pass can still land
+                // before the new bottom inset has been laid out.
+                try? await Task.sleep(for: .milliseconds(80))
+                proxy.scrollTo(anchor, anchor: .top)
+                try? await Task.sleep(for: .milliseconds(140))
+                proxy.scrollTo(anchor, anchor: .top)
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(50))
         }
     }
 
@@ -561,6 +677,11 @@ public struct SurahReaderView: View {
         // Resolved once per page, not per word: the view model caches the
         // query, but the dictionary lookup would still be per fragment.
         let spans = tajweedColors ? viewModel.tajweedSpans(forPage: page) : [:]
+        // `QuranFlow` numbers its fragments from 0 per section, so the plain
+        // item id is NOT unique across a page that holds two surahs — the
+        // non-anchor ids are namespaced by section to keep every scroll id on
+        // the page distinct.
+        let anchors = viewModel.ayahStartItemIDs(section: section, page: page)
         return RTLFlowLayout(horizontalSpacing: liveFontSize * 0.3,
                              verticalSpacing: liveFontSize * NoorMetrics.quranLineSpacingFactor) {
             ForEach(viewModel.flowItems(section: section, page: page)) { item in
@@ -571,6 +692,8 @@ public struct SurahReaderView: View {
                                                    ? liveFontSize * 0.62 : liveFontSize),
                               isReciting: recitingKey == key,
                               spans: spans[key] ?? [])
+                    .id(anchors.contains(item.id) ? Self.ayahAnchor(key)
+                                                  : "w\(section.id)-\(item.id)")
                     .padding(.horizontal, 2)
                     .background(
                         RoundedRectangle(cornerRadius: 5)
@@ -809,13 +932,20 @@ public struct SurahReaderView: View {
         withAnimation(.easeInOut(duration: 0.25)) { showDrawer = false }
         readingSurahId = surah.id
         arrivalAyah = 1
-        selectedKey = nil
+        // A surah rarely starts at the top of its page — most begin halfway
+        // down, under the tail of the previous one. Highlight its first ayah
+        // (exactly as arriving from search/bookmarks does) so the eye lands
+        // on the start instead of hunting the page for it.
+        selectedKey = surah.id * 1000 + 1
         revealedKeys = []
         viewModel.open(surahId: surah.id)
         if mode == .ayah {
             persistPosition(page: viewModel.page(surahId: surah.id, ayah: 1))
         } else if let page = viewModel.page(surahId: surah.id, ayah: 1) {
             currentPage = page      // no animation: jumps can be 600 pages
+            // Flowing mushaf: scroll the opening line up to the top of the
+            // page too (the Madani grid can't scroll — it gets the highlight).
+            scrollToKey = surah.id * 1000 + 1
         }
     }
 
@@ -862,6 +992,10 @@ public struct SurahReaderView: View {
             return (ayahCount: next.ayahCount,
                     title: next.displayName(arabicUI: isArabicUI),
                     arabicTitle: next.nameArabic)
+        }
+        // Lock screen / Control Center show the ayah being recited.
+        player?.ayahText = { [weak viewModel] surahId, ayah in
+            viewModel?.text(surahId: surahId, ayah: ayah)
         }
         if let page = viewModel.page(surahId: verse.surahId, ayah: verse.ayah),
            let last = viewModel.sections(forPage: page).flatMap(\.verses).last {

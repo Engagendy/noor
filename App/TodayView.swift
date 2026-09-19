@@ -1034,9 +1034,25 @@ struct TodayView: View {
         }
     }
 
+    /// Where the reading card's play button starts reciting: the first ayah
+    /// of the page reading stopped on, so listening picks up where the eye
+    /// left off. Falls back to the top of the remembered surah.
+    private var continueReadingStart: (surah: Int, ayah: Int) {
+        let page = UserDefaults.standard.integer(forKey: "reader.lastPage")
+        if page > 0,
+           let start = SurahReaderViewModel.sharedStructure(database)?
+            .pageStarts.first(where: { $0.idx == page }) {
+            return (start.surahId, start.ayah)
+        }
+        return (lastSurah, 1)
+    }
+
     private var continueReadingCard: some View {
         let surah = (try? database.allSurahs().first { $0.id == lastSurah }) ?? nil
-        return Button(action: openReader) {
+        // Two side-by-side buttons rather than one nested inside the other:
+        // tapping the card reads, tapping the disc listens.
+        return HStack(spacing: 8) {
+            Button(action: openReader) {
             HStack(spacing: 14) {
                 Image(systemName: "book")
                     .font(.system(size: 19))
@@ -1069,15 +1085,32 @@ struct TodayView: View {
                             .padding(.top, 2)
                     }
                 }
-                Spacer()
+                Spacer(minLength: 0)
                 Image(systemName: "chevron.forward")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(NoorColor.inkSecondary)
             }
-            .padding(16)
+            .padding(.leading, 16)
+            .padding(.vertical, 16)
             .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                let start = continueReadingStart
+                UserDefaults.standard.set(true, forKey: "pending.autoplay")
+                openListening(start.surah, start.ayah)
+            } label: {
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(NoorColor.accentGold)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, 12)
+            .accessibilityLabel("Listen")
         }
-        .buttonStyle(.plain)
         .noorCard()
     }
 

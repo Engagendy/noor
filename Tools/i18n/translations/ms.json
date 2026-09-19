@@ -526,5 +526,8 @@
  "Default for %@: %@": "Lalai untuk %1$@: %2$@",
  "Download the mushaf automatically": "Muat turun mushaf secara automatik",
  "Only on Wi-Fi": "Hanya melalui Wi-Fi",
- "Downloading page %lld…": "Memuat turun halaman %lld…"
+ "Downloading page %lld…": "Memuat turun halaman %lld…",
+ "Ayat to share": "Ayat untuk dikongsi",
+ "Add an ayah": "Tambah ayat",
+ "Remove an ayah": "Buang ayat"
 }

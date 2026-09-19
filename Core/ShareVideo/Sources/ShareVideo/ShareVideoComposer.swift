@@ -74,12 +74,30 @@ public enum ShareVideoComposer {
         size: CGSize = defaultSize,
         baseName: String = "noor-share"
     ) async throws -> URL {
-        let audioAsset = AVURLAsset(url: audioURL)
-        guard let duration = try? await audioAsset.load(.duration),
-              duration.seconds.isFinite, duration.seconds > 0,
-              let audioTrack = try? await audioAsset.loadTracks(withMediaType: .audio).first
-        else { throw ShareVideoError.audioUnreadable }
-        let totalSeconds = duration.seconds + trailingPadding
+        try await makeVideo(card: card, audioURLs: [audioURL], size: size, baseName: baseName)
+    }
+
+    /// Same, over several recitations played back to back — one card, one
+    /// continuous equaliser. A run of short ayat is the point: individually
+    /// each makes a video too brief to be worth posting.
+    public static func makeVideo(
+        card: CGImage,
+        audioURLs: [URL],
+        size: CGSize = defaultSize,
+        baseName: String = "noor-share"
+    ) async throws -> URL {
+        guard !audioURLs.isEmpty else { throw ShareVideoError.audioUnreadable }
+        var clips: [(asset: AVURLAsset, track: AVAssetTrack, duration: CMTime)] = []
+        for url in audioURLs {
+            let asset = AVURLAsset(url: url)
+            guard let duration = try? await asset.load(.duration),
+                  duration.seconds.isFinite, duration.seconds > 0,
+                  let track = try? await asset.loadTracks(withMediaType: .audio).first
+            else { throw ShareVideoError.audioUnreadable }
+            clips.append((asset, track, duration))
+        }
+        let audioSeconds = clips.reduce(0.0) { $0 + $1.duration.seconds }
+        let totalSeconds = audioSeconds + trailingPadding
 
         try Task.checkCancellation()
         let folder = try prepareOutputDirectory()
@@ -88,9 +106,20 @@ public enum ShareVideoComposer {
         let finalURL = folder.appendingPathComponent("\(baseName)-\(stamp).mp4")
         defer { try? FileManager.default.removeItem(at: stillURL) }
 
-        // 1. Loudness envelope, then the animated video.
-        let envelope = try await loudnessEnvelope(
-            asset: audioAsset, track: audioTrack, seconds: totalSeconds, fps: framesPerSecond)
+        // 1. Loudness envelope, then the animated video. Each clip is measured
+        // against its own peak and the results laid end to end, so a quietly
+        // recorded ayah in the middle of a run still moves the bars.
+        var envelope: [Float] = []
+        for clip in clips {
+            envelope += try await loudnessEnvelope(
+                asset: clip.asset, track: clip.track,
+                seconds: clip.duration.seconds, fps: framesPerSecond)
+            try Task.checkCancellation()
+        }
+        let totalFrames = Int((totalSeconds * Double(framesPerSecond)).rounded(.up))
+        if envelope.count < totalFrames {
+            envelope += [Float](repeating: 0, count: totalFrames - envelope.count)
+        }
         try Task.checkCancellation()
         let lay = layout(card: card, size: size)
         guard let base = renderBase(card: card, size: size, layout: lay) else { throw ShareVideoError.videoWriteFailed }
@@ -112,8 +141,13 @@ public enum ShareVideoComposer {
         do {
             try videoTrack.insertTimeRange(
                 CMTimeRange(start: .zero, duration: stillDuration), of: stillTrack, at: .zero)
-            try compAudio.insertTimeRange(
-                CMTimeRange(start: .zero, duration: duration), of: audioTrack, at: .zero)
+            // Butt-joined, in order: the recitations must run as one take.
+            var cursor = CMTime.zero
+            for clip in clips {
+                try compAudio.insertTimeRange(
+                    CMTimeRange(start: .zero, duration: clip.duration), of: clip.track, at: cursor)
+                cursor = CMTimeAdd(cursor, clip.duration)
+            }
         } catch {
             throw ShareVideoError.exportFailed
         }

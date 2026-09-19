@@ -258,6 +258,13 @@ struct KidsReaderView: View {
     private func start() {
         guard !verses.isEmpty, let surah else { return }
         sawLastAyah = false
+        // Lock screen / Control Center show the ayah being recited. Kids mode
+        // never leaves this surah, so its own loaded verses are enough.
+        player.ayahText = { ayahSurah, ayah in
+            guard ayahSurah == surahId,
+                  let verse = verses.first(where: { $0.ayah == ayah }) else { return nil }
+            return displayText(verse)
+        }
         if repeatCount > 1 {
             // Memorize mode gives us "each ayah N times, in order" for
             // free; it wraps back to ayah 1 at the end, which is one of
