@@ -919,25 +919,32 @@ fun ReaderScreen(
         }
     }
 
-    fun shareAyah(s: Surah, verse: Verse) {
+    /// Shares the run of [count] ayat starting at [verse] as one card.
+    fun shareAyah(s: Surah, verse: Verse, count: Int) {
         scope.launch {
             val bitmap = withContext(Dispatchers.IO) {
+                val run = AyahShareRun.verses(context, s.id, verse.ayah, count)
+                    .ifEmpty { listOf(verse) }
                 ShareCard.render(
                     context,
-                    "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩",
-                    context.getString(R.string.g2_surah_prefix, s.nameArabic) +
-                        " · ${s.id.localizedDigits()}:${verse.ayah.localizedDigits()}",
+                    AyahShareRun.cardText(run),
+                    AyahShareRun.reference(context, s, run),
                     useQuranFont = true)
             }
             ShareCard.share(context, bitmap)
         }
     }
 
-    fun copyAyah(s: Surah, verse: Verse) {
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText(
-            context.getString(R.string.g2_ayah_clip_label),
-            "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩ — ${s.id}:${verse.ayah}"))
+    fun copyAyah(s: Surah, verse: Verse, count: Int) {
+        scope.launch {
+            val run = withContext(Dispatchers.IO) {
+                AyahShareRun.verses(context, s.id, verse.ayah, count)
+            }.ifEmpty { listOf(verse) }
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText(
+                context.getString(R.string.g2_ayah_clip_label),
+                AyahShareRun.clipText(s, run)))
+        }
     }
 
     // Continuous playback crossing into the next surah (NoorPlayer's
@@ -978,9 +985,10 @@ fun ReaderScreen(
             isBookmarked = "${actionSurah.id}:${actionVerse.ayah}" in bookmarks,
             onPlay = { startPlayback(actionSurah, actionVerse.ayah) },
             onTafsir = { tafsirTarget = actionSurah to actionVerse },
-            onShare = { shareAyah(actionSurah, actionVerse) },
-            onShareVideo = { videoShare.start(actionVerse, actionSurah) },
-            onCopy = { copyAyah(actionSurah, actionVerse) },
+            availableAyat = AyahShareRun.available(actionSurah, actionVerse.ayah),
+            onShare = { count -> shareAyah(actionSurah, actionVerse, count) },
+            onShareVideo = { count -> videoShare.start(actionVerse, actionSurah, count) },
+            onCopy = { count -> copyAyah(actionSurah, actionVerse, count) },
             onToggleBookmark = { onToggleBookmark(actionSurah.id, actionVerse.ayah) },
             onDismiss = { actionTarget = null })
     }

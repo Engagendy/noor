@@ -27,6 +27,7 @@
     <!-- Share as video (ayah card + recitation) -->
     <string name="feat_share_video">مشاركة كفيديو</string>
     <string name="feat_share_video_caption">بصوت %1$s</string>
+    <string name="feat_share_ayat_count">عدد الآيات</string>
     <string name="feat_video_downloading">جارٍ تنزيل التلاوة…</string>
     <string name="feat_video_composing">جارٍ إنشاء الفيديو…</string>
     <string name="feat_video_offline">اتصل بالإنترنت مرة واحدة لتنزيل تلاوة هذه الآية</string>

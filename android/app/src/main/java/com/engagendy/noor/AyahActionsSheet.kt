@@ -11,12 +11,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,14 +43,20 @@ import androidx.compose.ui.unit.sp
 fun AyahActionsSheet(
     verse: Verse,
     isBookmarked: Boolean,
+    /// Ayat available from this one to the end of the surah, capped
+    /// (`AyahShareRun.available`). 1 hides the range stepper.
+    availableAyat: Int = 1,
     onPlay: () -> Unit,
     onTafsir: () -> Unit,
-    onShare: () -> Unit,
-    onShareVideo: () -> Unit,
-    onCopy: () -> Unit,
+    /// Share / copy the run starting here: the count the user chose.
+    onShare: (Int) -> Unit,
+    onShareVideo: (Int) -> Unit,
+    onCopy: (Int) -> Unit,
     onToggleBookmark: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    // Reset per ayah: a new long-press is a new selection.
+    var count by remember(verse.surahId, verse.ayah) { mutableIntStateOf(1) }
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
       // A ModalBottomSheet renders in its OWN window, which re-provides
       // LocalContext/LocalConfiguration from the Activity — so the app's
@@ -77,13 +90,16 @@ fun AyahActionsSheet(
                 onDismiss(); onPlay()
             }
             ActionRow(stringResource(R.string.g2_tafsir), icon = R.drawable.ic_book) { onDismiss(); onTafsir() }
-            ActionRow(stringResource(R.string.g2_share), icon = R.drawable.ic_share) { onDismiss(); onShare() }
+            if (availableAyat > 1) {
+                AyatRangePicker(count, availableAyat) { count = it }
+            }
+            ActionRow(stringResource(R.string.g2_share), icon = R.drawable.ic_share) { onDismiss(); onShare(count) }
             ActionRow(
                 stringResource(R.string.feat_share_video),
                 icon = R.drawable.ic_share,
                 caption = stringResource(R.string.feat_share_video_caption, NoorPlayer.reciter.localizedName),
-            ) { onDismiss(); onShareVideo() }
-            ActionRow(stringResource(R.string.g2_copy), glyph = "⧉") { onDismiss(); onCopy() }
+            ) { onDismiss(); onShareVideo(count) }
+            ActionRow(stringResource(R.string.g2_copy), glyph = "⧉") { onDismiss(); onCopy(count) }
             ActionRow(
                 stringResource(
                     if (isBookmarked) R.string.g2_bookmarked else R.string.g2_bookmark),
@@ -92,6 +108,56 @@ fun AyahActionsSheet(
                 onClick = onToggleBookmark)
         }
       }
+    }
+}
+
+/// How many ayat the share / video / copy rows below should carry. Centred
+/// and intrinsically sized, matching the iOS sheet's stepper.
+@Composable
+private fun AyatRangePicker(count: Int, available: Int, onChange: (Int) -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+    ) {
+        Text(
+            stringResource(R.string.feat_share_ayat_count),
+            fontSize = 13.sp,
+            color = NoorColor.inkSecondary)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            StepButton("−", enabled = count > 1) { onChange(count - 1) }
+            Text(
+                count.localizedDigits(),
+                fontSize = 19.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = NoorColor.inkPrimary,
+                modifier = Modifier.widthIn(min = 46.dp),
+                textAlign = TextAlign.Center)
+            StepButton("+", enabled = count < available) { onChange(count + 1) }
+        }
+    }
+}
+
+@Composable
+private fun StepButton(glyph: String, enabled: Boolean, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        // Clip BEFORE clickable so the ripple stays inside the circle.
+        modifier = Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(NoorColor.bgElevated)
+            .clickable(enabled = enabled, onClick = onClick)
+    ) {
+        Text(
+            glyph,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = if (enabled) NoorColor.accentPrimary
+                    else NoorColor.inkSecondary.copy(alpha = 0.4f))
     }
 }
 

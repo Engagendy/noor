@@ -25,6 +25,7 @@
     <!-- Share as video (ayah card + recitation) -->
     <string name="feat_share_video">Share as video</string>
     <string name="feat_share_video_caption">Recited by %1$s</string>
+    <string name="feat_share_ayat_count">Ayat to share</string>
     <string name="feat_video_downloading">Downloading recitation…</string>
     <string name="feat_video_composing">Composing video…</string>
     <string name="feat_video_offline">Connect once to download this ayah\'s recitation</string>

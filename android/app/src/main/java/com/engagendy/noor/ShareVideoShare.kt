@@ -55,17 +55,32 @@ class ShareVideoShare(private val context: Context, private val scope: Coroutine
         private set
     private var job: Job? = null
 
-    /// The current reciter's recitation of one ayah, on the ayah share card.
-    fun start(verse: Verse, surah: Surah) {
-        start(
+    /// The current reciter's recitation of a run of [count] ayat starting at
+    /// [verse], on one card. Their recitations play back to back.
+    fun start(verse: Verse, surah: Surah, count: Int = 1) {
+        // Resolved inside the coroutine, not here: reading the surah is DB
+        // work and `start` is called straight from a click handler. `card`
+        // only runs after `audio`, so it always sees the resolved run.
+        var run: List<Verse> = listOf(verse)
+        startRun(
             offlineRes = R.string.feat_video_offline,
-            audio = { NoorPlayer.ensureAyahFile(surah.id, verse.ayah) },
+            // Sequential, not concurrent: one ayah at a time keeps the failure
+            // honest (we know which is missing) and the download polite.
+            audio = audio@{
+                run = withContext(Dispatchers.IO) {
+                    AyahShareRun.verses(context, surah.id, verse.ayah, count)
+                }.ifEmpty { listOf(verse) }
+                val files = ArrayList<File>(run.size)
+                for (v in run) {
+                    files.add(NoorPlayer.ensureAyahFile(surah.id, v.ayah) ?: return@audio null)
+                }
+                files
+            },
             card = {
                 ShareCard.render(
                     context,
-                    "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩",
-                    context.getString(R.string.g2_surah_prefix, surah.nameArabic) +
-                        " · ${surah.id.localizedDigits()}:${verse.ayah.localizedDigits()}",
+                    AyahShareRun.cardText(run),
+                    AyahShareRun.reference(context, surah, run),
                     useQuranFont = true)
             })
     }
@@ -76,9 +91,9 @@ class ShareVideoShare(private val context: Context, private val scope: Coroutine
     /// whole recording is used, never a trimmed clip.
     fun start(dhikr: Dhikr, chapterTitle: String) {
         val file = dhikr.audio ?: return
-        start(
+        startRun(
             offlineRes = R.string.feat_video_offline_dhikr,
-            audio = { AthkarAudio.ensureLocal(context, file) },
+            audio = { AthkarAudio.ensureLocal(context, file)?.let { listOf(it) } },
             card = {
                 ShareCard.render(
                     context, dhikr.text, chapterTitle,
@@ -86,22 +101,24 @@ class ShareVideoShare(private val context: Context, private val scope: Coroutine
             })
     }
 
-    /// The shared flow: [audio] resolves the local MP3 (downloading if it is
-    /// not cached — the spinner covers that), [card] draws the still. Both run
-    /// off-main; [card] is only called once the audio is in hand.
-    private fun start(offlineRes: Int, audio: suspend () -> File?, card: () -> Bitmap) {
+    /// The shared flow: [audio] resolves the local MP3s in play order
+    /// (downloading any that are not cached — the spinner covers that),
+    /// [card] draws the still. Both run off-main; [card] is only called once
+    /// every file is in hand. A missing ayah aborts the whole compose: a video
+    /// silently missing an ayah is worse than no video.
+    private fun startRun(offlineRes: Int, audio: suspend () -> List<File>?, card: () -> Bitmap) {
         job?.cancel()
         stage = Stage.DOWNLOADING
         job = scope.launch {
             try {
-                val file = audio()
-                if (file == null) {
+                val files = audio()
+                if (files.isNullOrEmpty()) {
                     toast(if (isOnline()) R.string.feat_video_failed else offlineRes)
                     return@launch
                 }
                 stage = Stage.COMPOSING
                 val bitmap = withContext(Dispatchers.IO) { card() }
-                val video = ShareVideoComposer.compose(context, bitmap, file)
+                val video = ShareVideoComposer.compose(context, bitmap, files)
                 bitmap.recycle()
                 ShareCard.shareVideo(context, video)
             } catch (e: CancellationException) {

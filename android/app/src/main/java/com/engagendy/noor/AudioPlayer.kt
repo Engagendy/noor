@@ -136,6 +136,15 @@ object NoorPlayer {
     /// True from ayah request until audio actually starts — drives the
     /// pill's buffering spinner so downloads are visible to the user.
     var isBuffering by mutableStateOf(false)
+    /// What the USER wants, as opposed to [isPlaying], which is what the
+    /// MediaPlayer is actually doing. While an ayah is still preparing there
+    /// is no started player to pause, so a tap in that window has to be
+    /// remembered here — otherwise `onPrepared` starts audio that was already
+    /// cancelled, and the pill shows the wrong icon.
+    private var wantsPlayback = true
+    /// MediaPlayer.start() before onPrepared throws IllegalStateException;
+    /// the pill is tappable while buffering, so guard every start with this.
+    private var prepared = false
     var mode by mutableStateOf(PlaybackMode.CONTINUOUS)
         private set
     var speed by mutableFloatStateOf(1f)
@@ -169,6 +178,99 @@ object NoorPlayer {
 
     private var ayahCount = 0
     val currentAyahCount: Int get() = ayahCount
+
+    // MARK: Surah-wide progress (media notification / lock screen)
+
+    /// Rolling mean length of an ayah in the surah being recited, in ms.
+    /// Ayah-by-ayah playback has no single file to measure, so the surah's
+    /// total is estimated as mean × ayahCount and refined as ayat play —
+    /// a bar that measured ONE ayah refilled every few seconds and said
+    /// nothing about where in the surah you were. (iOS: meanAyahSeconds.)
+    private var measuredMs = 0L
+    private val measuredAyat = HashSet<Int>()
+    private val meanAyahMs: Long?
+        get() = if (measuredAyat.isEmpty()) null else measuredMs / measuredAyat.size
+
+    /// Verified DB text of the ayah being recited — the notification title,
+    /// so the words scroll on the lock screen. Cached per surah and loaded
+    /// off-main; ayah 1's stored basmala prefix is stripped because the
+    /// recording of ayah 1 does not include it (iOS does the same).
+    private var textSurah = 0
+    @Volatile private var textCache: List<Verse> = emptyList()
+
+    val currentAyahText: String?
+        get() {
+            if (textSurah != currentSurah) return null
+            val verse = textCache.firstOrNull { it.ayah == currentAyah } ?: return null
+            val context = appContext ?: return verse.text
+            return runCatching { QuranDb.get(context).textWithoutLeadingBasmala(verse) }
+                .getOrDefault(verse.text)
+        }
+
+    private fun warmAyahText(surah: Int) {
+        if (textSurah == surah) return
+        val context = appContext ?: return
+        prefetchPool.execute {
+            val verses = runCatching { QuranDb.get(context).verses(surah) }
+                .getOrDefault(emptyList())
+            if (verses.isNotEmpty()) {
+                textCache = verses
+                textSurah = surah
+                NoorAudioService.refresh(context)
+            }
+        }
+    }
+
+    private fun resetAyahLengthEstimate() {
+        measuredMs = 0L
+        measuredAyat.clear()
+    }
+
+    /// Folds the audible ayah's real length into the mean, once per ayah.
+    /// Translated readings are excluded: a second file over the same ayah is
+    /// not a unit of the surah.
+    private fun measureCurrentAyah() {
+        if (isPlayingTranslation || !prepared) return
+        val ayah = currentAyah
+        if (ayah <= 0 || ayah in measuredAyat) return
+        val length = runCatching { media?.duration ?: 0 }.getOrDefault(0)
+        if (length <= 0) return
+        measuredAyat.add(ayah)
+        measuredMs += length.toLong()
+    }
+
+    /// Total length the notification should show for the whole surah, ms,
+    /// or 0 while nothing has been measured yet.
+    val surahDurationMs: Long
+        get() {
+            val mean = meanAyahMs ?: return 0L
+            return if (ayahCount > 0) mean * ayahCount else 0L
+        }
+
+    /// How far through the SURAH we are, ms. The within-ayah part is capped
+    /// at one mean so a long ayah can never push past its own share and then
+    /// jump backwards.
+    val surahPositionMs: Long
+        get() {
+            measureCurrentAyah()
+            val mean = meanAyahMs ?: return 0L
+            val into = runCatching { if (prepared) media?.currentPosition ?: 0 else 0 }
+                .getOrDefault(0).toLong()
+            val elapsed = mean * (currentAyah - 1).coerceAtLeast(0) + into.coerceIn(0L, mean)
+            return elapsed.coerceAtMost(surahDurationMs)
+        }
+
+    /// Seek on the surah timeline the notification shows: converted back to
+    /// an ayah, because seeking a few-second file to minute 12 would just end
+    /// it. Dragging the bar therefore moves through the surah, which is what
+    /// the bar promises.
+    fun seekToSurahMs(positionMs: Long) {
+        val mean = meanAyahMs ?: return
+        if (mean <= 0 || ayahCount <= 0) return
+        val target = ((positionMs / mean).toInt() + 1).coerceIn(1, ayahCount)
+        if (target == currentAyah) return
+        playAyah(currentSurah, target)
+    }
     private var media: MediaPlayer? = null
     /// Last surah:ayah given a second chance after both hosts failed.
     private var retriedAyah: Pair<Int, Int>? = null
@@ -394,6 +496,7 @@ object NoorPlayer {
         surahName = name
         pageEndAyah = pageEnd
         memorizeDone = 0
+        resetAyahLengthEstimate()
         playAyah(surah, fromAyah)
         if (currentSurah != 0) startService()  // focus denied → nothing to keep alive
     }
@@ -430,6 +533,9 @@ object NoorPlayer {
         translated: Boolean = false,
     ) {
         currentSurah = surah; currentAyah = ayah
+        warmAyahText(surah)
+        wantsPlayback = true
+        prepared = false
         isPlayingTranslation = translated
         // Resume point for the Today "continue listening" card — written
         // from user-driven playback only, never from a compose observer.
@@ -449,9 +555,17 @@ object NoorPlayer {
         media = MediaPlayer().apply {
             setAudioAttributes(audioAttributes)
             setOnPreparedListener {
+                NoorPlayer.prepared = true
+                NoorPlayer.isBuffering = false
+                // Honour a pause made WHILE this ayah was downloading: do not
+                // resurrect playback the user already stopped.
+                if (!NoorPlayer.wantsPlayback) {
+                    NoorPlayer.isPlaying = false
+                    NoorAudioService.refresh(appContext)
+                    return@setOnPreparedListener
+                }
                 it.start()
                 NoorPlayer.isPlaying = true
-                NoorPlayer.isBuffering = false
                 applySpeed()
                 NoorAudioService.refresh(appContext)
                 // Warm the ayat ahead while this one plays — and this ayah
@@ -569,10 +683,12 @@ object NoorPlayer {
     /// the auto-resume flag so a user-initiated pause is never undone by a
     /// later AUDIOFOCUS_GAIN; the transient-loss path re-arms it afterwards.
     fun pause() {
-        val player = media ?: return
-        if (!isPlaying) return
+        // Recorded even with nothing started yet — the ayah may still be
+        // preparing, and `onPrepared` reads this.
+        wantsPlayback = false
         pausedByFocusLoss = false
-        player.pause()
+        val player = media
+        if (player != null && isPlaying && prepared) player.pause()
         isPlaying = false
         NoorAudioService.refresh(appContext)
     }
@@ -580,9 +696,14 @@ object NoorPlayer {
     fun resume() {
         val player = media ?: return
         if (isPlaying || !requestFocus()) return
+        wantsPlayback = true
+        resyncRequest++  // deliberate user action: follow the recitation again
+        // Still downloading: `onPrepared` will start it. Calling start() on an
+        // unprepared MediaPlayer throws, and the pill IS tappable while the
+        // spinner shows.
+        if (!prepared) { NoorAudioService.refresh(appContext); return }
         player.start(); applySpeed()
         isPlaying = true
-        resyncRequest++  // deliberate user action: follow the recitation again
         NoorAudioService.refresh(appContext)
     }
 
@@ -621,6 +742,7 @@ object NoorPlayer {
         if (next == null) { stop(); return }  // end of the mushaf
         ayahCount = next.ayahCount
         surahName = next.nameArabic
+        resetAyahLengthEstimate()
         pageEndAyah = 0
         memorizeDone = 0
         playAyah(next.id, 1)
@@ -651,7 +773,9 @@ object NoorPlayer {
         media?.release(); media = null
         pausedByFocusLoss = false
         abandonFocus()
-        isPlaying = false; isBuffering = false; currentSurah = 0; currentAyah = 0
+        isPlaying = false; isBuffering = false; prepared = false; wantsPlayback = false
+        resetAyahLengthEstimate()
+        currentSurah = 0; currentAyah = 0
         isPlayingTranslation = false
         handler.removeCallbacks(sleepStop)
         sleepDeadline = 0L

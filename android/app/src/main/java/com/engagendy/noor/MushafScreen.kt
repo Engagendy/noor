@@ -280,7 +280,7 @@ fun MushafScreen(
             // The sheet dismisses itself before firing the action, so tafsir
             // state must outlive it — it lives here on the screen.
             onOpenTafsir = { tafsirRef = ref },
-            onShareVideo = { verse, surah -> videoShare.start(verse, surah) },
+            onShareVideo = { verse, surah, count -> videoShare.start(verse, surah, count) },
             onDismiss = { actionRef = null })
     }
     ShareVideoProgressDialog(videoShare)
@@ -307,7 +307,7 @@ private val ayahActionScope = kotlinx.coroutines.CoroutineScope(
 private fun MushafAyahActions(
     ref: AyahRef,
     onOpenTafsir: () -> Unit,
-    onShareVideo: (Verse, Surah) -> Unit,
+    onShareVideo: (Verse, Surah, Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -340,26 +340,33 @@ private fun MushafAyahActions(
             }
         },
         onTafsir = onOpenTafsir,
-        onShare = {
+        availableAyat = AyahShareRun.available(surah, verse.ayah),
+        onShare = { count ->
             scope.launch {
                 val bitmap = withContext(Dispatchers.IO) {
+                    val run = AyahShareRun.verses(context, surah.id, verse.ayah, count)
+                        .ifEmpty { listOf(verse) }
                     ShareCard.render(
                         context,
-                        "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩",
-                        context.getString(R.string.g2_surah_prefix, surah.nameArabic) +
-                            " · ${surah.id.localizedDigits()}:${verse.ayah.localizedDigits()}",
+                        AyahShareRun.cardText(run),
+                        AyahShareRun.reference(context, surah, run),
                         useQuranFont = true)
                 }
                 ShareCard.share(context, bitmap)
             }
         },
-        onShareVideo = { onShareVideo(verse, surah) },
-        onCopy = {
-            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
-                as android.content.ClipboardManager
-            clipboard.setPrimaryClip(android.content.ClipData.newPlainText(
-                context.getString(R.string.g2_ayah_clip_label),
-                "${verse.text} ⁧﴿${verse.ayah.arabicIndic()}﴾⁩ — ${surah.id}:${verse.ayah}"))
+        onShareVideo = { count -> onShareVideo(verse, surah, count) },
+        onCopy = { count ->
+            scope.launch {
+                val run = withContext(Dispatchers.IO) {
+                    AyahShareRun.verses(context, surah.id, verse.ayah, count)
+                }.ifEmpty { listOf(verse) }
+                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                    as android.content.ClipboardManager
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText(
+                    context.getString(R.string.g2_ayah_clip_label),
+                    AyahShareRun.clipText(surah, run)))
+            }
         },
         onToggleBookmark = {
             val key = "${surah.id}:${verse.ayah}"

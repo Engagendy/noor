@@ -87,7 +87,16 @@ object ShareVideoComposer {
     /// Produces the MP4 in cacheDir/shared (fresh name each time, old
     /// share files pruned like ShareCard). Throws [ShareVideoException].
     suspend fun compose(context: android.content.Context, card: Bitmap, audio: File): File =
+        compose(context, card, listOf(audio))
+
+    /// Same, over several recitations played back to back — one card, one
+    /// continuous equaliser. A run of short ayat is the point: individually
+    /// each makes a video too brief to be worth posting.
+    suspend fun compose(context: android.content.Context, card: Bitmap, audios: List<File>): File =
         withContext(Dispatchers.Default) {
+            if (audios.isEmpty()) {
+                throw ShareVideoException(ShareVideoException.Kind.AUDIO_UNREADABLE, "no recitation")
+            }
             val ctx = currentCoroutineContext()
             val check = { ctx.ensureActive() }
             val dir = File(context.cacheDir, "shared").apply { mkdirs() }
@@ -100,7 +109,9 @@ object ShareVideoComposer {
             val yuv = toYuv420(base)
             base.recycle()
             check()
-            val audioResult = transcodeAudio(audio, check)
+            val audioResult = if (audios.size == 1) transcodeAudio(audios[0], check) else {
+                join(audios.map { transcodeAudio(it, check).also { check() } })
+            }
             check()
             try {
                 encodeAndMux(yuv, layout, audioResult, out, check)
@@ -502,6 +513,44 @@ object ShareVideoComposer {
             runCatching { encoder?.stop() }; runCatching { encoder?.release() }
             runCatching { extractor.release() }
         }
+    }
+
+    /// Lays several transcoded recitations end to end as one track: sample
+    /// timestamps shifted by the running offset, durations summed, and each
+    /// clip's own frames of loudness concatenated (measured against its own
+    /// peak, so a quietly recorded ayah mid-run still moves the bars). The
+    /// silent tail is added once, at the very end.
+    private fun join(clips: List<AudioResult>): AudioResult {
+        val first = clips.first()
+        val rate = first.format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+        val channels = first.format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+        for (clip in clips.drop(1)) {
+            // One reciter, one source — but a mismatch muxed into a single
+            // track would play as noise, so fail loudly instead.
+            if (clip.format.getInteger(MediaFormat.KEY_SAMPLE_RATE) != rate ||
+                clip.format.getInteger(MediaFormat.KEY_CHANNEL_COUNT) != channels) {
+                throw ShareVideoException(
+                    ShareVideoException.Kind.AUDIO_UNREADABLE, "recitations differ in audio format")
+            }
+        }
+        val frameUs = 1_000_000L / FPS
+        val samples = ArrayList<EncodedSample>()
+        val envelope = ArrayList<Float>()
+        var offsetUs = 0L
+        for (clip in clips) {
+            for (sample in clip.samples) {
+                // END_OF_STREAM must not survive mid-track: the muxer would
+                // stop writing there and drop every ayah after the first.
+                val flags = sample.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM.inv()
+                samples.add(EncodedSample(sample.data, sample.presentationUs + offsetUs, flags))
+            }
+            val own = ((clip.durationUs + frameUs - 1) / frameUs).toInt().coerceAtLeast(1)
+            for (i in 0 until own) envelope.add(clip.envelope.getOrElse(i) { 0f })
+            offsetUs += clip.durationUs
+        }
+        val want = frameCount(offsetUs)
+        while (envelope.size < want) envelope.add(0f)
+        return AudioResult(first.format, samples, offsetUs, envelope.toFloatArray().copyOf(want))
     }
 
     /// Frames for (audio + tail) at [FPS], rounded up.

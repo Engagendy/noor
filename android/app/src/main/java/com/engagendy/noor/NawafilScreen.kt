@@ -1,7 +1,9 @@
 package com.engagendy.noor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,18 +15,25 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 
 /// Reference guide to the voluntary prayers (النوافل) — a 1:1 port of the
 /// iOS NawafilView (Modules/PrayerTimes/.../NawafilView.swift): what, how
@@ -44,6 +53,10 @@ data class NawafilItem(
     val rakahs: String get() = if (isArabicLocale()) rakahsArabic else rakahsEnglish
     val time: String get() = if (isArabicLocale()) timeArabic else timeEnglish
     val note: String get() = if (isArabicLocale()) noteArabic else noteEnglish
+
+    /// Headline of the share card: the name, how many rak'ahs, and when —
+    /// the part someone reads off a status and can act on.
+    val shareHeadline: String get() = "$name\n$rakahs\n$time"
 }
 
 object Nawafil {
@@ -104,6 +117,13 @@ object Nawafil {
 @Composable
 fun NawafilSheet(onDismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary) {
+      // Own window → the app language must be re-provided (see AyahActionsSheet).
+      NoorLocaleProvider {
+        val context = LocalContext.current
+        // Survives the sheet: `share` suspends over a PNG encode + the chooser.
+        val scope = rememberCoroutineScope()
+        // Resolved here: a click handler is not a composable context.
+        val nawafilLabel = stringResource(R.string.g1_nawafil)
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
@@ -132,6 +152,30 @@ fun NawafilSheet(onDismiss: () -> Unit) {
                              color = NoorColor.inkPrimary, modifier = Modifier.weight(1f))
                         Text(item.rakahs, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                              color = NoorColor.accentPrimary)
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            // Clip before clickable so the ripple stays round.
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .clickable {
+                                    scope.launch {
+                                        val bitmap = withContext(Dispatchers.IO) {
+                                            ShareCard.render(
+                                                context,
+                                                item.shareHeadline,
+                                                nawafilLabel,
+                                                translation = item.note)
+                                        }
+                                        ShareCard.share(context, bitmap)
+                                    }
+                                }
+                        ) {
+                            Icon(painterResource(R.drawable.ic_share), contentDescription =
+                                 stringResource(R.string.g2_share),
+                                 tint = NoorColor.accentPrimary,
+                                 modifier = Modifier.size(18.dp))
+                        }
                     }
                     Row {
                         Icon(painterResource(R.drawable.ic_clock), contentDescription = null,
@@ -162,5 +206,6 @@ fun NawafilSheet(onDismiss: () -> Unit) {
             }
             item { Spacer(Modifier.padding(bottom = 24.dp)) }
         }
+      }
     }
 }

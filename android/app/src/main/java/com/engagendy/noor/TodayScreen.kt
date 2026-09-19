@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.contentDescription
@@ -63,6 +64,7 @@ import kotlin.math.ceil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 
 /// Home / Today — 1:1 with the iOS App/TodayView.swift structure and
 /// order: header (dates + calendar + settings), السلام عليكم, next-prayer
@@ -379,6 +381,7 @@ private fun JumuahCard(now: Date, openKahf: () -> Unit) {
 @Composable
 private fun ContinueReadingCard(openResume: () -> Unit) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val maxPage = remember { KhatmahPlan.prefs(context).getInt("khatmah.maxPage", 0) }
     // Surah name needs the DB — loads off-main.
     val resumeLabel by produceState<String?>(initialValue = null) {
@@ -435,7 +438,42 @@ private fun ContinueReadingCard(openResume: () -> Unit) {
         // Disclosure ("go deeper") points forward: LEFT in RTL, RIGHT in LTR.
         Icon(painterResource(NoorIcons.chevronForward()), contentDescription = null,
              tint = NoorColor.inkSecondary, modifier = Modifier.size(16.dp))
+        // Listening picks up where the eye left off, without opening the
+        // reader first — the Continue Listening card below plays in place
+        // too, so the idiom matches.
+        Box(
+            contentAlignment = Alignment.Center,
+            // Clip before clickable so the ripple stays inside the circle.
+            modifier = Modifier
+                .padding(start = 6.dp)
+                .size(44.dp)
+                .clip(CircleShape)
+                .clickable { scope.launch { playFromResumePoint(context) } }
+        ) {
+            Icon(painterResource(R.drawable.ic_play_circle_fill),
+                 contentDescription = stringResource(R.string.g1_play),
+                 tint = NoorColor.accentGold, modifier = Modifier.size(28.dp))
+        }
     }
+}
+
+/// Starts the recitation at the FIRST ayah of the page reading stopped on,
+/// so listening resumes where reading did. Falls back to the top of the
+/// remembered surah. All lookups are DB work — off-main.
+private suspend fun playFromResumePoint(context: android.content.Context) {
+    val target = withContext(Dispatchers.IO) {
+        val prefs = KhatmahPlan.prefs(context)
+        val db = QuranDb.get(context)
+        val ref = if (prefs.getString("reader.lastMode", null) == "page") {
+            runCatching {
+                PageLayoutDb.get(context).firstAyahOnPage(prefs.getInt("reader.lastPage", 1))
+            }.getOrNull()
+        } else null
+        val surahId = ref?.surahId ?: prefs.getInt("reader.lastSurah", 1).coerceAtLeast(1)
+        val surah = db.surahs().firstOrNull { it.id == surahId } ?: return@withContext null
+        Triple(surah, ref?.ayah ?: 1, surah.displayName())
+    } ?: return
+    NoorPlayer.play(target.first.id, target.first.ayahCount, target.second, target.third)
 }
 
 // MARK: - Continue listening

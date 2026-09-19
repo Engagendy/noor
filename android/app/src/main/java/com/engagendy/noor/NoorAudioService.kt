@@ -58,6 +58,8 @@ class NoorAudioService : Service() {
                 override fun onSkipToNext() { NoorPlayer.next() }
                 override fun onSkipToPrevious() { NoorPlayer.previous() }
                 override fun onStop() { NoorPlayer.stop() }
+                /// The bar spans the SURAH, so a scrub lands on an ayah.
+                override fun onSeekTo(pos: Long) { NoorPlayer.seekToSurahMs(pos) }
             })
             isActive = true
         }
@@ -118,17 +120,29 @@ class NoorAudioService : Service() {
                     PlaybackState.ACTION_PLAY or PlaybackState.ACTION_PAUSE or
                     PlaybackState.ACTION_PLAY_PAUSE or PlaybackState.ACTION_STOP or
                     PlaybackState.ACTION_SKIP_TO_NEXT or
-                    PlaybackState.ACTION_SKIP_TO_PREVIOUS)
-                .setState(state, PlaybackState.PLAYBACK_POSITION_UNKNOWN,
+                    PlaybackState.ACTION_SKIP_TO_PREVIOUS or
+                    PlaybackState.ACTION_SEEK_TO)
+                // A real position, not PLAYBACK_POSITION_UNKNOWN: without one
+                // the notification draws no progress at all. It spans the
+                // WHOLE surah — a bar that measured one ayah refilled every
+                // few seconds. The system interpolates between updates using
+                // the speed below.
+                .setState(state, NoorPlayer.surahPositionMs,
                           if (NoorPlayer.isPlaying) NoorPlayer.speed else 0f)
                 .build())
+        val reference = getString(R.string.g2_ayah_ref, NoorPlayer.surahName,
+                                  NoorPlayer.currentAyah.localizedDigits())
         session?.setMetadata(
             android.media.MediaMetadata.Builder()
+                // The recited ayah is the title, so its words scroll on the
+                // lock screen; the reference moves to the album line.
                 .putString(android.media.MediaMetadata.METADATA_KEY_TITLE,
-                           getString(R.string.g2_ayah_ref, NoorPlayer.surahName,
-                                     NoorPlayer.currentAyah.localizedDigits()))
+                           NoorPlayer.currentAyahText ?: reference)
+                .putString(android.media.MediaMetadata.METADATA_KEY_ALBUM, reference)
                 .putString(android.media.MediaMetadata.METADATA_KEY_ARTIST,
                            NoorPlayer.nowPlayingName)
+                .putLong(android.media.MediaMetadata.METADATA_KEY_DURATION,
+                         NoorPlayer.surahDurationMs)
                 .build())
     }
 
@@ -156,7 +170,7 @@ class NoorAudioService : Service() {
             .setSmallIcon(R.drawable.ic_book)
             .setContentTitle(getString(R.string.g2_ayah_ref, NoorPlayer.surahName,
                                        NoorPlayer.currentAyah.localizedDigits()))
-            .setContentText(NoorPlayer.nowPlayingName)
+            .setContentText(NoorPlayer.currentAyahText ?: NoorPlayer.nowPlayingName)
             .setContentIntent(PendingIntent.getActivity(
                 this, 0, Intent(this, MainActivity::class.java),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
