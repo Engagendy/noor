@@ -26,6 +26,9 @@ public struct SurahReaderView: View {
     /// Applies to the flow and ayah-by-ayah modes only — see `TajweedLegendView`
     /// and the note on `tajweedSpans` for why Madani print mode is excluded.
     @AppStorage("reader.tajweed") private var tajweedColors = false
+    /// The pinned translation edition, or nil to follow the app language.
+    /// The SAME key Settings uses — one source of truth (see `translationEditions`).
+    @AppStorage(TranslationStore.defaultsKey) private var translationId: String?
     /// Screenshot/UI-test hook: NOOR_TAJWEED_LEGEND=1 opens the colour key.
     @State private var showTajweedLegend =
         ProcessInfo.processInfo.environment["NOOR_TAJWEED_LEGEND"] == "1"
@@ -283,7 +286,15 @@ public struct SurahReaderView: View {
         #endif
         .simultaneousGesture(pinch)
         // Reader session bounds for the shared chrome state.
-        .onAppear { chrome.readerAppeared() }
+        .onAppear {
+            chrome.readerAppeared()
+            // Re-arm the auto-hide. `didAutoHide` is @State, so on a second
+            // visit to the SAME view instance (leaving the tab and coming
+            // back) the guard below was still true, the chrome never faded —
+            // and the floating tab bar sat over the page for the rest of the
+            // session.
+            didAutoHide = false
+        }
         .onDisappear { chrome.readerDisappeared() }
         .task {
             viewModel.load()
@@ -635,7 +646,38 @@ public struct SurahReaderView: View {
             // and again whenever a new arrival is requested for a page already
             // on screen.
             .task(id: scrollToKey) { await scrollToArrivalAyah(on: page, proxy: proxy) }
+            // Follow the recitation: bring the ayah being recited into view.
+            // The page itself is flipped by the `recitingKey` handler on the
+            // body; this scrolls WITHIN the page, which is what was missing —
+            // on a dense page the recited ayah could be entirely off-screen.
+            .onChange(of: recitingKey) { _, new in
+                guard let new, page == currentPage,
+                      viewModel.page(surahId: new / 1000, ayah: new % 1000) == page
+                else { return }
+                follow(Self.ayahAnchor(new), proxy: proxy)
+            }
         }
+        }
+    }
+
+    /// Keeps the ayah being recited in view.
+    ///
+    /// Scrolled TWICE on purpose. The rows are laid out lazily and the
+    /// word-by-word glosses arrive asynchronously, so the content above the
+    /// target keeps growing for a moment after the first scroll and shoves it
+    /// back off-screen — which is why the recited ayah kept ending up at the
+    /// bottom, half behind the audio pill. The second pass lands once the
+    /// layout has settled.
+    private func follow(_ anchor: String, proxy: ScrollViewProxy) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            proxy.scrollTo(anchor, anchor: .center)
+        }
+        Task {
+            try? await Task.sleep(for: .milliseconds(450))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeInOut(duration: 0.25)) {
+                proxy.scrollTo(anchor, anchor: .center)
+            }
         }
     }
 
@@ -789,6 +831,16 @@ public struct SurahReaderView: View {
             .onChange(of: readingSurahId) {
                 proxy.scrollTo("a1", anchor: .top)
             }
+            // KNOWN LIMITATION: this does not actually move the list.
+            // `ScrollViewProxy.scrollTo` is silently inert here — verified on
+            // the simulator with a manual call to an id that was on screen at
+            // the time, and `.scrollPosition(id:)` is equally inert (the
+            // binding kept the value we set and the scroll view never wrote
+            // its own position back). The same `scrollTo` DOES work in the
+            // flowing mushaf page a few hundred lines up, so it is something
+            // about this list, not the API. Left in place rather than removed:
+            // it is correct as written and costs nothing, and the arrival
+            // jumps above have the same problem.
             .onChange(of: recitingKey) { _, new in
                 guard let new, new / 1000 == readingSurahId else { return }
                 withAnimation(.easeInOut(duration: 0.3)) {
@@ -1068,6 +1120,54 @@ public struct SurahReaderView: View {
         }
     }
 
+    /// Edition list for the options panel. Hand-drawn rows, NOT a system
+    /// `Picker`: a menu follows the process language and cannot mirror for
+    /// RTL — the same reason this panel exists instead of a `Menu`.
+    private var translationEditions: some View { translationEditionsList }
+
+    private var translationEditionRows: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            editionRow(id: "", title: String(localized: "Follow app language"))
+            ForEach(TranslationStore.allEditions, id: \.id) { edition in
+                editionRow(id: edition.id, title: edition.displayName)
+            }
+        }
+    }
+
+    private var translationEditionsList: some View {
+        ScrollView {
+            translationEditionRows.padding(.horizontal, 12)
+        }
+        .frame(maxHeight: 190)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(NoorColor.inkPrimary.opacity(0.04)))
+    }
+
+    private func editionRow(id: String, title: String) -> some View {
+        let selected = (translationId ?? "") == id
+        return Button {
+            // Picking the first row again un-pins, exactly as in Settings.
+            translationId = id.isEmpty ? nil : id
+        } label: {
+            HStack(spacing: 10) {
+                Text(verbatim: title)
+                    .font(.noorScaled(14))
+                    .foregroundStyle(NoorColor.inkPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                if selected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                }
+            }
+            .padding(.vertical, 9)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .frame(minHeight: 40)
+    }
+
     /// Writes deferred one tick: selecting a mode swaps the whole pager —
     /// synchronous writes from inside the picker abort with
     /// "AttributeGraph: setting value during update".
@@ -1106,6 +1206,11 @@ public struct SurahReaderView: View {
                         Text("Show translation")
                     }
                     .tint(NoorColor.accentPrimary)
+                    // WHICH edition, right where it is switched on. Bound to
+                    // the very key Settings writes, so the two can never
+                    // disagree — and the app layer already watches it, swaps
+                    // the store and downloads.
+                    if showTranslation { translationEditions }
                 }
                 if layout != nil {
                     Toggle(isOn: deferred($wordByWord)) {
