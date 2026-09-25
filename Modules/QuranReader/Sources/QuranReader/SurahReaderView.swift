@@ -324,6 +324,17 @@ public struct SurahReaderView: View {
             }
             if showTranslation { await translations?.download() }
         }
+        // "Take me back to what is being recited" — the pill's reference.
+        .onChange(of: player?.resyncRequest) { _, _ in
+            guard let key = recitingKey else { return }
+            selectedKey = key
+            guard mode != .ayah else { return }
+            if let page = viewModel.page(surahId: key / 1000, ayah: key % 1000) {
+                withAnimation(.easeInOut(duration: 0.3)) { currentPage = page }
+            }
+            // Mushaf: this is what actually scrolls it into view on the page.
+            if mode == .mushaf { scrollToKey = key }
+        }
         .onChange(of: recitingKey) { _, new in
             guard mode != .ayah, let new,
                   let page = viewModel.page(surahId: new / 1000, ayah: new % 1000)
@@ -814,8 +825,20 @@ public struct SurahReaderView: View {
                             .arabicBlock(alignment: .center)
                             .padding(.bottom, 14)
                     }
-                    ForEach(viewModel.verses) { verse in
-                        ayahBlock(verse).id("a\(verse.ayah)")
+                    // `id: \.ayah` and NO explicit `.id()` on the row.
+                    //
+                    // `Verse` is Identifiable, so `ForEach(verses)` already
+                    // gives each row an identity ("2:1"); adding `.id("a1")`
+                    // inside the body layered a SECOND one on top, and
+                    // `ScrollViewProxy.scrollTo` then resolved neither — every
+                    // scroll here was silently inert, which is why the list
+                    // never followed the recitation and never landed on the
+                    // ayah arrived at from search, a bookmark or a juz.
+                    // Bisected against a standalone probe: swapping this one
+                    // ForEach is the whole difference. The scroll target is
+                    // now the ayah number itself.
+                    ForEach(viewModel.verses, id: \.ayah) { verse in
+                        ayahBlock(verse)
                     }
                 }
                 .padding(.horizontal, 14)
@@ -824,27 +847,18 @@ public struct SurahReaderView: View {
                 .onTapGesture(perform: backgroundTapped)
             }
             .onChange(of: viewModel.verses.count) {
-                if let ayah = arrivalAyah { proxy.scrollTo("a\(ayah)", anchor: .top) }
+                if let ayah = arrivalAyah { proxy.scrollTo(ayah, anchor: .top) }
             }
             // Drawer jump: land at the top of the new surah even when the
             // ayah count happens to be unchanged.
             .onChange(of: readingSurahId) {
-                proxy.scrollTo("a1", anchor: .top)
+                proxy.scrollTo(1, anchor: .top)
             }
-            // KNOWN LIMITATION: this does not actually move the list.
-            // `ScrollViewProxy.scrollTo` is silently inert here — verified on
-            // the simulator with a manual call to an id that was on screen at
-            // the time, and `.scrollPosition(id:)` is equally inert (the
-            // binding kept the value we set and the scroll view never wrote
-            // its own position back). The same `scrollTo` DOES work in the
-            // flowing mushaf page a few hundred lines up, so it is something
-            // about this list, not the API. Left in place rather than removed:
-            // it is correct as written and costs nothing, and the arrival
-            // jumps above have the same problem.
+            // Follow the recitation: keep the ayah being recited in view.
             .onChange(of: recitingKey) { _, new in
                 guard let new, new / 1000 == readingSurahId else { return }
                 withAnimation(.easeInOut(duration: 0.3)) {
-                    proxy.scrollTo("a\(new % 1000)", anchor: .center)
+                    proxy.scrollTo(new % 1000, anchor: .center)
                 }
             }
         }

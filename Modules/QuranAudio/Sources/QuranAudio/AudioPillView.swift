@@ -32,33 +32,47 @@ public struct AudioPillView: View {
             HStack(spacing: 12) {
                 // Icon AND name open the reciter picker (system Menu follows
                 // the process language, breaking RTL — custom sheet instead).
+                // Icon + name open the reciter picker (a system Menu follows
+                // the process language, breaking RTL — custom sheet instead).
+                // The reference below is its OWN target: after scrolling away,
+                // tapping it takes the reader back to the ayah being recited
+                // (Android does the same, via the player's resync counter).
                 Button { showReciterPicker = true } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "person.wave.2")
-                            .font(.system(size: 15))
-                            .foregroundStyle(NoorColor.accentPrimary)
-                            .frame(width: 38, height: 38)
-                            .background(Circle().fill(NoorColor.accentPrimary.opacity(0.15)))
-                        VStack(alignment: .leading, spacing: 1) {
-                            // During the translated reading the voice's name
-                            // replaces the reciter's.
-                            Text(verbatim: player.isPlayingTranslation
-                                 ? player.translationVoice.displayName(arabicUI: isArabicUI)
-                                 : player.reciter.displayName(arabicUI: isArabicUI))
-                                .font(.noorScaled(14, weight: .semibold))
-                                .foregroundStyle(NoorColor.inkPrimary)
-                                .lineLimit(1)
-                            Text("\(player.surahTitle) · \(String(localized: "Ayah \(current.ayah)", locale: locale))")
-                                .font(.noorScaled(11.5))
-                                .foregroundStyle(NoorColor.inkSecondary)
-                                .lineLimit(1)
-                        }
-                    }
-                    .contentShape(Rectangle())
+                    Image(systemName: "person.wave.2")
+                        .font(.system(size: 15))
+                        .foregroundStyle(NoorColor.accentPrimary)
+                        .frame(width: 38, height: 38)
+                        .background(Circle().fill(NoorColor.accentPrimary.opacity(0.15)))
+                        .contentShape(Circle())
                 }
+                .buttonStyle(.plain)
                 .accessibilityLabel(player.isPlayingTranslation
                                     ? "Translation audio: \(player.translationVoice.displayName(arabicUI: isArabicUI))"
                                     : "Reciter: \(player.reciter.displayName)")
+
+                VStack(alignment: .leading, spacing: 1) {
+                    // During the translated reading the voice's name replaces
+                    // the reciter's.
+                    Button { showReciterPicker = true } label: {
+                        Text(verbatim: player.isPlayingTranslation
+                             ? player.translationVoice.displayName(arabicUI: isArabicUI)
+                             : player.reciter.displayName(arabicUI: isArabicUI))
+                            .font(.noorScaled(14, weight: .semibold))
+                            .foregroundStyle(NoorColor.inkPrimary)
+                            .lineLimit(1)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    Button { player.requestResync() } label: {
+                        Text("\(player.surahTitle) · \(String(localized: "Ayah \(current.ayah)", locale: locale))")
+                            .font(.noorScaled(11.5, weight: .medium))
+                            .foregroundStyle(NoorColor.accentPrimary)
+                            .lineLimit(1)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Go to the ayah being recited")
+                }
                 Spacer(minLength: 4)
 
                 Button { player.previous() } label: {
@@ -69,13 +83,27 @@ public struct AudioPillView: View {
                 .accessibilityLabel("Previous ayah")
 
                 Button { player.togglePlayPause() } label: {
-                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(NoorColor.bgPrimary)
-                        .frame(width: 40, height: 40)
-                        .background(Circle().fill(NoorColor.accentPrimary))
+                    ZStack {
+                        Circle().fill(NoorColor.accentPrimary)
+                        // While the ayah is still downloading there is nothing
+                        // to start, so a transport icon here would be a button
+                        // that does nothing — show the wait instead. Android's
+                        // pill has always done this.
+                        if player.isBuffering && player.isPlaying {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .tint(NoorColor.bgPrimary)
+                                .scaleEffect(0.7)
+                        } else {
+                            Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                                .font(.system(size: 16))
+                                .foregroundStyle(NoorColor.bgPrimary)
+                        }
+                    }
+                    .frame(width: 40, height: 40)
                 }
-                .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
+                .accessibilityLabel(player.isBuffering && player.isPlaying ? "Loading recitation"
+                                    : player.isPlaying ? "Pause" : "Play")
 
                 Button { player.next() } label: {
                     Image(systemName: "forward.fill").font(.system(size: 14))

@@ -41,8 +41,25 @@ public final class QuranAudioPlayer {
         min(memorizeRepeatsDone + 1, max(memorizePerAyah, 1))
     }
 
+    /// Bumped when the user asks the reader to jump back to what is being
+    /// recited (tapping the pill's reference). The reader observes it; the
+    /// player itself does nothing with it. Mirrors Android's `resyncRequest`.
+    public private(set) var resyncRequest = 0
+
+    /// "Take me back to the ayah being recited."
+    public func requestResync() {
+        guard current != nil else { return }
+        resyncRequest &+= 1
+    }
+
     public private(set) var current: Reference?
     public private(set) var isPlaying = false
+    /// True while an ayah's audio is being fetched and there is nothing to
+    /// start yet. The pill shows a spinner instead of a transport icon (as
+    /// Android's already did): a mujawwad ayah is megabytes, not the ~100 KB
+    /// this was written around, so the wait is long enough that a play/pause
+    /// icon which cannot act yet reads as a dead button.
+    public private(set) var isBuffering = false
     public var mode: PlaybackMode = .continuous
     /// Last ayah to play when mode is .pageOnly (set by the reader).
     public var pageEndAyah: Int?
@@ -245,7 +262,7 @@ public final class QuranAudioPlayer {
 
     public func togglePlayPause() {
         if isFollowAlong, let followPlayer {
-            if isPlaying { followPlayer.pause() } else { followPlayer.play(); followPlayer.rate = rate }
+            if isPlaying { followPlayer.pause() } else { followPlayer.playImmediately(atRate: rate) }
             isPlaying.toggle()
             updateNowPlaying()
             return
@@ -259,8 +276,14 @@ public final class QuranAudioPlayer {
             player?.pause()
             isPlaying = false
         } else {
-            player?.play()
-            player?.rate = rate
+            #if os(iOS)
+            // Cheap insurance: a session that lost activation while paused
+            // would also make play() a silent no-op.
+            try? AVAudioSession.sharedInstance().setActive(true)
+            #endif
+            // One call, not `play()` then `rate =`: the API for "start now,
+            // at this rate".
+            player?.playImmediately(atRate: rate)
             isPlaying = true
         }
         updateNowPlaying()
@@ -281,6 +304,7 @@ public final class QuranAudioPlayer {
         player = nil
         current = nil
         isPlaying = false
+        isBuffering = false
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
 
@@ -394,6 +418,7 @@ public final class QuranAudioPlayer {
             Task { @MainActor in self?.followTick(ms: Int(time.seconds * 1000), surah: surah) }
         }
         installProgressObserver(on: avPlayer)
+        isBuffering = false
         avPlayer.play()
         avPlayer.rate = rate
         isPlaying = true
@@ -463,6 +488,7 @@ public final class QuranAudioPlayer {
     private func playAyah(_ reference: Reference) {
         playbackToken &+= 1
         let token = playbackToken
+        isBuffering = true
         // Never two voices at once. Switching sheikh mid-recitation (the
         // `reciter` setter) lands here while a gapless follow-along surah is
         // still running — without this the two played over each other, and
@@ -503,6 +529,7 @@ public final class QuranAudioPlayer {
     }
 
     private func startPlayer(with url: URL) {
+        isBuffering = false
         let item = makeItem(url: url)
         queuedNext = nil
         clearTranslationState()
@@ -511,6 +538,11 @@ public final class QuranAudioPlayer {
             player.insert(item, after: nil)
         } else {
             let queue = AVQueuePlayer(items: [item])
+            // Every item here is a fully downloaded local file: there is
+            // nothing to buffer, so stall-avoidance has no job. Off, play()
+            // starts immediately instead of passing through "waiting while
+            // evaluating buffering rate" first.
+            queue.automaticallyWaitsToMinimizeStalling = false
             player = queue
         }
         if let player, progressPlayer !== player { installProgressObserver(on: player) }
@@ -519,8 +551,7 @@ public final class QuranAudioPlayer {
         // not resurrect playback they already stopped. `playAyah` set
         // `isPlaying` when the fetch began; only a tap since then clears it.
         if isPlaying {
-            player?.play()
-            player?.rate = rate
+            player?.playImmediately(atRate: rate)
         }
         updateNowPlaying()
         stageAfterArabic()
@@ -561,8 +592,7 @@ public final class QuranAudioPlayer {
                 // Arabic already ended while we were fetching — go now.
                 self.awaitingTranslation = false
                 self.isPlayingTranslation = true
-                player.play()
-                player.rate = self.rate
+                player.playImmediately(atRate: self.rate)
                 self.updateNowPlaying()
             }
         }

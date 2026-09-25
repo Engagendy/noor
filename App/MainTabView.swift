@@ -206,7 +206,12 @@ struct MainTabView: View {
                     }
                 }
                 .onChange(of: player.isPlaying) { _, playing in
-                    if playing { AthkarAudioPlayer.shared.stop() }
+                    // Only silence an athkar recording that is actually
+                    // going. (stop() is now safe to call regardless — it no
+                    // longer touches the audio session unless it owned it —
+                    // but there is no reason to poke it on every resume.)
+                    let athkar = AthkarAudioPlayer.shared
+                    if playing, athkar.isPlaying || athkar.isLoading { athkar.stop() }
                 }
 
             NavigationStack {

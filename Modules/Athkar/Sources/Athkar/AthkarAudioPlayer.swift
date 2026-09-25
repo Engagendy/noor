@@ -79,11 +79,22 @@ public final class AthkarAudioPlayer {
     }
 
     public func stop() {
+        // Only a player that actually took the session may give it back.
+        // The app calls stop() defensively whenever the RECITER starts
+        // ("never two voices"); with nothing of ours playing, the old
+        // unconditional deactivateSession() switched off the shared
+        // AVAudioSession underneath the reciter's running AVPlayer. Same
+        // process, so no interruption notification — the engine just
+        // stopped ~0.5 s after every resume, and AVFoundation mirrored
+        // rate 0 on the main queue with no app frame in the stack. That was
+        // the "pause then resume does nothing" report, caught by KVO on the
+        // device.
+        let ownedSession = player != nil || isLoading
         requestSerial += 1
         stopPlayer()
         nowPlaying = nil
         isLoading = false
-        deactivateSession()
+        if ownedSession { deactivateSession() }
     }
 
     // MARK: - Internals
