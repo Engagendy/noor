@@ -7,7 +7,8 @@ public enum Riwayah: String, CaseIterable, Codable {
     case warsh
 }
 
-/// Ayah-by-ayah recitations from EveryAyah.com (see LICENSES.md).
+/// Ayah-by-ayah recitations — EveryAyah.com folders, with the extra
+/// hosts in `AudioSources` where available (see LICENSES.md).
 public enum Reciter: String, CaseIterable, Identifiable, Codable {
     case alafasy
     case husary
@@ -263,15 +264,68 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
     /// On-disk cache sub-folder (never contains a path separator).
     var cacheFolder: String { rawValue }
 
+    /// Quran Foundation per-ayah path on verses.quran.foundation
+    /// (verified 2026-10-03 for 2:255 and 114:6); nil = not hosted there.
+    var quranFoundationPath: String? {
+        switch self {
+        case .alafasy: "Alafasy"
+        case .abdulBasit: "AbdulBaset/Murattal"
+        case .abdulBasitMujawwad: "AbdulBaset/Mujawwad"
+        case .sudais: "Sudais"
+        case .shatri: "Shatri"
+        case .rifai: "Rifai"
+        case .minshawi: "Minshawi/Murattal"
+        case .minshawiMujawwad: "Minshawi/Mujawwad"
+        case .shuraym: "Shuraym"
+        case .jibreel: "Jibreel"
+        default: nil
+        }
+    }
+
+    /// Islamic Network CDN edition and the bitrate it is published at
+    /// (verified 2026-10-03); nil = not hosted there.
+    var islamicNetworkEdition: (bitrate: Int, id: String)? {
+        switch self {
+        case .alafasy: (128, "ar.alafasy")
+        case .husary: (128, "ar.husary")
+        case .minshawi: (128, "ar.minshawi")
+        case .minshawiMujawwad: (64, "ar.minshawimujawwad")
+        case .abdulBasit: (192, "ar.abdulbasitmurattal")
+        case .sudais: (192, "ar.abdurrahmaansudais")
+        case .muaiqly: (128, "ar.mahermuaiqly")
+        case .shuraym: (64, "ar.saoodshuraym")
+        case .ayyoub: (128, "ar.muhammadayyoub")
+        case .shatri: (128, "ar.shaatree")
+        case .rifai: (64, "ar.hanirifai")
+        case .hudhaify: (128, "ar.hudhaify")
+        case .jibreel: (128, "ar.muhammadjibreel")
+        case .basfar: (192, "ar.abdullahbasfar")
+        case .sowaid: (64, "ar.aymanswoaid")
+        case .ajamy: (128, "ar.ahmedajamy")
+        case .akhdar: (32, "ar.ibrahimakhbar")
+        default: nil
+        }
+    }
+
     /// Remote URL for one ayah, e.g. .../Alafasy_128kbps/001001.mp3
     public func url(surah: Int, ayah: Int) -> URL {
         urls(surah: surah, ayah: ayah)[0]
     }
 
-    /// Candidate sources in order — EveryAyah, then the quranicaudio mirror
-    /// (identical layout). Playback falls through automatically.
+    /// Candidate sources in order — EveryAyah, the quranicaudio mirror
+    /// (identical layout), then the Quran Foundation and Islamic Network
+    /// CDNs where this reciter is hosted. Playback falls through
+    /// automatically (`AyahFetcher`).
     public func urls(surah: Int, ayah: Int) -> [URL] {
-        Self.everyAyahURLs(folder: folder, surah: surah, ayah: ayah)
+        var list = Self.everyAyahURLs(folder: folder, surah: surah, ayah: ayah)
+        if let path = quranFoundationPath {
+            list.append(AudioSources.quranFoundationURL(path: path, surah: surah, ayah: ayah))
+        }
+        if let edition = islamicNetworkEdition {
+            list.append(AudioSources.islamicNetworkURL(
+                bitrate: edition.bitrate, edition: edition.id, surah: surah, ayah: ayah))
+        }
+        return list
     }
 
     /// EveryAyah, then the quranicaudio mirror (identical layout), for any
@@ -279,8 +333,8 @@ public enum Reciter: String, CaseIterable, Identifiable, Codable {
     static func everyAyahURLs(folder: String, surah: Int, ayah: Int) -> [URL] {
         let file = "\(folder)/\(fileName(surah: surah, ayah: ayah))"
         return [
-            URL(string: "https://everyayah.com/data/\(file)")!,
-            URL(string: "https://mirrors.quranicaudio.com/everyayah/\(file)")!,
+            URL(string: "\(AudioSources.everyAyah)/\(file)")!,
+            URL(string: "\(AudioSources.everyAyahMirror)/\(file)")!,
         ]
     }
 

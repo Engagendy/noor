@@ -104,7 +104,7 @@
     <string name="g1_attr_page_fonts">Font halaman mushaf: King Fahd Complex (QCF v2)</string>
     <string name="g1_attr_translation">Terjemahan: Saheeh International dan Tanzil (mirror: fawazahmed0/quran-api)</string>
     <string name="g1_attr_tafsir">Tafsir: Ibn Kathir dan Muyassar (spa5k/tafsir_api)</string>
-    <string name="g1_attr_recitations">Tilawah: EveryAyah.com</string>
+    <string name="g1_attr_recitations">Tilawah: EveryAyah.com · Quran Foundation · Islamic Network</string>
     <string name="g1_attr_hadith">Hadis: fawazahmed0/hadith-api</string>
     <string name="g1_attr_prayer">Jadwal salat: algoritma Adhan (Batoul Apps)</string>
     <string name="g1_attr_adhan_sounds">Suara azan: Wikimedia Commons (CC BY 3.0 / CC BY-SA)</string>
@@ -197,4 +197,9 @@
     <string name="g1_onboarding_adhan_body">Azan yang merdu di setiap waktu salat. Anda bisa mengganti atau membisukan suaranya nanti.</string>
     <string name="g1_enable_adhan">Aktifkan azan</string>
     <string name="g1_later">Nanti</string>
+    <!-- Shorouk (end of Fajr): timeline row + its notification -->
+    <string name="g1_sunrise">Terbit</string>
+    <string name="g1_sunrise_title">Terbit · waktu Subuh telah berakhir</string>
+    <string name="g1_channel_sunrise">Peringatan terbit</string>
+    <string name="g1_channel_sunrise_desc">Notifikasi saat waktu Subuh berakhir</string>
 </resources>

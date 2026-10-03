@@ -381,6 +381,7 @@ val PrayerEntry.nameRes: Int
         "dhuhr" -> R.string.g1_dhuhr
         "asr" -> R.string.g1_asr
         "maghrib" -> R.string.g1_maghrib
+        PrayerEngine.SUNRISE_KEY -> R.string.g1_sunrise
         else -> R.string.g1_isha
     }
 

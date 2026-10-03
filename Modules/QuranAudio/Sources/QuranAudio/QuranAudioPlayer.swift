@@ -1011,7 +1011,8 @@ enum AudioCache {
     }
 
     /// Returns a playable local file: an existing copy if present, else downloads
-    /// from the first reachable source (EveryAyah → mirror) and stores it.
+    /// from the first source that answers (EveryAyah → mirror → Quran
+    /// Foundation → Islamic Network, see `AudioSources`) and stores it.
     /// `persistent` marks a user-requested download (purge-proof storage).
     static func ensureLocal(
         reciter: Reciter, surah: Int, ayah: Int, persistent: Bool = false
@@ -1041,16 +1042,16 @@ enum AudioCache {
             else { return existing }
             return destination
         }
-        for remote in track.urls {
-            guard let (temp, response) = try? await URLSession.shared.download(from: remote),
-                  (response as? HTTPURLResponse)?.statusCode == 200
-            else { continue }
-            guard prepare(destination),
-                  (try? FileManager.default.moveItem(at: temp, to: destination)) != nil
-            else { continue }
-            return destination
+        // Hedged across every host (see `AyahFetcher`): the first complete
+        // audio body wins, dead or slow hosts are remembered and tried last.
+        guard let temp = await AyahFetcher.download(track.urls) else { return nil }
+        guard prepare(destination),
+              (try? FileManager.default.moveItem(at: temp, to: destination)) != nil
+        else {
+            try? FileManager.default.removeItem(at: temp)
+            return nil
         }
-        return nil
+        return destination
     }
 
     /// Creates the parent directory (excluded from backup) and clears any stale file.

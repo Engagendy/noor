@@ -22,6 +22,12 @@ data class ReciterA(
     val flag: String,
     val folder: String,
     val riwayah: Riwayah = Riwayah.HAFS,
+    /// Quran Foundation per-ayah path on verses.quran.foundation (verified
+    /// 2026-10-03); null = not hosted there. Mirrors iOS `quranFoundationPath`.
+    val qfPath: String? = null,
+    /// Islamic Network CDN "bitrate/edition" (verified 2026-10-03); null =
+    /// not hosted there. Mirrors iOS `islamicNetworkEdition`.
+    val inEdition: String? = null,
 )
 
 /// Riwayah of a recitation. The mushaf text is always Hafs; Warsh readers
@@ -34,14 +40,16 @@ enum class TranslationVoice(
     val folder: String,
     val nameEnglish: String,
     val nameArabic: String,
+    /// Islamic Network CDN "bitrate/edition" fallback (verified 2026-10-03).
+    val inEdition: String? = null,
 ) {
     NONE("", "Off", "إيقاف"),
     ENGLISH("English/Sahih_Intnl_Ibrahim_Walk_192kbps",
-            "English · Ibrahim Walk", "الإنجليزية · إبراهيم ووك"),
+            "English · Ibrahim Walk", "الإنجليزية · إبراهيم ووك", "192/en.walk"),
     URDU("translations/urdu_shamshad_ali_khan_46kbps",
-         "Urdu · Shamshad Ali Khan", "الأردية · شمشاد علي خان"),
+         "Urdu · Shamshad Ali Khan", "الأردية · شمشاد علي خان", "64/ur.khan"),
     PERSIAN("translations/Fooladvand_Hedayatfar_40Kbps",
-            "Persian · Fooladvand", "الفارسية · فولادوند"),
+            "Persian · Fooladvand", "الفارسية · فولادوند", "40/fa.hedayatfarfooladvand"),
     BOSNIAN("translations/besim_korkut_ajet_po_ajet",
             "Bosnian · Besim Korkut", "البوسنية · بسيم كوركوت"),
     AZERBAIJANI("translations/azerbaijani/balayev",
@@ -53,32 +61,141 @@ enum class TranslationVoice(
     }
 }
 
-/// Full verified EveryAyah roster — same 31 entries and folders as iOS.
+/// Where ayah-by-ayah audio comes from — 1:1 with iOS `AudioSources` /
+/// `HostHealth` (Modules/QuranAudio/Sources/QuranAudio/AudioSources.swift).
+///
+/// Four independent hosts serve the same per-ayah files (see LICENSES.md):
+/// EveryAyah, its quranicaudio mirror, the Quran Foundation verse CDN and
+/// the Islamic Network CDN. The first two cover every reciter; the last two
+/// cover the popular ones. On 2026-10-03 both EveryAyah hosts refused
+/// connections for hours while the other two answered in ~100 ms, which is
+/// why playback never depends on a single host.
+object AudioSources {
+    const val EVERY_AYAH = "https://everyayah.com/data"
+    const val EVERY_AYAH_MIRROR = "https://mirrors.quranicaudio.com/everyayah"
+    const val QURAN_FOUNDATION = "https://verses.quran.foundation"
+    const val ISLAMIC_NETWORK = "https://cdn.islamic.network/quran/audio"
+
+    /// Hosts that failed recently are tried LAST for this long.
+    const val COOLDOWN_MS = 90_000L
+    /// A streamed ayah that has not started within this long moves on to
+    /// the next host — the "slow" case, as opposed to the "down" case.
+    const val PREPARE_TIMEOUT_MS = 12_000L
+
+    /// Ayah count of every surah, in mushaf order (metadata only, not text;
+    /// identical to the `surah.ayah_count` column of the bundled DB).
+    val ayahCounts = intArrayOf(
+        7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111, 110, 98, 135,
+        112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45, 83, 182, 88, 75, 85,
+        54, 53, 89, 59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13,
+        14, 11, 11, 18, 12, 12, 30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42,
+        29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11,
+        11, 8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6,
+    )
+
+    /// 1-based position of the ayah in the whole mushaf (1:1 → 1, 114:6 → 6236).
+    fun globalAyahNumber(surah: Int, ayah: Int): Int {
+        var total = ayah
+        for (index in 0 until (surah - 1).coerceIn(0, ayahCounts.size)) total += ayahCounts[index]
+        return total
+    }
+
+    private fun fileName(surah: Int, ayah: Int) =
+        "%03d%03d.mp3".format(java.util.Locale.ROOT, surah, ayah)
+
+    /// Every URL that may serve this file, in preference order: EveryAyah,
+    /// its mirror (same layout), then the Quran Foundation and Islamic
+    /// Network CDNs when the voice behind `folder` is hosted there.
+    fun candidates(folder: String, surah: Int, ayah: Int): List<String> {
+        val file = "$folder/${fileName(surah, ayah)}"
+        val list = mutableListOf("$EVERY_AYAH/$file", "$EVERY_AYAH_MIRROR/$file")
+        val reciter = Reciters.all.firstOrNull { it.folder == folder }
+        val voice = TranslationVoice.entries.firstOrNull { it != TranslationVoice.NONE && it.folder == folder }
+        reciter?.qfPath?.let { list += "$QURAN_FOUNDATION/$it/mp3/${fileName(surah, ayah)}" }
+        (reciter?.inEdition ?: voice?.inEdition)?.let {
+            list += "$ISLAMIC_NETWORK/$it/${globalAyahNumber(surah, ayah)}.mp3"
+        }
+        return list
+    }
+
+    // MARK: - host health (in-memory; a blip must not outlive the session)
+
+    private val downUntil = HashMap<String, Long>()
+
+    private fun host(url: String): String = runCatching { java.net.URI(url).host }.getOrNull() ?: url
+
+    fun markDown(url: String) {
+        synchronized(downUntil) { downUntil[host(url)] = System.currentTimeMillis() + COOLDOWN_MS }
+    }
+
+    fun markUp(url: String) {
+        synchronized(downUntil) { downUntil.remove(host(url)) }
+    }
+
+    fun isDown(url: String): Boolean = synchronized(downUntil) {
+        val until = downUntil[host(url)] ?: return false
+        if (until <= System.currentTimeMillis()) { downUntil.remove(host(url)); return false }
+        true
+    }
+
+    /// Same candidates, healthy hosts first (relative order preserved).
+    fun ordered(urls: List<String>): List<String> =
+        urls.filterNot(::isDown) + urls.filter(::isDown)
+}
+
+/// Full verified EveryAyah roster — same entries and folders as iOS,
+/// with the extra hosts (`qfPath`, `inEdition`) resolved by `AudioSources`.
 object Reciters {
     val all = listOf(
-        ReciterA("alafasy", "Mishary Alafasy", "مشاري العفاسي", "🇰🇼", "Alafasy_128kbps"),
-        ReciterA("husary", "Mahmoud Al-Husary", "محمود خليل الحصري", "🇪🇬", "Husary_128kbps"),
-        ReciterA("minshawi", "Mohamed Al-Minshawi", "محمد صديق المنشاوي", "🇪🇬", "Minshawy_Murattal_128kbps"),
-        ReciterA("abdulBasit", "Abdul Basit (Murattal)", "عبد الباسط عبد الصمد", "🇪🇬", "Abdul_Basit_Murattal_192kbps"),
+        ReciterA("alafasy", "Mishary Alafasy", "مشاري العفاسي", "🇰🇼", "Alafasy_128kbps",
+                 qfPath = "Alafasy",
+                 inEdition = "128/ar.alafasy"),
+        ReciterA("husary", "Mahmoud Al-Husary", "محمود خليل الحصري", "🇪🇬", "Husary_128kbps",
+                 inEdition = "128/ar.husary"),
+        ReciterA("minshawi", "Mohamed Al-Minshawi", "محمد صديق المنشاوي", "🇪🇬", "Minshawy_Murattal_128kbps",
+                 qfPath = "Minshawi/Murattal",
+                 inEdition = "128/ar.minshawi"),
+        ReciterA("abdulBasit", "Abdul Basit (Murattal)", "عبد الباسط عبد الصمد", "🇪🇬", "Abdul_Basit_Murattal_192kbps",
+                 qfPath = "AbdulBaset/Murattal",
+                 inEdition = "192/ar.abdulbasitmurattal"),
         ReciterA("ghamdi", "Saad Al-Ghamdi", "سعد الغامدي", "🇸🇦", "Ghamadi_40kbps"),
-        ReciterA("sudais", "Abdurrahman As-Sudais", "عبد الرحمن السديس", "🇸🇦", "Abdurrahmaan_As-Sudais_192kbps"),
-        ReciterA("muaiqly", "Maher Al-Muaiqly", "ماهر المعيقلي", "🇸🇦", "Maher_AlMuaiqly_64kbps"),
-        ReciterA("shuraym", "Saud Ash-Shuraym", "سعود الشريم", "🇸🇦", "Saood_ash-Shuraym_128kbps"),
-        ReciterA("ayyoub", "Muhammad Ayyoub", "محمد أيوب", "🇸🇦", "Muhammad_Ayyoub_128kbps"),
-        ReciterA("shatri", "Abu Bakr Ash-Shatri", "أبو بكر الشاطري", "🇸🇦", "Abu_Bakr_Ash-Shaatree_128kbps"),
-        ReciterA("rifai", "Hani Ar-Rifai", "هاني الرفاعي", "🇸🇦", "Hani_Rifai_192kbps"),
-        ReciterA("hudhaify", "Ali Al-Hudhaify", "علي الحذيفي", "🇸🇦", "Hudhaify_128kbps"),
-        ReciterA("jibreel", "Muhammad Jibreel", "محمد جبريل", "🇪🇬", "Muhammad_Jibreel_128kbps"),
+        ReciterA("sudais", "Abdurrahman As-Sudais", "عبد الرحمن السديس", "🇸🇦", "Abdurrahmaan_As-Sudais_192kbps",
+                 qfPath = "Sudais",
+                 inEdition = "192/ar.abdurrahmaansudais"),
+        ReciterA("muaiqly", "Maher Al-Muaiqly", "ماهر المعيقلي", "🇸🇦", "Maher_AlMuaiqly_64kbps",
+                 inEdition = "128/ar.mahermuaiqly"),
+        ReciterA("shuraym", "Saud Ash-Shuraym", "سعود الشريم", "🇸🇦", "Saood_ash-Shuraym_128kbps",
+                 qfPath = "Shuraym",
+                 inEdition = "64/ar.saoodshuraym"),
+        ReciterA("ayyoub", "Muhammad Ayyoub", "محمد أيوب", "🇸🇦", "Muhammad_Ayyoub_128kbps",
+                 inEdition = "128/ar.muhammadayyoub"),
+        ReciterA("shatri", "Abu Bakr Ash-Shatri", "أبو بكر الشاطري", "🇸🇦", "Abu_Bakr_Ash-Shaatree_128kbps",
+                 qfPath = "Shatri",
+                 inEdition = "128/ar.shaatree"),
+        ReciterA("rifai", "Hani Ar-Rifai", "هاني الرفاعي", "🇸🇦", "Hani_Rifai_192kbps",
+                 qfPath = "Rifai",
+                 inEdition = "64/ar.hanirifai"),
+        ReciterA("hudhaify", "Ali Al-Hudhaify", "علي الحذيفي", "🇸🇦", "Hudhaify_128kbps",
+                 inEdition = "128/ar.hudhaify"),
+        ReciterA("jibreel", "Muhammad Jibreel", "محمد جبريل", "🇪🇬", "Muhammad_Jibreel_128kbps",
+                 qfPath = "Jibreel",
+                 inEdition = "128/ar.muhammadjibreel"),
         ReciterA("dussary", "Yasser Ad-Dussary", "ياسر الدوسري", "🇸🇦", "Yasser_Ad-Dussary_128kbps"),
-        ReciterA("basfar", "Abdullah Basfar", "عبد الله بصفر", "🇸🇦", "Abdullah_Basfar_192kbps"),
-        ReciterA("sowaid", "Ayman Sowaid", "أيمن سويد", "🇸🇾", "Ayman_Sowaid_64kbps"),
+        ReciterA("basfar", "Abdullah Basfar", "عبد الله بصفر", "🇸🇦", "Abdullah_Basfar_192kbps",
+                 inEdition = "192/ar.abdullahbasfar"),
+        ReciterA("sowaid", "Ayman Sowaid", "أيمن سويد", "🇸🇾", "Ayman_Sowaid_64kbps",
+                 inEdition = "64/ar.aymanswoaid"),
         ReciterA("tablawi", "Mohammad At-Tablawi", "محمد الطبلاوي", "🇪🇬", "Mohammad_al_Tablaway_128kbps"),
-        ReciterA("abdulBasitMujawwad", "Abdul Basit (Mujawwad)", "عبد الباسط (مجوّد)", "🇪🇬", "Abdul_Basit_Mujawwad_128kbps"),
-        ReciterA("minshawiMujawwad", "Al-Minshawi (Mujawwad)", "المنشاوي (مجوّد)", "🇪🇬", "Minshawy_Mujawwad_192kbps"),
+        ReciterA("abdulBasitMujawwad", "Abdul Basit (Mujawwad)", "عبد الباسط (مجوّد)", "🇪🇬", "Abdul_Basit_Mujawwad_128kbps",
+                 qfPath = "AbdulBaset/Mujawwad"),
+        ReciterA("minshawiMujawwad", "Al-Minshawi (Mujawwad)", "المنشاوي (مجوّد)", "🇪🇬", "Minshawy_Mujawwad_192kbps",
+                 qfPath = "Minshawi/Mujawwad",
+                 inEdition = "64/ar.minshawimujawwad"),
         ReciterA("salamah", "Yaser Salamah", "ياسر سلامة", "🇪🇬", "Yaser_Salamah_128kbps"),
         ReciterA("qatami", "Nasser Al-Qatami", "ناصر القطامي", "🇸🇦", "Nasser_Alqatami_128kbps"),
         ReciterA("faresAbbad", "Fares Abbad", "فارس عباد", "🇾🇪", "Fares_Abbad_64kbps"),
-        ReciterA("ajamy", "Ahmed Al-Ajmi", "أحمد العجمي", "🇸🇦", "Ahmed_ibn_Ali_al-Ajamy_64kbps_QuranExplorer.Com"),
+        ReciterA("ajamy", "Ahmed Al-Ajmi", "أحمد العجمي", "🇸🇦", "Ahmed_ibn_Ali_al-Ajamy_64kbps_QuranExplorer.Com",
+                 inEdition = "128/ar.ahmedajamy"),
         ReciterA("muhsinQasim", "Muhsin Al-Qasim", "محسن القاسم", "🇸🇦", "Muhsin_Al_Qasim_192kbps"),
         ReciterA("juhany", "Abdullah Al-Juhany", "عبد الله الجهني", "🇸🇦", "Abdullaah_3awwaad_Al-Juhaynee_128kbps"),
         ReciterA("bukhatir", "Salah Bukhatir", "صلاح بوخاطر", "🇦🇪", "Salaah_AbdulRahman_Bukhatir_128kbps"),
@@ -95,7 +212,8 @@ object Reciters {
         ReciterA("neana", "Ahmed Neana", "أحمد نعينع", "🇪🇬", "Ahmed_Neana_128kbps"),
         ReciterA("alaqimy", "Akram Al-Alaqimy", "أكرم العلاقمي", "🇾🇪", "Akram_AlAlaqimy_128kbps"),
         ReciterA("tunaiji", "Khalifa Al-Tunaiji", "خليفة الطنيجي", "🇦🇪", "khalefa_al_tunaiji_64kbps"),
-        ReciterA("akhdar", "Ibrahim Al-Akhdar", "إبراهيم الأخضر", "🇸🇦", "Ibrahim_Akhdar_32kbps"),
+        ReciterA("akhdar", "Ibrahim Al-Akhdar", "إبراهيم الأخضر", "🇸🇦", "Ibrahim_Akhdar_32kbps",
+                 inEdition = "32/ar.ibrahimakhbar"),
         ReciterA("alili", "Aziz Alili", "عزيز عليلي", "🇧🇦", "aziz_alili_128kbps"),
         // Warsh 'an Nafi' — Hafs-numbered EveryAyah files (verified).
         ReciterA("dosaryWarsh", "Ibrahim Al-Dosary (Warsh)", "إبراهيم الدوسري (ورش)", "🇸🇦",
@@ -117,7 +235,7 @@ enum class PlaybackMode { CONTINUOUS, REPEAT_AYAH, PAGE_ONLY, MEMORIZE }
 val PlaybackSpeeds = listOf(0.75f, 1f, 1.25f, 1.5f, 2f)
 
 /// Ayah-by-ayah recitation, continuous through the surah — streams from
-/// EveryAyah with the mirrors fallback, like the iOS player. Runs alongside
+/// EveryAyah with the CDN fallbacks (`AudioSources`), like the iOS player. Runs alongside
 /// NoorAudioService (foreground MediaSession) so audio survives backgrounding.
 object NoorPlayer {
     var reciter by mutableStateOf(Reciters.all[0])
@@ -272,8 +390,10 @@ object NoorPlayer {
         playAyah(currentSurah, target)
     }
     private var media: MediaPlayer? = null
-    /// Last surah:ayah given a second chance after both hosts failed.
+    /// Last surah:ayah given a second chance after every host failed.
     private var retriedAyah: Pair<Int, Int>? = null
+    /// Pending "still not prepared" check for the ayah being streamed.
+    private var prepareWatchdog: Runnable? = null
     private var appContext: Context? = null
     private val handler by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
     private val sleepStop = Runnable { stop() }
@@ -392,13 +512,6 @@ object NoorPlayer {
         if (currentSurah != 0) playAyah(currentSurah, memorizeStart)
     }
 
-    /// Takes the EveryAyah folder explicitly (a reciter's or a translation
-    /// voice's, not `reciter`) so the URL and the cache path for one request
-    /// always come from the same snapshot, even if the user switches voice
-    /// while a download is in flight.
-    private fun url(host: String, folder: String, surah: Int, ayah: Int) =
-        "%s/%s/%03d%03d.mp3".format(java.util.Locale.ROOT, host, folder, surah, ayah)
-
     // MARK: - ayah cache + prefetch (iOS: every ayah cached after first
     // play; the next few download while the current one plays, so
     // advancing is instant and replays work offline).
@@ -414,16 +527,17 @@ object NoorPlayer {
             "%03d%03d.mp3".format(java.util.Locale.ROOT, surah, ayah))
     }
 
-    /// Downloads one ayah to the cache (main host, then mirror). Quiet —
-    /// failures just mean that ayah streams when its turn comes.
+    /// Downloads one ayah to the cache from the first source that delivers
+    /// it (EveryAyah → mirror → Quran Foundation → Islamic Network, dead
+    /// hosts tried last). Quiet — failures just mean that ayah streams when
+    /// its turn comes.
     internal fun download(folder: String, surah: Int, ayah: Int): Boolean {
         val target = cacheFile(folder, surah, ayah)
         if (target.length() > 1024) return true
-        for (host in listOf("https://everyayah.com/data",
-                            "https://mirrors.quranicaudio.com/everyayah")) {
+        for (source in AudioSources.ordered(AudioSources.candidates(folder, surah, ayah))) {
             try {
                 val temp = java.io.File.createTempFile("ayah", ".mp3", target.parentFile)
-                val connection = java.net.URL(url(host, folder, surah, ayah))
+                val connection = java.net.URL(source)
                     .openConnection() as java.net.HttpURLConnection
                 connection.connectTimeout = 10_000
                 connection.readTimeout = 20_000
@@ -439,16 +553,22 @@ object NoorPlayer {
                 val expected = connection.contentLengthLong
                 connection.disconnect()
                 if (ok && copied > 1024 && (expected <= 0 || copied == expected)) {
-                    if (temp.renameTo(target)) return true
+                    if (temp.renameTo(target)) { AudioSources.markUp(source); return true }
                 }
                 temp.delete()
-            } catch (_: Exception) { /* try mirror / stream later */ }
+                // A 404 means this host lacks the file, not that it is down.
+                if (connection.responseCode >= 500) AudioSources.markDown(source)
+            } catch (_: Exception) {
+                // Refused / timed out: skip this host for a while so the
+                // next ayah does not wait on it again.
+                AudioSources.markDown(source)
+            }
         }
         return false
     }
 
     /// The cached recitation file for one ayah of the current reciter,
-    /// downloading it first if needed (main host, then mirror). Null when
+    /// downloading it first if needed (any reachable host). Null when
     /// it is not cached and cannot be fetched (offline). Runs on IO.
     /// `withTranslation` also fetches the selected translated reading so
     /// the pair plays gaplessly / offline afterwards (the video share keeps
@@ -525,10 +645,13 @@ object NoorPlayer {
     /// `translated` plays the translated reading of the same ayah (the second
     /// half of the pair); the highlight stays on the ayah and the mode logic
     /// runs only once the pair is done.
+    /// `sourceIndex` picks the host to stream from (see `AudioSources`):
+    /// each failure moves to the next one, so one dead or slow CDN never
+    /// strands playback.
     private fun playAyah(
         surah: Int,
         ayah: Int,
-        mirror: Boolean = false,
+        sourceIndex: Int = 0,
         skipCache: Boolean = false,
         translated: Boolean = false,
     ) {
@@ -541,20 +664,61 @@ object NoorPlayer {
         // from user-driven playback only, never from a compose observer.
         appContext?.getSharedPreferences("audio", Context.MODE_PRIVATE)?.edit()
             ?.putInt("audio.lastSurah", surah)?.putInt("audio.lastAyah", ayah)?.apply()
+        prepareWatchdog?.let(handler::removeCallbacks)
         media?.release()
         if (!requestFocus()) { media = null; stop(); return }
-        val host = if (mirror) "https://mirrors.quranicaudio.com/everyayah"
-                   else "https://everyayah.com/data"
         // One snapshot for cache path, URL and prefetch.
         val translationVoice = translation
         val folder = if (translated) translationVoice.folder else reciter.folder
+        // Healthy hosts first; a host that failed moments ago goes last.
+        val sources = AudioSources.ordered(AudioSources.candidates(folder, surah, ayah))
+        val source = sources.getOrNull(sourceIndex) ?: sources.last()
         // Set below, before prepareAsync(); read by the error listener so a
         // corrupt cached file is deleted rather than replayed on every retry.
         var cachedSource: java.io.File? = null
         var playedFromCache = false
+        // Bad cache file → drop it and stream; host → next host … → one
+        // delayed retry (transient network), then stop. Never strand
+        // playback on a hiccup. A translation that cannot be fetched is
+        // skipped: the Arabic recitation carries on.
+        fun fallback() {
+            when {
+                playedFromCache -> {
+                    cachedSource?.delete()
+                    playAyah(surah, ayah, skipCache = true, translated = translated)
+                }
+                sourceIndex + 1 < sources.size ->
+                    playAyah(surah, ayah, sourceIndex = sourceIndex + 1,
+                             skipCache = true, translated = translated)
+                translated -> { isPlayingTranslation = false; afterPair(surah, ayah) }
+                retriedAyah != surah to ayah -> {
+                    retriedAyah = surah to ayah
+                    handler.postDelayed({
+                        if (currentSurah == surah && currentAyah == ayah) {
+                            playAyah(surah, ayah)
+                        }
+                    }, 2500)
+                }
+                else -> stop()
+            }
+        }
         media = MediaPlayer().apply {
+            val player = this
+            // The "slow host" case: still buffering after PREPARE_TIMEOUT_MS
+            // means this CDN is crawling, not down — remember that and move
+            // on, exactly as if it had errored.
+            val watchdog = Runnable {
+                if (media !== player || NoorPlayer.prepared) return@Runnable
+                if (!playedFromCache) AudioSources.markDown(source)
+                player.setOnErrorListener(null)
+                runCatching { player.reset() }
+                fallback()
+            }
+            prepareWatchdog = watchdog
             setAudioAttributes(audioAttributes)
             setOnPreparedListener {
+                handler.removeCallbacks(watchdog)
+                if (!playedFromCache) AudioSources.markUp(source)
                 NoorPlayer.prepared = true
                 NoorPlayer.isBuffering = false
                 // Honour a pause made WHILE this ayah was downloading: do not
@@ -589,28 +753,14 @@ object NoorPlayer {
                 }
                 afterPair(surah, ayah)
             }
-            setOnErrorListener { _, _, _ ->
-                // Bad cache file → drop it and stream; host → mirror → one
-                // delayed retry (transient network), then stop. Never
-                // strand playback on a hiccup. A translation that cannot be
-                // fetched is skipped: the Arabic recitation carries on.
-                when {
-                    playedFromCache -> {
-                        cachedSource?.delete()
-                        playAyah(surah, ayah, skipCache = true, translated = translated)
-                    }
-                    !mirror -> playAyah(surah, ayah, mirror = true, translated = translated)
-                    translated -> { isPlayingTranslation = false; afterPair(surah, ayah) }
-                    retriedAyah != surah to ayah -> {
-                        retriedAyah = surah to ayah
-                        handler.postDelayed({
-                            if (currentSurah == surah && currentAyah == ayah) {
-                                playAyah(surah, ayah)
-                            }
-                        }, 2500)
-                    }
-                    else -> stop()
+            setOnErrorListener { _, _, extra ->
+                handler.removeCallbacks(watchdog)
+                // Only a timeout says the HOST is unwell; a plain error may
+                // just be a file this host does not carry (404).
+                if (!playedFromCache && extra == MediaPlayer.MEDIA_ERROR_TIMED_OUT) {
+                    AudioSources.markDown(source)
                 }
+                fallback()
                 true
             }
             // Cached copy plays instantly (and offline); otherwise stream
@@ -620,7 +770,8 @@ object NoorPlayer {
             if (playedFromCache) {
                 setDataSource(cachedSource!!.path)
             } else {
-                setDataSource(url(host, folder, surah, ayah))
+                setDataSource(source)
+                handler.postDelayed(watchdog, AudioSources.PREPARE_TIMEOUT_MS)
             }
             NoorPlayer.isBuffering = true
             prepareAsync()
@@ -770,6 +921,7 @@ object NoorPlayer {
     fun syncToCurrent() { if (currentSurah != 0) resyncRequest++ }
 
     fun stop() {
+        prepareWatchdog?.let(handler::removeCallbacks)
         media?.release(); media = null
         pausedByFocusLoss = false
         abandonFocus()

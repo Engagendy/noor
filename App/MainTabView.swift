@@ -66,6 +66,7 @@ struct MainTabView: View {
     @AppStorage("notif.asr") private var notifAsr = true
     @AppStorage("notif.maghrib") private var notifMaghrib = true
     @AppStorage("notif.isha") private var notifIsha = true
+    @AppStorage("notif.sunrise") private var notifSunrise = true
     @AppStorage("app.language") private var appLanguage = "system"
     @AppStorage("prayer.customLabel") private var customLabel = ""
     @AppStorage("fasting.reminders") private var fastingReminders = false
@@ -127,7 +128,7 @@ struct MainTabView: View {
                 watched: [cityName, methodRaw, madhabRaw, soundRaw,
                           String(notificationsEnabled), String(useCustomLocation),
                           String(notifFajr), String(notifDhuhr), String(notifAsr),
-                          String(notifMaghrib), String(notifIsha),
+                          String(notifMaghrib), String(notifIsha), String(notifSunrise),
                           appLanguage, customLabel, String(fastingReminders),
                           String(preAlertMinutes),
                           String(adjFajr), String(adjDhuhr), String(adjAsr),

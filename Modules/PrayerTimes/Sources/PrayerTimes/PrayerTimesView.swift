@@ -23,6 +23,8 @@ public struct PrayerTimesView: View {
     @AppStorage("notif.asr") private var notifAsr = true
     @AppStorage("notif.maghrib") private var notifMaghrib = true
     @AppStorage("notif.isha") private var notifIsha = true
+    /// Shorouk alert (end of Fajr) — not an adhan, plain notification sound.
+    @AppStorage("notif.sunrise") private var notifSunrise = true
 
     @State private var dayOffset = 0
     @State private var showSettings = false
@@ -61,7 +63,7 @@ public struct PrayerTimesView: View {
         case .asr: $notifAsr
         case .maghrib: $notifMaghrib
         case .isha: $notifIsha
-        default: nil
+        case .sunrise: $notifSunrise
         }
     }
 
@@ -187,15 +189,23 @@ public struct PrayerTimesView: View {
     private func timeline(day: PrayerDay, now: Date, isToday: Bool) -> some View {
         let next = isToday ? day.next(at: now) : nil
         VStack(spacing: 0) {
-            ForEach(day.entries) { entry in
+            ForEach(day.timelineEntries) { entry in
                 if entry.prayer == next?.prayer {
                     nextPrayerCard(entry, now: now)
                         .padding(.vertical, 8)
                 } else {
                     let passed = isToday && entry.time <= now
+                    let isSunrise = entry.prayer == .sunrise
                     HStack(spacing: 14) {
                         ZStack {
-                            if passed {
+                            if isSunrise {
+                                // Shorouk is a boundary, not a prayer: a sun
+                                // glyph instead of the timeline dot.
+                                Image(systemName: "sunrise")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(passed ? NoorColor.accentPrimary
+                                                            : NoorColor.inkSecondary.opacity(0.7))
+                            } else if passed {
                                 Circle().fill(NoorColor.accentPrimary)
                             } else {
                                 Circle().strokeBorder(NoorColor.inkSecondary.opacity(0.4), lineWidth: 1.5)
@@ -203,8 +213,8 @@ public struct PrayerTimesView: View {
                         }
                         .frame(width: 10, height: 10)
                         Text(entry.name)
-                            .font(.noorScaled(16))
-                            .foregroundStyle(NoorColor.inkPrimary)
+                            .font(.noorScaled(isSunrise ? 15 : 16))
+                            .foregroundStyle(isSunrise ? NoorColor.inkSecondary : NoorColor.inkPrimary)
                         Spacer()
                         Text(entry.time, format: timeFormat)
                             .font(.noorScaled(15).monospacedDigit())
@@ -590,11 +600,12 @@ public enum AdhanSound: String, CaseIterable, Identifiable {
 }
 
 /// Per-prayer notification enablement, stored in UserDefaults
-/// ("notif.fajr" … "notif.isha", default on).
+/// ("notif.fajr" … "notif.isha" plus "notif.sunrise", default on).
+/// `.sunrise` is the Shorouk alert — it never plays the adhan sound.
 public enum PrayerNotificationPrefs {
     public static let keys: [Prayer: String] = [
         .fajr: "notif.fajr", .dhuhr: "notif.dhuhr", .asr: "notif.asr",
-        .maghrib: "notif.maghrib", .isha: "notif.isha",
+        .maghrib: "notif.maghrib", .isha: "notif.isha", .sunrise: "notif.sunrise",
     ]
 
     public static func isEnabled(_ prayer: Prayer, defaults: UserDefaults = .standard) -> Bool {

@@ -389,7 +389,7 @@ struct SettingsView: View {
                 Text(verbatim: "Font: KFGQPC Uthmanic Hafs")
                 Text(verbatim: "Translations: Saheeh International and Tanzil (mirror: fawazahmed0/quran-api)")
                 Text(verbatim: "Tafsir: Ibn Kathir, Al-Muyassar (spa5k/tafsir_api)")
-                Text(verbatim: "Recitations: EveryAyah.com")
+                Text(verbatim: "Recitations: EveryAyah.com · Quran Foundation · Islamic Network")
                 Text(verbatim: "Tajweed annotations: cpfair/quran-tajweed (CC BY 4.0)")
                 Text(verbatim: "Prayer times: adhan-swift (Batoul Apps)")
                 Text(verbatim: "Adhan sounds: Wikimedia Commons (CC BY 3.0 / CC BY-SA)")

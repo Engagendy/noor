@@ -66,6 +66,13 @@ public struct AdhanNotificationScheduler: Sendable {
                 } else {
                     content.sound = sound == .silent ? nil : .default
                 }
+            case .sunrise:
+                // Shorouk: Fajr is over. Informational — system sound, never the adhan.
+                content.title = arabic
+                    ? "الشروق · انتهى وقت صلاة الفجر"
+                    : String(localized: "Sunrise · Fajr time has ended")
+                content.body = "\(item.prayerName) · \(item.timeString)"
+                content.sound = .default
             case .athkar:
                 continue
             }
@@ -77,13 +84,13 @@ public struct AdhanNotificationScheduler: Sendable {
         }
     }
 
-    /// Removes only adhan and pre-adhan requests so other schedulers'
-    /// pending notifications (e.g. `fasting-*`, `athkar-*`) survive.
+    /// Removes only adhan, pre-adhan and sunrise requests so other
+    /// schedulers' pending notifications (e.g. `fasting-*`, `athkar-*`) survive.
     public func cancelAll() async {
         let center = UNUserNotificationCenter.current()
         let ids = await center.pendingNotificationRequests()
             .map(\.identifier)
-            .filter { $0.hasPrefix("adhan-") || $0.hasPrefix("pre-adhan-") }
+            .filter { $0.hasPrefix("adhan-") || $0.hasPrefix("pre-adhan-") || $0.hasPrefix("sunrise-") }
         center.removePendingNotificationRequests(withIdentifiers: ids)
     }
 }

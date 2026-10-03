@@ -98,7 +98,7 @@
     <string name="g1_attr_page_fonts">মুসহাফের পৃষ্ঠার ফন্ট: King Fahd Complex (QCF v2)</string>
     <string name="g1_attr_translation">অনুবাদ: Saheeh International ও Tanzil (মিরর: fawazahmed0/quran-api)</string>
     <string name="g1_attr_tafsir">তাফসির: ইবনে কাসির ও মুয়াসসার (spa5k/tafsir_api)</string>
-    <string name="g1_attr_recitations">তিলাওয়াত: EveryAyah.com</string>
+    <string name="g1_attr_recitations">তিলাওয়াত: EveryAyah.com · Quran Foundation · Islamic Network</string>
     <string name="g1_attr_hadith">হাদিস: fawazahmed0/hadith-api</string>
     <string name="g1_attr_prayer">নামাজের সময়: Adhan অ্যালগরিদম (Batoul Apps)</string>
     <string name="g1_attr_adhan_sounds">আজানের শব্দ: Wikimedia Commons (CC BY 3.0 / CC BY-SA)</string>
@@ -191,4 +191,9 @@
     <string name="g1_onboarding_adhan_body">প্রতি নামাজে সুন্দর একটি আজান। পরে যেকোনো সময় শব্দটি বদলাতে বা নীরব করতে পারবেন।</string>
     <string name="g1_enable_adhan">আজান চালু করুন</string>
     <string name="g1_later">পরে</string>
+    <!-- Shorouk (end of Fajr): timeline row + its notification -->
+    <string name="g1_sunrise">সূর্যোদয়</string>
+    <string name="g1_sunrise_title">সূর্যোদয় · ফজরের সময় শেষ</string>
+    <string name="g1_channel_sunrise">সূর্যোদয়ের সতর্কবার্তা</string>
+    <string name="g1_channel_sunrise_desc">ফজরের সময় শেষ হলে বিজ্ঞপ্তি</string>
 </resources>

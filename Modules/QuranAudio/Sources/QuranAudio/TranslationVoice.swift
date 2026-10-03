@@ -72,10 +72,25 @@ public enum TranslationVoice: String, CaseIterable, Identifiable, Codable {
         folder?.replacingOccurrences(of: "/", with: "_")
     }
 
+    /// Islamic Network CDN edition (verified 2026-10-03); nil = EveryAyah only.
+    var islamicNetworkEdition: (bitrate: Int, id: String)? {
+        switch self {
+        case .english: (192, "en.walk")
+        case .urdu: (64, "ur.khan")
+        case .persian: (40, "fa.hedayatfarfooladvand")
+        default: nil
+        }
+    }
+
     /// Candidate sources in order (same hosts as `Reciter.urls`); empty for `.none`.
     public func urls(surah: Int, ayah: Int) -> [URL] {
         guard let folder else { return [] }
-        return Reciter.everyAyahURLs(folder: folder, surah: surah, ayah: ayah)
+        var list = Reciter.everyAyahURLs(folder: folder, surah: surah, ayah: ayah)
+        if let edition = islamicNetworkEdition {
+            list.append(AudioSources.islamicNetworkURL(
+                bitrate: edition.bitrate, edition: edition.id, surah: surah, ayah: ayah))
+        }
+        return list
     }
 
     public func url(surah: Int, ayah: Int) -> URL? {

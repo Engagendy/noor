@@ -297,7 +297,8 @@ class PrayerPrefs(context: Context) {
         get() = prefs.getInt("prayer.prealert", 0)
         set(value) = prefs.edit().putInt("prayer.prealert", value).apply()
 
-    /// Per-prayer notification toggles (iOS "notif.fajr" … "notif.isha", default on).
+    /// Per-prayer notification toggles (iOS "notif.fajr" … "notif.isha" plus
+    /// "notif.sunrise" for the Shorouk alert, default on).
     fun notificationEnabled(prayerKey: String): Boolean =
         prefs.getBoolean("notif.$prayerKey", true)
 
@@ -321,7 +322,24 @@ data class PrayerEntry(
 )
 
 object PrayerEngine {
+    /// Key of the Shorouk entry — the end of Fajr time. Not a prayer: it is
+    /// listed on the timeline (`timeline`) and has its own notification, but
+    /// never counts as "next prayer", progress, adhan or athkar reminder.
+    const val SUNRISE_KEY = "sunrise"
+
+    /// The five daily prayers, in order (iOS `PrayerDay.entries`).
     fun today(
+        city: CityPreset,
+        date: Date = Date(),
+        method: CalculationMethodChoice = CalculationMethodChoice.MOONSIGHTING_COMMITTEE,
+        madhab: MadhabChoice = MadhabChoice.SHAFI,
+        adjustments: (String) -> Int = { 0 },
+    ): List<PrayerEntry> =
+        timeline(city, date, method, madhab, adjustments).filter { it.key != SUNRISE_KEY }
+
+    /// The five prayers with sunrise slotted after Fajr — what the Prayer
+    /// Times screen lists (iOS `PrayerDay.timelineEntries`).
+    fun timeline(
         city: CityPreset,
         date: Date = Date(),
         method: CalculationMethodChoice = CalculationMethodChoice.MOONSIGHTING_COMMITTEE,
@@ -352,6 +370,8 @@ object PrayerEngine {
             Date(time.time + adjustments(key) * 60_000L)
         return listOf(
             PrayerEntry("fajr", "الفجر", "Fajr", adjusted(times.fajr, "fajr")),
+            // No manual offset for sunrise: it is astronomical, not a mosque time.
+            PrayerEntry(SUNRISE_KEY, "الشروق", "Sunrise", times.sunrise),
             PrayerEntry("dhuhr", "الظهر", "Dhuhr", adjusted(times.dhuhr, "dhuhr")),
             PrayerEntry("asr", "العصر", "Asr", adjusted(times.asr, "asr")),
             PrayerEntry("maghrib", "المغرب", "Maghrib", adjusted(times.maghrib, "maghrib")),
@@ -361,6 +381,9 @@ object PrayerEngine {
 
     fun today(prefs: PrayerPrefs, date: Date = Date()): List<PrayerEntry> =
         today(prefs.location, date, prefs.method, prefs.madhab, prefs::adjustment)
+
+    fun timeline(prefs: PrayerPrefs, date: Date = Date()): List<PrayerEntry> =
+        timeline(prefs.location, date, prefs.method, prefs.madhab, prefs::adjustment)
 
     fun next(entries: List<PrayerEntry>, now: Date = Date()): PrayerEntry? =
         entries.firstOrNull { it.time.after(now) }

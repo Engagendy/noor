@@ -37,6 +37,11 @@ object AdhanScheduler {
     /// prayer per day within DAYS_AHEAD (5 × 3 = 15 codes).
     private const val ATHKAR_BASE = 400
     private const val ATHKAR_PER_DAY = 5
+    /// Request codes 500.. are the Shorouk (end of Fajr) alerts, one per
+    /// day within DAYS_AHEAD. Plain notification on its own channel — never
+    /// the adhan sound (iOS `PlannedNotification.Kind.sunrise`).
+    private const val SUNRISE_BASE = 500
+    const val SUNRISE_CHANNEL_ID = "sunrise"
     const val ATHKAR_ACTION = "com.engagendy.noor.ATHKAR"
     const val ATHKAR_CHANNEL_ID = "athkar"
     /// Content-intent request code for the athkar tap (distinct from the
@@ -124,6 +129,12 @@ object AdhanScheduler {
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply { description = context.getString(R.string.g1_channel_prealert_desc) })
         }
+        if (manager.getNotificationChannel(SUNRISE_CHANNEL_ID) == null) {
+            manager.createNotificationChannel(NotificationChannel(
+                SUNRISE_CHANNEL_ID, context.getString(R.string.g1_channel_sunrise),
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply { description = context.getString(R.string.g1_channel_sunrise_desc) })
+        }
         if (manager.getNotificationChannel(REMINDER_CHANNEL_ID) == null) {
             manager.createNotificationChannel(NotificationChannel(
                 REMINDER_CHANNEL_ID, context.getString(R.string.g1_channel_reminders),
@@ -188,7 +199,23 @@ object AdhanScheduler {
                 time = now
                 add(Calendar.DAY_OF_YEAR, dayOffset)
             }.time
-            for (entry in PrayerEngine.today(prefs, day)) {
+            val timeline = PrayerEngine.timeline(prefs, day)
+            // Shorouk: one fixed code per day, gated by its own bell.
+            timeline.firstOrNull { it.key == PrayerEngine.SUNRISE_KEY }.let { sunrise ->
+                val sunrisePending = pending(SUNRISE_BASE + dayOffset) {
+                    putExtra("sunrise", true)
+                    putExtra("nameArabic", sunrise?.displayName(context))
+                    putExtra("timeString", sunrise?.let { formatter.format(it.time) })
+                }
+                val sunriseOn = notificationsEnabled &&
+                    prefs.notificationEnabled(PrayerEngine.SUNRISE_KEY)
+                if (sunrise != null && sunriseOn && sunrise.time.after(now)) {
+                    schedule(sunrise.time, sunrisePending)
+                } else {
+                    alarmManager.cancel(sunrisePending)
+                }
+            }
+            for (entry in timeline.filter { it.key != PrayerEngine.SUNRISE_KEY }) {
                 val adhanCode = slot
                 val preCode = PREALERT_BASE + slot
                 slot++
@@ -405,6 +432,23 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
         val timeString = intent.getStringExtra("timeString") ?: ""
         val preAlert = intent.getIntExtra("preAlertMinutes", 0)
         val isPreAlert = preAlert > 0
+        if (intent.getBooleanExtra("sunrise", false)) {
+            // Shorouk: Fajr is over. Informational — default sound, never the adhan.
+            val notification = android.app.Notification
+                .Builder(context, AdhanScheduler.SUNRISE_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_sun)
+                .setContentTitle(context.getString(R.string.g1_sunrise_title))
+                .setContentText("$nameArabic · $timeString")
+                .setContentIntent(PendingIntent.getActivity(
+                    context, 0, Intent(context, MainActivity::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+                .setAutoCancel(true)
+                .build()
+            context.getSystemService(NotificationManager::class.java)
+                .notify("sunrise".hashCode(), notification)
+            AdhanScheduler.reschedule(context)
+            return
+        }
         val channel = if (isPreAlert) AdhanScheduler.PREALERT_CHANNEL_ID
             else AdhanScheduler.channelId(PrayerPrefs(context).sound)
         // Calm microcopy like iOS — no exclamation marks.

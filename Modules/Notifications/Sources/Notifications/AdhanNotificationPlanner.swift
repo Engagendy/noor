@@ -11,6 +11,8 @@ public struct PlannedNotification: Equatable {
         case preAlert
         /// After-salah athkar nudge, `athkar.afterSalahMinutes` past the adhan.
         case athkar
+        /// Shorouk — Fajr time has ended. Plain notification, never an adhan.
+        case sunrise
     }
 
     public let id: String
@@ -56,7 +58,9 @@ public enum AdhanNotificationPlanner {
     /// count never exceeds `limit`: per prayer, the pre-alert (if any), the
     /// adhan (if that prayer's bell is on and adhan is enabled), and the
     /// after-salah athkar reminder (if `athkarMinutes` is set, for all five
-    /// prayers regardless of the adhan toggle).
+    /// prayers regardless of the adhan toggle). The Shorouk alert is added
+    /// after Fajr when `adhanPrayers` contains `.sunrise` — it gets no
+    /// pre-alert and no athkar reminder, since it is not a prayer.
     public static func planAll(
         location: PrayerLocation,
         method: CalculationMethodChoice,
@@ -81,11 +85,19 @@ public enum AdhanNotificationPlanner {
             guard let date = Calendar.current.date(byAdding: .day, value: dayOffset, to: now),
                   let day = PrayerDay.compute(location: location, method: method, madhab: madhab, date: date)
             else { continue }
-            for entry in day.entries where entry.time > now {
+            for entry in day.timelineEntries where entry.time > now {
                 let stamp = Int(entry.time.timeIntervalSince1970)
                 let prayerName = name(entry.prayer, entry.name)
                 let timeString = entry.time.formatted(formatStyle)
                 let adhanOn = adhanPrayers?.contains(entry.prayer) ?? false
+                if entry.prayer == .sunrise {
+                    guard adhanOn else { continue }
+                    guard result.count < limit else { return result }
+                    result.append(PlannedNotification(
+                        id: "sunrise-\(stamp)", prayerName: prayerName,
+                        fireDate: entry.time, timeString: timeString, kind: .sunrise))
+                    continue
+                }
                 if adhanOn && preAlertMinutes > 0 {
                     let preFire = entry.time.addingTimeInterval(TimeInterval(-preAlertMinutes * 60))
                     if preFire > now {

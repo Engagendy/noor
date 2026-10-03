@@ -11,9 +11,26 @@ public struct PrayerDay {
         public var id: Prayer { prayer }
     }
 
+    /// The five daily prayers, in order. Drives "next prayer", progress,
+    /// adhans and after-salah reminders.
     public let entries: [Entry]
+    /// Shorouk — the end of Fajr time. Not a prayer, so it is kept out of
+    /// `entries`; the timeline shows it and it has its own notification.
+    public let sunrise: Entry
     public let location: PrayerLocation
     private let times: Adhan.PrayerTimes
+
+    /// Everything the Prayer Times screen lists: the five prayers with
+    /// sunrise slotted after Fajr.
+    public var timelineEntries: [Entry] {
+        var list = entries
+        if let index = list.firstIndex(where: { $0.prayer == .fajr }) {
+            list.insert(sunrise, at: index + 1)
+        } else {
+            list.insert(sunrise, at: 0)
+        }
+        return list
+    }
 
     public static func compute(
         city: CityPreset,
@@ -55,7 +72,8 @@ public struct PrayerDay {
             Entry(prayer: .maghrib, name: "Maghrib", time: adjusted(times.maghrib, "maghrib")),
             Entry(prayer: .isha, name: "Isha", time: adjusted(times.isha, "isha")),
         ]
-        return PrayerDay(entries: entries, location: location, times: times)
+        let sunrise = Entry(prayer: .sunrise, name: "Sunrise", time: times.sunrise)
+        return PrayerDay(entries: entries, sunrise: sunrise, location: location, times: times)
     }
 
     /// The next of the five prayers still ahead of `now` this day, if any.

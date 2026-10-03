@@ -107,7 +107,7 @@
     <string name="g1_attr_page_fonts">خطوط صفحات المصحف: مجمع الملك فهد (QCF v2)</string>
     <string name="g1_attr_translation">الترجمة: Saheeh International وترجمات Tanzil (نسخة: fawazahmed0/quran-api)</string>
     <string name="g1_attr_tafsir">التفسير: ابن كثير والميسّر (spa5k/tafsir_api)</string>
-    <string name="g1_attr_recitations">التلاوات: EveryAyah.com</string>
+    <string name="g1_attr_recitations">التلاوات: EveryAyah.com · Quran Foundation · Islamic Network</string>
     <string name="g1_attr_hadith">الحديث: fawazahmed0/hadith-api</string>
     <string name="g1_attr_prayer">مواقيت الصلاة: خوارزمية Adhan (Batoul Apps)</string>
     <string name="g1_attr_adhan_sounds">أصوات الأذان: Wikimedia Commons (CC BY 3.0 / CC BY-SA)</string>
@@ -218,4 +218,9 @@
     <string name="g1_onboarding_adhan_body">أذان جميل عند كل صلاة. يمكنك تغيير الصوت أو إيقافه لاحقًا.</string>
     <string name="g1_enable_adhan">تفعيل الأذان</string>
     <string name="g1_later">لاحقًا</string>
+    <!-- Shorouk (end of Fajr): timeline row + its notification -->
+    <string name="g1_sunrise">الشروق</string>
+    <string name="g1_sunrise_title">الشروق · انتهى وقت صلاة الفجر</string>
+    <string name="g1_channel_sunrise">تنبيه الشروق</string>
+    <string name="g1_channel_sunrise_desc">إشعار عند انتهاء وقت صلاة الفجر</string>
 </resources>

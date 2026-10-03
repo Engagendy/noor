@@ -10,15 +10,57 @@ final class ReciterTests: XCTestCase {
 
     func testRemoteURLsWithFallback() {
         let urls = Reciter.alafasy.urls(surah: 1, ayah: 7)
-        XCTAssertEqual(urls.count, 2)
+        XCTAssertEqual(urls.count, 4)
         XCTAssertEqual(urls[0].absoluteString,
                        "https://everyayah.com/data/Alafasy_128kbps/001007.mp3")
         XCTAssertEqual(urls[1].absoluteString,
                        "https://mirrors.quranicaudio.com/everyayah/Alafasy_128kbps/001007.mp3")
-        // Every reciter has a fallback.
+        XCTAssertEqual(urls[2].absoluteString,
+                       "https://verses.quran.foundation/Alafasy/mp3/001007.mp3")
+        XCTAssertEqual(urls[3].absoluteString,
+                       "https://cdn.islamic.network/quran/audio/128/ar.alafasy/7.mp3")
+        // Every reciter has at least the mirror fallback; the popular ones
+        // also have the two independent CDNs.
         for reciter in Reciter.allCases {
-            XCTAssertEqual(reciter.urls(surah: 2, ayah: 255).count, 2)
+            XCTAssertGreaterThanOrEqual(reciter.urls(surah: 2, ayah: 255).count, 2, reciter.rawValue)
         }
+        XCTAssertEqual(Reciter.husary.urls(surah: 2, ayah: 255).count, 3)
+        XCTAssertEqual(Reciter.ghamdi.urls(surah: 2, ayah: 255).count, 2)
+        XCTAssertEqual(Reciter.sudais.urls(surah: 2, ayah: 255)[3].absoluteString,
+                       "https://cdn.islamic.network/quran/audio/192/ar.abdurrahmaansudais/262.mp3")
+        XCTAssertEqual(Reciter.minshawiMujawwad.urls(surah: 114, ayah: 6)[2].absoluteString,
+                       "https://verses.quran.foundation/Minshawi/Mujawwad/mp3/114006.mp3")
+        // Hosts never repeat within one candidate list.
+        for reciter in Reciter.allCases {
+            let hosts = reciter.urls(surah: 1, ayah: 1).map { $0.host ?? "" }
+            XCTAssertEqual(Set(hosts).count, hosts.count, reciter.rawValue)
+        }
+    }
+
+    func testGlobalAyahNumbering() {
+        XCTAssertEqual(AudioSources.ayahCounts.count, 114)
+        XCTAssertEqual(AudioSources.ayahCounts.reduce(0, +), 6236)
+        XCTAssertEqual(AudioSources.globalAyahNumber(surah: 1, ayah: 1), 1)
+        XCTAssertEqual(AudioSources.globalAyahNumber(surah: 2, ayah: 1), 8)
+        XCTAssertEqual(AudioSources.globalAyahNumber(surah: 2, ayah: 255), 262)
+        XCTAssertEqual(AudioSources.globalAyahNumber(surah: 114, ayah: 6), 6236)
+    }
+
+    func testHostHealthOrdersDeadHostsLast() {
+        let health = HostHealth()
+        let urls = Reciter.alafasy.urls(surah: 1, ayah: 1)
+        XCTAssertEqual(health.ordered(urls), urls)
+        health.markDown(urls[0])
+        XCTAssertTrue(health.isDown(urls[0]))
+        XCTAssertEqual(health.ordered(urls), Array(urls[1...]) + [urls[0]])
+        // The cooldown expires on its own …
+        let later = Date().addingTimeInterval(HostHealth.cooldown + 1)
+        XCTAssertFalse(health.isDown(urls[0], now: later))
+        XCTAssertEqual(health.ordered(urls, now: later), urls)
+        // … and a success clears it immediately.
+        health.markDown(urls[1])
+        health.markUp(urls[1])
+        XCTAssertFalse(health.isDown(urls[1]))
     }
 
     // MARK: - Warsh
@@ -83,11 +125,20 @@ final class ReciterTests: XCTestCase {
         ]
         for (voice, folder) in expected {
             let urls = voice.urls(surah: 2, ayah: 286)
-            XCTAssertEqual(urls.count, 2, voice.rawValue)
+            XCTAssertGreaterThanOrEqual(urls.count, 2, voice.rawValue)
             XCTAssertEqual(urls[0].absoluteString, "https://everyayah.com/data/\(folder)/002286.mp3")
             XCTAssertEqual(urls[1].absoluteString,
                            "https://mirrors.quranicaudio.com/everyayah/\(folder)/002286.mp3")
         }
+    }
+
+    func testTranslationVoiceExtraSources() {
+        XCTAssertEqual(TranslationVoice.english.urls(surah: 2, ayah: 286).count, 3)
+        XCTAssertEqual(TranslationVoice.english.urls(surah: 2, ayah: 286)[2].absoluteString,
+                       "https://cdn.islamic.network/quran/audio/192/en.walk/293.mp3")
+        XCTAssertEqual(TranslationVoice.urdu.urls(surah: 1, ayah: 1).last?.absoluteString,
+                       "https://cdn.islamic.network/quran/audio/64/ur.khan/1.mp3")
+        XCTAssertEqual(TranslationVoice.bosnian.urls(surah: 1, ayah: 1).count, 2)
     }
 
     func testTranslationCacheFolderIsSanitised() {

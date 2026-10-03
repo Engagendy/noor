@@ -98,11 +98,33 @@ catalogue entry's `link`, never derived from the key.
   Bosnian — Besim Korkut (`translations/besim_korkut_ajet_po_ajet`);
   Azerbaijani — Balayev (`translations/azerbaijani/balayev`). Same source
   and terms as the recitations.
-- **Source:** https://everyayah.com (community-hosted recitation archive).
+- **Source:** https://everyayah.com (community-hosted recitation archive),
+  with the identical-layout mirror https://mirrors.quranicaudio.com/everyayah
+  (QuranicAudio.com) as the second candidate for every file.
 - **Access:** streamed at listen time, cached to the device Caches directory.
 - **Attribution:** "Recitations courtesy of EveryAyah.com."
 - **Note:** verify redistribution terms before App Store submission; audio is
   never bundled, only fetched by the user's explicit playback.
+
+### Recitations — fallback hosts (same per-ayah files, fetched on demand)
+Both EveryAyah hosts were unreachable for hours on 2026-10-03, so the player
+(`AudioSources` on iOS and Android) also tries these independent CDNs, in
+this order, for the reciters they carry. Same per-ayah MP3s, same Hafs
+numbering; nothing is bundled.
+- **Quran Foundation verse CDN** — https://verses.quran.foundation/{reciter}/mp3/SSSAAA.mp3
+  (the audio behind Quran.com, run by the Quran Foundation, a non-profit).
+  Reciters: Alafasy, Abdul Basit (Murattal + Mujawwad), Sudais, Shatri,
+  Rifai, Minshawi (Murattal + Mujawwad), Shuraym, Jibreel.
+  **Attribution:** "Recitations via the Quran Foundation (Quran.com)."
+- **Islamic Network CDN** — https://cdn.islamic.network/quran/audio/{bitrate}/{edition}/{globalAyah}.mp3
+  (the audio CDN of alquran.cloud, Islamic Network; files numbered 1…6236).
+  Reciters: Alafasy, Husary, Minshawi (Murattal + Mujawwad), Abdul Basit,
+  Sudais, Muaiqly, Shuraym, Ayyoub, Shatri, Rifai, Hudhaify, Jibreel,
+  Basfar, Sowaid, Al-Ajmi, Al-Akhdar; translated readings: English (Ibrahim
+  Walk), Urdu (Shamshad Ali Khan), Persian (Fooladvand/Hedayatfar).
+  **Attribution:** "Recitations via Islamic Network (alquran.cloud)."
+- **Note:** both are free, public, no-key endpoints; verify their terms of
+  use before each store submission, as with EveryAyah.
 
 ### Tafsir — Al-Muyassar, As-Sa'di, Ibn Kathir, At-Tabari, Al-Qurtubi (fetched, cached)
 - **Source:** spa5k/tafsir_api CDN bundles
@@ -324,7 +346,6 @@ never touch Quran rendering, which stays on the verified Quran fonts above.
 ## Planned (record before shipping each phase)
 
 - Tafsir packs — per-source
-- Recitations (EveryAyah / Quran Foundation audio) — per-reciter
 - Hadith (Sunnah.com) — per-collection
 
 ### Adhan — Aaqib Azeez (bundled, trimmed to 28s)

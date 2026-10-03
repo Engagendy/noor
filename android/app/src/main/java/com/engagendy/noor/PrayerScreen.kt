@@ -107,9 +107,11 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
     val shownDate = remember(nowMillis / 60_000, dayOffset) {
         Calendar.getInstance().apply { time = now; add(Calendar.DAY_OF_YEAR, dayOffset) }.time
     }
-    val entries = remember(version, nowMillis / 60_000, dayOffset) {
-        PrayerEngine.today(prefs, shownDate)
+    // Five prayers + Shorouk for the list; "next" only ever looks at prayers.
+    val timeline = remember(version, nowMillis / 60_000, dayOffset) {
+        PrayerEngine.timeline(prefs, shownDate)
     }
+    val entries = remember(timeline) { timeline.filter { it.key != PrayerEngine.SUNRISE_KEY } }
     val isToday = dayOffset == 0
     val next = if (isToday) PrayerEngine.next(entries, now) else null
     val zone = remember(version) { TimeZone.getTimeZone(city.timeZone) }
@@ -159,7 +161,7 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
                      modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp))
             }
             // Vertical timeline: next prayer enlarged in a highlighted card.
-            entries.forEach { entry ->
+            timeline.forEach { entry ->
                 val bellOn = remember(version) { prefs.notificationEnabled(entry.key) }
                 val toggleBell = {
                     prefs.setNotificationEnabled(entry.key, !bellOn)
@@ -181,7 +183,8 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
                     TimelineRow(
                         entry = entry, passed = passed,
                         timeString = timeFormatter.format(entry.time),
-                        bellOn = bellOn, onBell = toggleBell)
+                        bellOn = bellOn, onBell = toggleBell,
+                        isSunrise = entry.key == PrayerEngine.SUNRISE_KEY)
                 }
             }
             Spacer(Modifier.height(16.dp))
@@ -265,6 +268,8 @@ private fun BellToggle(on: Boolean, onClick: () -> Unit) {
         modifier = Modifier.size(44.dp).clip(CircleShape).clickable(onClick = onClick).padding(13.dp))
 }
 
+/// `isSunrise`: Shorouk is a boundary, not a prayer — a sun glyph instead
+/// of the timeline dot and a quieter label (iOS timeline does the same).
 @Composable
 private fun TimelineRow(
     entry: PrayerEntry,
@@ -272,6 +277,7 @@ private fun TimelineRow(
     timeString: String,
     bellOn: Boolean,
     onBell: () -> Unit,
+    isSunrise: Boolean = false,
 ) {
     Column {
         HorizontalDivider(color = NoorColor.inkSecondary.copy(alpha = 0.15f))
@@ -279,15 +285,23 @@ private fun TimelineRow(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 9.dp)
         ) {
-            Box(
-                Modifier.size(10.dp).background(
-                    if (passed) NoorColor.accentPrimary else NoorColor.bgPrimary, CircleShape)
-                    .border(1.5.dp,
-                            if (passed) NoorColor.accentPrimary
-                            else NoorColor.inkSecondary.copy(alpha = 0.4f), CircleShape))
+            if (isSunrise) {
+                Icon(painterResource(R.drawable.ic_sun), contentDescription = null,
+                     tint = if (passed) NoorColor.accentPrimary
+                            else NoorColor.inkSecondary.copy(alpha = 0.7f),
+                     modifier = Modifier.size(10.dp))
+            } else {
+                Box(
+                    Modifier.size(10.dp).background(
+                        if (passed) NoorColor.accentPrimary else NoorColor.bgPrimary, CircleShape)
+                        .border(1.5.dp,
+                                if (passed) NoorColor.accentPrimary
+                                else NoorColor.inkSecondary.copy(alpha = 0.4f), CircleShape))
+            }
             Spacer(Modifier.width(14.dp))
-            Text(entry.displayName(), fontSize = 16.sp,
-                 color = NoorColor.inkPrimary.copy(alpha = if (passed) 0.6f else 1f),
+            Text(entry.displayName(), fontSize = if (isSunrise) 15.sp else 16.sp,
+                 color = (if (isSunrise) NoorColor.inkSecondary else NoorColor.inkPrimary)
+                     .copy(alpha = if (passed) 0.6f else 1f),
                  modifier = Modifier.weight(1f))
             Text(timeString, fontSize = 15.sp,
                  color = NoorColor.inkSecondary.copy(alpha = if (passed) 0.6f else 1f))

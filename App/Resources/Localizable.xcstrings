@@ -19767,6 +19767,64 @@
         }
       }
     },
+    "Sunrise · Fajr time has ended": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الشروق · انتهى وقت صلاة الفجر"
+          }
+        },
+        "bn": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "সূর্যোদয় · ফজরের সময় শেষ"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amanecer · ha terminado la hora del Fayr"
+          }
+        },
+        "fa": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "طلوع آفتاب · وقت نماز صبح تمام شد"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lever du soleil · fin de l’heure du Fajr"
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terbit · waktu Subuh telah berakhir"
+          }
+        },
+        "ms": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syuruk · waktu Subuh telah tamat"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Güneş · Sabah namazının vakti çıktı"
+          }
+        },
+        "ur": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "طلوعِ آفتاب · فجر کا وقت ختم ہو گیا"
+          }
+        }
+      }
+    },
     "Surah": {
       "extractionState": "stale",
       "localizations": {
