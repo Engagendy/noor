@@ -17,6 +17,16 @@ struct MadaniPageView: View {
     var highlightKey: Int?
     /// Plain tap on the page (chrome toggle / close panels).
     var onTap: (() -> Void)?
+    /// Printed line the reading marker sits on, when it is on THIS page.
+    var markerLine: Int?
+    /// A marker exists somewhere — the parked ribbon on other pages then
+    /// takes the reader back to it on tap.
+    var hasMarker = false
+    /// The ribbon was dropped on (or VoiceOver-adjusted to) this line. Nil
+    /// hides the ribbon altogether.
+    var onPlaceMarker: ((PageLine) -> Void)?
+    /// Tap on the parked ribbon of a page that does not hold the marker.
+    var onJumpToMarker: (() -> Void)?
     /// Long-pressing a line reports exactly the ayat on that line.
     var onLongPressLine: (([PageLine.Ref]) -> Void)?
 
@@ -126,6 +136,92 @@ struct MadaniPageView: View {
         }
         return line.wordsV2.isEmpty ? [line.glyphsV2] : line.wordsV2
     }
+
+    /// Line the ribbon is being dragged over (live preview), else nil.
+    @State private var dragLine: Int?
+    /// The line the ribbon shows on: the drag preview, else the marker.
+    private var ribbonLine: Int? { dragLine ?? markerLine }
+
+    /// Soft gold wash of the marked line; the recitation wash wins.
+    private func lineFill(_ line: PageLine) -> Color {
+        if isHighlighted(line) { return NoorColor.stateReciting }
+        if line.line == ribbonLine { return NoorColor.accentGold.opacity(0.16) }
+        return .clear
+    }
+
+    /// Nearest ayah-carrying line to row `index` — headers and basmalas
+    /// cannot hold the marker, so the ribbon snaps past them.
+    private func nearestWordsLine(toRow index: Int) -> PageLine? {
+        guard !lines.isEmpty else { return nil }
+        let clamped = min(max(index, 0), lines.count - 1)
+        for distance in 0..<lines.count {
+            for candidate in [clamped - distance, clamped + distance]
+            where lines.indices.contains(candidate) && lines[candidate].kind == .words {
+                return lines[candidate]
+            }
+        }
+        return nil
+    }
+
+    /// The ayah line under a vertical position in the page's space.
+    private func line(atY y: CGFloat, rowHeight: CGFloat, top: CGFloat) -> PageLine? {
+        nearestWordsLine(toRow: Int(((y - top) / rowHeight).rounded(.down)))
+    }
+
+    /// The ribbon on the page's leading edge (the right, in the RTL reader).
+    /// Drag vertically: it snaps line by line with a live wash and marks
+    /// the line it is dropped on. On a page without the marker it parks,
+    /// faded, by the first line; tapping it there goes back to the marker.
+    /// A high-priority gesture, so a drag on it never turns the page.
+    @ViewBuilder
+    private func markerRibbon(rowHeight: CGFloat, top: CGFloat) -> some View {
+        if let onPlaceMarker {
+            let rowIndex = ribbonLine.flatMap { line in lines.firstIndex { $0.line == line } }
+            let parkedIndex = lines.firstIndex { $0.kind == .words } ?? 0
+            let y = top + rowHeight * (CGFloat(rowIndex ?? parkedIndex) + 0.5)
+            let active = rowIndex != nil
+            RibbonShape()
+                .fill(NoorColor.accentGold)
+                .frame(width: 15, height: min(max(rowHeight * 0.8, 22), 34))
+                .shadow(color: .black.opacity(active ? 0.18 : 0), radius: 1.5, y: 1)
+                .opacity(active ? 1 : 0.4)
+                // 44 pt target around the slim ribbon, which hugs the
+                // page edge (leading = the right edge in this RTL reader).
+                .frame(width: 44, height: 44, alignment: .leading)
+                .contentShape(Rectangle())
+                .offset(y: y - 22)
+                .animation(.easeOut(duration: 0.12), value: y)
+                .highPriorityGesture(
+                    DragGesture(minimumDistance: 0, coordinateSpace: .named(Self.pageSpace))
+                        .onChanged { value in
+                            guard abs(value.translation.height) > 4 || dragLine != nil else { return }
+                            dragLine = line(atY: value.location.y, rowHeight: rowHeight, top: top)?.line
+                        }
+                        .onEnded { value in
+                            defer { dragLine = nil }
+                            if dragLine == nil {
+                                // A tap: back to the marker from elsewhere.
+                                if !active, hasMarker { onJumpToMarker?() }
+                                return
+                            }
+                            if let line = line(atY: value.location.y, rowHeight: rowHeight, top: top) { onPlaceMarker(line) }
+                        })
+                .sensoryFeedback(.selection, trigger: dragLine) { _, new in new != nil }
+                .accessibilityElement()
+                .accessibilityLabel("Reading marker")
+                .accessibilityValue(active ? lineLabel(lines[rowIndex ?? 0]) : "")
+                .accessibilityHint("Drag to the line you stopped at")
+                .accessibilityAdjustableAction { direction in
+                    let from = rowIndex ?? parkedIndex - 1
+                    let step = direction == .increment ? 1 : -1
+                    var index = from + step
+                    while lines.indices.contains(index), lines[index].kind != .words { index += step }
+                    if lines.indices.contains(index) { onPlaceMarker(lines[index]) }
+                }
+        }
+    }
+
+    private static let pageSpace = "madaniPage"
 
     private func isHighlighted(_ line: PageLine) -> Bool {
         guard let highlightKey else { return false }
@@ -241,7 +337,7 @@ struct MadaniPageView: View {
                                     .frame(height: rowHeight)
                                     .background(
                                         RoundedRectangle(cornerRadius: 6)
-                                            .fill(isHighlighted(line) ? NoorColor.stateReciting : Color.clear)
+                                            .fill(lineFill(line))
                                     )
                                     .contentShape(Rectangle())
                                     .onLongPressGesture { onLongPressLine?(line.ayahRefs) }
@@ -253,6 +349,14 @@ struct MadaniPageView: View {
                     .padding(.horizontal, Self.pageMargin)
                     .contentShape(Rectangle())
                     .onTapGesture { onTap?() }
+                    // Rows are centred as a block, so a row's top is pure
+                    // geometry off that offset (the long-press math too).
+                    .overlay(alignment: .topLeading) {
+                        markerRibbon(
+                            rowHeight: rowHeight,
+                            top: (geometry.size.height - rowHeight * CGFloat(lines.count)) / 2)
+                    }
+                    .coordinateSpace(name: Self.pageSpace)
                 } else if fontFailed {
                     // Only a FAILED fetch lands here. A page still being
                     // fetched (by this view, a neighbour's prefetch or the
@@ -302,6 +406,23 @@ struct MadaniPageView: View {
         .accessibilityLabel("Page \(page)")
     }
 
+}
+
+/// A ribbon tab hanging in from the page edge, swallow-tailed on its inner
+/// side. Drawn for the RTL reader: attached at the right, notch facing the
+/// text on the left.
+private struct RibbonShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let notch = rect.width * 0.45
+        path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX + notch, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
 }
 
 /// Word glyph outlines and advances, built once per word/size and kept.

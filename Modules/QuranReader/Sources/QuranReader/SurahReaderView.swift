@@ -32,6 +32,9 @@ public struct SurahReaderView: View {
     /// Screenshot/UI-test hook: NOOR_TAJWEED_LEGEND=1 opens the colour key.
     @State private var showTajweedLegend =
         ProcessInfo.processInfo.environment["NOOR_TAJWEED_LEGEND"] == "1"
+    /// The draggable reading marker (see `ReadingMarker`), "" when unset.
+    @AppStorage(ReadingMarker.defaultsKey) private var markerRaw = ""
+    private var marker: ReadingMarker? { ReadingMarker(raw: markerRaw) }
     @State private var revealedKeys: Set<Int> = []
     @State private var selectedKey: Int?          // surah*1000 + ayah
     @State private var showGoToPage = false
@@ -141,8 +144,12 @@ public struct SurahReaderView: View {
             database: database, surahId: surahId, ayah: scrollToAyah)
         _currentPage = State(initialValue: initial)
         if let ayah = scrollToAyah {
-            // Arriving at a specific ayah (search/juz/bookmark): highlight it.
-            _selectedKey = State(initialValue: surahId * 1000 + ayah)
+            // Arriving at a specific ayah (search/juz/bookmark): highlight it
+            // — unless it is the reading marker's, whose line already
+            // carries its own wash (Continue Reading opens there).
+            if ReadingMarker.load()?.key != surahId * 1000 + ayah {
+                _selectedKey = State(initialValue: surahId * 1000 + ayah)
+            }
             _scrollToKey = State(initialValue: surahId * 1000 + ayah)
         } else if SurahReaderViewModel.sharedStructure(database)?
                     .page(surahId: surahId, ayah: 1) == initial {
@@ -404,7 +411,17 @@ public struct SurahReaderView: View {
                 onShare: { verse in
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { shareVerse = verse }
                 },
-                onToggleBookmark: onToggleBookmark)
+                onToggleBookmark: onToggleBookmark,
+                markerKey: marker?.key,
+                onPlaceMarker: { verse in
+                    let line = (try? layout?.lines(page: group.page))?.first {
+                        $0.kind == .words && $0.ayahRefs.contains {
+                            $0.surahId == verse.surahId && $0.ayah == verse.ayah
+                        }
+                    }
+                    if let line { placeMarker(page: group.page, line: line, ayah: verse.ayah) }
+                },
+                onRemoveMarker: { markerRaw = "" })
                 .presentationDetents([.medium, .large])
                 .environment(\.locale, locale)
                 .environment(\.layoutDirection, appDirection)
@@ -582,7 +599,14 @@ public struct SurahReaderView: View {
                 // Recitation wins while playing; a tapped/arrival selection
                 // shows only when nothing is being recited.
                 highlightKey: recitingKey ?? selectedKey,
-                onTap: backgroundTapped
+                onTap: backgroundTapped,
+                markerLine: marker?.page == page ? marker?.line : nil,
+                hasMarker: marker != nil,
+                onPlaceMarker: { line in placeMarker(page: page, line: line) },
+                onJumpToMarker: {
+                    guard let marker else { return }
+                    withAnimation(.easeInOut(duration: 0.3)) { currentPage = marker.page }
+                }
             ) { refs in
                 let verses = viewModel.sections(forPage: page)
                     .flatMap(\.verses)
@@ -1017,6 +1041,16 @@ public struct SurahReaderView: View {
 
     /// Direct defaults writes: the reader must NOT observe these via
     /// @AppStorage or every swipe re-renders the whole pager.
+    /// Drops the reading marker on a printed line. The ayah defaults to the
+    /// line's first — the one in progress there; the actions sheet passes
+    /// the exact ayah picked.
+    private func placeMarker(page: Int, line: PageLine, ayah: Int? = nil) {
+        guard let ref = ayah.flatMap({ a in line.ayahRefs.first { $0.ayah == a } })
+                ?? line.ayahRefs.first else { return }
+        markerRaw = ReadingMarker(page: page, line: line.line,
+                                  surahId: ref.surahId, ayah: ref.ayah).raw
+    }
+
     private func persistPosition(page: Int?) {
         guard let page, page > 0 else { return }
         let defaults = UserDefaults.standard

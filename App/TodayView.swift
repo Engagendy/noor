@@ -68,6 +68,8 @@ struct TodayView: View {
     @AppStorage("prayer.method") private var methodRaw = CalculationMethodChoice.moonsightingCommittee.rawValue
     @AppStorage("prayer.madhab") private var madhabRaw = MadhabChoice.shafi.rawValue
     @AppStorage("reader.lastSurah") private var lastSurah = 1
+    /// The reader's draggable marker; Continue Reading opens there when set.
+    @AppStorage(ReadingMarker.defaultsKey) private var markerRaw = ""
     @AppStorage("khatmah.maxPage") private var khatmahMaxPage = 0
     @Environment(\.locale) private var locale
     #if os(iOS)
@@ -1038,6 +1040,8 @@ struct TodayView: View {
     /// of the page reading stopped on, so listening picks up where the eye
     /// left off. Falls back to the top of the remembered surah.
     private var continueReadingStart: (surah: Int, ayah: Int) {
+        // The reading marker is the reader's own "I stopped here".
+        if let marker = ReadingMarker(raw: markerRaw) { return (marker.surahId, marker.ayah) }
         let page = UserDefaults.standard.integer(forKey: "reader.lastPage")
         if page > 0,
            let start = SurahReaderViewModel.sharedStructure(database)?
@@ -1048,11 +1052,21 @@ struct TodayView: View {
     }
 
     private var continueReadingCard: some View {
-        let surah = (try? database.allSurahs().first { $0.id == lastSurah }) ?? nil
+        let marker = ReadingMarker(raw: markerRaw)
+        let surah = (try? database.allSurahs().first { $0.id == (marker?.surahId ?? lastSurah) }) ?? nil
         // Two side-by-side buttons rather than one nested inside the other:
         // tapping the card reads, tapping the disc listens.
         return HStack(spacing: 8) {
-            Button(action: openReader) {
+            Button {
+                // With a marker, open AT its ayah (its page in the Madani
+                // reader) without starting the recitation.
+                if let marker {
+                    UserDefaults.standard.set(false, forKey: "pending.autoplay")
+                    openListening(marker.surahId, marker.ayah)
+                } else {
+                    openReader()
+                }
+            } label: {
             HStack(spacing: 14) {
                 Image(systemName: "book")
                     .font(.system(size: 19))
@@ -1067,6 +1081,15 @@ struct TodayView: View {
                     Text(verbatim: surah?.displayName(arabicUI: isArabicUI) ?? "")
                         .font(isArabicUI ? NoorFont.quran(size: 18) : .system(size: 16, weight: .semibold))
                         .foregroundStyle(NoorColor.inkPrimary)
+                    if let marker {
+                        Label {
+                            Text("Reading marker · page \(marker.page)")
+                        } icon: {
+                            Image(systemName: "flag.fill")
+                        }
+                        .font(.noorScaled(11))
+                        .foregroundStyle(NoorColor.accentGold)
+                    }
                     if khatmahMaxPage > 0 {
                         GeometryReader { geometry in
                             ZStack(alignment: .leading) {

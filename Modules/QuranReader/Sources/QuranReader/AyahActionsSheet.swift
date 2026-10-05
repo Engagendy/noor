@@ -11,6 +11,11 @@ struct AyahActionsSheet: View {
     let onTafsir: (Verse) -> Void
     let onShare: (Verse) -> Void
     let onToggleBookmark: ((Int, Int) -> Void)?
+    /// surah * 1000 + ayah of the reading marker, if any.
+    var markerKey: Int?
+    /// Moves the reading marker onto this ayah's line. Nil hides the row.
+    var onPlaceMarker: ((Verse) -> Void)?
+    var onRemoveMarker: (() -> Void)?
 
     @State private var picked: Verse?
     @Environment(\.dismiss) private var dismiss
@@ -118,6 +123,19 @@ struct AyahActionsSheet: View {
                               icon: isBookmarked ? "bookmark.fill" : "bookmark",
                               gold: isBookmarked) {
                         onToggleBookmark(verse.surahId, verse.ayah)
+                    }
+                }
+                if let onPlaceMarker {
+                    if markerKey == verse.surahId * 1000 + verse.ayah {
+                        actionRow("Remove reading marker", icon: "flag.slash", gold: true) {
+                            dismiss()
+                            onRemoveMarker?()
+                        }
+                    } else {
+                        actionRow("Place reading marker here", icon: "flag") {
+                            dismiss()
+                            onPlaceMarker(verse)
+                        }
                     }
                 }
             }
