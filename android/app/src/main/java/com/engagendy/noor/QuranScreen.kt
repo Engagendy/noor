@@ -194,6 +194,8 @@ fun QuranScreen(
                 MushafScreen(
                     startPage = firstPage,
                     onBack = { openSurah = null; openAyah = 0; onSurahClosed() },
+                    // Highlight the ayah arrived at, or the surah's first.
+                    selectAyah = AyahRef(current.id, if (openAyah > 0) openAyah else 1),
                     onSwitchMode = ::leaveMushaf,
                     modifier = modifier)
             } else {

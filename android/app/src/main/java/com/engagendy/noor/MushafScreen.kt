@@ -77,6 +77,10 @@ private data class PageMeasure(
 fun MushafScreen(
     startPage: Int,
     onBack: () -> Unit,
+    /// Ayah arrived at (search / juz / bookmark, or a surah's first ayah when
+    /// opened from the index) — softly highlighted until playback starts,
+    /// like the iOS reader's selectedKey.
+    selectAyah: AyahRef? = null,
     onSwitchMode: (mode: String, surahId: Int, ayah: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -112,8 +116,11 @@ fun MushafScreen(
     // on its own.)
     androidx.activity.compose.BackHandler(enabled = showOptions) { showOptions = false }
     androidx.activity.compose.BackHandler(enabled = showSurahList) { showSurahList = false }
-    // Ayah long-pressed on the page — the iOS ayah-actions sheet.
-    var actionRef by remember { mutableStateOf<AyahRef?>(null) }
+    // Ayat on the long-pressed line — the iOS ayah-actions sheet (a picker
+    // first when the line carries more than one).
+    var actionRefs by remember { mutableStateOf<List<AyahRef>>(emptyList()) }
+    // Highlighted when nothing is being recited (recitation wins).
+    var selected by remember(selectAyah) { mutableStateOf(selectAyah) }
     // Tafsir opened from that sheet (survives the sheet's self-dismiss).
     var tafsirRef by remember { mutableStateOf<AyahRef?>(null) }
 
@@ -140,8 +147,14 @@ fun MushafScreen(
     // Recompose-driven (snapshotFlow over the player's Compose state — no
     // polling): resolve the playing ayah's page off-main, then animate.
     LaunchedEffect(pager) {
+        var wasPlaying = false
         snapshotFlow { NoorPlayer.currentSurah to NoorPlayer.currentAyah }
             .collect { (surahId, ayah) ->
+                // A new recitation replaces the arrival highlight (iOS
+                // startPlayback clears selectedKey).
+                val playing = surahId != 0 && ayah != 0
+                if (playing && !wasPlaying) selected = null
+                wasPlaying = playing
                 if (surahId == 0 || ayah == 0) {
                     // Playback stopped — the next session follows again.
                     followTargetPage = 0
@@ -170,6 +183,7 @@ fun MushafScreen(
                 val ayah = NoorPlayer.currentAyah
                 if (surahId == 0 || ayah == 0) return@collect
                 followPlayback = true
+                selected = AyahRef(surahId, ayah)
                 val page = withContext(Dispatchers.IO) {
                     runCatching { PageLayoutDb.get(context).pageFor(surahId, ayah) }
                         .getOrDefault(0)
@@ -228,8 +242,9 @@ fun MushafScreen(
             HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), beyondViewportPageCount = 1) { index ->
                 MadaniPage(
                     page = index + 1,
+                    selected = selected,
                     onTap = { chromeVisible = !chromeVisible },
-                    onAyahLongPress = { ref -> actionRef = ref })
+                    onAyahLongPress = { refs -> actionRefs = refs })
             }
             if (showOptions) {
                 // Scrim: any tap outside the panel dismisses it (flow-reader parity).
@@ -261,6 +276,7 @@ fun MushafScreen(
         currentSurahId = titleSurah?.id ?: 1,
         onPick = { picked ->
             showSurahList = false
+            selected = AyahRef(picked.id, 1)
             scope.launch {
                 val page = withContext(Dispatchers.IO) {
                     runCatching { PageLayoutDb.get(context).firstPage(picked.id) }.getOrDefault(0)
@@ -274,14 +290,14 @@ fun MushafScreen(
     // Long-pressed ayah → the same actions sheet as the flow reader
     // (play from here, tafsir, share, copy, bookmark). Verse text and surah
     // info resolve off-main from the verified DB.
-    actionRef?.let { ref ->
+    if (actionRefs.isNotEmpty()) {
         MushafAyahActions(
-            ref,
+            actionRefs,
             // The sheet dismisses itself before firing the action, so tafsir
             // state must outlive it — it lives here on the screen.
-            onOpenTafsir = { tafsirRef = ref },
+            onOpenTafsir = { ref -> tafsirRef = ref },
             onShareVideo = { verse, surah, count -> videoShare.start(verse, surah, count) },
-            onDismiss = { actionRef = null })
+            onDismiss = { actionRefs = emptyList() })
     }
     ShareVideoProgressDialog(videoShare)
     tafsirRef?.let { ref -> MushafTafsir(ref, onDismiss = { tafsirRef = null }) }
@@ -305,11 +321,19 @@ private val ayahActionScope = kotlinx.coroutines.CoroutineScope(
 /// surah off-main, then shows the shared AyahActionsSheet + TafsirSheet.
 @Composable
 private fun MushafAyahActions(
-    ref: AyahRef,
-    onOpenTafsir: () -> Unit,
+    refs: List<AyahRef>,
+    onOpenTafsir: (AyahRef) -> Unit,
     onShareVideo: (Verse, Surah, Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    // One ayah → its actions directly; several → pick one first (iOS
+    // AyahActionsSheet.versePicker).
+    var picked by remember(refs) { mutableStateOf(refs.singleOrNull()) }
+    val ref = picked
+    if (ref == null) {
+        MushafAyahPicker(refs, onPick = { picked = it }, onDismiss = onDismiss)
+        return
+    }
     val context = LocalContext.current
     val scope = ayahActionScope
     val loaded by produceState<Pair<Verse, Surah>?>(initialValue = null, ref) {
@@ -339,7 +363,7 @@ private fun MushafAyahActions(
                 NoorPlayer.play(surah.id, surah.ayahCount, verse.ayah, surah.nameArabic, pageEnd)
             }
         },
-        onTafsir = onOpenTafsir,
+        onTafsir = { onOpenTafsir(ref) },
         availableAyat = AyahShareRun.available(surah, verse.ayah),
         onShare = { count ->
             scope.launch {
@@ -377,6 +401,74 @@ private fun MushafAyahActions(
             prefs.edit().putStringSet("quran.bookmarks", next).apply()
         },
         onDismiss = onDismiss)
+}
+
+/// The pressed line carries several ayat: list them (number + opening
+/// words, from the verified DB) and hand the chosen one to the actions.
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun MushafAyahPicker(
+    refs: List<AyahRef>,
+    onPick: (AyahRef) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    val verses by produceState(emptyList<Verse>(), refs) {
+        value = withContext(Dispatchers.IO) {
+            val db = QuranDb.get(context)
+            refs.mapNotNull { ref ->
+                db.verses(ref.surahId).firstOrNull { it.ayah == ref.ayah }
+            }
+        }
+    }
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss, containerColor = NoorColor.bgPrimary
+    ) {
+      // Own window — re-apply the in-app language (see AyahActionsSheet).
+      NoorLocaleProvider {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 32.dp)) {
+            verses.forEach { verse ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { onPick(AyahRef(verse.surahId, verse.ayah)) }
+                        .padding(vertical = 10.dp, horizontal = 4.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(30.dp)
+                            .background(NoorColor.accentGold.copy(alpha = 0.18f), CircleShape)
+                    ) {
+                        Text(
+                            verse.ayah.localizedDigits(),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = NoorColor.inkPrimary)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        verse.text,
+                        fontFamily = QuranFont,
+                        fontSize = 18.sp,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        color = NoorColor.inkPrimary,
+                        style = arabicText(),
+                        modifier = Modifier.weight(1f))
+                    Spacer(Modifier.width(8.dp))
+                    Icon(
+                        painterResource(NoorIcons.chevronForward()),
+                        contentDescription = null,
+                        tint = NoorColor.inkSecondary,
+                        modifier = Modifier.size(14.dp))
+                }
+            }
+        }
+      }
+    }
 }
 
 /// Tafsir for a page ayah — its own loader so it survives the actions
@@ -555,8 +647,9 @@ private enum class PagePhase { LOADING, DOWNLOADING, UNAVAILABLE, READY }
 @Composable
 private fun MadaniPage(
     page: Int,
+    selected: AyahRef?,
     onTap: () -> Unit,
-    onAyahLongPress: (AyahRef) -> Unit = {},
+    onAyahLongPress: (List<AyahRef>) -> Unit = {},
 ) {
     val context = LocalContext.current
     // `attempt` counts the quiet automatic retries inside one cycle; a tap
@@ -619,7 +712,7 @@ private fun MadaniPage(
 
     when {
         loaded != null && loaded.fontFamily != null ->
-            MadaniPageBody(loaded, page, { attempt = 0; cycle++ }, onTap, onAyahLongPress)
+            MadaniPageBody(loaded, page, selected, { attempt = 0; cycle++ }, onTap, onAyahLongPress)
         phase == PagePhase.UNAVAILABLE -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -663,10 +756,11 @@ private fun MadaniPage(
 private fun MadaniPageBody(
     content: PageContent,
     page: Int,
+    selected: AyahRef?,
     /// The page font turned out to be unusable — refetch and re-render.
     onFontUnusable: () -> Unit,
     onTap: () -> Unit,
-    onAyahLongPress: (AyahRef) -> Unit = {},
+    onAyahLongPress: (List<AyahRef>) -> Unit = {},
 ) {
     val context = LocalContext.current
     // Ayah being recited (iOS MadaniPageView highlightKey/isHighlighted):
@@ -674,6 +768,9 @@ private fun MadaniPageBody(
     val reciting =
         if (NoorPlayer.currentSurah != 0) AyahRef(NoorPlayer.currentSurah, NoorPlayer.currentAyah)
         else null
+    // Recitation wins while playing; the arrival selection shows otherwise
+    // (iOS highlightKey: recitingKey ?? selectedKey).
+    val highlight = reciting ?: selected
     androidx.compose.foundation.layout.BoxWithConstraints(
         Modifier
             .fillMaxSize()
@@ -684,14 +781,16 @@ private fun MadaniPageBody(
                         // Rows are a fixed height/15 tall and the block is
                         // vertically centered (iOS MadaniPageView), so the
                         // pressed row is pure geometry off that top offset;
-                        // its first ayah drives the sheet.
+                        // every ayah on it goes to the sheet, which asks
+                        // which one when there are several (iOS parity).
                         if (content.lines.isNotEmpty()) {
                             val rowPx =
                                 size.height.toFloat() / maxOf(content.lines.size, 15)
                             val top = (size.height - rowPx * content.lines.size) / 2f
                             val row = ((pos.y - top) / rowPx)
                                 .toInt().coerceIn(0, content.lines.lastIndex)
-                            content.lines[row].ayahRefs.firstOrNull()
+                            content.lines[row].ayahRefs.distinct()
+                                .takeIf { it.isNotEmpty() }
                                 ?.let(onAyahLongPress)
                         }
                     })
@@ -762,8 +861,9 @@ private fun MadaniPageBody(
         ) {
             content.lines.forEachIndexed { lineIndex, line ->
                 // Soft rounded stateReciting wash behind every line that
-                // carries the playing ayah (line-level, like iOS page mode).
-                val highlighted = reciting != null && reciting in line.ayahRefs
+                // carries the playing (or arrived-at) ayah — line-level, like
+                // iOS page mode.
+                val highlighted = highlight != null && highlight in line.ayahRefs
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
