@@ -36,6 +36,8 @@ public struct SurahReaderView: View {
     @AppStorage(ReadingMarker.defaultsKey) private var markerRaw = ""
     private var marker: ReadingMarker? { ReadingMarker(raw: markerRaw) }
     @State private var revealedKeys: Set<Int> = []
+    /// Ayah the ayah-by-ayah list should scroll to for the marker.
+    @State private var markerJump: Int?
     @State private var selectedKey: Int?          // surah*1000 + ayah
     @State private var showGoToPage = false
     @State private var showOptions =
@@ -222,6 +224,17 @@ public struct SurahReaderView: View {
         // surah 22's title. A jump is rare and always a full context switch,
         // so re-creating the subtree is the honest answer.
         .id(readingSurahId)
+        // The reading marker for the scrolling modes; the Madani page draws
+        // its own per-line ribbon. Fed by the ayat's reported positions.
+        .overlayPreferenceValue(MarkerTargetsKey.self) { targets in
+            if mode != .page {
+                ScrollMarkerRibbon(targets: targets,
+                                   markerKey: marker?.key,
+                                   onPlace: placeMarker(key:),
+                                   onJump: jumpToMarker)
+            }
+        }
+        .coordinateSpace(name: ScrollMarkerRibbon.space)
         .environment(\.layoutDirection, .rightToLeft)
         .background(NoorColor.bgPrimary)
         // Constant-height top strip: content never reflows — the two rows
@@ -603,10 +616,7 @@ public struct SurahReaderView: View {
                 markerLine: marker?.page == page ? marker?.line : nil,
                 hasMarker: marker != nil,
                 onPlaceMarker: { line in placeMarker(page: page, line: line) },
-                onJumpToMarker: {
-                    guard let marker else { return }
-                    withAnimation(.easeInOut(duration: 0.3)) { currentPage = marker.page }
-                }
+                onJumpToMarker: jumpToMarker
             ) { refs in
                 let verses = viewModel.sections(forPage: page)
                     .flatMap(\.verses)
@@ -771,6 +781,7 @@ public struct SurahReaderView: View {
                               spans: spans[key] ?? [])
                     .id(anchors.contains(item.id) ? Self.ayahAnchor(key)
                                                   : "w\(section.id)-\(item.id)")
+                    .markerTarget(key, enabled: anchors.contains(item.id), lineBand: true)
                     .padding(.horizontal, 2)
                     .background(
                         RoundedRectangle(cornerRadius: 5)
@@ -822,6 +833,19 @@ public struct SurahReaderView: View {
             shareVerse = verse
         } label: {
             Label("Share", systemImage: "square.and.arrow.up")
+        }
+        if marker?.key == verse.surahId * 1000 + verse.ayah {
+            Button {
+                markerRaw = ""
+            } label: {
+                Label("Remove reading marker", systemImage: "flag.slash")
+            }
+        } else {
+            Button {
+                placeMarker(key: verse.surahId * 1000 + verse.ayah)
+            } label: {
+                Label("Place reading marker here", systemImage: "flag")
+            }
         }
         Button {
             let text = "\(verse.text) \u{2067}﴿\(verse.ayah.arabicIndic)﴾\u{2069} — \(verse.surahId):\(verse.ayah)"
@@ -877,6 +901,12 @@ public struct SurahReaderView: View {
             // ayah count happens to be unchanged.
             .onChange(of: readingSurahId) {
                 proxy.scrollTo(1, anchor: .top)
+            }
+            // The parked marker ribbon was tapped: bring the marked ayah back.
+            .onChange(of: markerJump) { _, ayah in
+                guard let ayah else { return }
+                markerJump = nil
+                withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(ayah, anchor: .center) }
             }
             // Follow the recitation: keep the ayah being recited in view.
             .onChange(of: recitingKey) { _, new in
@@ -940,6 +970,8 @@ public struct SurahReaderView: View {
                 .fill(isSelected || isReciting ? NoorColor.stateReciting : Color.clear)
         )
         .contentShape(Rectangle())
+        // The ribbon points at the first line, past the block's padding.
+        .markerTarget(key, anchorY: { [liveFontSize] in $0.minY + 8 + liveFontSize * 0.8 })
         .blur(radius: hifzMode && !revealedKeys.contains(key) && !isReciting ? 7 : 0)
         .animation(.easeInOut(duration: 0.25), value: revealedKeys)
         .onTapGesture {
@@ -1039,8 +1071,6 @@ public struct SurahReaderView: View {
         }
     }
 
-    /// Direct defaults writes: the reader must NOT observe these via
-    /// @AppStorage or every swipe re-renders the whole pager.
     /// Drops the reading marker on a printed line. The ayah defaults to the
     /// line's first — the one in progress there; the actions sheet passes
     /// the exact ayah picked.
@@ -1051,6 +1081,43 @@ public struct SurahReaderView: View {
                                   surahId: ref.surahId, ayah: ref.ayah).raw
     }
 
+    /// Marks an ayah from the scrolling modes. The marker is stored against
+    /// the Madani line that ayah begins on, so every mode agrees on it.
+    private func placeMarker(key: Int) {
+        let surahId = key / 1000, ayah = key % 1000
+        guard let page = viewModel.page(surahId: surahId, ayah: ayah) else { return }
+        let line = (try? layout?.lines(page: page))?.first {
+            $0.kind == .words && $0.ayahRefs.contains { $0.surahId == surahId && $0.ayah == ayah }
+        }
+        markerRaw = ReadingMarker(page: page, line: line?.line ?? 1,
+                                  surahId: surahId, ayah: ayah).raw
+    }
+
+    /// The parked ribbon was tapped: go back to the marker, in any mode.
+    private func jumpToMarker() {
+        guard let marker else { return }
+        switch mode {
+        case .page, .mushaf:
+            if abs(currentPage - marker.page) <= 2 {
+                withAnimation(.easeInOut(duration: 0.3)) { currentPage = marker.page }
+            } else {
+                currentPage = marker.page   // no animation: jumps can be 600 pages
+            }
+            if mode == .mushaf { scrollToKey = marker.key }
+        case .ayah:
+            if marker.surahId == readingSurahId {
+                markerJump = marker.ayah
+            } else {
+                readingSurahId = marker.surahId
+                arrivalAyah = marker.ayah
+                revealedKeys = []
+                viewModel.open(surahId: marker.surahId)
+            }
+        }
+    }
+
+    /// Direct defaults writes: the reader must NOT observe these via
+    /// @AppStorage or every swipe re-renders the whole pager.
     private func persistPosition(page: Int?) {
         guard let page, page > 0 else { return }
         let defaults = UserDefaults.standard

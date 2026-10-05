@@ -411,7 +411,7 @@ struct MadaniPageView: View {
 /// A ribbon tab hanging in from the page edge, swallow-tailed on its inner
 /// side. Drawn for the RTL reader: attached at the right, notch facing the
 /// text on the left.
-private struct RibbonShape: Shape {
+struct RibbonShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         let notch = rect.width * 0.45
