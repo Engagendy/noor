@@ -48,4 +48,9 @@
     <string name="feat_athkar_favorite_add">Favorilere ekle</string>
     <string name="feat_athkar_favorite_remove">Favorilerden çıkar</string>
     <string name="feat_athkar_favorites_empty">Henüz favori zikir yok — buraya eklemek için herhangi bir zikrin yanındaki kalbe dokunun.</string>
+    <string name="feat_marker">Okuma işareti</string>
+    <string name="feat_marker_hint">Kaldığınız satıra sürükleyin</string>
+    <string name="feat_marker_place">Okuma işaretini buraya koy</string>
+    <string name="feat_marker_remove">Okuma işaretini kaldır</string>
+    <string name="feat_marker_page">Okuma işareti · sayfa %1$s</string>
 </resources>

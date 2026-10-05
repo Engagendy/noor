@@ -48,4 +48,9 @@
     <string name="feat_athkar_favorite_add">افزودن به برگزیده‌ها</string>
     <string name="feat_athkar_favorite_remove">حذف از برگزیده‌ها</string>
     <string name="feat_athkar_favorites_empty">هنوز ذکر برگزیده‌ای ندارید — روی نماد قلب کنار هر ذکر بزنید تا اینجا افزوده شود.</string>
+    <string name="feat_marker">نشانگر قرائت</string>
+    <string name="feat_marker_hint">آن را به سطری که در آن ایستادید بکشید</string>
+    <string name="feat_marker_place">نشانگر قرائت را اینجا بگذار</string>
+    <string name="feat_marker_remove">حذف نشانگر قرائت</string>
+    <string name="feat_marker_page">نشانگر قرائت · صفحهٔ %1$s</string>
 </resources>

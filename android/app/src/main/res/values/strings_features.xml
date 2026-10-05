@@ -51,4 +51,9 @@
     <string name="feat_athkar_favorite_add">إضافة إلى المفضّلة</string>
     <string name="feat_athkar_favorite_remove">إزالة من المفضّلة</string>
     <string name="feat_athkar_favorites_empty">لا توجد أذكار مفضّلة بعد — اضغط رمز القلب بجانب أي ذكر لإضافته هنا.</string>
+    <string name="feat_marker">علامة القراءة</string>
+    <string name="feat_marker_hint">اسحبها إلى السطر الذي توقفت عنده</string>
+    <string name="feat_marker_place">ضع علامة القراءة هنا</string>
+    <string name="feat_marker_remove">إزالة علامة القراءة</string>
+    <string name="feat_marker_page">علامة القراءة · صفحة %1$s</string>
 </resources>

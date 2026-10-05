@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -243,6 +244,17 @@ fun MushafScreen(
                 MadaniPage(
                     page = index + 1,
                     selected = selected,
+                    onJumpToMarker = {
+                        ReadingMarkers.current?.page?.let { target ->
+                            scope.launch {
+                                if (kotlin.math.abs(target - 1 - pager.currentPage) <= 2) {
+                                    pager.animateScrollToPage(target - 1)
+                                } else {
+                                    pager.scrollToPage(target - 1)
+                                }
+                            }
+                        }
+                    },
                     onTap = { chromeVisible = !chromeVisible },
                     onAyahLongPress = { refs -> actionRefs = refs })
             }
@@ -400,7 +412,10 @@ private fun MushafAyahActions(
             bookmarks = next
             prefs.edit().putStringSet("quran.bookmarks", next).apply()
         },
-        onDismiss = onDismiss)
+        onDismiss = onDismiss,
+        markerHere = ReadingMarkers.current?.key == surah.id * 1000 + verse.ayah,
+        onPlaceMarker = { ReadingMarkers.placeAt(context, scope, surah.id, verse.ayah) },
+        onRemoveMarker = { ReadingMarkers.set(context, null) })
 }
 
 /// The pressed line carries several ayat: list them (number + opening
@@ -648,6 +663,7 @@ private enum class PagePhase { LOADING, DOWNLOADING, UNAVAILABLE, READY }
 private fun MadaniPage(
     page: Int,
     selected: AyahRef?,
+    onJumpToMarker: () -> Unit,
     onTap: () -> Unit,
     onAyahLongPress: (List<AyahRef>) -> Unit = {},
 ) {
@@ -712,7 +728,7 @@ private fun MadaniPage(
 
     when {
         loaded != null && loaded.fontFamily != null ->
-            MadaniPageBody(loaded, page, selected, { attempt = 0; cycle++ }, onTap, onAyahLongPress)
+            MadaniPageBody(loaded, page, selected, onJumpToMarker, { attempt = 0; cycle++ }, onTap, onAyahLongPress)
         phase == PagePhase.UNAVAILABLE -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -757,6 +773,7 @@ private fun MadaniPageBody(
     content: PageContent,
     page: Int,
     selected: AyahRef?,
+    onJumpToMarker: () -> Unit,
     /// The page font turned out to be unusable — refetch and re-render.
     onFontUnusable: () -> Unit,
     onTap: () -> Unit,
@@ -771,6 +788,9 @@ private fun MadaniPageBody(
     // Recitation wins while playing; the arrival selection shows otherwise
     // (iOS highlightKey: recitingKey ?? selectedKey).
     val highlight = reciting ?: selected
+    // Page height for the marker ribbon's row geometry.
+    var pageHeight by remember { mutableStateOf(0f) }
+    Box(Modifier.fillMaxSize().onSizeChanged { pageHeight = it.height.toFloat() }) {
     androidx.compose.foundation.layout.BoxWithConstraints(
         Modifier
             .fillMaxSize()
@@ -962,5 +982,36 @@ private fun MadaniPageBody(
                 }
             }
         }
+    }
+    // The reading marker: one ribbon row per printed ayah line, on the same
+    // centred 15-row geometry the long-press uses (iOS markerRibbon).
+    val marker = ReadingMarkers.current
+    val ribbonLines = remember(content.lines, pageHeight) {
+        if (pageHeight <= 0f || content.lines.isEmpty()) emptyList()
+        else {
+            val rowPx = pageHeight / maxOf(content.lines.size, 15)
+            val top = (pageHeight - rowPx * content.lines.size) / 2f
+            content.lines.mapIndexedNotNull { i, line ->
+                val ref = line.ayahRefs.firstOrNull()
+                if (line.kind != LineKind.Words || ref == null) null
+                else MarkerLine(
+                    top = top + rowPx * i,
+                    bottom = top + rowPx * (i + 1),
+                    key = ref.surahId * 1000 + ref.ayah,
+                    word = line.refStarts.firstOrNull() ?: 1,
+                    tag = line.line)
+            }
+        }
+    }
+    MarkerRibbonLayer(
+        lines = ribbonLines,
+        markedIndex = if (marker?.page == page)
+            ribbonLines.indexOfFirst { it.tag == marker.line }.takeIf { it >= 0 } else null,
+        hasMarker = marker != null,
+        onPlace = { line ->
+            ReadingMarkers.set(context, ReadingMarker(
+                page, line.tag, line.key / 1000, line.key % 1000, line.word))
+        },
+        onJump = onJumpToMarker)
     }
 }

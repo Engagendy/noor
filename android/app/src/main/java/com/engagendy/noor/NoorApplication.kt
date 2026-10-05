@@ -19,6 +19,13 @@ class NoorApplication : Application() {
         super.attachBaseContext(NoorLocale.wrapBase(base))
     }
 
+    override fun onCreate() {
+        super.onCreate()
+        // The reading marker is Compose state shared by every reader and the
+        // Today card — loaded once, before any of them composes.
+        ReadingMarkers.load(this)
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         // "system" follows the device even for background surfaces.

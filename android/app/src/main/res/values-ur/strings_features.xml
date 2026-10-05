@@ -48,4 +48,9 @@
     <string name="feat_athkar_favorite_add">پسندیدہ میں شامل کریں</string>
     <string name="feat_athkar_favorite_remove">پسندیدہ سے ہٹائیں</string>
     <string name="feat_athkar_favorites_empty">ابھی کوئی پسندیدہ ذکر نہیں — کسی بھی ذکر کے ساتھ دل کے نشان پر ٹیپ کریں تاکہ وہ یہاں شامل ہو جائے۔</string>
+    <string name="feat_marker">تلاوت کا نشان</string>
+    <string name="feat_marker_hint">اسے اس سطر تک کھینچیں جہاں آپ رکے تھے</string>
+    <string name="feat_marker_place">تلاوت کا نشان یہاں لگائیں</string>
+    <string name="feat_marker_remove">تلاوت کا نشان ہٹائیں</string>
+    <string name="feat_marker_page">تلاوت کا نشان · صفحہ %1$s</string>
 </resources>

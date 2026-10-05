@@ -48,4 +48,9 @@
     <string name="feat_athkar_favorite_add">Tambahkan ke favorit</string>
     <string name="feat_athkar_favorite_remove">Hapus dari favorit</string>
     <string name="feat_athkar_favorites_empty">Belum ada zikir favorit — ketuk ikon hati di samping zikir mana pun untuk menambahkannya di sini.</string>
+    <string name="feat_marker">Penanda bacaan</string>
+    <string name="feat_marker_hint">Seret ke baris tempat Anda berhenti</string>
+    <string name="feat_marker_place">Letakkan penanda bacaan di sini</string>
+    <string name="feat_marker_remove">Hapus penanda bacaan</string>
+    <string name="feat_marker_page">Penanda bacaan · halaman %1$s</string>
 </resources>

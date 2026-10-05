@@ -54,6 +54,10 @@ fun AyahActionsSheet(
     onCopy: (Int) -> Unit,
     onToggleBookmark: () -> Unit,
     onDismiss: () -> Unit,
+    /// Whether the reading marker is on this ayah; null hides the marker row.
+    markerHere: Boolean? = null,
+    onPlaceMarker: () -> Unit = {},
+    onRemoveMarker: () -> Unit = {},
 ) {
     // Reset per ayah: a new long-press is a new selection.
     var count by remember(verse.surahId, verse.ayah) { mutableIntStateOf(1) }
@@ -106,6 +110,17 @@ fun AyahActionsSheet(
                 glyph = if (isBookmarked) "★" else "☆",
                 gold = isBookmarked,
                 onClick = onToggleBookmark)
+            when (markerHere) {
+                true -> ActionRow(stringResource(R.string.feat_marker_remove),
+                                  icon = R.drawable.ic_flag_slash, gold = true) {
+                    onDismiss(); onRemoveMarker()
+                }
+                false -> ActionRow(stringResource(R.string.feat_marker_place),
+                                   icon = R.drawable.ic_flag) {
+                    onDismiss(); onPlaceMarker()
+                }
+                null -> {}
+            }
         }
       }
     }

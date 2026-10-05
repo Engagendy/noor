@@ -44,6 +44,10 @@ data class PageLine(
     /// so negative glyph bearings can never overlap adjacent words.
     val wordsV2: List<String>,
     val ayahRefs: List<AyahRef>,
+    /// Parallel to [ayahRefs]: the word position (1-based, within its ayah)
+    /// at which each ayah starts ON THIS LINE — 1 where it begins here,
+    /// more where it continues from the line above (iOS refStarts).
+    val refStarts: List<Int> = emptyList(),
 )
 
 /// Read-only access to the bundled page-layout DB — the same file the iOS
@@ -138,6 +142,28 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
         ).use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }
     }
 
+    /// The reading marker for a line marked in the flow / ayah-by-ayah
+    /// readers by its first word: stored with the printed line that word
+    /// sits on — the last line where this ayah has started by [word] (a long
+    /// ayah can run onto the next page). iOS SurahReaderView.placeMarker.
+    fun markerFor(surahId: Int, ayah: Int, word: Int): ReadingMarker {
+        val startPage = pageFor(surahId, ayah)
+        var page = startPage
+        var lineNumber = 1
+        for (candidate in startPage..minOf(startPage + 1, PAGE_COUNT)) {
+            for (line in lines(candidate)) {
+                if (line.kind != LineKind.Words) continue
+                val index = line.ayahRefs.indexOf(AyahRef(surahId, ayah))
+                if (index < 0) continue
+                if ((line.refStarts.getOrNull(index) ?: 1) <= word) {
+                    page = candidate
+                    lineNumber = line.line
+                }
+            }
+        }
+        return ReadingMarker(page, lineNumber, surahId, ayah, word)
+    }
+
     /// The QCF glyph lines of one page, with the reserved surah-header and
     /// basmala lines injected (At-Tawbah opens without the basmala;
     /// Al-Fatiha's basmala is its first ayah).
@@ -158,9 +184,13 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
         val lines = words.groupBy { it.line }
             .map { (line, lineWords) ->
                 val refs = mutableListOf<AyahRef>()
+                val starts = mutableListOf<Int>()
                 for (word in lineWords) {
                     val ref = AyahRef(word.surahId, word.ayah)
-                    if (refs.lastOrNull() != ref) refs.add(ref)
+                    if (refs.lastOrNull() != ref) {
+                        refs.add(ref)
+                        starts.add(word.position)
+                    }
                 }
                 PageLine(
                     line = line,
@@ -168,7 +198,8 @@ class PageLayoutDb private constructor(private val db: SQLiteDatabase) {
                     glyphs = lineWords.joinToString("") { it.glyph },
                     glyphsV2 = lineWords.joinToString("") { it.glyphV2 },
                     wordsV2 = lineWords.map { it.glyphV2 },
-                    ayahRefs = refs)
+                    ayahRefs = refs,
+                    refStarts = starts)
             }
             .toMutableList()
 

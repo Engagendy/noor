@@ -229,11 +229,22 @@ fun NoorApp(openRequest: OpenRequest? = null) {
     var mushafPage by rememberSaveable { mutableStateOf(0) }
     // Surah requested from Today (continue reading); 0 = none.
     var quranSurah by rememberSaveable { mutableStateOf(0) }
+    // Exact ayah to open [quranSurah] at (the reading marker); 0 = resume.
+    var quranAyah by rememberSaveable { mutableStateOf(0) }
 
     // Continue reading: reopen the reader exactly where it was left —
     // last Madani page or last surah, whichever was read most recently.
     fun openResume() {
         val prefs = KhatmahPlan.prefs(context)
+        // The reading marker is the reader's own "I stopped here": open AT
+        // its ayah, in whatever mode is current.
+        ReadingMarkers.current?.let { marker ->
+            mushafPage = 0
+            quranAyah = marker.ayah
+            quranSurah = marker.surahId
+            tab = Tab.QURAN
+            return
+        }
         when (prefs.getString("reader.lastMode", null)) {
             "surah" -> quranSurah = prefs.getInt("reader.lastSurah", 1).coerceAtLeast(1)
             "page" -> mushafPage = prefs.getInt("reader.lastPage", 1).coerceAtLeast(1)
@@ -327,13 +338,14 @@ fun NoorApp(openRequest: OpenRequest? = null) {
                 modifier,
                 openResume = ::openResume,
                 openPage = { page -> mushafPage = page; tab = Tab.QURAN },
-                openSurah = { id -> quranSurah = id; tab = Tab.QURAN },
+                openSurah = { id -> quranAyah = 0; quranSurah = id; tab = Tab.QURAN },
                 openAthkar = { tab = Tab.ATHKAR },
                 openPrayer = { tab = Tab.PRAYER })
             Tab.QURAN -> QuranScreen(modifier, mushafPage = mushafPage,
                                      resumeSurahId = quranSurah,
+                                     resumeAyah = quranAyah,
                                      onMushafClosed = { mushafPage = 0 },
-                                     onSurahClosed = { quranSurah = 0 })
+                                     onSurahClosed = { quranSurah = 0; quranAyah = 0 })
             Tab.PRAYER -> PrayerScreen(modifier)
             Tab.HADITH -> HadithScreen(modifier)
             Tab.ATHKAR -> AthkarScreen(modifier, openCategoryTitle = athkarCategory,

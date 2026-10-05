@@ -48,4 +48,9 @@
     <string name="feat_athkar_favorite_add">Ajouter aux favoris</string>
     <string name="feat_athkar_favorite_remove">Retirer des favoris</string>
     <string name="feat_athkar_favorites_empty">Aucun adhkar favori pour l’instant — touchez le cœur à côté d’un dhikr pour l’ajouter ici.</string>
+    <string name="feat_marker">Marque-page de lecture</string>
+    <string name="feat_marker_hint">Faites-le glisser jusqu\'à la ligne où vous vous êtes arrêté</string>
+    <string name="feat_marker_place">Placer le marque-page ici</string>
+    <string name="feat_marker_remove">Retirer le marque-page</string>
+    <string name="feat_marker_page">Marque-page · page %1$s</string>
 </resources>

@@ -48,4 +48,9 @@
     <string name="feat_athkar_favorite_add">প্রিয়তে যোগ করুন</string>
     <string name="feat_athkar_favorite_remove">প্রিয় থেকে সরান</string>
     <string name="feat_athkar_favorites_empty">এখনও কোনো প্রিয় জিকির নেই — যেকোনো জিকিরের পাশের হৃদয় আইকনে ট্যাপ করে এখানে যোগ করুন।</string>
+    <string name="feat_marker">পাঠ চিহ্ন</string>
+    <string name="feat_marker_hint">যে লাইনে থেমেছেন সেখানে টেনে আনুন</string>
+    <string name="feat_marker_place">এখানে পাঠ চিহ্ন রাখুন</string>
+    <string name="feat_marker_remove">পাঠ চিহ্ন সরান</string>
+    <string name="feat_marker_page">পাঠ চিহ্ন · পৃষ্ঠা %1$s</string>
 </resources>

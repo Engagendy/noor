@@ -61,6 +61,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -79,6 +81,7 @@ fun QuranScreen(
     modifier: Modifier = Modifier,
     mushafPage: Int = 0,
     resumeSurahId: Int = 0,
+    resumeAyah: Int = 0,
     onMushafClosed: () -> Unit = {},
     onSurahClosed: () -> Unit = {},
 ) {
@@ -91,11 +94,11 @@ fun QuranScreen(
         mutableStateOf(prefs.getString("reader.mode", "mushaf") ?: "mushaf")
     }
     // Flow reader: opened from the list or from Today (continue reading).
-    var openSurah by remember(resumeSurahId) {
+    var openSurah by remember(resumeSurahId, resumeAyah) {
         mutableStateOf(surahs.firstOrNull { it.id == resumeSurahId })
     }
     // Exact arrival ayah (search hit, juz start, bookmark); 0 = surah start.
-    var openAyah by remember(resumeSurahId) { mutableStateOf(0) }
+    var openAyah by remember(resumeSurahId, resumeAyah) { mutableStateOf(resumeAyah) }
     // Bumped on every navigation request into the reader, so re-opening the
     // SAME surah (picked from the reader's drawer) still resets it.
     var openSerial by remember { mutableStateOf(0) }
@@ -195,7 +198,13 @@ fun QuranScreen(
                     startPage = firstPage,
                     onBack = { openSurah = null; openAyah = 0; onSurahClosed() },
                     // Highlight the ayah arrived at, or the surah's first.
-                    selectAyah = AyahRef(current.id, if (openAyah > 0) openAyah else 1),
+                    // ...except the reading marker's, whose line has its own wash.
+                    // Decided once per arrival, so moving the marker later
+                    // never brings the highlight back.
+                    selectAyah = remember(current.id, openAyah) {
+                        AyahRef(current.id, if (openAyah > 0) openAyah else 1)
+                            .takeIf { ReadingMarkers.current?.key != it.surahId * 1000 + it.ayah }
+                    },
                     onSwitchMode = ::leaveMushaf,
                     modifier = modifier)
             } else {
@@ -907,6 +916,8 @@ fun ReaderScreen(
     // the verse, so bookmark/share/copy/video/tafsir can never be filed
     // under the surah the reader happened to open at.
     var actionTarget by remember { mutableStateOf<Pair<Surah, Verse>?>(null) }
+    // Surah whose page should scroll back to the reading marker (0 = none).
+    var markerJumpSurah by remember { mutableStateOf(0) }
     var tafsirTarget by remember { mutableStateOf<Pair<Surah, Verse>?>(null) }
 
     fun startPlayback(s: Surah, fromAyah: Int = 1) {
@@ -992,7 +1003,10 @@ fun ReaderScreen(
             onShareVideo = { count -> videoShare.start(actionVerse, actionSurah, count) },
             onCopy = { count -> copyAyah(actionSurah, actionVerse, count) },
             onToggleBookmark = { onToggleBookmark(actionSurah.id, actionVerse.ayah) },
-            onDismiss = { actionTarget = null })
+            onDismiss = { actionTarget = null },
+            markerHere = ReadingMarkers.current?.key == actionSurah.id * 1000 + actionVerse.ayah,
+            onPlaceMarker = { ReadingMarkers.placeAt(context, scope, actionSurah.id, actionVerse.ayah) },
+            onRemoveMarker = { ReadingMarkers.set(context, null) })
     }
     ShareVideoProgressDialog(videoShare)
 
@@ -1102,7 +1116,16 @@ fun ReaderScreen(
                         hifzMode = hifzMode,
                         revealedKeys = revealedKeys,
                         onReveal = { key -> revealedKeys = revealedKeys + key },
-                        onAyahTap = { s, verse -> actionTarget = s to verse })
+                        onAyahTap = { s, verse -> actionTarget = s to verse },
+                        markerJumpPending = markerJumpSurah == pageSurah.id,
+                        onMarkerJumpHandled = { markerJumpSurah = 0 },
+                        onJumpToMarker = {
+                            val marker = ReadingMarkers.current ?: return@SurahPage
+                            markerJumpSurah = marker.surahId
+                            if (pager.currentPage != marker.surahId - 1) {
+                                scope.launch { pager.scrollToPage(marker.surahId - 1) }
+                            }
+                        })
                 }
             }
             if (showOptions) {
@@ -1185,8 +1208,18 @@ private fun SurahPage(
     revealedKeys: Set<Int> = emptySet(),
     onReveal: (Int) -> Unit = {},
     onAyahTap: (Surah, Verse) -> Unit,
+    /// The marker's ayah is in this surah and the reader asked to go back
+    /// to it (the parked ribbon was tapped).
+    markerJumpPending: Boolean = false,
+    onMarkerJumpHandled: () -> Unit = {},
+    onJumpToMarker: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // Where the text sits on screen, for the reading-marker ribbon. Written
+    // from layout callbacks; read only inside SurahMarkerLayer, so scrolling
+    // recomposes the ribbon and never this page.
+    val geometry = remember(surah.id) { MarkerGeometry() }
     val db = remember { QuranDb.get(context) }
     val listState = rememberLazyListState()
     val verses by produceState(emptyList<Verse>(), surah.id) { value = versesFor(surah.id) }
@@ -1196,7 +1229,14 @@ private fun SurahPage(
     // from the player, so the highlight tracks playback automatically.
     val recitingAyah = if (NoorPlayer.currentSurah == surah.id) NoorPlayer.currentAyah else 0
     // Recitation wins over the arrival highlight (iOS: recitingKey ?? selectedKey).
-    val highlightAyah = if (recitingAyah > 0) recitingAyah else scrollToAyah
+    // Arriving AT the reading marker (Continue Reading) skips it: the marked
+    // line carries its own wash.
+    // Decided once per arrival — moving the marker later must not bring
+    // the highlight back.
+    val arrivalAyah = remember(surah.id, scrollToAyah) {
+        if (ReadingMarkers.current?.key == surah.id * 1000 + scrollToAyah) 0 else scrollToAyah
+    }
+    val highlightAyah = if (recitingAyah > 0) recitingAyah else arrivalAyah
     val flow = remember(surah.id, verses, fontSize, highlightAyah, mode) {
         if (mode == "ayah") androidx.compose.ui.text.AnnotatedString("")
         else buildSurahFlow(context, db, surah.id, verses, meta.juzAt, meta.quarterKeys,
@@ -1222,6 +1262,26 @@ private fun SurahPage(
         if (animate) listState.animateScrollToItem(item, top) else listState.scrollToItem(item, top)
     }
 
+    // Back to the marker (parked ribbon tapped): flow mode brings the marked
+    // LINE near the top; ayah mode its ayah block.
+    LaunchedEffect(markerJumpPending, verses, textLayout) {
+        if (!markerJumpPending || verses.isEmpty()) return@LaunchedEffect
+        if (mode != "ayah" && textLayout == null) return@LaunchedEffect
+        val marker = ReadingMarkers.current
+        onMarkerJumpHandled()
+        if (marker == null || marker.surahId != surah.id) return@LaunchedEffect
+        val layout = textLayout
+        if (mode == "ayah" || layout == null) {
+            scrollTo(marker.ayah, animate = true)
+            return@LaunchedEffect
+        }
+        val anno = flow.getStringAnnotations("ayah", 0, flow.length)
+            .firstOrNull { it.item == marker.ayah.toString() } ?: return@LaunchedEffect
+        val offset = ReadingMarkers.offsetOfWord(flow.text, anno.start, anno.end, marker.word)
+        val top = layout.getLineTop(layout.getLineForOffset(offset)).toInt()
+        listState.animateScrollToItem(if (hasBasmala) 1 else 0, (top - 160).coerceAtLeast(0))
+    }
+
     // Open-at-ayah: waits for the verses (and, in flow mode, the paragraph
     // layout) before scrolling.
     LaunchedEffect(surah.id, mode, scrollToAyah, verses, textLayout) {
@@ -1238,6 +1298,14 @@ private fun SurahPage(
     }
 
     // The whole Quran text area is an RTL block, in the English UI too.
+    Box(
+        Modifier
+            .fillMaxSize()
+            .onGloballyPositioned {
+                geometry.boxY = it.positionInRoot().y
+                geometry.boxHeight = it.size.height.toFloat()
+            }
+    ) {
     ArabicDirection {
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 18.dp), state = listState) {
             if (hasBasmala) {
@@ -1296,7 +1364,19 @@ private fun SurahPage(
                                 }
                                 .padding(horizontal = 12.dp, vertical = 8.dp)
                                 .hifzHidden(hidden)
+                                .onGloballyPositioned {
+                                    val y = it.positionInRoot().y
+                                    geometry.blocks[verse.ayah] = y to y + it.size.height
+                                }
                         ) {
+                            // Off screen: its lines no longer count.
+                            androidx.compose.runtime.DisposableEffect(verse.ayah) {
+                                onDispose {
+                                    geometry.textTops.remove(verse.ayah)
+                                    geometry.layouts.remove(verse.ayah)
+                                    geometry.blocks.remove(verse.ayah)
+                                }
+                            }
                             if (wordByWord) {
                                 WordByWordAyah(
                                     surahId = surah.id,
@@ -1331,7 +1411,12 @@ private fun SurahPage(
                                     // RTL paragraph whatever the UI language: the
                                     // ayah-number chip lands at the line end (left).
                                     style = arabicText(),
-                                    modifier = Modifier.fillMaxWidth()
+                                    onTextLayout = { geometry.layouts[verse.ayah] = it },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .onGloballyPositioned {
+                                            geometry.textTops[verse.ayah] = it.positionInRoot().y
+                                        }
                                 )
                             }
                             if (showTranslation) {
@@ -1353,10 +1438,11 @@ private fun SurahPage(
                         color = NoorColor.inkPrimary,
                         textAlign = TextAlign.Justify,
                         style = arabicText(TextAlign.Justify),
-                        onTextLayout = { textLayout = it },
+                        onTextLayout = { textLayout = it; geometry.flowLayout = it },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 40.dp)
+                            .onGloballyPositioned { geometry.flowY = it.positionInRoot().y }
                             .pointerInput(surah.id, flow) {
                                 fun pick(position: Offset) {
                                     val layout = textLayout ?: return
@@ -1375,6 +1461,9 @@ private fun SurahPage(
                 }
             }
         }
+    }
+    // The reading marker over the page, fed by the laid-out lines.
+    SurahMarkerLayer(surah.id, mode, wordByWord, geometry, scope, onJumpToMarker)
     }
 }
 
@@ -1766,4 +1855,69 @@ private fun WordByWordAyah(surahId: Int, ayah: Int, fontSize: Float) {
             style = arabicText(),
             modifier = Modifier.padding(top = 4.dp))
     }
+}
+
+/// Where a reader page's Quran text sits on screen, in root pixels — the
+/// reading-marker ribbon's input. Plain state holders written from layout
+/// callbacks; only [SurahMarkerLayer] reads them.
+private class MarkerGeometry {
+    var boxY by mutableFloatStateOf(0f)
+    var boxHeight by mutableFloatStateOf(0f)
+    var flowY by mutableFloatStateOf(0f)
+    var flowLayout by mutableStateOf<TextLayoutResult?>(null)
+    /// Ayah-by-ayah mode, per visible ayah: its text's top and layout, and
+    /// (for word-by-word cards, which are not one text) the block's extent.
+    val textTops = androidx.compose.runtime.mutableStateMapOf<Int, Float>()
+    val layouts = androidx.compose.runtime.mutableStateMapOf<Int, TextLayoutResult>()
+    val blocks = androidx.compose.runtime.mutableStateMapOf<Int, Pair<Float, Float>>()
+}
+
+/// The reading marker over one surah page (flow or ayah by ayah): the lines
+/// on screen come from the text layouts themselves, so the ribbon snaps to
+/// the real rendered lines (iOS ScrollMarkerRibbon).
+@Composable
+private fun SurahMarkerLayer(
+    surahId: Int,
+    mode: String,
+    wordByWord: Boolean,
+    geometry: MarkerGeometry,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onJumpToMarker: () -> Unit,
+) {
+    val context = LocalContext.current
+    val marker = ReadingMarkers.current
+    val lines = run {
+        val all = if (mode != "ayah") {
+            val layout = geometry.flowLayout
+            if (layout == null) emptyList()
+            else {
+                val annotated = layout.layoutInput.text
+                markerLines(layout, geometry.flowY - geometry.boxY) { offset ->
+                    annotated.getStringAnnotations("ayah", offset, offset).firstOrNull()?.let {
+                        val ayah = it.item.toIntOrNull() ?: return@let null
+                        (surahId * 1000 + ayah) to it.start
+                    }
+                }
+            }
+        } else if (wordByWord) {
+            geometry.blocks.map { (ayah, extent) ->
+                MarkerLine(extent.first - geometry.boxY, extent.second - geometry.boxY,
+                           surahId * 1000 + ayah, 1)
+            }
+        } else {
+            geometry.layouts.flatMap { (ayah, layout) ->
+                val top = geometry.textTops[ayah] ?: return@flatMap emptyList()
+                markerLines(layout, top - geometry.boxY) { (surahId * 1000 + ayah) to 0 }
+            }
+        }
+        all.filter { it.center in 0f..geometry.boxHeight }.sortedBy { it.top }
+    }
+    MarkerRibbonLayer(
+        lines = lines,
+        markedIndex = markedLineIndex(lines, marker),
+        hasMarker = marker != null,
+        onPlace = { line ->
+            ReadingMarkers.placeAt(context, scope, line.key / 1000, line.key % 1000, line.word)
+        },
+        onJump = onJumpToMarker)
 }

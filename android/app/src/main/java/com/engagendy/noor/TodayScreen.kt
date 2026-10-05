@@ -383,10 +383,16 @@ private fun ContinueReadingCard(openResume: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val maxPage = remember { KhatmahPlan.prefs(context).getInt("khatmah.maxPage", 0) }
+    // The reading marker, when set, is what Continue Reading opens.
+    val marker = ReadingMarkers.current
     // Surah name needs the DB — loads off-main.
-    val resumeLabel by produceState<String?>(initialValue = null) {
+    val resumeLabel by produceState<String?>(initialValue = null, marker) {
         value = withContext(Dispatchers.IO) {
             val p = KhatmahPlan.prefs(context)
+            if (marker != null) {
+                return@withContext QuranDb.get(context).surahs().firstOrNull { it.id == marker.surahId }
+                    ?.let { context.getString(R.string.g1_surah_prefix, it.displayName()) }
+            }
             when (p.getString("reader.lastMode", null)) {
                 "surah" -> {
                     val id = p.getInt("reader.lastSurah", 0)
@@ -426,6 +432,16 @@ private fun ContinueReadingCard(openResume: () -> Unit) {
             Text(resumeLabel ?: "", fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                  color = NoorColor.inkPrimary,
                  modifier = Modifier.padding(top = 2.dp))
+            if (marker != null) {
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 2.dp)) {
+                    Icon(painterResource(R.drawable.ic_flag), contentDescription = null,
+                         tint = NoorColor.accentGold, modifier = Modifier.size(12.dp))
+                    Text(stringResource(R.string.feat_marker_page, marker.page.localizedDigits()),
+                         fontSize = 11.sp, color = NoorColor.accentGold,
+                         modifier = Modifier.padding(start = 4.dp))
+                }
+            }
             if (maxPage > 0) {
                 ProgressBar(maxPage / 604f, NoorColor.accentGold,
                             Modifier.padding(top = 8.dp), height = 3.dp)
@@ -461,10 +477,14 @@ private fun ContinueReadingCard(openResume: () -> Unit) {
 /// so listening resumes where reading did. Falls back to the top of the
 /// remembered surah. All lookups are DB work — off-main.
 private suspend fun playFromResumePoint(context: android.content.Context) {
+    val marker = ReadingMarkers.current
     val target = withContext(Dispatchers.IO) {
         val prefs = KhatmahPlan.prefs(context)
         val db = QuranDb.get(context)
-        val ref = if (prefs.getString("reader.lastMode", null) == "page") {
+        // The reading marker first: listening picks up at the marked ayah.
+        val ref = if (marker != null) {
+            AyahRef(marker.surahId, marker.ayah)
+        } else if (prefs.getString("reader.lastMode", null) == "page") {
             runCatching {
                 PageLayoutDb.get(context).firstAyahOnPage(prefs.getInt("reader.lastPage", 1))
             }.getOrNull()
