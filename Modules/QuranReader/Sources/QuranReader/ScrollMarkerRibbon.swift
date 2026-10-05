@@ -1,19 +1,16 @@
 import DesignSystem
 import SwiftUI
 
-/// Where one ayah sits on screen in the scrolling reading modes (flowing
-/// mushaf, ayah by ayah), reported up through `MarkerTargetsKey` in the
-/// reader's `ScrollMarkerRibbon.space`.
+/// Where one Quran word sits on screen in the scrolling reading modes
+/// (flowing mushaf, ayah by ayah), reported up through `MarkerTargetsKey`
+/// in the reader's `ScrollMarkerRibbon.space`. The ribbon groups these into
+/// the lines actually on screen.
 struct MarkerTarget: Equatable {
     /// surah * 1000 + ayah.
     let key: Int
-    /// Height the ribbon points at: the ayah's first line.
-    let anchorY: CGFloat
-    /// What the marker's gold wash covers: the ayah block (ayah by ayah),
-    /// or — with `lineBand` — the reported word, widened by the ribbon to
-    /// the full line the ayah begins on (flow).
-    let band: CGRect
-    var lineBand = false
+    /// 1-based word number within the ayah (`QuranFlowItem.wordIndex`).
+    let word: Int
+    let frame: CGRect
 }
 
 struct MarkerTargetsKey: PreferenceKey {
@@ -24,20 +21,16 @@ struct MarkerTargetsKey: PreferenceKey {
 }
 
 extension View {
-    /// Reports this view as the place of ayah `key` for the reading marker.
-    /// `lineBand`: the view is the ayah's first word in a flowing line, and
-    /// the wash spans that whole line. Off (`enabled == false`) costs no
-    /// GeometryReader, so only ayah-start words carry one.
-    func markerTarget(_ key: Int, enabled: Bool = true, lineBand: Bool = false,
-                      anchorY: @escaping (CGRect) -> CGFloat = { $0.midY }) -> some View {
+    /// Reports this word's place for the reading marker. Off costs no
+    /// GeometryReader.
+    func markerTarget(_ key: Int, word: Int, enabled: Bool = true) -> some View {
         background {
             if enabled {
                 GeometryReader { geometry in
-                    let frame = geometry.frame(in: .named(ScrollMarkerRibbon.space))
                     Color.clear.preference(
                         key: MarkerTargetsKey.self,
-                        value: [MarkerTarget(key: key, anchorY: anchorY(frame),
-                                             band: frame, lineBand: lineBand)])
+                        value: [MarkerTarget(key: key, word: word,
+                                             frame: geometry.frame(in: .named(ScrollMarkerRibbon.space)))])
                 }
             }
         }
@@ -48,48 +41,51 @@ extension View {
 /// Madani page's per-line ribbon (see `MadaniPageView.markerRibbon`).
 ///
 /// It floats on the screen's leading edge (the right, in the RTL reader)
-/// over whatever is scrolled into view. Drag it vertically and it snaps
-/// ayah by ayah with a live wash; dropping it marks that ayah. When the
-/// marked ayah is on screen the ribbon sits on it; otherwise it parks,
-/// faded, at the top, and a tap goes back to the marker.
+/// over whatever is scrolled into view. The words report where they are;
+/// grouped by row they give the lines on screen, so a drag snaps LINE by
+/// line with a live wash, and dropping marks that line by its first word —
+/// the same (ayah, word) the Madani page stores, so every mode agrees.
+/// When the marked line is on screen the ribbon sits on it; otherwise it
+/// parks, faded, at the top, and a tap goes back to the marker.
 ///
 /// Lives in `overlayPreferenceValue`, so scrolling only re-renders this
 /// overlay — never the reader's body.
 struct ScrollMarkerRibbon: View {
     static let space = "readerContent"
 
-    /// Every reported ayah, including the pager's off-screen neighbours —
+    /// Every reported word, including the pager's off-screen neighbours —
     /// filtered to the visible ones here.
     let targets: [MarkerTarget]
     let markerKey: Int?
-    let onPlace: (Int) -> Void
+    let markerWord: Int
+    let onPlace: (_ key: Int, _ word: Int) -> Void
     let onJump: () -> Void
 
-    @State private var dragKey: Int?
+    @State private var dragLine: Int?
+
+    /// One row of words on screen. `first` is the word read first: the
+    /// rightmost, in Arabic.
+    private struct Line {
+        var band: CGRect
+        var first: MarkerTarget
+        var words: [MarkerTarget]
+    }
 
     var body: some View {
         GeometryReader { geometry in
-            let bounds = CGRect(origin: .zero, size: geometry.size)
-            let visible = targets
-                .filter { bounds.contains(CGPoint(x: $0.band.midX, y: $0.anchorY)) }
-                .sorted { $0.anchorY < $1.anchorY }
-            let shownKey = dragKey ?? markerKey
-            let shown = visible.first { $0.key == shownKey }
+            let lines = Self.lines(of: targets, in: CGRect(origin: .zero, size: geometry.size))
+            let markerLine = markerKey.flatMap { Self.lineIndex(of: $0, word: markerWord, in: lines) }
+            let shownIndex = dragLine ?? markerLine
+            let shown = shownIndex.flatMap { lines.indices.contains($0) ? lines[$0] : nil }
             let active = shown != nil
-            let wash = shown.map { target in
-                target.lineBand
-                    ? CGRect(x: 8, y: target.band.minY - 3,
-                             width: geometry.size.width - 16, height: target.band.height + 6)
-                    : target.band
-            }
-            let y = shown?.anchorY ?? 28
+            let y = shown?.band.midY ?? 28
 
             ZStack(alignment: .topLeading) {
-                if let wash {
+                if let shown {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(NoorColor.accentGold.opacity(0.16))
-                        .frame(width: wash.width, height: wash.height)
-                        .offset(x: wash.minX, y: wash.minY)
+                        .frame(width: geometry.size.width - 16, height: shown.band.height + 6)
+                        .offset(x: 8, y: shown.band.minY - 3)
                         .allowsHitTesting(false)
                 }
                 RibbonShape()
@@ -104,29 +100,30 @@ struct ScrollMarkerRibbon: View {
                     .highPriorityGesture(
                         DragGesture(minimumDistance: 0, coordinateSpace: .named(Self.space))
                             .onChanged { value in
-                                guard abs(value.translation.height) > 4 || dragKey != nil else { return }
-                                dragKey = nearest(to: value.location.y, in: visible)?.key
+                                guard abs(value.translation.height) > 4 || dragLine != nil else { return }
+                                dragLine = Self.nearest(to: value.location.y, in: lines)
                             }
                             .onEnded { value in
-                                defer { dragKey = nil }
-                                guard dragKey != nil else {
+                                defer { dragLine = nil }
+                                guard dragLine != nil else {
                                     if !active, markerKey != nil { onJump() }
                                     return
                                 }
-                                if let target = nearest(to: value.location.y, in: visible) {
-                                    onPlace(target.key)
+                                if let index = Self.nearest(to: value.location.y, in: lines) {
+                                    onPlace(lines[index].first.key, lines[index].first.word)
                                 }
                             })
-                    .sensoryFeedback(.selection, trigger: dragKey) { _, new in new != nil }
+                    .sensoryFeedback(.selection, trigger: dragLine) { _, new in new != nil }
                     .accessibilityElement()
                     .accessibilityLabel("Reading marker")
-                    .accessibilityValue(shown.map { String(localized: "Ayah \($0.key % 1000)") } ?? "")
+                    .accessibilityValue(shown.map { String(localized: "Ayah \($0.first.key % 1000)") } ?? "")
                     .accessibilityHint("Drag to the line you stopped at")
                     .accessibilityAdjustableAction { direction in
-                        let index = visible.firstIndex { $0.key == markerKey }
                         let next = direction == .increment
-                            ? (index.map { $0 + 1 } ?? 0) : (index.map { $0 - 1 } ?? 0)
-                        if visible.indices.contains(next) { onPlace(visible[next].key) }
+                            ? (markerLine.map { $0 + 1 } ?? 0) : (markerLine.map { $0 - 1 } ?? 0)
+                        if lines.indices.contains(next) {
+                            onPlace(lines[next].first.key, lines[next].first.word)
+                        }
                     }
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
@@ -136,10 +133,43 @@ struct ScrollMarkerRibbon: View {
         }
     }
 
-    /// The ayah under the finger: the one whose block holds `y` (ayah by
-    /// ayah), else the one whose first line is closest (flow).
-    private func nearest(to y: CGFloat, in visible: [MarkerTarget]) -> MarkerTarget? {
-        visible.first { $0.band.height > 60 && $0.band.minY <= y && y <= $0.band.maxY }
-            ?? visible.min { abs($0.anchorY - y) < abs($1.anchorY - y) }
+    /// The visible words grouped into rows, top to bottom. Words whose
+    /// vertical centres sit within half a word's height share a row.
+    private static func lines(of targets: [MarkerTarget], in bounds: CGRect) -> [Line] {
+        let visible = targets
+            .filter { bounds.contains(CGPoint(x: $0.frame.midX, y: $0.frame.midY)) }
+            .sorted { $0.frame.midY < $1.frame.midY }
+        var lines: [Line] = []
+        for target in visible {
+            if var last = lines.last,
+               abs(target.frame.midY - last.band.midY) < max(target.frame.height, last.band.height) * 0.5 {
+                last.band = last.band.union(target.frame)
+                if target.frame.maxX > last.first.frame.maxX { last.first = target }
+                last.words.append(target)
+                lines[lines.count - 1] = last
+            } else {
+                lines.append(Line(band: target.frame, first: target, words: [target]))
+            }
+        }
+        return lines
+    }
+
+    /// The row holding the marker's word — or, if that exact word is not
+    /// on screen, the row holding the closest earlier word of its ayah.
+    private static func lineIndex(of key: Int, word: Int, in lines: [Line]) -> Int? {
+        var best: (index: Int, word: Int)?
+        for (index, line) in lines.enumerated() {
+            for target in line.words where target.key == key {
+                if target.word == word { return index }
+                let isEarlier = target.word < word
+                if isEarlier, target.word > (best?.word ?? 0) { best = (index, target.word) }
+            }
+        }
+        return best?.index
+    }
+
+    /// The row whose centre is closest to `y` — the one under the finger.
+    private static func nearest(to y: CGFloat, in lines: [Line]) -> Int? {
+        lines.indices.min { abs(lines[$0].band.midY - y) < abs(lines[$1].band.midY - y) }
     }
 }

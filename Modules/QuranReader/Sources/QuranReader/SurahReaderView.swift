@@ -230,7 +230,8 @@ public struct SurahReaderView: View {
             if mode != .page {
                 ScrollMarkerRibbon(targets: targets,
                                    markerKey: marker?.key,
-                                   onPlace: placeMarker(key:),
+                                   markerWord: marker?.word ?? 1,
+                                   onPlace: { placeMarker(key: $0, word: $1) },
                                    onJump: jumpToMarker)
             }
         }
@@ -781,7 +782,7 @@ public struct SurahReaderView: View {
                               spans: spans[key] ?? [])
                     .id(anchors.contains(item.id) ? Self.ayahAnchor(key)
                                                   : "w\(section.id)-\(item.id)")
-                    .markerTarget(key, enabled: anchors.contains(item.id), lineBand: true)
+                    .markerTarget(key, word: item.wordIndex, enabled: item.kind == .word)
                     .padding(.horizontal, 2)
                     .background(
                         RoundedRectangle(cornerRadius: 5)
@@ -842,7 +843,7 @@ public struct SurahReaderView: View {
             }
         } else {
             Button {
-                placeMarker(key: verse.surahId * 1000 + verse.ayah)
+                placeMarker(key: verse.surahId * 1000 + verse.ayah, word: 1)
             } label: {
                 Label("Place reading marker here", systemImage: "flag")
             }
@@ -957,7 +958,8 @@ public struct SurahReaderView: View {
                     highlightKey: isReciting ? key : nil,
                     // Whole-surah dictionary, looked up by ayah key inside —
                     // filtering to this ayah would copy it on every render.
-                    tajweed: tajweedColors ? viewModel.tajweedSpansForSurah() : [:])
+                    tajweed: tajweedColors ? viewModel.tajweedSpansForSurah() : [:],
+                    reportsMarkerTargets: true)
             }
             if showTranslation {
                 translationSlot(for: verse)
@@ -970,8 +972,9 @@ public struct SurahReaderView: View {
                 .fill(isSelected || isReciting ? NoorColor.stateReciting : Color.clear)
         )
         .contentShape(Rectangle())
-        // The ribbon points at the first line, past the block's padding.
-        .markerTarget(key, anchorY: { [liveFontSize] in $0.minY + 8 + liveFontSize * 0.8 })
+        // Word-by-word cards are not flow words: the block stands in as
+        // one marker line (the plain flow reports every word itself).
+        .markerTarget(key, word: 1, enabled: wordByWord)
         .blur(radius: hifzMode && !revealedKeys.contains(key) && !isReciting ? 7 : 0)
         .animation(.easeInOut(duration: 0.25), value: revealedKeys)
         .onTapGesture {
@@ -1075,22 +1078,33 @@ public struct SurahReaderView: View {
     /// line's first — the one in progress there; the actions sheet passes
     /// the exact ayah picked.
     private func placeMarker(page: Int, line: PageLine, ayah: Int? = nil) {
-        guard let ref = ayah.flatMap({ a in line.ayahRefs.first { $0.ayah == a } })
-                ?? line.ayahRefs.first else { return }
+        let index = ayah.flatMap { a in line.ayahRefs.firstIndex { $0.ayah == a } } ?? 0
+        guard line.ayahRefs.indices.contains(index) else { return }
+        let ref = line.ayahRefs[index]
+        let word = line.refStarts.indices.contains(index) ? line.refStarts[index] : 1
         markerRaw = ReadingMarker(page: page, line: line.line,
-                                  surahId: ref.surahId, ayah: ref.ayah).raw
+                                  surahId: ref.surahId, ayah: ref.ayah, word: word).raw
     }
 
-    /// Marks an ayah from the scrolling modes. The marker is stored against
-    /// the Madani line that ayah begins on, so every mode agrees on it.
-    private func placeMarker(key: Int) {
+    /// Marks a line from the scrolling modes by its first word. Stored with
+    /// the Madani line that word sits on, so every mode agrees on it: the
+    /// last printed line where this ayah has started by `word`.
+    private func placeMarker(key: Int, word: Int) {
         let surahId = key / 1000, ayah = key % 1000
-        guard let page = viewModel.page(surahId: surahId, ayah: ayah) else { return }
-        let line = (try? layout?.lines(page: page))?.first {
-            $0.kind == .words && $0.ayahRefs.contains { $0.surahId == surahId && $0.ayah == ayah }
+        guard let startPage = viewModel.page(surahId: surahId, ayah: ayah) else { return }
+        // A long ayah can run onto the next printed page.
+        var page = startPage, lineNumber = 1
+        for candidate in startPage...min(startPage + 1, 604) {
+            for line in (try? layout?.lines(page: candidate)) ?? [] where line.kind == .words {
+                guard let index = line.ayahRefs.firstIndex(where: {
+                    $0.surahId == surahId && $0.ayah == ayah
+                }) else { continue }
+                let start = line.refStarts.indices.contains(index) ? line.refStarts[index] : 1
+                if start <= word { page = candidate; lineNumber = line.line }
+            }
         }
-        markerRaw = ReadingMarker(page: page, line: line?.line ?? 1,
-                                  surahId: surahId, ayah: ayah).raw
+        markerRaw = ReadingMarker(page: page, line: lineNumber,
+                                  surahId: surahId, ayah: ayah, word: word).raw
     }
 
     /// The parked ribbon was tapped: go back to the marker, in any mode.

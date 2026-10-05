@@ -12,6 +12,12 @@ public struct QuranFlowItem: Identifiable, Hashable {
     public let ayah: Int
     public let text: String
     public let kind: Kind
+    /// 1-based ordinal of this word within its ayah, counting only tokens
+    /// that carry letters — the numbering the Madani layout's word
+    /// positions use (the Tanzil text spaces off its pause marks, which
+    /// take the preceding word's number). Lets the reading marker sit on
+    /// the same line in every mode.
+    public var wordIndex: Int = 1
     /// Where this fragment starts inside its ayah's stored text, counted in
     /// Unicode scalars — the coordinate system the bundled tajweed spans use.
     /// Measured against the FULL stored text even when a leading basmala was
@@ -34,6 +40,17 @@ public struct QuranFlowItem: Identifiable, Hashable {
 }
 
 public enum QuranFlow {
+    /// Unicode general category L* — a token with none of these (a pause
+    /// mark standing alone) is not a word of its own.
+    private static func isLetter(_ scalar: Unicode.Scalar) -> Bool {
+        switch scalar.properties.generalCategory {
+        case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter:
+            return true
+        default:
+            return false
+        }
+    }
+
     /// Builds the flow fragments for a run of verses.
     ///
     /// - Parameters:
@@ -47,14 +64,21 @@ public enum QuranFlow {
                              isQuarterStart: (Int) -> Bool = { _ in false }) -> [QuranFlowItem] {
         var items: [QuranFlowItem] = []
         var index = 0
+        var wordIndex = 0
         func add(_ surahId: Int, _ ayah: Int, _ text: String,
                  _ kind: QuranFlowItem.Kind, _ scalarStart: Int = 0) {
-            items.append(QuranFlowItem(id: index, surahId: surahId, ayah: ayah,
-                                       text: text, kind: kind,
-                                       scalarStart: scalarStart))
+            if kind == .word, text.unicodeScalars.contains(where: Self.isLetter) {
+                wordIndex += 1
+            }
+            var item = QuranFlowItem(id: index, surahId: surahId, ayah: ayah,
+                                     text: text, kind: kind,
+                                     scalarStart: scalarStart)
+            item.wordIndex = max(wordIndex, 1)
+            items.append(item)
             index += 1
         }
         for verse in verses {
+            wordIndex = 0
             if isQuarterStart(verse.surahId * 1000 + verse.ayah) {
                 add(verse.surahId, verse.ayah, "۞", .quarter)
             }
@@ -99,9 +123,18 @@ public struct QuranFlowText: View {
     public var highlightKey: Int?
     /// Tajweed spans per `surahId * 1000 + ayah`. Empty = colouring off.
     public var tajweed: [Int: [TajweedSpan]]
+    /// Report each word's place for the reader's line-by-line marker.
+    let reportsMarkerTargets: Bool
 
     public init(items: [QuranFlowItem], fontSize: CGFloat, highlightKey: Int? = nil,
                 tajweed: [Int: [TajweedSpan]] = [:]) {
+        self.init(items: items, fontSize: fontSize, highlightKey: highlightKey,
+                  tajweed: tajweed, reportsMarkerTargets: false)
+    }
+
+    init(items: [QuranFlowItem], fontSize: CGFloat, highlightKey: Int? = nil,
+         tajweed: [Int: [TajweedSpan]] = [:], reportsMarkerTargets: Bool) {
+        self.reportsMarkerTargets = reportsMarkerTargets
         self.items = items
         self.fontSize = fontSize
         self.highlightKey = highlightKey
@@ -117,6 +150,8 @@ public struct QuranFlowText: View {
                                                    ? fontSize : fontSize * 0.62),
                               isReciting: highlightKey == item.key,
                               spans: tajweed[item.key] ?? [])
+                    .markerTarget(item.key, word: item.wordIndex,
+                                  enabled: reportsMarkerTargets && item.kind == .word)
             }
         }
         // Positions are computed right-to-left by the layout itself.

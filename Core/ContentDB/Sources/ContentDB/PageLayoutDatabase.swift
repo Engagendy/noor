@@ -58,10 +58,16 @@ public struct PageLine: Identifiable, Hashable, Sendable {
     /// feeding one variant's codes to the other font renders gibberish.
     public let words: [String]
     public let ayahRefs: [Ref]
+    /// Parallel to `ayahRefs`: the word position (1-based, within its ayah)
+    /// at which each ayah starts ON THIS LINE — 1 where the ayah begins
+    /// here, more where it continues from the line above.
+    public let refStarts: [Int]
     public var id: Int { line }
 
     public init(line: Int, kind: Kind, glyphs: String, glyphsV2: String,
-                wordsV2: [String] = [], words: [String] = [], ayahRefs: [Ref]) {
+                wordsV2: [String] = [], words: [String] = [], ayahRefs: [Ref],
+                refStarts: [Int] = []) {
+        self.refStarts = refStarts
         self.line = line
         self.kind = kind
         self.glyphs = glyphs
@@ -97,9 +103,13 @@ public final class PageLayoutDatabase: Sendable {
             var lines = Dictionary(grouping: words, by: \.line)
                 .map { line, words in
                     var refs: [PageLine.Ref] = []
+                    var starts: [Int] = []
                     for word in words {
                         let ref = PageLine.Ref(surahId: word.surahId, ayah: word.ayah)
-                        if refs.last != ref { refs.append(ref) }
+                        if refs.last != ref {
+                            refs.append(ref)
+                            starts.append(word.position)
+                        }
                     }
                     return PageLine(
                         line: line,
@@ -108,7 +118,8 @@ public final class PageLayoutDatabase: Sendable {
                         glyphsV2: words.map(\.glyphV2).joined(),
                         wordsV2: words.map(\.glyphV2),
                         words: words.map(\.glyph),
-                        ayahRefs: refs)
+                        ayahRefs: refs,
+                        refStarts: starts)
                 }
                 .sorted { $0.line < $1.line }
 
